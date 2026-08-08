@@ -1,0 +1,11 @@
+import {describe,expect,it} from "vitest";import {calculateEffectiveDayCapacity,calculateEffectiveWeekCapacity,isoWeekday} from "./capacity";
+const availability=[{weekday:1,start_time:"09:00",end_time:"13:00"}];
+describe("Capacity Engine V1",()=>{
+ it("applies the most restrictive calendar multiplier",()=>expect(calculateEffectiveDayCapacity({date:"2026-08-03",weeklyAvailability:availability,calendarPeriods:[{startDate:"2026-08-01",endDate:"2026-08-10",capacityMultiplier:.75},{startDate:"2026-08-03",endDate:"2026-08-03",capacityMultiplier:.5}],scheduleExceptions:[]})).toBe(120));
+ it("applies a sole capacity increase multiplier",()=>expect(calculateEffectiveDayCapacity({date:"2026-08-03",weeklyAvailability:availability,calendarPeriods:[{startDate:"2026-08-03",endDate:"2026-08-03",capacityMultiplier:1.25}],scheduleExceptions:[]})).toBe(300));
+ it("subtracts unavailable overlap",()=>expect(calculateEffectiveDayCapacity({date:"2026-08-03",weeklyAvailability:availability,calendarPeriods:[],scheduleExceptions:[{date:"2026-08-03",type:"unavailable",startTime:"11:00",endTime:"13:00",minutesDelta:null}]})).toBe(120));
+ it("adds extra availability",()=>expect(calculateEffectiveDayCapacity({date:"2026-08-03",weeklyAvailability:availability,calendarPeriods:[],scheduleExceptions:[{date:"2026-08-03",type:"extra_available",startTime:null,endTime:null,minutesDelta:180}]})).toBe(420));
+ it("does not double count overlapping unavailable windows",()=>expect(calculateEffectiveDayCapacity({date:"2026-08-03",weeklyAvailability:availability,calendarPeriods:[],scheduleExceptions:[{date:"2026-08-03",type:"unavailable",startTime:"10:00",endTime:"12:00",minutesDelta:null},{date:"2026-08-03",type:"unavailable",startTime:"11:00",endTime:"13:00",minutesDelta:null}]})).toBe(60));
+ it("never returns negative capacity",()=>expect(calculateEffectiveDayCapacity({date:"2026-08-03",weeklyAvailability:availability,calendarPeriods:[],scheduleExceptions:[{date:"2026-08-03",type:"custom",startTime:null,endTime:null,minutesDelta:-999}]})).toBe(0));
+ it("uses ISO Istanbul calendar weekdays and week dates",()=>{expect(isoWeekday("2026-08-03")).toBe(1);expect(calculateEffectiveWeekCapacity({weekStart:"2026-08-03",weeklyAvailability:availability,calendarPeriods:[],scheduleExceptions:[]})).toBe(240);});
+});

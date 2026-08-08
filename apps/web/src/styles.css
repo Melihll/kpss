@@ -38,6 +38,22 @@ dd { margin: 0.25rem 0 0; }
 .button-link { display: inline-block; padding: 0.65rem 1rem; background: #1d2433; color: white; text-decoration: none; border-radius: 0.35rem; }
 .planning-panel { border-bottom: 2px solid #d9dee8; padding-bottom: 2rem; margin-bottom: 2rem; }
 .execution-panel { border-bottom: 2px solid #d9dee8; padding-bottom: 2rem; margin-bottom: 2rem; }
+.revision-panel, .mastery-panel { border-bottom: 2px solid #d9dee8; padding-bottom: 2rem; margin-bottom: 2rem; }
+.adaptive-panel { border-bottom: 2px solid #d9dee8; padding-bottom: 2rem; margin-bottom: 2rem; }
+.adaptive-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:1rem;margin:1rem 0; }
+.adaptive-grid article,.special-form { padding:1rem;border:1px solid #d9dee8;border-radius:.5rem; }
+.special-form { grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));align-items:end;margin:1rem 0; }
+.topic-grid, .revision-list { display: grid; gap: 0.75rem; }
+.topic-grid { grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+.topic-card, .revision-card { padding: 1rem; border: 1px solid #d9dee8; border-radius: 0.5rem; }
+.topic-card h3, .revision-card h3 { margin: 0.25rem 0 0.6rem; }
+.revision-card { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.revision-card p { margin: 0.25rem 0; }
+.mastery-badge { display: inline-block; padding: 0.3rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: #e5e7eb; }
+.mastery-badge.strong { background: #dcfce7; color: #166534; }
+.mastery-badge.sufficient { background: #dbeafe; color: #1e40af; }
+.mastery-badge.fragile { background: #fef3c7; color: #92400e; }
+.mastery-badge.weak, .mastery-badge.critical { background: #fee2e2; color: #991b1b; }
 details { margin: 1rem 0; padding: 1rem; border: 1px solid #d9dee8; border-radius: .5rem; }
 summary { cursor: pointer; font-weight: 700; }
 .primary-action { background: #1d4ed8; color: white; border: 0; border-radius: 0.35rem; }

@@ -61,8 +61,8 @@ const headers = {
   apikey: anonKey,
   "Content-Type": "application/json",
 };
-const app = async (path, method = "GET") => {
-  const response = await fetch(`${url}/functions/v1/app-api${path}`, { method, headers });
+const app = async (path, method = "GET", body) => {
+  const response = await fetch(`${url}/functions/v1/app-api${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   const payload = await response.json();
   if (!response.ok) throw new Error(JSON.stringify(payload));
   return payload;
@@ -138,6 +138,43 @@ if (saved.result.review_status !== "pending" || saved.result.total_questions !==
 const reviewed = await telegram(callback(`result_review:${saved.result.id}`));
 if (reviewed.result.review_status !== "reviewed") throw new Error("review failed");
 
+const evidence = await app("/test-results", "POST", {
+  subjectId: MATH, curriculumNodeId: TOPIC, correct: 10, wrong: 0, blank: 0, total: 10,
+  idempotencyKey: `telegram-mastery-${unique}`,
+});
+if (evidence.mastery?.assessment?.resulting_mastery_level !== "strong" || !evidence.mastery?.revision) {
+  throw new Error(`Telegram mastery setup failed: ${JSON.stringify(evidence)}`);
+}
+const dueDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
+const dueSetup = await api.rpc("apply_topic_mastery_assessment", { p_payload: {
+  examProfileId: profile.data.id, curriculumNodeId: TOPIC, triggerType: "manual_recalculation",
+  sourceTestResultId: null, sourceResultUpdatedAt: null,
+  sampleQuestionCount: 20, sampleCorrectCount: 17, sampleWrongCount: 2, sampleBlankCount: 1,
+  previousMasteryLevel: "strong", resultingMasteryLevel: "strong", resultingTopicState: "learned",
+  assessmentReason: "CONSISTENT_STRONG_RESULTS",
+  revision: { shouldSchedule: true, scheduledFor: dueDate, revisionType: "short_review", estimatedMinutes: 15, reason: "TELEGRAM_DUE_FIXTURE" },
+} });
+if (dueSetup.error) throw dueSetup.error;
+const specialMenu = await telegram(message("/ozel"));
+const lessCallback = specialMenu.outbound.reply_markup.inline_keyboard[0][0].callback_data;
+await telegram(callback(lessCallback));
+const specialApplied = await telegram(message("90"));
+if (!specialApplied.outbound.text.includes("→ 90 dk") || !specialApplied.replan?.revision) throw new Error("special situation replan failed");
+const minimumPlan = await telegram(message("/minimum"));
+if (!minimumPlan.minimum || minimumPlan.minimum.totalMinutes > 90) throw new Error("minimum plan failed");
+const adaptiveNow = await telegram(message("/simdi"));
+if (!["due_revision", "weak_topic", "critical_revision"].includes(adaptiveNow.recommendation?.reason)) throw new Error(`adaptive simdi failed: ${JSON.stringify(adaptiveNow)}`);
+const repeatList = await telegram(message("/tekrar"));
+const completeData = repeatList.outbound.reply_markup?.inline_keyboard?.[0]?.[0]?.callback_data;
+if (!repeatList.outbound.text.includes("Bugünkü tekrarların") || !completeData?.startsWith("revision_complete:")) throw new Error("tekrar list failed");
+const completeUpdate = callback(completeData);
+const repeatCompleted = await telegram(completeUpdate);
+if (repeatCompleted.revision.status !== "completed") throw new Error("revision callback failed");
+const repeatDuplicate = await telegram(completeUpdate);
+if (!repeatDuplicate.duplicate) throw new Error("revision callback retry was not deduplicated");
+const storedRevision = await api.from("revision_schedules").select("status,completed_at").eq("id", evidence.mastery.revision.id).single();
+if (storedRevision.data?.status !== "completed" || !storedRevision.data.completed_at) throw new Error("revision completion was not persisted");
+
 const manual = await telegram(message("/calisma_ekle"));
 const subjectCallback = manual.outbound.reply_markup.inline_keyboard[0][0].callback_data;
 await telegram(callback(subjectCallback));
@@ -154,6 +191,12 @@ console.log(JSON.stringify({
   sessionFinishedMinutes: finished.session.duration_minutes,
   resultRecorded: "7D/2Y/1B",
   wrongReview: "reviewed",
+  tekrarListed: true,
+  revisionCompleted: true,
+  revisionCallbackDeduplicated: true,
+  specialSituationReplanned: true,
+  minimumPlanMinutes: minimumPlan.minimum.totalMinutes,
+  adaptiveRecommendation: adaptiveNow.recommendation.reason,
   manualStudyMinutes: retroactive.session.duration_minutes,
   retryDeduplicated: true,
   retryBeforeBusinessRecovered: true,

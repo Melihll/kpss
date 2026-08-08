@@ -9,6 +9,8 @@ import {
   type RecommendationTask,
   type WeeklyPlanningContext,
 } from "../_shared/planning.bundle.js";
+import { recalculateTopicMastery, revisionWithUrgency } from "../_shared/mastery.ts";
+import { loadAdaptiveBase, minimumDayPlan, recalculateCurrentPlan, syllabusProjection } from "../_shared/adaptive.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,6 +49,11 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   ACTIVE_PLAN_ALREADY_EXISTS: 409,
   TASK_HAS_PENDING_UNITS: 409,
   INVALID_TASK_PROGRESS: 400,
+  TOPIC_PROGRESS_NOT_FOUND: 404,
+  REVISION_NOT_FOUND: 404,
+  REVISION_NOT_ACTIVE: 409,
+  WEEKLY_PLAN_NOT_FOUND: 404,
+  TASK_NOT_REPLANNABLE: 409,
 };
 
 function caughtMessage(caught: unknown) {
@@ -222,15 +229,17 @@ function remainingTodayMinutes(windows: any[]) {
   return total;
 }
 
-async function nextTask(client: SupabaseClient, profileId: string, weekStart: string) {
-  const plan = await currentPlan(client, profileId, weekStart);
+async function nextTask(client: SupabaseClient, profile: any, userId: string, weekStart: string) {
+  const plan = await currentPlan(client, profile.id, weekStart);
   if (!plan) throw new PlanningDomainError("NO_RECOMMENDABLE_TASK");
   const [{ data: tasks, error: taskError }, { data: windows, error: windowError }] = await Promise.all([
     client.from("tasks").select("*, task_progress(completed_minutes)").eq("weekly_plan_id", plan.id),
-    client.from("weekly_availability").select("weekday, start_time, end_time, is_active").eq("exam_profile_id", profileId),
+    client.from("weekly_availability").select("weekday, start_time, end_time, is_active").eq("exam_profile_id", profile.id),
   ]);
   if (taskError) throw taskError;
   if (windowError) throw windowError;
+  const adaptive = await loadAdaptiveBase(client, userId, profile, plan);
+  const adaptiveMap = new Map(adaptive.adaptiveTasks.map((task: any) => [task.id, task]));
   const taskIds = (tasks ?? []).map((task) => task.id);
   const linksResult = taskIds.length
     ? await client.from("task_resource_units").select("task_id, status, resource_units(unit_type, estimated_minutes)").in("task_id", taskIds)
@@ -241,15 +250,21 @@ async function nextTask(client: SupabaseClient, profileId: string, weekStart: st
     const pendingUnitMinutes = links.length
       ? links.reduce((sum, link: any) => sum + (link.resource_units?.estimated_minutes ?? DEFAULT_RESOURCE_UNIT_MINUTES[link.resource_units?.unit_type ?? "other"]), 0)
       : null;
+    const signal: any = adaptiveMap.get(task.id) ?? {};
+    const revision = task.revision_schedule_id
+      ? adaptive.allAdaptiveRevisions.find((row: any) => row.id === task.revision_schedule_id)
+      : null;
     return {
       id: task.id, status: task.status, importance: task.importance, priorityScore: task.priority_score,
       plannedDate: task.planned_date, estimatedMinutes: task.estimated_minutes,
       completedMinutes: task.task_progress?.[0]?.completed_minutes ?? 0,
       pendingUnitMinutes, createdAt: task.created_at,
+      isRevision: Boolean(task.revision_schedule_id), revisionUrgency: revision?.urgency ?? null,
+      masteryLevel: signal.masteryLevel ?? null, topicState: signal.topicState ?? null,
     };
   });
   const recommendation = getNextBestTask(recommendationTasks, {
-    today: istanbulDate(), availableMinutes: remainingTodayMinutes(windows ?? []),
+    today: istanbulDate(), availableMinutes: Math.min(remainingTodayMinutes(windows ?? []), adaptive.dayCapacities[istanbulDate()] ?? 0),
   });
   const task = (tasks ?? []).find((candidate) => candidate.id === recommendation.recommendedTask.id);
   return { task, reason: recommendation.reason, remainingMinutes: recommendation.remainingMinutes };
@@ -292,8 +307,21 @@ Deno.serve(async (request) => {
       return json((await planWithTasks(client, plan)).tasks);
     }
     if (request.method === "GET" && route === "/tasks/next") {
-      return json(await nextTask(client, profile.id, weekStart));
+      return json(await nextTask(client, profile, userId, weekStart));
     }
+    if(request.method==="POST"&&route==="/schedule-exceptions"){
+      const body=await request.json();const {data,error}=await client.from("schedule_exceptions").insert({user_id:userId,exam_profile_id:profile.id,exception_date:body.date,exception_type:body.type,start_time:body.startTime??null,end_time:body.endTime??null,minutes_delta:body.minutesDelta??null,note:body.note??null}).select("*").single();if(error)throw error;return json(data,201);
+    }
+    if(request.method==="POST"&&route==="/plans/current/recalculate"){
+      const plan=await currentPlan(client,profile.id,weekStart);if(!plan)throw new Error("WEEKLY_PLAN_NOT_FOUND");const body=await request.json().catch(()=>({}));return json(await recalculateCurrentPlan(client,userId,profile,plan,body.trigger??"manual_request"));
+    }
+    if(request.method==="GET"&&route==="/plans/minimum-day"){
+      const plan=await currentPlan(client,profile.id,weekStart);if(!plan)throw new Error("WEEKLY_PLAN_NOT_FOUND");const url=new URL(request.url);const date=url.searchParams.get("date")??today;const raw=url.searchParams.get("availableMinutes");return json(await minimumDayPlan(client,userId,profile,plan,date,raw===null?undefined:Number(raw)));
+    }
+    if(request.method==="GET"&&route==="/plans/risks"){const {data,error}=await client.from("plan_risks").select("*").eq("exam_profile_id",profile.id).eq("status","open").order("created_at",{ascending:false});if(error)throw error;return json(data??[]);}
+    if(request.method==="GET"&&route==="/backlog/current"){const plan=await currentPlan(client,profile.id,weekStart);if(!plan)return json(null);const {data,error}=await client.from("backlog_states").select("*").eq("weekly_plan_id",plan.id).maybeSingle();if(error)throw error;return json(data);}
+    if(request.method==="GET"&&route==="/plan-revisions/latest"){const {data,error}=await client.from("plan_revisions").select("*").eq("exam_profile_id",profile.id).order("created_at",{ascending:false}).limit(1).maybeSingle();if(error)throw error;return json(data);}
+    if(request.method==="GET"&&route==="/progress/projection")return json(await syllabusProjection(client,userId,profile));
     if (request.method === "GET" && route === "/study-sessions/active") {
       const { data, error } = await client.from("study_sessions").select("*, tasks(title)").eq("status","active").maybeSingle();
       if (error) throw error; return json({ session: data });
@@ -317,10 +345,51 @@ Deno.serve(async (request) => {
     }
     const sessionMatch=route.match(/^\/study-sessions\/([0-9a-f-]+)\/(finish|cancel)$/);
     if(request.method==="POST"&&sessionMatch){const rpc=sessionMatch[2]==="finish"?"finish_study_session":"cancel_study_session";const {data,error}=await client.rpc(rpc,{p_session_id:sessionMatch[1]});if(error)throw error;return json(data);}
-    if(request.method==="POST"&&route==="/test-results"){const body=await request.json();const {data,error}=await client.rpc("record_test_result",{p_payload:{...body,examProfileId:profile.id,entrySource:body.entrySource??"web"}});if(error)throw error;return json(data,201);}
+    if(request.method==="POST"&&route==="/test-results"){
+      const body=await request.json();
+      const {data,error}=await client.rpc("record_test_result",{p_payload:{...body,examProfileId:profile.id,entrySource:body.entrySource??"web"}});
+      if(error)throw error;
+      let mastery=null; let masteryPending=false;
+      if(data.curriculum_node_id){
+        try { mastery=await recalculateTopicMastery(client,{userId,examProfileId:profile.id,curriculumNodeId:data.curriculum_node_id,sourceTestResultId:data.id,triggerType:body.revisionScheduleId?"revision_result":"test_result"}); }
+        catch(caught){ masteryPending=true; console.error("MASTERY_RECALCULATION_FAILED",caughtMessage(caught)); }
+      }
+      return json({...data,mastery,masteryPending},201);
+    }
     const resultMatch=route.match(/^\/test-results\/([0-9a-f-]+)(?:\/(review))?$/);
-    if(request.method==="PATCH"&&resultMatch&&!resultMatch[2]){const body=await request.json();const {data,error}=await client.rpc("update_test_result",{p_result_id:resultMatch[1],p_correct:body.correct,p_wrong:body.wrong,p_blank:body.blank,p_total:body.total,p_duration:body.durationMinutes??null});if(error)throw error;return json(data);}
+    if(request.method==="PATCH"&&resultMatch&&!resultMatch[2]){
+      const body=await request.json();
+      const {data,error}=await client.rpc("update_test_result",{p_result_id:resultMatch[1],p_correct:body.correct,p_wrong:body.wrong,p_blank:body.blank,p_total:body.total,p_duration:body.durationMinutes??null});
+      if(error)throw error;
+      let mastery=null; let masteryPending=false;
+      if(data.curriculum_node_id){
+        try { mastery=await recalculateTopicMastery(client,{userId,examProfileId:profile.id,curriculumNodeId:data.curriculum_node_id,sourceTestResultId:data.id,triggerType:"manual_recalculation"}); }
+        catch(caught){ masteryPending=true; console.error("MASTERY_RECALCULATION_FAILED",caughtMessage(caught)); }
+      }
+      return json({...data,mastery,masteryPending});
+    }
     if(request.method==="POST"&&resultMatch?.[2]==="review"){const {data,error}=await client.rpc("review_test_result",{p_result_id:resultMatch[1]});if(error)throw error;return json(data);}
+    const topicPerformanceMatch=route.match(/^\/topics\/([0-9a-f-]+)\/performance$/);
+    if(request.method==="GET"&&topicPerformanceMatch){
+      const topicId=topicPerformanceMatch[1];
+      const [progress,assessments,revisions,results]=await Promise.all([
+        client.from("topic_progress").select("*, curriculum_nodes(name, subjects(name))").eq("exam_profile_id",profile.id).eq("curriculum_node_id",topicId).maybeSingle(),
+        client.from("topic_assessments").select("*").eq("exam_profile_id",profile.id).eq("curriculum_node_id",topicId).order("created_at",{ascending:false}).limit(10),
+        client.from("revision_schedules").select("*").eq("exam_profile_id",profile.id).eq("curriculum_node_id",topicId).order("created_at",{ascending:false}).limit(10),
+        client.from("test_results").select("id,correct_count,wrong_count,blank_count,total_questions,accuracy,completed_at,review_status").eq("exam_profile_id",profile.id).eq("curriculum_node_id",topicId).order("completed_at",{ascending:false}).limit(3),
+      ]);
+      for(const result of [progress,assessments,revisions,results]) if(result.error)throw result.error;
+      if(!progress.data)throw new Error("TOPIC_PROGRESS_NOT_FOUND");
+      return json({topicProgress:progress.data,assessments:assessments.data??[],revisions:(revisions.data??[]).map((row)=>revisionWithUrgency(row,today)),recentResults:results.data??[]});
+    }
+    if(request.method==="GET"&&(route==="/revisions"||route==="/revisions/due")){
+      let query=client.from("revision_schedules").select("*, curriculum_nodes(name, subjects(name))").eq("exam_profile_id",profile.id).in("status",["scheduled","due"]).order("scheduled_for",{ascending:true});
+      if(route==="/revisions/due")query=query.lte("scheduled_for",today);
+      const {data,error}=await query; if(error)throw error;
+      return json((data??[]).map((row)=>revisionWithUrgency(row,today)));
+    }
+    const revisionCompleteMatch=route.match(/^\/revisions\/([0-9a-f-]+)\/complete$/);
+    if(request.method==="POST"&&revisionCompleteMatch){const {data,error}=await client.rpc("complete_revision",{p_revision_id:revisionCompleteMatch[1]});if(error)throw error;return json(revisionWithUrgency(data,today));}
     if(request.method==="GET"&&route==="/messaging/telegram/status"){const {data,error}=await client.from("messaging_identities").select("external_user_id,external_chat_id,username,linked_at").eq("provider","telegram").maybeSingle();if(error)throw error;return json({linked:Boolean(data),identity:data});}
     if(request.method==="POST"&&route==="/messaging/telegram/link-token"){const raw=crypto.randomUUID().replaceAll("-","");const hash=await sha256(raw);const {error}=await client.from("messaging_link_tokens").insert({user_id:userId,provider:"telegram",token_hash:hash,expires_at:new Date(Date.now()+15*60_000).toISOString()});if(error)throw error;const username=Deno.env.get("TELEGRAM_BOT_USERNAME")??"BOT_USERNAME";return json({token:raw,expiresInSeconds:900,url:`https://t.me/${username}?start=${raw}`,configured:username!=="BOT_USERNAME"},201);}
     const match = route.match(/^\/tasks\/([0-9a-f-]+)\/(start|progress|complete-unit|complete)$/);

@@ -134,6 +134,10 @@ export interface RecommendationTask {
   completedMinutes: number;
   pendingUnitMinutes?: number | null;
   createdAt: string;
+  isRevision?: boolean;
+  revisionUrgency?: "upcoming" | "due" | "overdue" | "critical_overdue" | null;
+  masteryLevel?: "unknown" | "strong" | "sufficient" | "fragile" | "weak" | "critical" | null;
+  topicState?: TopicProgressState | null;
 }
 
 export type RecommendationReason =
@@ -145,7 +149,10 @@ export type RecommendationReason =
   | "today_important"
   | "fits_available_window"
   | "highest_priority"
-  | "optional";
+  | "optional"
+  | "critical_revision"
+  | "weak_topic"
+  | "due_revision";
 
 export interface NextTaskRecommendation {
   recommendedTask: RecommendationTask;

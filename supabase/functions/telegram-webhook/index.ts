@@ -1,5 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { getNextBestTask } from "../_shared/planning.bundle.js";
+import { recalculateTopicMastery, revisionWithUrgency } from "../_shared/mastery.ts";
+import { loadAdaptiveBase, minimumDayPlan, recalculateCurrentPlan } from "../_shared/adaptive.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -199,6 +201,62 @@ Deno.serve(async (req) => {
     const day = today();
     const week = monday(day);
 
+    if (text === "/minimum" || callback === "minimum") {
+      const profile = await admin.from("exam_profiles").select("*").eq("user_id", userId).eq("status", "active").maybeSingle();
+      const plan = profile.data ? await admin.from("weekly_plans").select("*").eq("user_id",userId).eq("exam_profile_id",profile.data.id).eq("week_start_date",week).eq("status","active").maybeSingle() : {data:null};
+      if (!profile.data || !plan.data) return await finalize({ok:true,outbound:await sendMessage(chatId,"Aktif haftalık plan bulunamadı.")});
+      const minimum = await minimumDayPlan(admin,userId,profile.data,plan.data,day);
+      const lines = minimum.tasks.map((task:any,index:number)=>`${index+1}. ${task.title} — ${task.minutes} dk`).join("\n");
+      return await finalize({ok:true,minimum,outbound:await sendMessage(chatId,minimum.tasks.length?`Minimum planın (${minimum.totalMinutes} dk)\n\n${lines}`:"Bugünkü sürene uyan anlamlı minimum görev yok.")});
+    }
+
+    if (text === "/ozel" || callback === "special") {
+      await setState(admin,userId,chatId,"special_mode",{});
+      return await finalize({ok:true,outbound:await sendMessage(chatId,"Bugünkü planını etkileyen durum?",[[{text:"Bugün daha az vaktim var",callback_data:"special_less"}],[{text:"Ekstra vaktim var",callback_data:"special_extra"}],[{text:"İptal",callback_data:"form_cancel"}]])});
+    }
+    if (callback === "special_less" || callback === "special_extra") {
+      const profile = await admin.from("exam_profiles").select("*").eq("user_id",userId).eq("status","active").maybeSingle();
+      const plan = profile.data ? await admin.from("weekly_plans").select("*").eq("user_id",userId).eq("exam_profile_id",profile.data.id).eq("week_start_date",week).eq("status","active").maybeSingle() : {data:null};
+      if(!profile.data||!plan.data)return await finalize({ok:true,outbound:await sendMessage(chatId,"Aktif haftalık plan bulunamadı.")});
+      const base=await loadAdaptiveBase(admin,userId,profile.data,plan.data);
+      await setState(admin,userId,chatId,callback==="special_less"?"special_less_minutes":"special_extra_minutes",{profileId:profile.data.id,planId:plan.data.id,normalMinutes:base.dayCapacities[day]??0});
+      return await finalize({ok:true,outbound:await sendMessage(chatId,callback==="special_less"?"Bugün toplam kaç dakika çalışabilirsin?":"Bugün kaç dakika fazladan çalışabilirsin?")});
+    }
+
+    if (text === "/tekrar") {
+      const revisions = await admin.from("revision_schedules")
+        .select("id,scheduled_for,revision_type,estimated_minutes,curriculum_nodes(name,subjects(name))")
+        .eq("user_id", userId)
+        .in("status", ["scheduled", "due"])
+        .lte("scheduled_for", day)
+        .order("scheduled_for", { ascending: true });
+      if (revisions.error) throw revisions.error;
+      if (!revisions.data?.length) {
+        return await finalize({ ok: true, outbound: await sendMessage(chatId, "Bugün bekleyen tekrarın yok.") });
+      }
+      const typeNames: Record<string, string> = {
+        short_review: "Kısa tekrar", wrong_review: "Yanlış inceleme", topic_test: "Konu testi", intensive_review: "Yoğun tekrar",
+      };
+      const rows = revisions.data.map((row: any, index: number) => {
+        const urgency = revisionWithUrgency(row, day).urgency;
+        const subject = row.curriculum_nodes?.subjects?.name ?? "Ders";
+        const topic = row.curriculum_nodes?.name ?? "Konu";
+        const timing = urgency === "due" ? "Bugün" : "Gecikmiş";
+        return `${index + 1}. ${subject} — ${topic}\n${typeNames[row.revision_type]} — ${row.estimated_minutes} dk — ${timing}`;
+      });
+      const buttons = revisions.data.map((row: any) => [{ text: "Tekrarı Tamamla", callback_data: `revision_complete:${row.id}` }]);
+      return await finalize({ ok: true, revisions: revisions.data, outbound: await sendMessage(chatId, `Bugünkü tekrarların\n\n${rows.join("\n\n")}`, buttons) });
+    }
+
+    if (callback.startsWith("revision_complete:")) {
+      const completed = await admin.rpc("telegram_complete_revision", {
+        p_user_id: userId,
+        p_revision_id: callback.slice(18),
+      });
+      if (completed.error) throw completed.error;
+      return await finalize({ ok: true, revision: completed.data, outbound: await sendMessage(chatId, "Tekrar tamamlandı.") });
+    }
+
     if (text === "/bugun") {
       const tasks = await admin.from("tasks")
         .select("id,title,estimated_minutes")
@@ -214,24 +272,27 @@ Deno.serve(async (req) => {
         outbound: await sendMessage(
           chatId,
           `Bugünkü planın\n\n${tasks.data?.length ?? 0} görev\nTahmini toplam: ${Math.floor(total / 60)}s ${total % 60}dk\n\n${lines}`,
-          [[{ text: "Şimdi Ne Yapmalıyım?", callback_data: "now" }], [{ text: "Çalışma Ekle", callback_data: "manual_begin" }]],
+          [[{ text: "Şimdi Ne Yapmalıyım?", callback_data: "now" }], [{ text: "Minimum Plan", callback_data: "minimum" }], [{ text: "Özel Durum", callback_data: "special" },{ text: "Çalışma Ekle", callback_data: "manual_begin" }]],
         ),
       });
     }
 
     if (text === "/simdi" || callback === "now") {
       const plan = await admin.from("weekly_plans")
-        .select("id")
+        .select("*")
         .eq("user_id", userId)
         .eq("week_start_date", week)
         .eq("status", "active")
         .maybeSingle();
       if (!plan.data) return await finalize({ ok: true, outbound: await sendMessage(chatId, "Şu anda aktif haftalık görev bulunamadı.") });
       const tasks = await admin.from("tasks")
-        .select("id,title,status,importance,priority_score,planned_date,estimated_minutes,created_at,task_progress(completed_minutes)")
+        .select("id,title,status,importance,priority_score,planned_date,estimated_minutes,created_at,curriculum_node_id,revision_schedule_id,task_progress(completed_minutes)")
         .eq("user_id", userId)
         .eq("weekly_plan_id", plan.data.id);
       if (tasks.error) throw tasks.error;
+      const profile = await admin.from("exam_profiles").select("*").eq("user_id",userId).eq("status","active").maybeSingle();
+      const adaptive = profile.data ? await loadAdaptiveBase(admin,userId,profile.data,plan.data) : null;
+      const adaptiveTasks = new Map((adaptive?.adaptiveTasks??[]).map((item:any)=>[item.id,item]));
       const mapped = (tasks.data ?? []).map((task: any) => ({
         id: task.id,
         status: task.status,
@@ -241,9 +302,13 @@ Deno.serve(async (req) => {
         estimatedMinutes: task.estimated_minutes,
         completedMinutes: task.task_progress?.[0]?.completed_minutes ?? 0,
         createdAt: task.created_at,
+        isRevision:Boolean(task.revision_schedule_id),
+        revisionUrgency:adaptive?.allAdaptiveRevisions.find((row:any)=>row.id===task.revision_schedule_id)?.urgency??null,
+        masteryLevel:(adaptiveTasks.get(task.id) as any)?.masteryLevel??null,
+        topicState:(adaptiveTasks.get(task.id) as any)?.topicState??null,
       }));
       try {
-        const recommendation = getNextBestTask(mapped, { today: day });
+        const recommendation = getNextBestTask(mapped, { today: day, availableMinutes:adaptive?.dayCapacities[day]??null });
         const task = (tasks.data ?? []).find((candidate) => candidate.id === recommendation.recommendedTask.id)!;
         return await finalize({
           ok: true,
@@ -324,6 +389,23 @@ Deno.serve(async (req) => {
         p_payload: { ...payload, idempotencyKey: `telegram:${eventId}` },
       });
       if (result.error) throw result.error;
+      let mastery = null;
+      let masteryPending = false;
+      if (result.data.curriculum_node_id) {
+        try {
+          mastery = await recalculateTopicMastery(admin, {
+            userId,
+            examProfileId: result.data.exam_profile_id,
+            curriculumNodeId: result.data.curriculum_node_id,
+            sourceTestResultId: result.data.id,
+            triggerType: "test_result",
+            serviceRole: true,
+          });
+        } catch (caught) {
+          masteryPending = true;
+          console.error("MASTERY_RECALCULATION_FAILED", caught instanceof Error ? caught.message : String(caught));
+        }
+      }
       await clearState(admin, userId, chatId);
       const buttons = result.data.review_status === "pending"
         ? [[{ text: "İnceledim", callback_data: `result_review:${result.data.id}` }, { text: "Sonra", callback_data: "result_later" }]]
@@ -331,6 +413,8 @@ Deno.serve(async (req) => {
       return await finalize({
         ok: true,
         result: result.data,
+        mastery,
+        masteryPending,
         outbound: await sendMessage(
           chatId,
           `Sonuç kaydedildi: ${result.data.correct_count}D ${result.data.wrong_count}Y ${result.data.blank_count}B\nBaşarı: %${(Number(result.data.accuracy) * 100).toFixed(1)}${buttons.length ? "\n\nYanlışlarının çözümlerini inceledin mi?" : ""}`,
@@ -415,11 +499,18 @@ Deno.serve(async (req) => {
         await clearState(admin, userId, chatId);
         return await finalize({ ok: true, session: session.data, outbound: await sendMessage(chatId, `${value} dakikalık çalışma kaydedildi.`) });
       }
+      if (state.state === "special_less_minutes" || state.state === "special_extra_minutes") {
+        const normal=Number(state.payload.normalMinutes??0);const less=state.state==="special_less_minutes";
+        const inserted=await admin.from("schedule_exceptions").insert({user_id:userId,exam_profile_id:state.payload.profileId,exception_date:day,exception_type:less?"custom":"extra_available",minutes_delta:less?value-normal:value,note:"Telegram özel durum"});if(inserted.error)throw inserted.error;
+        const profile=await admin.from("exam_profiles").select("*").eq("id",state.payload.profileId).eq("user_id",userId).single();const plan=await admin.from("weekly_plans").select("*").eq("id",state.payload.planId).eq("user_id",userId).single();
+        const replanned=await recalculateCurrentPlan(admin,userId,profile.data,plan.data,"capacity_change",true);await clearState(admin,userId,chatId);
+        const updated=replanned.dayCapacities[day]??0;return await finalize({ok:true,replan:replanned,outbound:await sendMessage(chatId,`Bugünkü kapasite ${normal} dk → ${updated} dk olarak güncellendi.\n${replanned.decision.explanation}`)});
+      }
     }
 
     return await finalize({
       ok: true,
-      outbound: await sendMessage(chatId, "Desteklenen komutlar: /bugun, /simdi, /calisma_ekle"),
+      outbound: await sendMessage(chatId, "Desteklenen komutlar: /bugun, /simdi, /tekrar, /minimum, /ozel, /calisma_ekle"),
     });
   } catch (error) {
     if (lifecycleAdmin && lifecycleEventId) {

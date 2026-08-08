@@ -9,20 +9,26 @@ export function remainingTaskMinutes(task: RecommendationTask): number {
 function tier(task: RecommendationTask, today: string): number {
   if (task.status === "in_progress") return 1;
   if (task.status === "partially_completed") return 2;
+  if (task.isRevision && task.revisionUrgency === "critical_overdue") return 3;
   const overdue = Boolean(task.plannedDate && task.plannedDate < today);
   const dueToday = task.plannedDate === today;
-  if (overdue && task.importance === "core") return 3;
-  if (dueToday && task.importance === "core") return 4;
-  if (overdue && task.importance === "important") return 5;
-  if (dueToday && task.importance === "important") return 6;
-  if (task.importance !== "optional") return 7;
-  return 8;
+  if (overdue && task.importance === "core") return 4;
+  if (task.topicState === "remediation" || task.masteryLevel === "critical" || task.masteryLevel === "weak") return 5;
+  if (task.isRevision && (task.revisionUrgency === "due" || task.revisionUrgency === "overdue")) return 6;
+  if (dueToday && task.importance === "core") return 7;
+  if (overdue && task.importance === "important") return 8;
+  if (dueToday && task.importance === "important") return 9;
+  if (task.importance !== "optional") return 10;
+  return 11;
 }
 
 function reasonFor(task: RecommendationTask, today: string, fits: boolean): RecommendationReason {
   if (task.status === "in_progress") return "continue_in_progress";
   if (task.status === "partially_completed") return "continue_partial";
+  if (task.isRevision && task.revisionUrgency === "critical_overdue") return "critical_revision";
   if (task.plannedDate && task.plannedDate < today && task.importance === "core") return "overdue_core";
+  if (task.topicState === "remediation" || task.masteryLevel === "critical" || task.masteryLevel === "weak") return "weak_topic";
+  if (task.isRevision && (task.revisionUrgency === "due" || task.revisionUrgency === "overdue")) return "due_revision";
   if (task.plannedDate === today && task.importance === "core") return "today_core";
   if (task.plannedDate && task.plannedDate < today && task.importance === "important") return "overdue_important";
   if (task.plannedDate === today && task.importance === "important") return "today_important";

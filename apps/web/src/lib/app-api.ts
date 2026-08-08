@@ -47,5 +47,9 @@ export const FRIENDLY_API_ERRORS: Readonly<Record<string, string>> = {
   RESOURCE_UNIT_NOT_LINKED_TO_TASK: "Seçilen test ünitesi bu göreve bağlı değil.",
   RESOURCE_UNIT_NOT_FOUND: "Test ünitesi bulunamadı.",
   TEST_RESULT_NOT_FOUND: "Test sonucu bulunamadı.",
+  REVISION_NOT_FOUND: "Tekrar bulunamadı veya bu tekrara erişiminiz yok.",
+  REVISION_NOT_ACTIVE: "Bu tekrar artık aktif değil.",
+  WEEKLY_PLAN_NOT_FOUND: "Bu hafta için aktif plan bulunamadı.",
+  TASK_NOT_REPLANNABLE: "Görev mevcut durumunda yeniden planlanamaz.",
   UNAUTHORIZED: "Oturumunuz geçersiz. Yeniden giriş yapın.",
 };

@@ -5,6 +5,9 @@ import { useAuth } from "../auth/AuthContext";
 import { supabase } from "../lib/supabase";
 import { PlanningPanel } from "../components/PlanningPanel";
 import { ExecutionPanel } from "../components/ExecutionPanel";
+import { RevisionPanel } from "../components/RevisionPanel";
+import { TopicPerformancePanel } from "../components/TopicPerformancePanel";
+import { AdaptivePlanningPanel } from "../components/AdaptivePlanningPanel";
 
 interface DashboardData {
   examName: string;
@@ -95,6 +98,9 @@ export function HomePage() {
       {hasActiveProfile === false && <section><h2>Çalışma profilinizi oluşturun</h2><p>Henüz aktif bir KPSS hazırlık profiliniz yok.</p><Link className="button-link" to="/onboarding">Onboarding’i Başlat</Link></section>}
       {hasActiveProfile && dashboard && <>
         <ExecutionPanel />
+        <AdaptivePlanningPanel />
+        <RevisionPanel />
+        <TopicPerformancePanel />
         <PlanningPanel />
         <div className="toolbar"><h2>Çalışma Profili</h2><Link to="/onboarding">Düzenle</Link></div>
         <dl className="stats"><div><dt>Sınav</dt><dd>{dashboard.examName}</dd></div><div><dt>Seçilen ders</dt><dd>{dashboard.subjectCount}</dd></div><div><dt>Haftalık müsait süre</dt><dd>{Math.floor(dashboard.weeklyMinutes / 60)}h {dashboard.weeklyMinutes % 60}m</dd></div></dl>

@@ -14,6 +14,8 @@
     "test:integration": "node scripts/run-integration-tests.mjs",
     "test:edge": "node scripts/run-edge-smoke.mjs",
     "test:phase04-http": "node scripts/run-phase04-http-smoke.mjs",
+    "test:phase05-http": "node scripts/run-phase05-http-smoke.mjs",
+    "test:phase06-http": "node scripts/run-phase06-http-smoke.mjs",
     "test:telegram": "node scripts/run-telegram-smoke.mjs",
     "edge:bundle": "esbuild packages/domain/src/planning/index.ts --bundle --format=esm --platform=neutral --target=es2022 --outfile=supabase/functions/_shared/planning.bundle.js",
     "supabase:init": "node scripts/run-supabase.mjs init",
