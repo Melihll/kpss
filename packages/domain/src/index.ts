@@ -7,3 +7,4 @@ export * from "./execution";
 export * from "./time-boundaries";
 export * from "./mastery/index";
 export * from "./adaptive/index";
+export * from "./pilot/index";

@@ -62,6 +62,10 @@ TELEGRAM_WEBHOOK_SECRET=local-test-secret TELEGRAM_TRANSPORT_MODE=mock TELEGRAM_
 pnpm test:telegram
 ```
 
+## V1 Pilot Local Run
+
+Normal local pilot için `pnpm install`, `pnpm supabase:start` ve `pnpm dev` yeterlidir. Otomasyon/Telegram akışını yerelde çalıştırmak için Edge-only `TELEGRAM_*` ve `SCHEDULER_WORKER_SECRET` değerlerini ayarlayıp `pnpm supabase:functions:serve` komutunu ayrı terminalde çalıştırın. Phase 07 ayrıntıları [V1 pilot closure dokümanında](docs/phase-07-v1-pilot-closure.md) bulunur.
+
 PowerShell'de environment değerlerini `$env:TELEGRAM_WEBHOOK_SECRET='local-test-secret'` biçiminde ayrı ayrı ayarlayın.
 
 ## Gerçek Telegram bot kurulumu

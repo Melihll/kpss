@@ -11,6 +11,7 @@ import {
 } from "../_shared/planning.bundle.js";
 import { recalculateTopicMastery, revisionWithUrgency } from "../_shared/mastery.ts";
 import { loadAdaptiveBase, minimumDayPlan, recalculateCurrentPlan, syllabusProjection } from "../_shared/adaptive.ts";
+import { generateWeeklyReport, pilotMetrics, recordRecommendationEvent } from "../_shared/pilot.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,6 +55,9 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   REVISION_NOT_ACTIVE: 409,
   WEEKLY_PLAN_NOT_FOUND: 404,
   TASK_NOT_REPLANNABLE: 409,
+  DATA_GAP_NOT_FOUND: 404,
+  INVALID_DATA_GAP_RESULT: 400,
+  INVALID_WEEK_START: 400,
 };
 
 function caughtMessage(caught: unknown) {
@@ -307,7 +311,9 @@ Deno.serve(async (request) => {
       return json((await planWithTasks(client, plan)).tasks);
     }
     if (request.method === "GET" && route === "/tasks/next") {
-      return json(await nextTask(client, profile, userId, weekStart));
+      const recommendation=await nextTask(client, profile, userId, weekStart);
+      await recordRecommendationEvent(client,{userId,examProfileId:profile.id,taskId:recommendation.task.id,eventType:"next_best_task",channel:"web",reason:recommendation.reason});
+      return json(recommendation);
     }
     if(request.method==="POST"&&route==="/schedule-exceptions"){
       const body=await request.json();const {data,error}=await client.from("schedule_exceptions").insert({user_id:userId,exam_profile_id:profile.id,exception_date:body.date,exception_type:body.type,start_time:body.startTime??null,end_time:body.endTime??null,minutes_delta:body.minutesDelta??null,note:body.note??null}).select("*").single();if(error)throw error;return json(data,201);
@@ -316,12 +322,27 @@ Deno.serve(async (request) => {
       const plan=await currentPlan(client,profile.id,weekStart);if(!plan)throw new Error("WEEKLY_PLAN_NOT_FOUND");const body=await request.json().catch(()=>({}));return json(await recalculateCurrentPlan(client,userId,profile,plan,body.trigger??"manual_request"));
     }
     if(request.method==="GET"&&route==="/plans/minimum-day"){
-      const plan=await currentPlan(client,profile.id,weekStart);if(!plan)throw new Error("WEEKLY_PLAN_NOT_FOUND");const url=new URL(request.url);const date=url.searchParams.get("date")??today;const raw=url.searchParams.get("availableMinutes");return json(await minimumDayPlan(client,userId,profile,plan,date,raw===null?undefined:Number(raw)));
+      const plan=await currentPlan(client,profile.id,weekStart);if(!plan)throw new Error("WEEKLY_PLAN_NOT_FOUND");const url=new URL(request.url);const date=url.searchParams.get("date")??today;const raw=url.searchParams.get("availableMinutes");const minimum=await minimumDayPlan(client,userId,profile,plan,date,raw===null?undefined:Number(raw));await recordRecommendationEvent(client,{userId,examProfileId:profile.id,eventType:"minimum_plan",channel:"web",reason:"minimum_day_requested"});return json(minimum);
     }
     if(request.method==="GET"&&route==="/plans/risks"){const {data,error}=await client.from("plan_risks").select("*").eq("exam_profile_id",profile.id).eq("status","open").order("created_at",{ascending:false});if(error)throw error;return json(data??[]);}
     if(request.method==="GET"&&route==="/backlog/current"){const plan=await currentPlan(client,profile.id,weekStart);if(!plan)return json(null);const {data,error}=await client.from("backlog_states").select("*").eq("weekly_plan_id",plan.id).maybeSingle();if(error)throw error;return json(data);}
     if(request.method==="GET"&&route==="/plan-revisions/latest"){const {data,error}=await client.from("plan_revisions").select("*").eq("exam_profile_id",profile.id).order("created_at",{ascending:false}).limit(1).maybeSingle();if(error)throw error;return json(data);}
     if(request.method==="GET"&&route==="/progress/projection")return json(await syllabusProjection(client,userId,profile));
+    if(request.method==="GET"&&route==="/reports/weekly/current"){
+      const {data,error}=await client.from("weekly_reports").select("*").eq("exam_profile_id",profile.id).eq("week_start_date",weekStart).maybeSingle();if(error)throw error;return json(data);
+    }
+    if(request.method==="GET"&&route==="/reports/weekly/latest"){
+      const {data,error}=await client.from("weekly_reports").select("*").eq("exam_profile_id",profile.id).order("week_start_date",{ascending:false}).limit(1).maybeSingle();if(error)throw error;return json(data);
+    }
+    if(request.method==="POST"&&route==="/reports/weekly/generate"){
+      const body=await request.json().catch(()=>({}));const target=body.weekStartDate??weekStart;if(mondayOf(target)!==target)throw new Error("INVALID_WEEK_START");return json(await generateWeeklyReport(client,userId,profile,target),201);
+    }
+    if(request.method==="GET"&&route==="/pilot/metrics")return json(await pilotMetrics(client,userId,profile.id));
+    if(request.method==="GET"&&route==="/data-gaps/open"){
+      const {data,error}=await client.from("data_gap_events").select("*").eq("exam_profile_id",profile.id).eq("status","open").order("gap_date",{ascending:false});if(error)throw error;return json(data??[]);
+    }
+    const gapMatch=route.match(/^\/data-gaps\/([0-9a-f-]+)\/confirm-no-study$/);
+    if(request.method==="POST"&&gapMatch){const {data,error}=await client.rpc("resolve_data_gap_event",{p_event_id:gapMatch[1],p_result:"confirmed_no_study"});if(error)throw error;return json(data);}
     if (request.method === "GET" && route === "/study-sessions/active") {
       const { data, error } = await client.from("study_sessions").select("*, tasks(title)").eq("status","active").maybeSingle();
       if (error) throw error; return json({ session: data });

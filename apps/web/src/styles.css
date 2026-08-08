@@ -40,6 +40,11 @@ dd { margin: 0.25rem 0 0; }
 .execution-panel { border-bottom: 2px solid #d9dee8; padding-bottom: 2rem; margin-bottom: 2rem; }
 .revision-panel, .mastery-panel { border-bottom: 2px solid #d9dee8; padding-bottom: 2rem; margin-bottom: 2rem; }
 .adaptive-panel { border-bottom: 2px solid #d9dee8; padding-bottom: 2rem; margin-bottom: 2rem; }
+.weekly-report-panel { border-bottom: 2px solid #d9dee8; padding-bottom: 2rem; margin-bottom: 2rem; }
+.report-status { padding: .35rem .6rem; border-radius: 999px; }
+.report-status.good { color: #166534; background: #dcfce7; }
+.report-status.attention { color: #92400e; background: #fef3c7; }
+.report-status.risk { color: #991b1b; background: #fee2e2; }
 .adaptive-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:1rem;margin:1rem 0; }
 .adaptive-grid article,.special-form { padding:1rem;border:1px solid #d9dee8;border-radius:.5rem; }
 .special-form { grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));align-items:end;margin:1rem 0; }

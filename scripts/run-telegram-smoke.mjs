@@ -86,6 +86,16 @@ const telegram = async (update, { failStage, expectedStatus = 200 } = {}) => {
   if (response.status !== expectedStatus) throw new Error(`Expected ${expectedStatus}, got ${response.status}: ${JSON.stringify(payload)}`);
   return payload;
 };
+const scheduler = async (reference) => {
+  const response = await fetch(`${url}/functions/v1/scheduler-worker`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Scheduler-Secret": "local-scheduler-secret" },
+    body: JSON.stringify({ reference, limit: 100 }),
+  });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(`Scheduler ${response.status}: ${JSON.stringify(payload)}`);
+  return payload;
+};
 const telegramNumericId = 1_000_000_000 + Number.parseInt(unique.slice(0, 7), 16);
 const from = { id: telegramNumericId, username: "pilot" };
 const chat = { id: telegramNumericId };
@@ -181,6 +191,39 @@ await telegram(callback(subjectCallback));
 const retroactive = await telegram(message("35"));
 if (retroactive.session.duration_minutes !== 35 || retroactive.session.entry_source !== "telegram") throw new Error("manual log failed");
 
+const calendarToday = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
+await scheduler(`${calendarToday}T12:00:00+03:00`);
+const openGap = await api.from("data_gap_events").select("*").eq("status", "open").order("gap_date", { ascending: false }).limit(1).single();
+if (openGap.error || !openGap.data.notified_at) throw openGap.error ?? new Error("data gap notification missing");
+const noStudy = await telegram(callback(`gap_no_study:${openGap.data.id}`));
+if (noStudy.dataGap?.resolution_result !== "confirmed_no_study") throw new Error("data gap no-study callback failed");
+
+const referenceDate = new Date(`${calendarToday}T12:00:00Z`);
+referenceDate.setUTCDate(referenceDate.getUTCDate() - 1);
+const previousDate = referenceDate.toISOString().slice(0, 10);
+await scheduler(`${previousDate}T12:00:00+03:00`);
+const addGap = await api.from("data_gap_events").select("*").eq("status", "open").order("gap_date", { ascending: false }).limit(1).single();
+if (addGap.error) throw addGap.error;
+const addBegin = await telegram(callback(`gap_add_study:${addGap.data.id}`));
+const gapSubjectData = addBegin.outbound.reply_markup.inline_keyboard[0][0].callback_data;
+await telegram(callback(gapSubjectData));
+const gapStudy = await telegram(message("25"));
+if (gapStudy.session.duration_minutes !== 25 || !gapStudy.session.ended_at.startsWith(addGap.data.gap_date)) throw new Error("data gap retroactive date flow failed");
+const resolvedGap = await api.from("data_gap_events").select("status,resolution_result").eq("id", addGap.data.id).single();
+if (resolvedGap.data?.status !== "resolved" || resolvedGap.data.resolution_result !== "study_added") throw new Error("data gap study resolution missing");
+
+const sunday = new Date(`${calendarToday}T12:00:00Z`);
+const isoDay = sunday.getUTCDay() || 7;
+sunday.setUTCDate(sunday.getUTCDate() - isoDay - 6);
+const previousSunday = sunday.toISOString().slice(0, 10);
+await scheduler(`${previousSunday}T20:00:00+03:00`);
+const weeklyAction = await api.from("scheduled_actions").select("result_payload,dedupe_key").eq("action_type", "weekly_report").eq("status", "completed").limit(1).single();
+if (weeklyAction.error || weeklyAction.data.result_payload?.notification !== "sent" || !weeklyAction.data.result_payload?.outbound?.text?.includes("Haftalık özet")) throw weeklyAction.error ?? new Error("weekly report Telegram send missing");
+const actionCountBefore = (await api.from("scheduled_actions").select("id", { count: "exact", head: true })).count;
+await scheduler(`${previousSunday}T20:00:00+03:00`);
+const actionCountAfter = (await api.from("scheduled_actions").select("id", { count: "exact", head: true })).count;
+if (actionCountAfter !== actionCountBefore) throw new Error("scheduler retry created duplicate actions");
+
 console.log(JSON.stringify({
   TELEGRAM_SMOKE: "PASS",
   planId: built.plan.id,
@@ -198,6 +241,10 @@ console.log(JSON.stringify({
   minimumPlanMinutes: minimumPlan.minimum.totalMinutes,
   adaptiveRecommendation: adaptiveNow.recommendation.reason,
   manualStudyMinutes: retroactive.session.duration_minutes,
+  dataGapNoStudyResolved: true,
+  dataGapStudyAdded: true,
+  weeklyReportSent: true,
+  schedulerNotificationDeduplicated: true,
   retryDeduplicated: true,
   retryBeforeBusinessRecovered: true,
   retryAfterBusinessDidNotMutate: true,

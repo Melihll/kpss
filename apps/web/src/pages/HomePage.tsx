@@ -8,6 +8,7 @@ import { ExecutionPanel } from "../components/ExecutionPanel";
 import { RevisionPanel } from "../components/RevisionPanel";
 import { TopicPerformancePanel } from "../components/TopicPerformancePanel";
 import { AdaptivePlanningPanel } from "../components/AdaptivePlanningPanel";
+import { WeeklyReportPanel } from "../components/WeeklyReportPanel";
 
 interface DashboardData {
   examName: string;
@@ -98,6 +99,7 @@ export function HomePage() {
       {hasActiveProfile === false && <section><h2>Çalışma profilinizi oluşturun</h2><p>Henüz aktif bir KPSS hazırlık profiliniz yok.</p><Link className="button-link" to="/onboarding">Onboarding’i Başlat</Link></section>}
       {hasActiveProfile && dashboard && <>
         <ExecutionPanel />
+        <WeeklyReportPanel />
         <AdaptivePlanningPanel />
         <RevisionPanel />
         <TopicPerformancePanel />

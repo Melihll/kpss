@@ -71,6 +71,10 @@ verify_jwt = true
 enabled = true
 verify_jwt = false
 
+[functions.scheduler-worker]
+enabled = true
+verify_jwt = false
+
 [analytics]
 enabled = false
 port = 54327

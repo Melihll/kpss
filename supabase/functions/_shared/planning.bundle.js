@@ -573,11 +573,11 @@ function buildRevisionDecision(context) {
     reason: context.pendingWrongReview ? "PENDING_WRONG_REVIEW" : `MASTERY_${context.masteryLevel.toUpperCase()}`
   };
 }
-function calculateWeeklyRevisionBudget(planningBudgetMinutes, ratio = DEFAULT_WEEKLY_REVISION_BUDGET_RATIO) {
-  if (!Number.isFinite(planningBudgetMinutes) || planningBudgetMinutes < 0 || ratio < 0 || ratio > 1) {
+function calculateWeeklyRevisionBudget(planningBudgetMinutes, ratio2 = DEFAULT_WEEKLY_REVISION_BUDGET_RATIO) {
+  if (!Number.isFinite(planningBudgetMinutes) || planningBudgetMinutes < 0 || ratio2 < 0 || ratio2 > 1) {
     throw new Error("INVALID_REVISION_BUDGET");
   }
-  return Math.floor(planningBudgetMinutes * ratio);
+  return Math.floor(planningBudgetMinutes * ratio2);
 }
 function completeRevisionStatus(status) {
   if (status === "completed") return "completed";
@@ -642,9 +642,9 @@ function calculateEffectiveWeekCapacity(input) {
 function evaluateBacklog(tasks, remainingCapacityMinutes) {
   const open = tasks.filter((t) => !["completed", "cancelled"].includes(t.status));
   const minutes = open.reduce((s, t) => s + Math.max(0, t.remainingMinutes), 0);
-  const ratio = remainingCapacityMinutes <= 0 ? minutes ? Number.POSITIVE_INFINITY : 0 : minutes / remainingCapacityMinutes;
-  const severity = ratio <= BACKLOG_THRESHOLDS.normal ? "normal" : ratio <= BACKLOG_THRESHOLDS.attention ? "attention" : ratio <= BACKLOG_THRESHOLDS.risk ? "risk" : "critical";
-  return { openTaskCount: open.length, openCoreCount: open.filter((t) => t.importance === "core").length, openImportantCount: open.filter((t) => t.importance === "important").length, openOptionalCount: open.filter((t) => t.importance === "optional").length, estimatedRemainingMinutes: minutes, remainingCapacityMinutes, capacityRatio: ratio, severity, shouldReplan: severity === "risk" || severity === "critical" };
+  const ratio2 = remainingCapacityMinutes <= 0 ? minutes ? Number.POSITIVE_INFINITY : 0 : minutes / remainingCapacityMinutes;
+  const severity = ratio2 <= BACKLOG_THRESHOLDS.normal ? "normal" : ratio2 <= BACKLOG_THRESHOLDS.attention ? "attention" : ratio2 <= BACKLOG_THRESHOLDS.risk ? "risk" : "critical";
+  return { openTaskCount: open.length, openCoreCount: open.filter((t) => t.importance === "core").length, openImportantCount: open.filter((t) => t.importance === "important").length, openOptionalCount: open.filter((t) => t.importance === "optional").length, estimatedRemainingMinutes: minutes, remainingCapacityMinutes, capacityRatio: ratio2, severity, shouldReplan: severity === "risk" || severity === "critical" };
 }
 function calculatePlanDeviation(input) {
   const expectedMinutes = input.plannedMinutes * Math.max(0, Math.min(1, input.elapsedWeekRatio));
@@ -652,8 +652,8 @@ function calculatePlanDeviation(input) {
   const minuteRatio = expectedMinutes ? delay / expectedMinutes : 0;
   const expectedTasks = input.plannedTaskCount * Math.max(0, Math.min(1, input.elapsedWeekRatio));
   const taskRatio = expectedTasks ? Math.max(0, expectedTasks - input.completedTaskCount) / expectedTasks : 0;
-  const ratio = (minuteRatio + taskRatio) / 2;
-  return { deviationRatio: ratio, estimatedDelayMinutes: delay, severity: ratio <= DEVIATION_THRESHOLDS.normal ? "normal" : ratio <= DEVIATION_THRESHOLDS.attention ? "attention" : "risk" };
+  const ratio2 = (minuteRatio + taskRatio) / 2;
+  return { deviationRatio: ratio2, estimatedDelayMinutes: delay, severity: ratio2 <= DEVIATION_THRESHOLDS.normal ? "normal" : ratio2 <= DEVIATION_THRESHOLDS.attention ? "attention" : "risk" };
 }
 
 // packages/domain/src/adaptive/replan.ts
@@ -753,6 +753,28 @@ function buildSyllabusProjection(input) {
   const status = projected <= target ? "ON_TRACK" : projected <= input.examDate ? "ATTENTION" : "RISK";
   return { completed, inProgress, remaining, total: top.length, status, projectedCompletionDate: projected, weeksRemaining: weeks, deviationDays: diff, message: status === "ON_TRACK" ? "\u0130lk tur hedefi plan dahilinde." : status === "ATTENTION" ? "\u0130lk tur hedefi s\u0131nav tamponuna yakla\u015Ft\u0131." : "\u0130lk tur tahmini s\u0131nav tarihini a\u015F\u0131yor." };
 }
+
+// packages/domain/src/pilot/report.ts
+var ratio = (actual, planned) => planned > 0 ? actual / planned : 1;
+var percent = (value) => Math.round(Math.max(0, value) * 100);
+function interpretWeeklyReport(input) {
+  const completionRatio = ratio(input.completedTaskCount, input.plannedTaskCount);
+  const plannedVsActualRatio = ratio(input.actualMinutes, input.plannedMinutes);
+  const backlogRisk = input.backlogSeverity === "risk" || input.backlogSeverity === "critical";
+  const projectionRisk = input.projectionStatus.toUpperCase() === "RISK";
+  const riskSignals = Number(completionRatio < 0.65) + Number(plannedVsActualRatio < 0.65) + Number(backlogRisk) + Number(projectionRisk);
+  let status = "attention";
+  if (riskSignals >= 2) status = "risk";
+  else if (completionRatio >= 0.8 && plannedVsActualRatio >= 0.8 && !backlogRisk && !projectionRisk) status = "good";
+  const parts = [
+    `Bu hafta planlanan s\xFCrenin %${percent(plannedVsActualRatio)}'i ve g\xF6revlerin %${percent(completionRatio)}'i tamamland\u0131.`
+  ];
+  if (backlogRisk) parts.push("Backlog y\xFCkseldi\u011Fi i\xE7in gelecek hafta a\xE7\u0131k g\xF6revler \xF6nceliklendirilmeli.");
+  else if (projectionRisk) parts.push("M\xFCfredat projeksiyonu risk g\xF6sterdi\u011Fi i\xE7in haftal\u0131k kapasite yeniden g\xF6zden ge\xE7irilmeli.");
+  else if (status === "good") parts.push("Plan ve ger\xE7ek \xE7al\u0131\u015Fma dengesi pilot hedefiyle uyumlu.");
+  else parts.push("Plan\u0131 yakalamak i\xE7in gelecek hafta g\xFCnl\xFCk ger\xE7ekle\u015Fen s\xFCre takip edilmeli.");
+  return { status, completionRatio, plannedVsActualRatio, explanation: parts.join(" ") };
+}
 export {
   BACKLOG_THRESHOLDS,
   CRITICAL_OVERDUE_AFTER_DAYS,
@@ -802,6 +824,7 @@ export {
   getRevisionUrgency,
   getZonedDayRange,
   getZonedWeekRange,
+  interpretWeeklyReport,
   isInstantInRange,
   isoWeekday,
   remainingTaskMinutes,

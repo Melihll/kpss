@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { getNextBestTask } from "../_shared/planning.bundle.js";
 import { recalculateTopicMastery, revisionWithUrgency } from "../_shared/mastery.ts";
 import { loadAdaptiveBase, minimumDayPlan, recalculateCurrentPlan } from "../_shared/adaptive.ts";
+import { recordRecommendationEvent } from "../_shared/pilot.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -201,11 +202,35 @@ Deno.serve(async (req) => {
     const day = today();
     const week = monday(day);
 
+    if (callback.startsWith("gap_no_study:")) {
+      const eventId=callback.slice(13);
+      const event=await admin.from("data_gap_events").select("*").eq("id",eventId).eq("user_id",userId).maybeSingle();
+      if(event.error)throw event.error;if(!event.data)throw new Error("DATA_GAP_NOT_FOUND");
+      if(event.data.status==="open"){
+        const resolved=await admin.from("data_gap_events").update({status:"resolved",resolution_result:"confirmed_no_study",resolved_at:new Date().toISOString()}).eq("id",eventId).eq("user_id",userId);
+        if(resolved.error)throw resolved.error;
+      }
+      return await finalize({ok:true,dataGap:{...event.data,status:"resolved",resolution_result:event.data.resolution_result??"confirmed_no_study"},outbound:await sendMessage(chatId,"Dün için çalışmadığın kaydedildi.")});
+    }
+
+    if (callback.startsWith("gap_add_study:")) {
+      const eventId=callback.slice(14);
+      const event=await admin.from("data_gap_events").select("id,exam_profile_id,gap_date,status").eq("id",eventId).eq("user_id",userId).maybeSingle();
+      if(event.error)throw event.error;if(!event.data)throw new Error("DATA_GAP_NOT_FOUND");
+      if(event.data.status==="resolved")return await finalize({ok:true,outbound:await sendMessage(chatId,"Bu eksik kayıt daha önce çözüldü.")});
+      const subjects=await admin.from("user_subjects").select("subject_id,subjects(name)").eq("user_id",userId).eq("exam_profile_id",event.data.exam_profile_id).eq("status","active");
+      if(subjects.error)throw subjects.error;
+      await setState(admin,userId,chatId,"manual_subject",{examProfileId:event.data.exam_profile_id,dataGapEventId:eventId,endedAt:`${event.data.gap_date}T21:00:00+03:00`});
+      const buttons=(subjects.data??[]).map((item:any)=>[{text:item.subjects?.name??"Ders",callback_data:`manual_subject:${item.subject_id}`}]);
+      return await finalize({ok:true,outbound:await sendMessage(chatId,"Hangi dersi çalıştın?",buttons)});
+    }
+
     if (text === "/minimum" || callback === "minimum") {
       const profile = await admin.from("exam_profiles").select("*").eq("user_id", userId).eq("status", "active").maybeSingle();
       const plan = profile.data ? await admin.from("weekly_plans").select("*").eq("user_id",userId).eq("exam_profile_id",profile.data.id).eq("week_start_date",week).eq("status","active").maybeSingle() : {data:null};
       if (!profile.data || !plan.data) return await finalize({ok:true,outbound:await sendMessage(chatId,"Aktif haftalık plan bulunamadı.")});
       const minimum = await minimumDayPlan(admin,userId,profile.data,plan.data,day);
+      await recordRecommendationEvent(admin,{userId,examProfileId:profile.data.id,eventType:"minimum_plan",channel:"telegram",reason:"minimum_day_requested"});
       const lines = minimum.tasks.map((task:any,index:number)=>`${index+1}. ${task.title} — ${task.minutes} dk`).join("\n");
       return await finalize({ok:true,minimum,outbound:await sendMessage(chatId,minimum.tasks.length?`Minimum planın (${minimum.totalMinutes} dk)\n\n${lines}`:"Bugünkü sürene uyan anlamlı minimum görev yok.")});
     }
@@ -310,6 +335,7 @@ Deno.serve(async (req) => {
       try {
         const recommendation = getNextBestTask(mapped, { today: day, availableMinutes:adaptive?.dayCapacities[day]??null });
         const task = (tasks.data ?? []).find((candidate) => candidate.id === recommendation.recommendedTask.id)!;
+        await recordRecommendationEvent(admin,{userId,examProfileId:profile.data.id,taskId:task.id,eventType:"next_best_task",channel:"telegram",reason:recommendation.reason});
         return await finalize({
           ok: true,
           outbound: await sendMessage(
@@ -496,6 +522,7 @@ Deno.serve(async (req) => {
           p_payload: { ...state.payload, durationMinutes: value },
         });
         if (session.error) throw session.error;
+        if(state.payload.dataGapEventId){const resolved=await admin.from("data_gap_events").update({status:"resolved",resolution_result:"study_added",resolved_at:new Date().toISOString()}).eq("id",state.payload.dataGapEventId).eq("user_id",userId).eq("status","open");if(resolved.error)throw resolved.error;}
         await clearState(admin, userId, chatId);
         return await finalize({ ok: true, session: session.data, outbound: await sendMessage(chatId, `${value} dakikalık çalışma kaydedildi.`) });
       }

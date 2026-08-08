@@ -8,3 +8,4 @@ export * from "../time-boundaries";
 export * from "../mastery/index";
 export * from "../adaptive/index";
 export * from "../capacity";
+export * from "../pilot/index";
