@@ -1,0 +1,35 @@
+{
+  "name": "kpss-coach",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.16.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @kpss-coach/web dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run --exclude tests/integration/**",
+    "test:integration": "node scripts/run-integration-tests.mjs",
+    "test:edge": "node scripts/run-edge-smoke.mjs",
+    "test:phase04-http": "node scripts/run-phase04-http-smoke.mjs",
+    "test:telegram": "node scripts/run-telegram-smoke.mjs",
+    "edge:bundle": "esbuild packages/domain/src/planning/index.ts --bundle --format=esm --platform=neutral --target=es2022 --outfile=supabase/functions/_shared/planning.bundle.js",
+    "supabase:init": "node scripts/run-supabase.mjs init",
+    "supabase:start": "node scripts/run-supabase.mjs start && node scripts/sync-supabase-env.mjs",
+    "supabase:stop": "node scripts/run-supabase.mjs stop",
+    "supabase:status": "node scripts/run-supabase.mjs status",
+    "supabase:reset": "node scripts/run-supabase.mjs db reset",
+    "supabase:functions:serve": "pnpm edge:bundle && node scripts/run-supabase.mjs functions serve"
+  },
+  "devDependencies": {
+    "@kpss-coach/domain": "workspace:*",
+    "@supabase/supabase-js": "^2.57.0",
+    "@types/node": "^24.3.0",
+    "esbuild": "^0.28.1",
+    "supabase": "2.39.2",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
