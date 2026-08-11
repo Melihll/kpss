@@ -27,19 +27,24 @@ export function WeeklyReportPanel() {
       .catch((caught) => { if (active) setError(caught instanceof Error ? caught.message : "Haftalık rapor yüklenemedi."); });
     return () => { active = false; };
   }, []);
-  return <section className="weekly-report-panel">
-    <div className="toolbar"><h2>BU HAFTA</h2>{report && <strong className={`report-status ${report.plan_status}`}>{labels[report.plan_status]}</strong>}</div>
+
+  const percent = report && report.planned_minutes > 0 ? Math.min(100, Math.round((report.actual_minutes / report.planned_minutes) * 100)) : 0;
+
+  return <section className="weekly-report-panel panel-card compact-panel">
+    <div className="panel-heading"><div><span className="panel-kicker">BU HAFTA</span><h2>Haftalık durum</h2></div>{report && <strong className={`report-status ${report.plan_status}`}>{labels[report.plan_status]}</strong>}</div>
     {error && <p className="error">{error}</p>}
-    {!report && !error && <p>Haftalık özet hazırlanıyor…</p>}
+    {!report && !error && <div className="loading-line" />}
     {report && <>
-      <dl className="stats">
-        <div><dt>Çalışma</dt><dd>{duration(report.actual_minutes)} / {duration(report.planned_minutes)}</dd></div>
-        <div><dt>Görev</dt><dd>{report.completed_task_count} / {report.planned_task_count}</dd></div>
-        <div><dt>Soru</dt><dd>{report.question_count}</dd></div>
-        <div><dt>Konu</dt><dd>{report.completed_topic_count} tamamlandı</dd></div>
-        <div><dt>Tekrar</dt><dd>{report.revision_completed_count} / {report.revision_due_count}</dd></div>
-      </dl>
-      <p>{report.explanation}</p>
+      <div className="weekly-main-stat"><span>Çalışma</span><strong>{duration(report.actual_minutes)}</strong><small>{duration(report.planned_minutes)} planlandı</small></div>
+      <div className="weekly-progress"><i style={{ width: `${percent}%` }} /></div>
+      <small className="progress-caption">Haftalık planın %{percent}'i</small>
+      <div className="weekly-metric-grid">
+        <div><span>Görev</span><strong>{report.completed_task_count}/{report.planned_task_count}</strong></div>
+        <div><span>Soru</span><strong>{report.question_count}</strong></div>
+        <div><span>Konu</span><strong>{report.completed_topic_count}</strong></div>
+        <div><span>Tekrar</span><strong>{report.revision_completed_count}/{report.revision_due_count}</strong></div>
+      </div>
+      <p className="panel-note">{report.explanation}</p>
     </>}
   </section>;
 }

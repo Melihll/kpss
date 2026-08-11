@@ -57,13 +57,13 @@ describe("Phase 02 catalog, ownership and resource RLS", () => {
     expect(error).not.toBeNull();
   });
 
-  it("seeds only the documented representative curriculum sample", async () => {
+  it("seeds the production curriculum catalog", async () => {
     const { data, error } = await userAClient
       .from("curriculum_nodes")
       .select("id, name, parent_id")
       .order("id");
     expect(error).toBeNull();
-    expect(data).toHaveLength(12);
+    expect(data).toHaveLength(108);
     expect(data?.some((node) => node.name === "Hareket Problemleri" && node.parent_id)).toBe(true);
   });
 
@@ -134,7 +134,7 @@ describe("Phase 02 catalog, ownership and resource RLS", () => {
       p_subject_id: MATHEMATICS_ID,
     });
     expect(error).toBeNull();
-    expect(data).toBe(7);
+    expect(data).toBe(14);
   });
 
   it("keeps subject progress initialization idempotent", async () => {
@@ -149,7 +149,7 @@ describe("Phase 02 catalog, ownership and resource RLS", () => {
       .from("topic_progress")
       .select("id", { count: "exact", head: true })
       .eq("exam_profile_id", profileAId);
-    expect(count).toBe(7);
+    expect(count).toBe(14);
   });
 
   it("hides User A's topic progress from User B", async () => {
@@ -209,7 +209,7 @@ describe("Phase 02 catalog, ownership and resource RLS", () => {
       user_id: userA.id,
       exam_profile_id: profileAId,
       period_type: "midterm",
-      name: "Vize haftası",
+      name: "Vize haftasÄ±",
       start_date: "2026-10-12",
       end_date: "2026-10-18",
       capacity_multiplier: 0.5,
@@ -222,7 +222,7 @@ describe("Phase 02 catalog, ownership and resource RLS", () => {
       exception_date: "2026-10-13",
       exception_type: "extra_available",
       minutes_delta: 180,
-      note: "Ek çalışma zamanı",
+      note: "Ek Ã§alÄ±ÅŸma zamanÄ±",
     });
     expect(exceptionResult.error).toBeNull();
 
@@ -253,8 +253,8 @@ describe("Phase 02 catalog, ownership and resource RLS", () => {
         user_id: userA.id,
         exam_profile_id: profileAId,
         subject_id: MATHEMATICS_ID,
-        name: "Matematik Soru Bankası",
-        publisher: "Demo Yayınları",
+        name: "Matematik Soru BankasÄ±",
+        publisher: "Demo YayÄ±nlarÄ±",
         resource_type: "question_bank",
         resource_role: "primary",
         difficulty: "normal",

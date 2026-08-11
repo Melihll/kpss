@@ -10,6 +10,17 @@ describe("Priority and Dynamic Replanning V1",()=>{
  it("never moves or cancels completed tasks",()=>{const r=replanWeeklyPlanV1(ctx([t("done",{status:"completed"})]));expect(r.tasksToMove).toEqual([]);expect(r.tasksToCancel).toEqual([]);});
  it("preserves in progress task",()=>expect(replanWeeklyPlanV1(ctx([t("active",{status:"in_progress"})],[],{planningBudgetMinutes:10,dailyCapacities:{"2026-08-03":10}})).tasksToKeep).toContain("active"));
  it("stays within ordinary replan budget",()=>{const r=replanWeeklyPlanV1(ctx([t("one"),t("two")],[],{planningBudgetMinutes:120}));expect(r.afterPlannedMinutes).toBeLessThanOrEqual(120);});
+
+ it("uses actual study time without pulling future work forward after overspending",()=>{
+  const r=replanWeeklyPlanV1(ctx([t("done",{plannedDate:"2026-08-03",estimatedMinutes:60,status:"completed"}),t("long",{plannedDate:"2026-08-03",estimatedMinutes:90}),t("later",{plannedDate:"2026-08-04",estimatedMinutes:60})],[],{planningBudgetMinutes:210,dailyCapacities:{"2026-08-03":120,"2026-08-04":120},actualMinutesByDate:{"2026-08-03":90},plannedConsumedMinutesByDate:{"2026-08-03":60},trigger:"study_deviation"}));
+  expect(r.tasksToMove).toContainEqual({taskId:"long",fromDate:"2026-08-03",toDate:"2026-08-04",reason:"replanning"});
+  expect(r.tasksToMove.some(move=>move.taskId==="later"&&move.toDate==="2026-08-03")).toBe(false);
+  expect(r.availableMinutes).toBe(240);
+ });
+ it("pulls future work forward after a task finishes faster than planned",()=>{
+  const r=replanWeeklyPlanV1(ctx([t("done",{plannedDate:"2026-08-03",estimatedMinutes:60,status:"completed"}),t("later",{plannedDate:"2026-08-04",estimatedMinutes:60})],[],{planningBudgetMinutes:120,dailyCapacities:{"2026-08-03":120,"2026-08-04":120},actualMinutesByDate:{"2026-08-03":35},plannedConsumedMinutesByDate:{"2026-08-03":60},trigger:"study_deviation"}));
+  expect(r.tasksToMove).toContainEqual({taskId:"later",fromDate:"2026-08-04",toDate:"2026-08-03",reason:"replanning"});
+ });
  it("is deterministic",()=>{const input=ctx([t("a"),t("b")],[rev("r")]);expect(replanWeeklyPlanV1(input)).toEqual(replanWeeklyPlanV1(input));});
  it("uses stable revision dedupe keys",()=>{const input=ctx([], [rev("r")]);expect(replanWeeklyPlanV1(input).tasksToCreate[0]?.dedupeKey).toBe(replanWeeklyPlanV1(input).tasksToCreate[0]?.dedupeKey);});
 });

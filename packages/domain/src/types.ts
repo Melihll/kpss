@@ -247,6 +247,7 @@ export interface Task {
   resource_id: string | null;
   carried_from_task_id: string | null;
   task_type: TaskType;
+  work_mode: "video" | "book" | "notes" | "questions" | "mock" | "review" | "other" | null;
   title: string;
   description: string | null;
   planned_date: string | null;

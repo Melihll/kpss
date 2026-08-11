@@ -25,7 +25,9 @@
     "supabase:stop": "node scripts/run-supabase.mjs stop",
     "supabase:status": "node scripts/run-supabase.mjs status",
     "supabase:reset": "node scripts/run-supabase.mjs db reset",
-    "supabase:functions:serve": "pnpm edge:bundle && node scripts/run-supabase.mjs functions serve"
+    "supabase:functions:serve": "pnpm edge:bundle && node scripts/run-supabase.mjs functions serve",
+    "test:weekly-pilot": "node scripts/run-weekly-pilot-smoke.mjs",
+    "test:p48-roadmap": "node scripts/run-p48-roadmap-smoke.mjs"
   },
   "devDependencies": {
     "@kpss-coach/domain": "workspace:*",

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
+  DEFAULT_RESOURCE_UNIT_MINUTES,
   getNextBestTask,
   getZonedWeekRange,
   interpretWeeklyReport,
@@ -31,7 +32,7 @@ const ratio = (numerator: number, denominator: number) => denominator > 0 ? nume
 
 export async function recordRecommendationEvent(
   client: SupabaseClient,
-  input: { userId: string; examProfileId: string; taskId?: string | null; eventType: "next_best_task" | "minimum_plan"; channel: "web" | "telegram" | "scheduler"; reason: string },
+  input: { userId: string; examProfileId: string; taskId?: string | null; eventType: "next_best_task" | "minimum_plan" | "daily_plan"; channel: "web" | "telegram" | "scheduler"; reason: string },
 ) {
   const { error } = await client.from("recommendation_events").insert({
     user_id: input.userId,
@@ -44,51 +45,198 @@ export async function recordRecommendationEvent(
   if (error) throw error;
 }
 
-export async function buildDailyPlanSummary(client: SupabaseClient, userId: string, profile: any, date: string) {
+function remainingClockMinutes(availability: any[], date: string) {
+  if (date !== localDate()) return Number.POSITIVE_INFINITY;
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
+    timeZone: PILOT_TIMEZONE,
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date()).map((part) => [part.type, part.value]));
+  const weekdays: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
+  const weekday = weekdays[parts.weekday] ?? 1;
+  const current = Number(parts.hour) * 60 + Number(parts.minute);
+  const intervals = availability.filter((window) => window.weekday === weekday && window.is_active !== false)
+    .map((window) => {
+      const [startHour, startMinute] = String(window.start_time).split(":").map(Number);
+      const [endHour, endMinute] = String(window.end_time).split(":").map(Number);
+      return { start: Math.max(current, startHour * 60 + startMinute), end: endHour * 60 + endMinute };
+    })
+    .filter((interval) => interval.end > interval.start)
+    .sort((left, right) => left.start - right.start);
+  let total = 0;
+  let end = -1;
+  for (const interval of intervals) {
+    if (interval.start > end) total += interval.end - interval.start;
+    else if (interval.end > end) total += interval.end - end;
+    end = Math.max(end, interval.end);
+  }
+  return total;
+}
+
+export async function loadDailyCoachContext(
+  client: SupabaseClient,
+  userId: string,
+  profile: any,
+  date: string,
+  options: { respectCurrentTime?: boolean } = {},
+) {
   const weekStart = mondayOf(date);
   const planResult = await client.from("weekly_plans").select("*")
     .eq("user_id", userId).eq("exam_profile_id", profile.id).eq("week_start_date", weekStart).eq("status", "active").maybeSingle();
   if (planResult.error) throw planResult.error;
-  if (!planResult.data) return { date, taskCount: 0, totalMinutes: 0, capacityMinutes: 0, tasks: [], recommendation: null };
+  if (!planResult.data) return {
+    date,
+    plan: null,
+    taskCount: 0,
+    scheduledTaskCount: 0,
+    totalMinutes: 0,
+    capacityMinutes: 0,
+    studiedMinutes: 0,
+    remainingCapacityMinutes: 0,
+    availableNowMinutes: 0,
+    tasks: [],
+    allTasks: [],
+    recommendation: null,
+  };
 
   const tasksResult = await client.from("tasks")
-    .select("id,title,status,importance,priority_score,planned_date,estimated_minutes,created_at,revision_schedule_id,task_progress(completed_minutes)")
+    .select("id,title,task_type,status,importance,priority_score,planned_date,estimated_minutes,created_at,revision_schedule_id,task_progress(completed_minutes),task_resource_units(status,resource_units(unit_type,estimated_minutes))")
     .eq("user_id", userId).eq("weekly_plan_id", planResult.data.id);
   if (tasksResult.error) throw tasksResult.error;
   const adaptive = await loadAdaptiveBase(client, userId, profile, planResult.data);
+  const dayRange = localDayRange(date);
+  const sessionsResult = await client.from("study_sessions")
+    .select("duration_minutes")
+    .eq("user_id", userId)
+    .eq("exam_profile_id", profile.id)
+    .eq("status", "completed")
+    .gte("started_at", dayRange.startUtc)
+    .lt("started_at", dayRange.endUtc);
+  if (sessionsResult.error) throw sessionsResult.error;
+  const studiedMinutes = sum(sessionsResult.data, "duration_minutes");
   const adaptiveMap = new Map(adaptive.adaptiveTasks.map((item: any) => [item.id, item]));
-  const mapped: RecommendationTask[] = (tasksResult.data ?? []).map((task: any) => ({
-    id: task.id,
-    status: task.status,
-    importance: task.importance,
-    priorityScore: task.priority_score,
-    plannedDate: task.planned_date,
-    estimatedMinutes: task.estimated_minutes,
-    completedMinutes: task.task_progress?.[0]?.completed_minutes ?? 0,
-    createdAt: task.created_at,
-    isRevision: Boolean(task.revision_schedule_id),
-    revisionUrgency: adaptive.allAdaptiveRevisions.find((row: any) => row.id === task.revision_schedule_id)?.urgency ?? null,
-    masteryLevel: (adaptiveMap.get(task.id) as any)?.masteryLevel ?? null,
-    topicState: (adaptiveMap.get(task.id) as any)?.topicState ?? null,
-  }));
-  let recommendation: null | { taskId: string; title: string; reason: string; remainingMinutes: number } = null;
+  const enriched = (tasksResult.data ?? []).map((task: any) => {
+    const pendingUnits = (task.task_resource_units ?? []).filter((link: any) => link.status === "pending");
+    const pendingUnitMinutes = pendingUnits.length
+      ? pendingUnits.reduce((total: number, link: any) => {
+        const unit = link.resource_units;
+        return total + Number(unit?.estimated_minutes ?? (DEFAULT_RESOURCE_UNIT_MINUTES as Record<string, number>)[unit?.unit_type ?? "other"] ?? 30);
+      }, 0)
+      : null;
+    const completedMinutes = Number(task.task_progress?.[0]?.completed_minutes ?? 0);
+    return {
+      raw: task,
+      pendingUnitCount: pendingUnits.length,
+      mapped: {
+        id: task.id,
+        status: task.status,
+        importance: task.importance,
+        priorityScore: task.priority_score,
+        plannedDate: task.planned_date,
+        estimatedMinutes: task.estimated_minutes,
+        completedMinutes,
+        pendingUnitMinutes,
+        createdAt: task.created_at,
+        isRevision: Boolean(task.revision_schedule_id),
+        revisionUrgency: adaptive.allAdaptiveRevisions.find((row: any) => row.id === task.revision_schedule_id)?.urgency ?? null,
+        masteryLevel: (adaptiveMap.get(task.id) as any)?.masteryLevel ?? null,
+        topicState: (adaptiveMap.get(task.id) as any)?.topicState ?? null,
+      } satisfies RecommendationTask,
+    };
+  });
+  const mapped = enriched.map((item) => item.mapped);
+  const dayCapacity = Number(adaptive.dayCapacities[date] ?? 0);
+  const remainingCapacityMinutes = Math.max(0, dayCapacity - studiedMinutes);
+  const availableNowMinutes = options.respectCurrentTime
+    ? Math.min(remainingCapacityMinutes, remainingClockMinutes(adaptive.availability ?? [], date))
+    : remainingCapacityMinutes;
+  let recommendation: null | {
+    taskId: string;
+    title: string;
+    taskType: string;
+    reason: string;
+    remainingMinutes: number;
+    completedMinutes: number;
+    estimatedMinutes: number;
+    pendingUnitCount: number;
+    needsResult: boolean;
+  } = null;
   try {
-    const selected = getNextBestTask(mapped, { today: date, availableMinutes: adaptive.dayCapacities[date] ?? 0 });
-    const task = (tasksResult.data ?? []).find((row) => row.id === selected.recommendedTask.id);
-    if (task) recommendation = { taskId: task.id, title: task.title, reason: selected.reason, remainingMinutes: selected.remainingMinutes };
+    const selected = getNextBestTask(mapped, { today: date, availableMinutes: availableNowMinutes });
+    const item = enriched.find((candidate) => candidate.raw.id === selected.recommendedTask.id);
+    if (item) recommendation = {
+      taskId: item.raw.id,
+      title: item.raw.title,
+      taskType: item.raw.task_type,
+      reason: selected.reason,
+      remainingMinutes: selected.remainingMinutes,
+      completedMinutes: item.mapped.completedMinutes,
+      estimatedMinutes: item.mapped.estimatedMinutes,
+      pendingUnitCount: item.pendingUnitCount,
+      needsResult: item.raw.task_type === "solve_resource_units" && item.pendingUnitCount > 0 && selected.remainingMinutes === 0,
+    };
   } catch {
     recommendation = null;
   }
-  const todayTasks = (tasksResult.data ?? []).filter((task) => task.planned_date === date &&
+
+  const focusTasks: Array<{
+    id: string;
+    title: string;
+    taskType: string;
+    minutes: number;
+    remainingMinutes: number;
+    reason: string;
+    needsResult: boolean;
+  }> = [];
+  let candidates = [...mapped];
+  let remainingCapacity = remainingCapacityMinutes;
+  while (candidates.length && focusTasks.length < 5) {
+    let selected;
+    try {
+      selected = getNextBestTask(candidates, { today: date, availableMinutes: Math.max(0, remainingCapacity) });
+    } catch {
+      break;
+    }
+    const item = enriched.find((candidate) => candidate.raw.id === selected.recommendedTask.id);
+    candidates = candidates.filter((candidate) => candidate.id !== selected.recommendedTask.id);
+    if (!item) continue;
+    const needsResult = item.raw.task_type === "solve_resource_units" && item.pendingUnitCount > 0 && selected.remainingMinutes === 0;
+    if (remainingCapacity <= 0 && !needsResult) break;
+    const minutes = needsResult ? 0 : Math.min(selected.remainingMinutes, remainingCapacity);
+    focusTasks.push({
+      id: item.raw.id,
+      title: item.raw.title,
+      taskType: item.raw.task_type,
+      minutes,
+      remainingMinutes: selected.remainingMinutes,
+      reason: selected.reason,
+      needsResult,
+    });
+    remainingCapacity = Math.max(0, remainingCapacity - minutes);
+  }
+
+  const scheduledToday = (tasksResult.data ?? []).filter((task: any) => task.planned_date === date &&
     ["planned", "ready", "in_progress", "partially_completed", "rescheduled"].includes(task.status));
   return {
     date,
-    taskCount: todayTasks.length,
-    totalMinutes: sum(todayTasks, "estimated_minutes"),
-    capacityMinutes: adaptive.dayCapacities[date] ?? 0,
-    tasks: todayTasks,
+    plan: planResult.data,
+    taskCount: focusTasks.length,
+    scheduledTaskCount: scheduledToday.length,
+    totalMinutes: focusTasks.reduce((total, task) => total + task.minutes, 0),
+    capacityMinutes: dayCapacity,
+    studiedMinutes,
+    remainingCapacityMinutes,
+    availableNowMinutes,
+    tasks: focusTasks,
+    allTasks: tasksResult.data ?? [],
     recommendation,
   };
+}
+
+export async function buildDailyPlanSummary(client: SupabaseClient, userId: string, profile: any, date: string) {
+  return await loadDailyCoachContext(client, userId, profile, date);
 }
 
 export async function generateWeeklyReport(client: SupabaseClient, userId: string, profile: any, weekStartDate: string) {

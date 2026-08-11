@@ -69,7 +69,9 @@ const app = async (path, method = "GET", body) => {
 };
 const built = await app("/weekly-plan/build", "POST");
 const solveTask = built.tasks.find((task) => task.task_type === "solve_resource_units");
+const learnTask = built.tasks.find((task) => task.task_type === "learn_topic");
 if (!solveTask) throw new Error("solve task missing");
+if (!learnTask) throw new Error("learn task missing");
 const link = await app("/messaging/telegram/link-token", "POST");
 
 const telegram = async (update, { failStage, expectedStatus = 200 } = {}) => {
@@ -110,10 +112,47 @@ const linked = await telegram(message(`/start ${link.token}`));
 if (!linked.outbound.text.includes("bağlandı")) throw new Error("link failed");
 const identity = await api.from("messaging_identities").select("external_user_id").single();
 if (identity.data?.external_user_id !== String(from.id)) throw new Error("identity missing");
+const greeting = await telegram(message("Merhaba"));
+if (!greeting.outbound.text.includes("KPSS Koçu hazır")) throw new Error("friendly greeting failed");
 const today = await telegram(message("/bugun"));
-if (!today.outbound.text.includes("Bugünkü planın")) throw new Error("bugun failed");
+if (!today.outbound.text.includes("Bugünkü çalışma planın") || today.outbound.text.includes("0 görev") || !(today.summary?.taskCount > 0)) throw new Error(`bugun actionable plan failed: ${JSON.stringify(today)}`);
 const now = await telegram(message("/simdi"));
 if (!now.recommendation?.taskId) throw new Error("simdi failed");
+const naturalNow = await telegram(message("Ne çalışayım?"));
+if (!naturalNow.recommendation?.taskId) throw new Error("natural-language now intent failed");
+
+const learnStarted = await telegram(callback(`task_start:${learnTask.id}`));
+if (learnStarted.outbound.method !== "editMessageText") throw new Error("callback did not edit the existing Telegram card");
+const backdated = new Date(Date.now() - (20 * 60 + 5) * 1000).toISOString();
+const backdateResult = await api.from("study_sessions").update({ started_at: backdated }).eq("id", learnStarted.session.id);
+if (backdateResult.error) throw backdateResult.error;
+const whileActive = await telegram(message("Ne çalışayım?"));
+if (!whileActive.activeSession || !whileActive.outbound.text.includes("Çalışman devam ediyor")) throw new Error("active session was not surfaced by /simdi");
+const blockedSecondStart = await telegram(callback(`task_start:${solveTask.id}`));
+if (!blockedSecondStart.activeSession || !blockedSecondStart.outbound.text.includes("Önce devam eden çalışmayı bitirmen gerekiyor")) throw new Error("second task start was not safely blocked");
+const learnFinished = await telegram(callback(`session_finish:${learnStarted.session.id}`));
+if (learnFinished.session.duration_minutes !== 20) throw new Error(`expected 20-minute session, got ${learnFinished.session.duration_minutes}`);
+const learnProgress = await api.from("task_progress").select("completed_minutes,actual_study_minutes").eq("task_id", learnTask.id).single();
+if (learnProgress.error || learnProgress.data.completed_minutes !== 20 || learnProgress.data.actual_study_minutes !== 20) throw learnProgress.error ?? new Error(`session progress not applied: ${JSON.stringify(learnProgress.data)}`);
+const partialNow = await telegram(message("/simdi"));
+if (partialNow.recommendation?.taskId !== learnTask.id || partialNow.recommendation.remainingMinutes !== Math.max(0, learnTask.estimated_minutes - 20)) throw new Error(`remaining minutes did not decrease after session: ${JSON.stringify(partialNow.recommendation)}`);
+const afterStudyToday = await telegram(message("/bugun"));
+if (afterStudyToday.summary?.studiedMinutes !== 20 || afterStudyToday.summary?.remainingCapacityMinutes !== Math.max(0, afterStudyToday.summary.capacityMinutes - 20)) {
+  throw new Error(`daily capacity did not account for completed study: ${JSON.stringify(afterStudyToday.summary)}`);
+}
+const manualLinked = await telegram(message("10 dk çalıştım"));
+const manualMathCallback = manualLinked.outbound.reply_markup.inline_keyboard.find((row) => row[0]?.callback_data?.startsWith("manual_subject:"))?.[0]?.callback_data;
+if (!manualMathCallback) throw new Error("manual linked study subject choice missing");
+const manualTaskStep = await telegram(callback(manualMathCallback));
+const learnTaskChoice = manualTaskStep.outbound.reply_markup?.inline_keyboard?.flat()?.find((button) => button.callback_data === `manual_task:${learnTask.id}`)?.callback_data;
+if (!learnTaskChoice) throw new Error(`manual linked study task choice missing: ${JSON.stringify(manualTaskStep)}`);
+await telegram(callback(learnTaskChoice));
+const manualLinkedSaved = await telegram(message("10"));
+if (manualLinkedSaved.session.task_id !== learnTask.id || manualLinkedSaved.session.duration_minutes !== 10) throw new Error("manual linked study did not attach to the selected task");
+const progressAfterManual = await api.from("task_progress").select("completed_minutes,actual_study_minutes").eq("task_id", learnTask.id).single();
+if (progressAfterManual.error || progressAfterManual.data.completed_minutes !== 30 || progressAfterManual.data.actual_study_minutes !== 30) throw progressAfterManual.error ?? new Error(`manual linked progress not applied: ${JSON.stringify(progressAfterManual.data)}`);
+const afterManualNow = await telegram(message("/simdi"));
+if (afterManualNow.recommendation?.taskId !== learnTask.id || afterManualNow.recommendation.remainingMinutes !== Math.max(0, learnTask.estimated_minutes - 30)) throw new Error(`manual study did not reduce task remaining: ${JSON.stringify(afterManualNow.recommendation)}`);
 
 const startUpdate = callback(`task_start:${solveTask.id}`);
 const failedBeforeBusiness = await telegram(startUpdate, { failStage: "before-business", expectedStatus: 400 });
@@ -131,10 +170,13 @@ if (failedAfterBusiness.error !== "MOCK_FAILURE_AFTER_BUSINESS") throw new Error
 const storedAfterFailure = await api.from("study_sessions").select("status,duration_minutes").eq("id", started.session.id).single();
 if (storedAfterFailure.data?.status !== "completed") throw new Error("business mutation did not commit before delivery failure");
 const minutesBeforeRetry = (await api.from("task_progress").select("actual_study_minutes").eq("task_id", solveTask.id).single()).data?.actual_study_minutes;
+const completedBeforeRetry = (await api.from("task_progress").select("completed_minutes").eq("task_id", solveTask.id).single()).data?.completed_minutes;
 const finished = await telegram(finishUpdate);
 if (finished.session.status !== "completed") throw new Error("finish failed");
 const minutesAfterRetry = (await api.from("task_progress").select("actual_study_minutes").eq("task_id", solveTask.id).single()).data?.actual_study_minutes;
+const completedAfterRetry = (await api.from("task_progress").select("completed_minutes").eq("task_id", solveTask.id).single()).data?.completed_minutes;
 if (minutesAfterRetry !== minutesBeforeRetry) throw new Error("delivery retry duplicated business accounting");
+if (completedAfterRetry !== completedBeforeRetry) throw new Error("delivery retry duplicated task progress");
 const completedDuplicate = await telegram(finishUpdate);
 if (!completedDuplicate.duplicate) throw new Error("completed event was not a no-op");
 
@@ -147,6 +189,8 @@ const saved = await telegram(callback("result_save"));
 if (saved.result.review_status !== "pending" || saved.result.total_questions !== 10) throw new Error("result save failed");
 const reviewed = await telegram(callback(`result_review:${saved.result.id}`));
 if (reviewed.result.review_status !== "reviewed") throw new Error("review failed");
+const staleCompletedStart = await telegram(callback(`task_start:${solveTask.id}`));
+if (!staleCompletedStart.outbound.text.includes("artık açık değil")) throw new Error(`completed task stale button was not handled safely: ${JSON.stringify(staleCompletedStart)}`);
 
 const evidence = await app("/test-results", "POST", {
   subjectId: MATH, curriculumNodeId: TOPIC, correct: 10, wrong: 0, blank: 0, total: 10,
@@ -173,7 +217,11 @@ if (!specialApplied.outbound.text.includes("→ 90 dk") || !specialApplied.repla
 const minimumPlan = await telegram(message("/minimum"));
 if (!minimumPlan.minimum || minimumPlan.minimum.totalMinutes > 90) throw new Error("minimum plan failed");
 const adaptiveNow = await telegram(message("/simdi"));
-if (!["due_revision", "weak_topic", "critical_revision"].includes(adaptiveNow.recommendation?.reason)) throw new Error(`adaptive simdi failed: ${JSON.stringify(adaptiveNow)}`);
+if (adaptiveNow.recommendation?.reason !== "continue_partial"
+  || adaptiveNow.recommendation?.remainingMinutes !== 30
+  || adaptiveNow.recommendation?.completedMinutes !== 30) {
+  throw new Error(`adaptive simdi partial-progress regression failed: ${JSON.stringify(adaptiveNow)}`);
+}
 const repeatList = await telegram(message("/tekrar"));
 const completeData = repeatList.outbound.reply_markup?.inline_keyboard?.[0]?.[0]?.callback_data;
 if (!repeatList.outbound.text.includes("Bugünkü tekrarların") || !completeData?.startsWith("revision_complete:")) throw new Error("tekrar list failed");
@@ -187,12 +235,16 @@ if (storedRevision.data?.status !== "completed" || !storedRevision.data.complete
 
 const manual = await telegram(message("/calisma_ekle"));
 const subjectCallback = manual.outbound.reply_markup.inline_keyboard[0][0].callback_data;
-await telegram(callback(subjectCallback));
+const manualSubjectStep = await telegram(callback(subjectCallback));
+const generalChoice = manualSubjectStep.outbound.reply_markup?.inline_keyboard?.flat()?.find((button) => button.callback_data === "manual_task:none")?.callback_data;
+if (generalChoice) await telegram(callback(generalChoice));
 const retroactive = await telegram(message("35"));
 if (retroactive.session.duration_minutes !== 35 || retroactive.session.entry_source !== "telegram") throw new Error("manual log failed");
 
 const calendarToday = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
 await scheduler(`${calendarToday}T12:00:00+03:00`);
+const dailyAction = await api.from("scheduled_actions").select("result_payload").eq("action_type", "daily_plan").eq("status", "completed").limit(1).single();
+if (dailyAction.error || dailyAction.data.result_payload?.notification !== "suppressed_manual_view") throw dailyAction.error ?? new Error(`manual /bugun did not suppress duplicate scheduler message: ${JSON.stringify(dailyAction.data)}`);
 const openGap = await api.from("data_gap_events").select("*").eq("status", "open").order("gap_date", { ascending: false }).limit(1).single();
 if (openGap.error || !openGap.data.notified_at) throw openGap.error ?? new Error("data gap notification missing");
 const noStudy = await telegram(callback(`gap_no_study:${openGap.data.id}`));
@@ -206,9 +258,20 @@ const addGap = await api.from("data_gap_events").select("*").eq("status", "open"
 if (addGap.error) throw addGap.error;
 const addBegin = await telegram(callback(`gap_add_study:${addGap.data.id}`));
 const gapSubjectData = addBegin.outbound.reply_markup.inline_keyboard[0][0].callback_data;
-await telegram(callback(gapSubjectData));
+const gapSubjectStep = await telegram(callback(gapSubjectData));
+const gapGeneralChoice = gapSubjectStep.outbound.reply_markup?.inline_keyboard
+  ?.flat()
+  ?.find((button) => button.callback_data === "manual_task:none")?.callback_data;
+if (gapGeneralChoice) {
+  const gapDurationStep = await telegram(callback(gapGeneralChoice));
+  if (!gapDurationStep.outbound.text.includes("Kaç dakika çalıştın?")) {
+    throw new Error(`data gap duration prompt missing after task choice: ${JSON.stringify(gapDurationStep)}`);
+  }
+} else if (!gapSubjectStep.outbound.text.includes("Kaç dakika çalıştın?")) {
+  throw new Error(`data gap subject flow did not reach duration step: ${JSON.stringify(gapSubjectStep)}`);
+}
 const gapStudy = await telegram(message("25"));
-if (gapStudy.session.duration_minutes !== 25 || !gapStudy.session.ended_at.startsWith(addGap.data.gap_date)) throw new Error("data gap retroactive date flow failed");
+if (gapStudy.session?.duration_minutes !== 25 || !gapStudy.session?.ended_at?.startsWith(addGap.data.gap_date)) throw new Error(`data gap retroactive date flow failed: ${JSON.stringify(gapStudy)}`);
 const resolvedGap = await api.from("data_gap_events").select("status,resolution_result").eq("id", addGap.data.id).single();
 if (resolvedGap.data?.status !== "resolved" || resolvedGap.data.resolution_result !== "study_added") throw new Error("data gap study resolution missing");
 
@@ -245,6 +308,14 @@ console.log(JSON.stringify({
   dataGapStudyAdded: true,
   weeklyReportSent: true,
   schedulerNotificationDeduplicated: true,
+  schedulerDailyPlanSuppressedAfterManualView: true,
+  callbackCardsEditedInPlace: true,
+  activeSessionGuarded: true,
+  sessionMinutesUpdateTaskRemaining: true,
+  dailyCapacityAccountsForStudy: true,
+  manualStudyCanReduceTaskRemaining: true,
+  staleCompletedTaskStartHandled: true,
+  naturalLanguageIntent: true,
   retryDeduplicated: true,
   retryBeforeBusinessRecovered: true,
   retryAfterBusinessDidNotMutate: true,

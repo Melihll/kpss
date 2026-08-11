@@ -2,8 +2,14 @@ import { PlanningDomainError } from "./errors";
 import type { NextTaskRecommendation, RecommendationReason, RecommendationTask } from "./types";
 
 export function remainingTaskMinutes(task: RecommendationTask): number {
-  if (task.pendingUnitMinutes != null) return Math.max(0, task.pendingUnitMinutes);
-  return Math.max(0, task.estimatedMinutes - task.completedMinutes);
+  const timeRemaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
+  if (task.pendingUnitMinutes == null) return timeRemaining;
+
+  // A resource task can progress in two independent ways:
+  // - live/manual study time updates completedMinutes,
+  // - completing resource units reduces pendingUnitMinutes.
+  // Use the strongest progress signal so neither path makes the user repeat work.
+  return Math.max(0, Math.min(timeRemaining, task.pendingUnitMinutes));
 }
 
 function tier(task: RecommendationTask, today: string): number {

@@ -273,8 +273,9 @@ function buildWeeklyPlanV0(context) {
 
 // packages/domain/src/planning/recommendation.ts
 function remainingTaskMinutes(task) {
-  if (task.pendingUnitMinutes != null) return Math.max(0, task.pendingUnitMinutes);
-  return Math.max(0, task.estimatedMinutes - task.completedMinutes);
+  const timeRemaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
+  if (task.pendingUnitMinutes == null) return timeRemaining;
+  return Math.max(0, Math.min(timeRemaining, task.pendingUnitMinutes));
 }
 function tier(task, today) {
   if (task.status === "in_progress") return 1;
@@ -673,10 +674,10 @@ function calculatePriorityV1(input) {
 }
 function replanWeeklyPlanV1(context) {
   const availableMinutes = Object.values(context.dailyCapacities).reduce((a, b) => a + Math.max(0, b), 0);
-  const planBudget = Math.min(context.planningBudgetMinutes, Math.floor(availableMinutes * 0.85));
+  const planBudget = Math.min(context.planningBudgetMinutes, availableMinutes);
   const revisionBudget = calculateWeeklyRevisionBudget(planBudget);
   const activeTasks = context.tasks.filter((t) => !["completed", "cancelled", "missed"].includes(t.status)).sort((a, b) => taskRank(a) - taskRank(b) || b.priorityScore - a.priorityScore || a.id.localeCompare(b.id));
-  const selectedRevisions = [...context.revisions].sort((a, b) => urgencyRank[a.urgency] - urgencyRank[b.urgency] || masteryRank[a.masteryLevel] - masteryRank[b.masteryLevel] || a.id.localeCompare(b.id));
+  const selectedRevisions = (context.trigger === "study_deviation" ? [] : [...context.revisions]).sort((a, b) => urgencyRank[a.urgency] - urgencyRank[b.urgency] || masteryRank[a.masteryLevel] - masteryRank[b.masteryLevel] || a.id.localeCompare(b.id));
   let revisionMinutes = 0;
   const creates = [];
   for (const revision of selectedRevisions) {
@@ -696,21 +697,28 @@ function replanWeeklyPlanV1(context) {
     else keep.push(task.id);
   }
   const moves = [];
-  const dayRemaining = { ...context.dailyCapacities };
-  for (const task of activeTasks.filter((t) => keep.includes(t.id) && !["in_progress", "partially_completed"].includes(t.status))) {
+  const dayRemaining = Object.fromEntries(Object.entries(context.dailyCapacities).map(([date, minutes]) => [date, date < context.currentDate ? 0 : Math.max(0, minutes - (context.actualMinutesByDate?.[date] ?? 0))]));
+  const currentDeviation = (context.actualMinutesByDate?.[context.currentDate] ?? 0) - (context.plannedConsumedMinutesByDate?.[context.currentDate] ?? 0);
+  const allowPullForward = currentDeviation <= 0;
+  const placementTasks = activeTasks.filter((t) => keep.includes(t.id) && !["in_progress", "partially_completed"].includes(t.status));
+  if (!allowPullForward) {
+    placementTasks.sort((a, b) => (a.plannedDate ?? context.currentDate).localeCompare(b.plannedDate ?? context.currentDate) || taskRank(a) - taskRank(b) || b.priorityScore - a.priorityScore || a.id.localeCompare(b.id));
+  }
+  for (const task of placementTasks) {
     const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
     const current = task.plannedDate;
+    const earliest = allowPullForward ? context.currentDate : current && current > context.currentDate ? current : context.currentDate;
     const dates = Object.keys(dayRemaining).sort();
-    const chosen = dates.find((d) => d >= context.currentDate && (dayRemaining[d] ?? 0) >= remaining);
+    const chosen = dates.find((d) => d >= earliest && (dayRemaining[d] ?? 0) >= remaining);
     if (chosen) {
       dayRemaining[chosen] = (dayRemaining[chosen] ?? 0) - remaining;
       if (current !== chosen) moves.push({ taskId: task.id, fromDate: current, toDate: chosen, reason: "replanning" });
     }
   }
   const changed = moves.length + cancel.length + creates.length;
-  const revisionType = changed <= REPLAN_LEVEL_1_CHANGE_LIMIT ? "automatic_minor" : changed <= REPLAN_LEVEL_2_CHANGE_LIMIT ? "automatic_informed" : "strategic_proposal";
+  const revisionType = context.trigger === "study_deviation" ? "automatic_informed" : changed <= REPLAN_LEVEL_1_CHANGE_LIMIT ? "automatic_minor" : changed <= REPLAN_LEVEL_2_CHANGE_LIMIT ? "automatic_informed" : "strategic_proposal";
   const reasonCode = context.trigger.toUpperCase();
-  const explanation = context.trigger === "capacity_change" ? `Kapasiten de\u011Fi\u015Fti\u011Fi i\xE7in ${changed} plan \xF6\u011Fesi yeniden d\xFCzenlendi.` : context.trigger === "revision_due" ? `${creates.length} \xF6ncelikli tekrar haftal\u0131k plana eklendi.` : `Plan\u0131ndaki ${changed} \xF6\u011Fe g\xFCncel ilerlemene g\xF6re d\xFCzenlendi.`;
+  const explanation = context.trigger === "capacity_change" ? `Kapasiten de\u011Fi\u015Fti\u011Fi i\xE7in ${changed} plan \xF6\u011Fesi yeniden d\xFCzenlendi.` : context.trigger === "study_deviation" ? changed ? `Ger\xE7ek \xE7al\u0131\u015Fma s\xFCrene g\xF6re haftan\u0131n kalan\u0131nda ${changed} g\xF6rev yeniden yerle\u015Ftirildi.` : "Ger\xE7ek \xE7al\u0131\u015Fma s\xFCren plana uygun; g\xF6revlerin yerini de\u011Fi\u015Ftirmeye gerek kalmad\u0131." : context.trigger === "revision_due" ? `${creates.length} \xF6ncelikli tekrar haftal\u0131k plana eklendi.` : `Plan\u0131ndaki ${changed} \xF6\u011Fe g\xFCncel ilerlemene g\xF6re d\xFCzenlendi.`;
   return { tasksToKeep: keep, tasksToMove: moves, tasksToCancel: cancel, tasksToCreate: creates, availableMinutes, afterPlannedMinutes: used, revisionMinutes, revisionBudgetMinutes: revisionBudget, changedTaskCount: changed, revisionType, reasonCode, explanation, dedupeKey: [context.planId, context.trigger, availableMinutes, keep.join(","), moves.map((m) => `${m.taskId}:${m.toDate}`).join(","), creates.map((c) => c.revisionScheduleId).join(",")].join("|") };
 }
 
@@ -775,6 +783,214 @@ function interpretWeeklyReport(input) {
   else parts.push("Plan\u0131 yakalamak i\xE7in gelecek hafta g\xFCnl\xFCk ger\xE7ekle\u015Fen s\xFCre takip edilmeli.");
   return { status, completionRatio, plannedVsActualRatio, explanation: parts.join(" ") };
 }
+
+// packages/domain/src/p48/roadmap.ts
+var DAY_MS = 864e5;
+function parseDate3(date) {
+  return /* @__PURE__ */ new Date(`${date}T12:00:00Z`);
+}
+function dateString(date) {
+  return date.toISOString().slice(0, 10);
+}
+function addP48Days(date, days) {
+  const value = parseDate3(date);
+  value.setUTCDate(value.getUTCDate() + days);
+  return dateString(value);
+}
+function p48MondayOf(date) {
+  const value = parseDate3(date);
+  const day = value.getUTCDay() || 7;
+  value.setUTCDate(value.getUTCDate() - day + 1);
+  return dateString(value);
+}
+function monthKey(date) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+function monthEnd(date) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 12));
+}
+function periodMultiplierForDate(date, periods) {
+  const matches = periods.filter((period) => period.startDate <= date && period.endDate >= date);
+  if (!matches.length) return 1;
+  return matches.reduce((value, period) => Math.min(value, period.capacityMultiplier ?? 1), 1);
+}
+function p48PhaseForDate(date) {
+  if (date <= "2027-01-03") return { name: "Temel + ilk tur", focus: "Konu anlat\u0131m\u0131, not ve soru bankas\u0131n\u0131 d\xFCzenli bi\xE7imde ilerlet." };
+  if (date <= "2027-04-04") return { name: "Ana kaynak + soru yo\u011Funla\u015Ft\u0131rma", focus: "Ana kaynaklar\u0131 s\xFCrd\xFCr; soru \xE7\xF6z\xFCm\xFCn\xFC ve yanl\u0131\u015F d\xF6n\xFC\u015Flerini art\u0131r." };
+  if (date <= "2027-06-06") return { name: "Kaynak kapan\u0131\u015F\u0131", focus: "\u0130lk kaynak havuzunu kapatmaya \xE7al\u0131\u015F; biten derslerde bran\u015F denemesi ekle." };
+  if (date <= "2027-08-08") return { name: "Yeni kaynak + bran\u015F denemeleri", focus: "Biten kaynaklar\u0131n yerine yeni soru/deneme kaynaklar\u0131 koy ve s\xFCreli \xE7\xF6z\xFCm\xFC art\u0131r." };
+  return { name: "Final tekrar", focus: "Yeni a\u011F\u0131r kaynak a\xE7ma; deneme, yanl\u0131\u015F defteri ve k\u0131sa tekrarlarla s\u0131nava gir." };
+}
+function usableWeekRatio(weekStart, asOfDate, targetExamDate, periods) {
+  let ratio2 = 0;
+  for (let day = 0; day < 7; day += 1) {
+    const date = addP48Days(weekStart, day);
+    if (date < asOfDate || date > targetExamDate) continue;
+    ratio2 += periodMultiplierForDate(date, periods) / 7;
+  }
+  return ratio2;
+}
+function forecastP48Resources(input) {
+  const subjects = [];
+  for (const subject of input.subjects) {
+    const queue = input.resources.filter((resource) => resource.subjectId === subject.subjectId).sort((a, b) => a.sequenceOrder - b.sequenceOrder).map((resource) => ({
+      ...resource,
+      remainingMinutes: Math.max(0, resource.plannedMinutes - resource.actualMinutes),
+      progressPercent: resource.plannedMinutes > 0 ? Math.min(100, Math.round(resource.actualMinutes / resource.plannedMinutes * 100)) : 0,
+      forecastStartDate: null,
+      forecastFinishDate: null,
+      completed: resource.resourceStatus === "completed" || resource.actualMinutes >= resource.plannedMinutes
+    }));
+    let currentIndex = queue.findIndex((resource) => !resource.completed);
+    if (currentIndex < 0) currentIndex = queue.length;
+    let week = p48MondayOf(input.asOfDate);
+    let lastFinish = null;
+    let guard = 0;
+    while (currentIndex < queue.length && week <= input.targetExamDate && guard < 90) {
+      const ratio2 = usableWeekRatio(week, input.asOfDate, input.targetExamDate, input.periods);
+      let budget = Math.round(subject.weeklyMinutes * ratio2);
+      if (budget <= 0) {
+        week = addP48Days(week, 7);
+        guard += 1;
+        continue;
+      }
+      while (budget > 0 && currentIndex < queue.length) {
+        const resource = queue[currentIndex];
+        if (!resource.forecastStartDate) resource.forecastStartDate = week < input.asOfDate ? input.asOfDate : week;
+        const use = Math.min(budget, resource.remainingMinutes);
+        resource.remainingMinutes -= use;
+        budget -= use;
+        if (resource.remainingMinutes <= 0) {
+          resource.forecastFinishDate = addP48Days(week, 6);
+          lastFinish = resource.forecastFinishDate;
+          currentIndex += 1;
+        }
+      }
+      week = addP48Days(week, 7);
+      guard += 1;
+    }
+    for (const resource of queue) {
+      if (resource.completed) {
+        resource.forecastStartDate = resource.forecastStartDate ?? input.asOfDate;
+        resource.forecastFinishDate = resource.forecastFinishDate ?? input.asOfDate;
+        resource.remainingMinutes = 0;
+        resource.progressPercent = 100;
+      }
+    }
+    const totalPlannedMinutes = queue.reduce((sum, resource) => sum + resource.plannedMinutes, 0);
+    const totalActualMinutes = queue.reduce((sum, resource) => sum + Math.min(resource.actualMinutes, resource.plannedMinutes), 0);
+    const newSourceDate = currentIndex >= queue.length && lastFinish && lastFinish < input.targetExamDate ? addP48Days(lastFinish, 1) : null;
+    subjects.push({
+      subjectId: subject.subjectId,
+      subjectName: subject.subjectName,
+      weeklyMinutes: subject.weeklyMinutes,
+      resources: queue,
+      newSourceDate,
+      totalPlannedMinutes,
+      totalActualMinutes
+    });
+  }
+  return subjects;
+}
+function buildP48Months(input) {
+  const result = [];
+  const cursor = parseDate3(input.asOfDate);
+  cursor.setUTCDate(1);
+  const end = parseDate3(input.targetExamDate);
+  end.setUTCDate(1);
+  while (cursor <= end) {
+    const startMonth = new Date(cursor);
+    const endMonth = monthEnd(startMonth);
+    const rangeStart = startMonth < parseDate3(input.asOfDate) ? parseDate3(input.asOfDate) : startMonth;
+    const rangeEnd = endMonth > parseDate3(input.targetExamDate) ? parseDate3(input.targetExamDate) : endMonth;
+    const totalMonthDays = endMonth.getUTCDate();
+    let activeFactor = 0;
+    let blockedDays = 0;
+    for (let d = new Date(rangeStart); d <= rangeEnd; d = new Date(d.getTime() + DAY_MS)) {
+      const multiplier = periodMultiplierForDate(dateString(d), input.periods);
+      activeFactor += multiplier;
+      if (multiplier === 0) blockedDays += 1;
+    }
+    const plannedMinutes = Math.max(0, Math.round(input.monthlyTargetMinutes * (activeFactor / totalMonthDays) / 30) * 30);
+    const phase = p48PhaseForDate(dateString(rangeStart));
+    result.push({
+      month: monthKey(startMonth),
+      label: new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric", timeZone: "UTC" }).format(startMonth),
+      plannedMinutes,
+      blockedDays,
+      phase: phase.name,
+      focus: phase.focus
+    });
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+  return result;
+}
+function roundToThirty(minutes) {
+  return Math.max(0, Math.round(minutes / 30) * 30);
+}
+function buildP48WeekBlocks(input) {
+  const dates = Array.from({ length: 7 }, (_, index) => addP48Days(input.weekStart, index));
+  const activeDates = dates.filter((date) => date >= input.currentDate && (input.dayCapacities[date] ?? 0) > 0);
+  const totalCapacity = activeDates.reduce((sum, date) => sum + (input.dayCapacities[date] ?? 0), 0);
+  if (totalCapacity <= 0) return [];
+  const scale = Math.min(1, totalCapacity / input.weeklyTargetMinutes);
+  const subjectRemaining = /* @__PURE__ */ new Map();
+  for (const subject of input.subjects) subjectRemaining.set(subject.subjectId, roundToThirty(subject.weeklyMinutes * scale));
+  let targetTotal = [...subjectRemaining.values()].reduce((sum, minutes) => sum + minutes, 0);
+  const capacityTarget = roundToThirty(totalCapacity);
+  while (targetTotal > capacityTarget) {
+    const candidate = [...subjectRemaining.entries()].sort((a, b) => b[1] - a[1])[0];
+    if (!candidate || candidate[1] < 30) break;
+    subjectRemaining.set(candidate[0], candidate[1] - 30);
+    targetTotal -= 30;
+  }
+  while (targetTotal + 30 <= capacityTarget) {
+    const subject = input.subjects.slice().sort((a, b) => b.weeklyMinutes - (subjectRemaining.get(b.subjectId) ?? 0) - (a.weeklyMinutes - (subjectRemaining.get(a.subjectId) ?? 0)))[0];
+    if (!subject) break;
+    subjectRemaining.set(subject.subjectId, (subjectRemaining.get(subject.subjectId) ?? 0) + 30);
+    targetTotal += 30;
+  }
+  const queues = /* @__PURE__ */ new Map();
+  for (const subject of input.subjects) {
+    queues.set(subject.subjectId, input.resources.filter((resource) => resource.subjectId === subject.subjectId && resource.remainingMinutes > 0).sort((a, b) => a.sequenceOrder - b.sequenceOrder).map((resource) => ({ ...resource })));
+  }
+  const result = [];
+  let previousSubject = null;
+  for (const date of activeDates) {
+    let dayRemaining = roundToThirty(input.dayCapacities[date] ?? 0);
+    let guard = 0;
+    while (dayRemaining >= 30 && guard < 30) {
+      const candidates = input.subjects.filter((subject2) => (subjectRemaining.get(subject2.subjectId) ?? 0) >= 30).sort((a, b) => (subjectRemaining.get(b.subjectId) ?? 0) - (subjectRemaining.get(a.subjectId) ?? 0));
+      if (!candidates.length) break;
+      const subject = candidates.find((candidate) => candidate.subjectId !== previousSubject) ?? candidates[0];
+      const weeklyRemaining = subjectRemaining.get(subject.subjectId) ?? 0;
+      const queue = queues.get(subject.subjectId) ?? [];
+      while (queue.length && queue[0].remainingMinutes <= 0) queue.shift();
+      const resource = queue[0] ?? null;
+      const chunk = Math.min(60, dayRemaining, weeklyRemaining, resource ? Math.max(30, roundToThirty(resource.remainingMinutes)) : 60);
+      const minutes = Math.max(30, roundToThirty(chunk));
+      const bounded = Math.min(minutes, dayRemaining, weeklyRemaining);
+      if (bounded < 30) break;
+      result.push({
+        plannedDate: date,
+        subjectId: subject.subjectId,
+        subjectName: subject.subjectName,
+        workMode: resource?.workMode ?? "other",
+        resourceId: resource?.resourceId ?? null,
+        resourceName: resource?.resourceName ?? null,
+        estimatedMinutes: bounded,
+        detail: resource ? resource.resourceName : `Yeni kaynak zaman\u0131 \xB7 ${subject.subjectName}`,
+        isNewResourceWindow: !resource
+      });
+      subjectRemaining.set(subject.subjectId, weeklyRemaining - bounded);
+      dayRemaining -= bounded;
+      if (resource) resource.remainingMinutes -= bounded;
+      previousSubject = subject.subjectId;
+      guard += 1;
+    }
+  }
+  return result;
+}
 export {
   BACKLOG_THRESHOLDS,
   CRITICAL_OVERDUE_AFTER_DAYS,
@@ -804,8 +1020,11 @@ export {
   REVISION_INTERVAL_DAYS,
   REVISION_TYPE_BY_MASTERY,
   addCalendarDays,
+  addP48Days,
   addRevisionCalendarDays,
   buildMinimumDayPlan,
+  buildP48Months,
+  buildP48WeekBlocks,
   buildRevisionDecision,
   buildSyllabusProjection,
   buildWeeklyPlanV0,
@@ -820,6 +1039,7 @@ export {
   deriveTaskStatus,
   evaluateBacklog,
   evaluateTopicMastery,
+  forecastP48Resources,
   getNextBestTask,
   getRevisionUrgency,
   getZonedDayRange,
@@ -827,6 +1047,8 @@ export {
   interpretWeeklyReport,
   isInstantInRange,
   isoWeekday,
+  p48MondayOf,
+  p48PhaseForDate,
   remainingTaskMinutes,
   replanWeeklyPlanV1,
   transitionTopicForLearnTask,

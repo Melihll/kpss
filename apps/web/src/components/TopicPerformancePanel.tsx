@@ -32,13 +32,17 @@ export function TopicPerformancePanel() {
     void load();
     return () => window.removeEventListener("kpss:execution-changed", refresh);
   }, [load]);
-  return <section className="mastery-panel">
-    <h2>KONU PERFORMANSI</h2>
+
+  const evaluated = topics.filter((topic) => topic.mastery_level !== "unknown");
+  const visibleTopics = (evaluated.length ? evaluated : topics).slice(0, 12);
+
+  return <section className="mastery-panel panel-card">
+    <div className="panel-heading"><div><span className="panel-kicker">KONU PERFORMANSI</span><h2>Hangi konular güçlü, hangileri dikkat istiyor?</h2><p>Son çalışma ve test sonuçlarına göre güncellenen mastery görünümü.</p></div><span className="count-bubble">{evaluated.length}/{topics.length}</span></div>
     {error && <p className="error">{error}</p>}
-    <div className="topic-grid">{topics.map((topic) => <article className="topic-card" key={topic.curriculum_node_id}>
-      <small>{topic.curriculum_nodes?.subjects?.name ?? "Ders"}</small>
-      <h3>{topic.curriculum_nodes?.name ?? "Konu"}</h3>
+    <div className="topic-grid">{visibleTopics.map((topic) => <article className={`topic-card ${topic.mastery_level}`} key={topic.curriculum_node_id}>
+      <div><small>{topic.curriculum_nodes?.subjects?.name ?? "Ders"}</small><h3>{topic.curriculum_nodes?.name ?? "Konu"}</h3></div>
       <span className={`mastery-badge ${topic.mastery_level}`}>{LEVEL_NAMES[topic.mastery_level] ?? topic.mastery_level}</span>
     </article>)}</div>
+    {!topics.length && <div className="empty-inline">Henüz konu performansı oluşmadı.</div>}
   </section>;
 }

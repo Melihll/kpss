@@ -404,14 +404,14 @@ export function OnboardingPage() {
     });
   }
 
-  if (loading) return <main className="card wide"><p>Onboarding yükleniyor…</p></main>;
+  if (loading) return <main className="card wide onboarding-card"><p>Kurulum yükleniyor…</p></main>;
 
   const selectedResource = resources.find((resource) => resource.id === selectedResourceId);
   const selectedCurriculum = curriculum.filter((node) => node.subject_id === selectedResource?.subject_id);
 
   return (
-    <main className="card wide">
-      <div className="toolbar"><h1>KPSS Koçu Kurulum</h1><Link to="/">Dashboard</Link></div>
+    <main className="card wide onboarding-card">
+      <div className="toolbar onboarding-toolbar"><div><span className="eyebrow">ÇALIŞMA PROFİLİ</span><h1>KPSS Koçu Kurulum</h1><p>Planın doğru çalışması için temel bilgileri bir kez tamamla.</p></div><Link to="/">Dashboard</Link></div>
       <nav className="steps" aria-label="Onboarding adımları">
         {STEPS.map((label, index) => (
           <button key={label} type="button" className={step === index + 1 ? "active" : ""}

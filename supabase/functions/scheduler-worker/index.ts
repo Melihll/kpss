@@ -1,11 +1,13 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   buildDailyPlanSummary,
-  formatMinutes,
   generateWeeklyReport,
   localDayRange,
   weeklyReportMessage,
 } from "../_shared/pilot.ts";
+import { formatDailyCoachMessage } from "../_shared/telegram-coach.ts";
+import { recalculateCurrentPlan } from "../_shared/adaptive.ts";
+import { ensureP48WeekPlanForService } from "../_shared/p48-week.ts";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -53,19 +55,41 @@ Deno.serve(async (request) => {
       let result: Record<string, unknown> = { actionType: action.action_type, notification: "skipped_not_linked" };
 
       if (action.action_type === "daily_plan") {
+        const weekStart = action.payload.weekStartDate ?? (() => { const value=new Date(`${action.payload.localDate}T12:00:00Z`); const day=value.getUTCDay()||7; value.setUTCDate(value.getUTCDate()-day+1); return value.toISOString().slice(0,10); })();
+        await ensureP48WeekPlanForService(admin, action.user_id, profile.data, action.payload.localDate);
+        const activePlan = await admin.from("weekly_plans").select("*").eq("user_id",action.user_id).eq("exam_profile_id",action.exam_profile_id).eq("week_start_date",weekStart).eq("status","active").maybeSingle();
+        if (activePlan.error) throw activePlan.error;
+        if (activePlan.data) await recalculateCurrentPlan(admin,action.user_id,profile.data,activePlan.data,"study_deviation",true);
         const summary = await buildDailyPlanSummary(admin, action.user_id, profile.data, action.payload.localDate);
         result = { ...result, summary };
         if (identity.data?.external_chat_id) {
-          const reserved = await admin.rpc("reserve_scheduled_action_notification", { p_action_id: action.id });
-          if (reserved.error) throw reserved.error;
-          if (reserved.data) {
-            const recommendation = summary.recommendation
-              ? `\n\nŞimdi en mantıklı görev:\n${summary.recommendation.title}\n${summary.recommendation.remainingMinutes} dk`
-              : "";
-            const outbound = await sendTelegram(identity.data.external_chat_id,
-              `Bugünkü planın\n\n${summary.taskCount} görev\nTahmini toplam: ${formatMinutes(summary.totalMinutes)}${recommendation}`);
-            result = { ...result, notification: "sent", outbound };
-          } else result = { ...result, notification: "deduplicated" };
+          const range = localDayRange(action.payload.localDate);
+          const manualView = await admin.from("recommendation_events").select("id", { count: "exact", head: true })
+            .eq("user_id", action.user_id)
+            .eq("exam_profile_id", action.exam_profile_id)
+            .eq("event_type", "daily_plan")
+            .eq("channel", "telegram")
+            .gte("created_at", range.startUtc)
+            .lt("created_at", range.endUtc);
+          if (manualView.error) throw manualView.error;
+          if ((manualView.count ?? 0) > 0) {
+            result = { ...result, notification: "suppressed_manual_view" };
+          } else {
+            const reserved = await admin.rpc("reserve_scheduled_action_notification", { p_action_id: action.id });
+            if (reserved.error) throw reserved.error;
+            if (reserved.data) {
+              const recommendation = summary.recommendation;
+              const primaryButton = recommendation?.needsResult
+                ? { text: "Sonuç Gir", callback_data: `result_begin:${recommendation.taskId}` }
+                : { text: "Şimdi Ne Yapmalıyım?", callback_data: "now" };
+              const outbound = await sendTelegram(
+                identity.data.external_chat_id,
+                formatDailyCoachMessage(summary),
+                [[primaryButton], [{ text: "Minimum Plan", callback_data: "minimum" }], [{ text: "Özel Durum", callback_data: "special" }, { text: "Çalışma Ekle", callback_data: "manual_begin" }]],
+              );
+              result = { ...result, notification: "sent", outbound };
+            } else result = { ...result, notification: "deduplicated" };
+          }
         }
       } else if (action.action_type === "data_gap_check") {
         const range = localDayRange(action.payload.gapDate);

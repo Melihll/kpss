@@ -46,4 +46,18 @@ describe("getNextBestTask", () => {
     ], { today: "2026-08-08" });
     expect(result.recommendedTask.id).toBe("a");
   });
+
+  it("combines session progress and pending resource units without double-counting remaining work", () => {
+    expect(getNextBestTask([
+      task({ id: "session-progress", estimatedMinutes: 60, completedMinutes: 20, pendingUnitMinutes: 60 }),
+    ], { today: "2026-08-08" }).remainingMinutes).toBe(40);
+
+    expect(getNextBestTask([
+      task({ id: "unit-progress", estimatedMinutes: 60, completedMinutes: 0, pendingUnitMinutes: 30 }),
+    ], { today: "2026-08-08" }).remainingMinutes).toBe(30);
+
+    expect(getNextBestTask([
+      task({ id: "awaiting-result", estimatedMinutes: 60, completedMinutes: 60, pendingUnitMinutes: 60, status: "partially_completed" }),
+    ], { today: "2026-08-08" }).remainingMinutes).toBe(0);
+  });
 });

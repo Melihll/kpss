@@ -39,13 +39,16 @@ export function RevisionPanel() {
   const today = revisions.filter((row) => row.urgency === "due").length;
   const overdue = revisions.filter((row) => row.urgency === "overdue" || row.urgency === "critical_overdue").length;
   const upcoming = revisions.filter((row) => row.urgency === "upcoming").length;
-  return <section className="revision-panel">
-    <h2>TEKRARLAR</h2>
+
+  return <section className="revision-panel panel-card compact-panel">
+    <div className="panel-heading"><div><span className="panel-kicker">TEKRARLAR</span><h2>Tekrar bütçesi</h2></div><span className="count-bubble">{revisions.length}</span></div>
     {error && <p className="error">{error}</p>}
-    <dl className="stats"><div><dt>Bugün</dt><dd>{today}</dd></div><div><dt>Gecikmiş</dt><dd>{overdue}</dd></div><div><dt>Yaklaşan</dt><dd>{upcoming}</dd></div></dl>
-    <div className="revision-list">{revisions.map((row) => <article className="revision-card" key={row.id}>
-      <div><small>{row.curriculum_nodes?.subjects?.name ?? "Ders"}</small><h3>{row.curriculum_nodes?.name ?? "Konu"}</h3><p>{TYPE_NAMES[row.revision_type]} — {row.estimated_minutes} dk · {DATE_NAMES[row.urgency]}</p></div>
-      <button disabled={busy === row.id} onClick={() => void complete(row.id)}>Tamamla</button>
+    <div className="revision-summary"><div className="due"><strong>{today}</strong><span>Bugün</span></div><div className="overdue"><strong>{overdue}</strong><span>Gecikmiş</span></div><div className="upcoming"><strong>{upcoming}</strong><span>Yaklaşan</span></div></div>
+    <div className="revision-list">{revisions.slice(0, 5).map((row) => <article className="revision-card" key={row.id}>
+      <div className={`revision-dot ${row.urgency}`} />
+      <div className="revision-copy"><small>{row.curriculum_nodes?.subjects?.name ?? "Ders"}</small><h3>{row.curriculum_nodes?.name ?? "Konu"}</h3><p>{TYPE_NAMES[row.revision_type]} · {row.estimated_minutes} dk · {DATE_NAMES[row.urgency]}</p></div>
+      <button className="text-button" disabled={busy === row.id} onClick={() => void complete(row.id)}>Tamamla</button>
     </article>)}</div>
+    {!revisions.length && <div className="empty-inline">Şu an bekleyen tekrar yok.</div>}
   </section>;
 }

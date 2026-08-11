@@ -1,0 +1,241 @@
+{
+  "target_score_type": "KPSSP48",
+  "target_exam_year": 2027,
+  "source_note": "106 WhatsApp photos supplied by user on 2026-08-11; resource names transcribed from visible covers. 2027 official guide should be rechecked when published.",
+  "resources": [
+    {
+      "subject": "Türkçe",
+      "name": "20 Günde Zemin Hazırla – Paragraf Anlam Bilgisi Soru Bankası",
+      "publisher": "Zeduva",
+      "resource_type": "question_bank",
+      "resource_role": "reinforcement",
+      "edition": "2026",
+      "notes": "Paragraf / anlam bilgisi"
+    },
+    {
+      "subject": "Türkçe",
+      "name": "2026 KPSS Türkçe – Tamamı Çözümlü Soru Bankası",
+      "publisher": "Hoca Kafası Yayınları",
+      "resource_type": "question_bank",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "Öznur Saat Yıldırım"
+    },
+    {
+      "subject": "Matematik",
+      "name": "2026 KPSS Matematik Soru Bankası",
+      "publisher": "Yediiklim Atölyesi",
+      "resource_type": "question_bank",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "Mehmet Bilge Yıldız"
+    },
+    {
+      "subject": "Matematik",
+      "name": "2026 KPSS Genel Yetenek Matematik Soru Bankası – Tamamı Çözümlü",
+      "publisher": "Yargı Plus",
+      "resource_type": "question_bank",
+      "resource_role": "reinforcement",
+      "edition": "2026",
+      "notes": "İlyas Güneş"
+    },
+    {
+      "subject": "Coğrafya",
+      "name": "2026 KPSS Genel Kültür Coğrafya Video Ders Notları",
+      "publisher": "Yargı Plus",
+      "resource_type": "notes",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "Engin Eraydın"
+    },
+    {
+      "subject": "Coğrafya",
+      "name": "2026 KPSS Genel Kültür Coğrafya Soru Bankası – Tamamı Çözümlü",
+      "publisher": "Yargı Plus",
+      "resource_type": "question_bank",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "Engin Eraydın"
+    },
+    {
+      "subject": "Tarih",
+      "name": "2026 KPSS Tarih Ders Notları",
+      "publisher": "Benim Hocam",
+      "resource_type": "notes",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "Ramazan Yetgin"
+    },
+    {
+      "subject": "Tarih",
+      "name": "2026 KPSS Tarih Soru Bankası – Tamamı Çözümlü",
+      "publisher": "Benim Hocam",
+      "resource_type": "question_bank",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "Ramazan Yetgin"
+    },
+    {
+      "subject": "Hukuk",
+      "name": "Libertus Anayasa Hukuku – Konu Anlatımlı",
+      "publisher": "Pegem Akademi",
+      "resource_type": "book",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "KPSS A Grubu"
+    },
+    {
+      "subject": "Hukuk",
+      "name": "Libertus İdare Hukuku – Konu Anlatımlı",
+      "publisher": "Pegem Akademi",
+      "resource_type": "book",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "KPSS A Grubu"
+    },
+    {
+      "subject": "Hukuk",
+      "name": "Libertus Ceza Hukuku – Konu Anlatımlı",
+      "publisher": "Pegem Akademi",
+      "resource_type": "book",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "KPSS A Grubu"
+    },
+    {
+      "subject": "Hukuk",
+      "name": "Libertus Medeni Hukuk – Konu Anlatımlı",
+      "publisher": "Pegem Akademi",
+      "resource_type": "book",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "KPSS A Grubu"
+    },
+    {
+      "subject": "Hukuk",
+      "name": "Libertus Borçlar Hukuku – Konu Anlatımlı",
+      "publisher": "Pegem Akademi",
+      "resource_type": "book",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "KPSS A Grubu"
+    },
+    {
+      "subject": "Hukuk",
+      "name": "Libertus Ticaret Hukuku – Konu Anlatımlı",
+      "publisher": "Pegem Akademi",
+      "resource_type": "book",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "KPSS A Grubu"
+    },
+    {
+      "subject": "Hukuk",
+      "name": "Libertus İcra-İflas Hukuku – Konu Anlatımlı",
+      "publisher": "Pegem Akademi",
+      "resource_type": "book",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": "KPSS A Grubu"
+    },
+    {
+      "subject": "Hukuk",
+      "name": "Libertus Hukuk Soru Bankası – Kamu Hukuku",
+      "publisher": "Pegem Akademi",
+      "resource_type": "question_bank",
+      "resource_role": "reinforcement",
+      "edition": "2026",
+      "notes": "Anayasa, İdare, İdari Yargılama, Ceza, Ceza Muhakemesi"
+    },
+    {
+      "subject": "Hukuk",
+      "name": "Libertus Hukuk Soru Bankası – Özel Hukuk",
+      "publisher": "Pegem Akademi",
+      "resource_type": "question_bank",
+      "resource_role": "reinforcement",
+      "edition": "2026",
+      "notes": "Medeni, Borçlar, Ticaret, İcra-İflas"
+    },
+    {
+      "subject": "İktisat",
+      "name": "Economicus Mikro İktisat – Konu Anlatımlı",
+      "publisher": "Pegem Akademi",
+      "resource_type": "book",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": ""
+    },
+    {
+      "subject": "İktisat",
+      "name": "Economicus Makro İktisat Para-Banka-Kredi – Konu Anlatımlı",
+      "publisher": "Pegem Akademi",
+      "resource_type": "book",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": ""
+    },
+    {
+      "subject": "İktisat",
+      "name": "Economicus Türkiye Ekonomisi, Uluslararası İktisat, Büyüme-Kalkınma ve İktisat Politikası – Ders Notları",
+      "publisher": "Pegem Akademi",
+      "resource_type": "notes",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": ""
+    },
+    {
+      "subject": "İktisat",
+      "name": "Economicus İktisat Soru Bankası 1 – Mikro İktisat",
+      "publisher": "Pegem Akademi",
+      "resource_type": "question_bank",
+      "resource_role": "reinforcement",
+      "edition": "2026",
+      "notes": ""
+    },
+    {
+      "subject": "İktisat",
+      "name": "Economicus İktisat Soru Bankası 2 – Makro İktisat / Para-Banka-Kredi",
+      "publisher": "Pegem Akademi",
+      "resource_type": "question_bank",
+      "resource_role": "reinforcement",
+      "edition": "2026",
+      "notes": ""
+    },
+    {
+      "subject": "Maliye",
+      "name": "Optimus Maliye – Konu Anlatımlı",
+      "publisher": "Pegem Akademi",
+      "resource_type": "book",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": ""
+    },
+    {
+      "subject": "Maliye",
+      "name": "Optimus Maliye – Soru Bankası",
+      "publisher": "Pegem Akademi",
+      "resource_type": "question_bank",
+      "resource_role": "reinforcement",
+      "edition": "2026",
+      "notes": ""
+    },
+    {
+      "subject": "Muhasebe",
+      "name": "Reditus Muhasebe – Konu Anlatımlı",
+      "publisher": "Pegem Akademi",
+      "resource_type": "book",
+      "resource_role": "primary",
+      "edition": "2026",
+      "notes": ""
+    },
+    {
+      "subject": "Muhasebe",
+      "name": "Reditus Muhasebe – Soru Bankası",
+      "publisher": "Pegem Akademi",
+      "resource_type": "question_bank",
+      "resource_role": "reinforcement",
+      "edition": "2026",
+      "notes": ""
+    }
+  ]
+}

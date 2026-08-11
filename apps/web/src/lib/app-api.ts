@@ -51,5 +51,12 @@ export const FRIENDLY_API_ERRORS: Readonly<Record<string, string>> = {
   REVISION_NOT_ACTIVE: "Bu tekrar artık aktif değil.",
   WEEKLY_PLAN_NOT_FOUND: "Bu hafta için aktif plan bulunamadı.",
   TASK_NOT_REPLANNABLE: "Görev mevcut durumunda yeniden planlanamaz.",
+  INVALID_MANUAL_PLAN_DATE: "Plan içindeki günlerden biri bu haftanın dışında.",
+  INVALID_MANUAL_PLAN_MINUTES: "Çalışma süresini kontrol et.",
+  INVALID_MANUAL_PLAN_SUBJECT: "Seçilen ders aktif derslerin arasında değil.",
+  INVALID_MANUAL_PLAN_RESOURCE: "Seçilen kaynak bu dersle eşleşmiyor.",
+  INVALID_WORK_MODE: "Çalışma türünü kontrol et.",
+  MANUAL_PLAN_OVER_CAPACITY: "Bu plan haftalık kapasiteni aşıyor. Birkaç süreyi azalt.",
+  P48_STRATEGY_NOT_CONFIGURED: "P48 yol haritası henüz kurulmadı.",
   UNAUTHORIZED: "Oturumunuz geçersiz. Yeniden giriş yapın.",
 };

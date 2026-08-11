@@ -1,6 +1,11 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
+  buildP48Months,
+  buildP48WeekBlocks,
   buildWeeklyPlanV0,
+  calculateEffectiveDayCapacity,
+  calculateWeeklyAvailableMinutes,
+  forecastP48Resources,
   DEFAULT_RESOURCE_UNIT_MINUTES,
   getZonedDayRange,
   getZonedWeekRange,
@@ -38,6 +43,7 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   RESOURCE_UNIT_NOT_LINKED_TO_TASK: 400,
   RESOURCE_UNIT_NOT_TEST: 400,
   TASK_NOT_FOUND: 404,
+  TASK_NOT_STARTABLE: 409,
   RESOURCE_UNIT_NOT_FOUND: 404,
   TEST_RESULT_NOT_FOUND: 404,
   SESSION_NOT_FOUND: 404,
@@ -58,6 +64,14 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   DATA_GAP_NOT_FOUND: 404,
   INVALID_DATA_GAP_RESULT: 400,
   INVALID_WEEK_START: 400,
+  INVALID_MANUAL_PLAN_DATE: 400,
+  INVALID_MANUAL_PLAN_MINUTES: 400,
+  INVALID_MANUAL_PLAN_TITLE: 400,
+  INVALID_MANUAL_PLAN_SUBJECT: 400,
+  INVALID_MANUAL_PLAN_RESOURCE: 400,
+  INVALID_WORK_MODE: 400,
+  MANUAL_PLAN_OVER_CAPACITY: 409,
+  P48_STRATEGY_NOT_CONFIGURED: 409,
 };
 
 function caughtMessage(caught: unknown) {
@@ -83,6 +97,17 @@ function mondayOf(dateString: string) {
   date.setUTCDate(date.getUTCDate() - day + 1);
   return date.toISOString().slice(0, 10);
 }
+
+function addDays(dateString: string, days: number) {
+  const date = new Date(`${dateString}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+const WORK_MODE_LABELS: Readonly<Record<string, string>> = {
+  video: "Video", book: "Kaynak kitap", notes: "Not", questions: "Soru çözümü",
+  mock: "Deneme", review: "Tekrar", other: "Diğer",
+};
 
 async function sha256(value: string) {
   const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
@@ -202,7 +227,7 @@ async function planWithTasks(client: SupabaseClient, plan: any) {
   if (!plan) return { plan: null, tasks: [] };
   const { data: tasks, error } = await client
     .from("tasks")
-    .select("*, task_progress(completed_minutes), task_resource_units(id, resource_unit_id, status, completed_at, resource_units(name, unit_type, estimated_minutes))")
+    .select("*, subjects(name), resources(name, resource_type), task_progress(completed_minutes, actual_study_minutes), task_resource_units(id, resource_unit_id, status, completed_at, resource_units(name, unit_type, estimated_minutes))")
     .eq("weekly_plan_id", plan.id)
     .order("planned_date")
     .order("priority_score", { ascending: false });
@@ -231,6 +256,282 @@ function remainingTodayMinutes(windows: any[]) {
     end = Math.max(end, interval.end);
   }
   return total;
+}
+
+
+const P48_SUBJECT_TARGETS = [
+  { subjectId: "20000000-0000-0000-0000-000000000006", subjectName: "Hukuk", weeklyMinutes: 450, scoreWeight: 20 },
+  { subjectId: "20000000-0000-0000-0000-000000000007", subjectName: "İktisat", weeklyMinutes: 360, scoreWeight: 20 },
+  { subjectId: "20000000-0000-0000-0000-000000000008", subjectName: "Maliye", weeklyMinutes: 210, scoreWeight: 20 },
+  { subjectId: "20000000-0000-0000-0000-000000000009", subjectName: "Muhasebe", weeklyMinutes: 210, scoreWeight: 20 },
+  { subjectId: "20000000-0000-0000-0000-000000000002", subjectName: "Matematik", weeklyMinutes: 180, scoreWeight: 5 },
+  { subjectId: "20000000-0000-0000-0000-000000000001", subjectName: "Türkçe", weeklyMinutes: 120, scoreWeight: 5 },
+  { subjectId: "20000000-0000-0000-0000-000000000003", subjectName: "Tarih", weeklyMinutes: 150, scoreWeight: 4.5 },
+  { subjectId: "20000000-0000-0000-0000-000000000004", subjectName: "Coğrafya", weeklyMinutes: 120, scoreWeight: 3 },
+] as const;
+
+function p48Windows(rows: any[]) {
+  return rows.map((row) => ({ weekday: row.weekday, start_time: row.start_time, end_time: row.end_time, is_active: row.is_active }));
+}
+
+function p48Periods(rows: any[]) {
+  return rows.map((row) => ({
+    name: row.name,
+    periodType: row.period_type,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    capacityMultiplier: row.capacity_multiplier == null ? null : Number(row.capacity_multiplier),
+  }));
+}
+
+function p48Exceptions(rows: any[]) {
+  return rows.map((row) => ({
+    date: row.exception_date,
+    type: row.exception_type,
+    startTime: row.start_time,
+    endTime: row.end_time,
+    minutesDelta: row.minutes_delta,
+  }));
+}
+
+async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: any) {
+  const strategyResult = await client.from("p48_strategy_profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("exam_profile_id", profile.id)
+    .eq("status", "active")
+    .maybeSingle();
+  if (strategyResult.error) throw strategyResult.error;
+  if (!strategyResult.data) return { configured: false };
+
+  const [targetResult, sessionsResult, periodsResult, availabilityResult] = await Promise.all([
+    client.from("p48_resource_targets")
+      .select("planned_minutes,sequence_order,work_mode,resources(id,subject_id,name,status,resource_type,publisher)")
+      .eq("user_id", userId)
+      .eq("exam_profile_id", profile.id)
+      .order("sequence_order"),
+    client.from("study_sessions")
+      .select("resource_id,duration_minutes")
+      .eq("user_id", userId)
+      .eq("exam_profile_id", profile.id)
+      .eq("status", "completed")
+      .not("resource_id", "is", null),
+    client.from("calendar_periods")
+      .select("period_type,name,start_date,end_date,capacity_multiplier")
+      .eq("user_id", userId)
+      .eq("exam_profile_id", profile.id)
+      .order("start_date"),
+    client.from("weekly_availability")
+      .select("weekday,start_time,end_time,is_active")
+      .eq("user_id", userId)
+      .eq("exam_profile_id", profile.id)
+      .eq("is_active", true),
+  ]);
+  for (const result of [targetResult, sessionsResult, periodsResult, availabilityResult]) if (result.error) throw result.error;
+
+  const actualByResource = new Map<string, number>();
+  for (const row of sessionsResult.data ?? []) {
+    if (!row.resource_id) continue;
+    actualByResource.set(row.resource_id, (actualByResource.get(row.resource_id) ?? 0) + Number(row.duration_minutes ?? 0));
+  }
+
+  const resources = (targetResult.data ?? []).map((row: any) => ({
+    resourceId: row.resources.id,
+    subjectId: row.resources.subject_id,
+    subjectName: P48_SUBJECT_TARGETS.find((subject) => subject.subjectId === row.resources.subject_id)?.subjectName ?? "Ders",
+    resourceName: row.resources.name,
+    plannedMinutes: Number(row.planned_minutes),
+    actualMinutes: actualByResource.get(row.resources.id) ?? 0,
+    sequenceOrder: Number(row.sequence_order),
+    workMode: row.work_mode,
+    resourceStatus: row.resources.status,
+    publisher: row.resources.publisher,
+    resourceType: row.resources.resource_type,
+  }));
+
+  const periods = p48Periods(periodsResult.data ?? []);
+  const today = istanbulDate();
+  const targetExamDate = strategyResult.data.target_exam_date;
+  const subjectForecasts = forecastP48Resources({
+    asOfDate: today,
+    targetExamDate,
+    subjects: P48_SUBJECT_TARGETS.map((subject) => ({ ...subject })),
+    resources,
+    periods,
+  });
+  const baseMonths = buildP48Months({
+    asOfDate: today,
+    targetExamDate,
+    monthlyTargetMinutes: Number(strategyResult.data.monthly_target_minutes),
+    periods,
+  });
+  const months = baseMonths.map((month) => {
+    const [year, monthNumber] = month.month.split("-").map(Number);
+    const monthStart = `${month.month}-01`;
+    const monthEnd = new Date(Date.UTC(year, monthNumber, 0, 12)).toISOString().slice(0, 10);
+    const focusResources = subjectForecasts.flatMap((subject) => subject.resources
+      .filter((resource) => resource.forecastStartDate && resource.forecastFinishDate
+        && resource.forecastStartDate <= monthEnd && resource.forecastFinishDate >= monthStart)
+      .map((resource) => `${subject.subjectName}: ${resource.resourceName}`));
+    for (const subject of subjectForecasts) {
+      if (subject.newSourceDate && subject.newSourceDate >= monthStart && subject.newSourceDate <= monthEnd) {
+        focusResources.push(`${subject.subjectName}: Yeni kaynak zamanı`);
+      }
+    }
+    return { ...month, focusResources: [...new Set(focusResources)].slice(0, 5) };
+  });
+  const currentWeek = await planWithTasks(client, await currentPlan(client, profile.id, mondayOf(today)));
+  const totalPlannedResourceMinutes = resources.reduce((sum, resource) => sum + resource.plannedMinutes, 0);
+  const totalActualResourceMinutes = resources.reduce((sum, resource) => sum + Math.min(resource.actualMinutes, resource.plannedMinutes), 0);
+  const milestones = [
+    ...periods.map((period) => ({ type: "academic_gap", date: period.startDate, endDate: period.endDate, title: period.name, subjectName: null })),
+    ...subjectForecasts.filter((subject) => subject.newSourceDate).map((subject) => ({
+      type: "new_resource",
+      date: subject.newSourceDate!,
+      endDate: null,
+      title: `Yeni kaynak zamanı · ${subject.subjectName}`,
+      subjectName: subject.subjectName,
+    })),
+    {
+      type: "source_gap",
+      date: "2027-01-18",
+      endDate: null,
+      title: "Vatandaşlık + güncel bilgiler kaynağını ekle",
+      subjectName: "Genel Kültür",
+    },
+    {
+      type: "exam",
+      date: targetExamDate,
+      endDate: null,
+      title: "KPSS 2027 hedef günü (varsayım)",
+      subjectName: null,
+    },
+  ].sort((a, b) => a.date.localeCompare(b.date));
+
+  return {
+    configured: true,
+    strategy: {
+      scoreType: strategyResult.data.score_type,
+      targetExamDate,
+      weeklyTargetMinutes: Number(strategyResult.data.weekly_target_minutes),
+      monthlyTargetMinutes: Number(strategyResult.data.monthly_target_minutes),
+      sourceNote: strategyResult.data.source_note,
+      daysToExam: Math.max(0, Math.ceil((new Date(`${targetExamDate}T12:00:00Z`).getTime() - new Date(`${today}T12:00:00Z`).getTime()) / 86_400_000)),
+    },
+    subjects: P48_SUBJECT_TARGETS.map((subject) => ({ ...subject })),
+    subjectForecasts,
+    months,
+    periods,
+    milestones,
+    currentWeek,
+    availability: availabilityResult.data ?? [],
+    resourcesSummary: {
+      count: resources.length,
+      totalPlannedMinutes: totalPlannedResourceMinutes,
+      totalActualMinutes: totalActualResourceMinutes,
+      progressPercent: totalPlannedResourceMinutes > 0 ? Math.round((totalActualResourceMinutes / totalPlannedResourceMinutes) * 100) : 0,
+    },
+  };
+}
+
+async function generateP48Week(client: SupabaseClient, userId: string, profile: any, force = false) {
+  const strategyResult = await client.from("p48_strategy_profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("exam_profile_id", profile.id)
+    .eq("status", "active")
+    .maybeSingle();
+  if (strategyResult.error) throw strategyResult.error;
+  if (!strategyResult.data) throw new Error("P48_STRATEGY_NOT_CONFIGURED");
+
+  const today = istanbulDate();
+  const weekStart = mondayOf(today);
+  const existing = await currentPlan(client, profile.id, weekStart);
+  if (existing && !force) return { ...(await planWithTasks(client, existing)), created: false };
+
+  const [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult] = await Promise.all([
+    client.from("weekly_availability").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id).eq("is_active", true),
+    client.from("calendar_periods").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id),
+    client.from("schedule_exceptions").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id)
+      .gte("exception_date", weekStart).lte("exception_date", addDays(weekStart, 6)),
+    client.from("p48_resource_targets")
+      .select("planned_minutes,sequence_order,work_mode,resources(id,subject_id,name,status)")
+      .eq("user_id", userId).eq("exam_profile_id", profile.id),
+    client.from("study_sessions")
+      .select("resource_id,duration_minutes")
+      .eq("user_id", userId).eq("exam_profile_id", profile.id).eq("status", "completed").not("resource_id", "is", null),
+  ]);
+  for (const result of [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult]) if (result.error) throw result.error;
+
+  const actualByResource = new Map<string, number>();
+  for (const row of sessionsResult.data ?? []) {
+    if (!row.resource_id) continue;
+    actualByResource.set(row.resource_id, (actualByResource.get(row.resource_id) ?? 0) + Number(row.duration_minutes ?? 0));
+  }
+
+  const dayCapacities: Record<string, number> = {};
+  for (let index = 0; index < 7; index += 1) {
+    const date = addDays(weekStart, index);
+    dayCapacities[date] = calculateEffectiveDayCapacity({
+      date,
+      weeklyAvailability: p48Windows(availabilityResult.data ?? []),
+      calendarPeriods: p48Periods(periodsResult.data ?? []).map((period) => ({
+        startDate: period.startDate,
+        endDate: period.endDate,
+        capacityMultiplier: period.capacityMultiplier,
+      })),
+      scheduleExceptions: p48Exceptions(exceptionsResult.data ?? []),
+    });
+  }
+
+  const resources = (targetResult.data ?? []).map((row: any) => ({
+    resourceId: row.resources.id,
+    resourceName: row.resources.name,
+    subjectId: row.resources.subject_id,
+    subjectName: P48_SUBJECT_TARGETS.find((subject) => subject.subjectId === row.resources.subject_id)?.subjectName ?? "Ders",
+    workMode: row.work_mode,
+    remainingMinutes: row.resources.status === "completed"
+      ? 0
+      : Math.max(0, Number(row.planned_minutes) - (actualByResource.get(row.resources.id) ?? 0)),
+    sequenceOrder: Number(row.sequence_order),
+  }));
+
+  const blocks = buildP48WeekBlocks({
+    weekStart,
+    currentDate: today,
+    weeklyTargetMinutes: Number(strategyResult.data.weekly_target_minutes),
+    dayCapacities,
+    subjects: P48_SUBJECT_TARGETS.map((subject) => ({ ...subject })),
+    resources,
+  });
+
+  const normalized = blocks.map((block) => ({
+    plannedDate: block.plannedDate,
+    subjectId: block.subjectId,
+    workMode: block.workMode,
+    resourceId: block.resourceId,
+    estimatedMinutes: block.estimatedMinutes,
+    title: block.isNewResourceWindow
+      ? `${block.subjectName} · Yeni kaynak zamanı`
+      : `${block.subjectName} · ${WORK_MODE_LABELS[block.workMode] ?? "Çalışma"} · ${block.resourceName}`,
+    description: block.isNewResourceWindow
+      ? `Mevcut P48 kaynakları planlanan süreden önce tamamlandı. ${block.subjectName} için yeni kaynak/deneme seç.`
+      : `Kaynak: ${block.resourceName}`,
+  }));
+  const availableMinutes = Object.entries(dayCapacities)
+    .filter(([date]) => date >= today)
+    .reduce((sum, [, minutes]) => sum + minutes, 0);
+
+  if (availableMinutes <= 0 || normalized.length === 0) {
+    return { plan: null, tasks: [], created: false, academicGap: true, dayCapacities, generatedBlocks: 0 };
+  }
+
+  const stored = await client.rpc("replace_manual_weekly_plan", {
+    p_payload: { weekStartDate: weekStart, availableMinutes, blocks: normalized },
+  });
+  if (stored.error) throw stored.error;
+  const plan = await currentPlan(client, profile.id, weekStart);
+  return { ...(await planWithTasks(client, plan)), created: true, dayCapacities, generatedBlocks: normalized.length };
 }
 
 async function nextTask(client: SupabaseClient, profile: any, userId: string, weekStart: string) {
@@ -292,6 +593,67 @@ Deno.serve(async (request) => {
     const route = pathname.includes("/app-api") ? pathname.split("/app-api")[1] || "/" : pathname;
     const today = istanbulDate();
     const weekStart = mondayOf(today);
+
+    if (request.method === "GET" && route === "/p48/roadmap") {
+      return json(await loadP48Roadmap(client, userId, profile));
+    }
+    if (request.method === "POST" && route === "/p48/bootstrap") {
+      const bootstrap = await client.rpc("bootstrap_p48_strategy");
+      if (bootstrap.error) throw bootstrap.error;
+      await generateP48Week(client, userId, profile, true);
+      return json({ bootstrap: bootstrap.data, roadmap: await loadP48Roadmap(client, userId, profile) }, 201);
+    }
+    if (request.method === "POST" && route === "/p48/week/generate") {
+      return json(await generateP48Week(client, userId, profile, false), 201);
+    }
+    if (request.method === "GET" && route === "/weekly-plan/options") {
+      const [subjectsResult, resourcesResult, availabilityResult] = await Promise.all([
+        client.from("user_subjects").select("subject_id, subjects(id,name,sort_order)").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","active"),
+        client.from("resources").select("id,subject_id,name,resource_type").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","active").order("name"),
+        client.from("weekly_availability").select("weekday,start_time,end_time,is_active").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("is_active",true),
+      ]);
+      for (const result of [subjectsResult,resourcesResult,availabilityResult]) if (result.error) throw result.error;
+      const availability=(availabilityResult.data??[]).map((row:any)=>({weekday:row.weekday,start_time:row.start_time,end_time:row.end_time,is_active:row.is_active}));
+      return json({
+        weekStartDate: weekStart,
+        weekEndDate: addDays(weekStart,6),
+        availableMinutes: calculateWeeklyAvailableMinutes(availability),
+        subjects: (subjectsResult.data??[]).map((row:any)=>({id:row.subject_id,name:row.subjects?.name??"Ders",sortOrder:row.subjects?.sort_order??0})).sort((a:any,b:any)=>a.sortOrder-b.sortOrder),
+        resources: resourcesResult.data??[],
+      });
+    }
+    if (request.method === "POST" && route === "/weekly-plan/manual") {
+      const body=await request.json();
+      const blocks=Array.isArray(body.blocks)?body.blocks:[];
+      const [subjectsResult,resourcesResult,availabilityResult]=await Promise.all([
+        client.from("user_subjects").select("subject_id, subjects(name)").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","active"),
+        client.from("resources").select("id,subject_id,name,resource_type").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","active"),
+        client.from("weekly_availability").select("weekday,start_time,end_time,is_active").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("is_active",true),
+      ]);
+      for(const result of [subjectsResult,resourcesResult,availabilityResult]) if(result.error) throw result.error;
+      const subjectNames=new Map((subjectsResult.data??[]).map((row:any)=>[row.subject_id,row.subjects?.name??"Ders"]));
+      const resources=new Map((resourcesResult.data??[]).map((row:any)=>[row.id,row]));
+      const availability=(availabilityResult.data??[]).map((row:any)=>({weekday:row.weekday,start_time:row.start_time,end_time:row.end_time,is_active:row.is_active}));
+      const availableMinutes=calculateWeeklyAvailableMinutes(availability);
+      const normalized=blocks.map((block:any)=>{
+        const subjectName=subjectNames.get(block.subjectId);
+        const resource=block.resourceId?resources.get(block.resourceId):null;
+        const mode=WORK_MODE_LABELS[String(block.workMode)]??String(block.workMode??"");
+        const detail=String(block.detail??"").trim();
+        const descriptor=detail||resource?.name||"Çalışma";
+        return {
+          plannedDate:String(block.plannedDate??""),subjectId:String(block.subjectId??""),
+          workMode:String(block.workMode??""),resourceId:block.resourceId?String(block.resourceId):null,
+          estimatedMinutes:Number(block.estimatedMinutes),
+          title:`${subjectName??"Ders"} · ${mode} · ${descriptor}`,
+          description:resource?.name?`Kaynak: ${resource.name}${detail&&detail!==resource.name?` · ${detail}`:""}`:(detail||null),
+        };
+      });
+      const stored=await client.rpc("replace_manual_weekly_plan",{p_payload:{weekStartDate:weekStart,availableMinutes,blocks:normalized}});
+      if(stored.error) throw stored.error;
+      const plan=await currentPlan(client,profile.id,weekStart);
+      return json({...(await planWithTasks(client,plan)),manual:stored.data},201);
+    }
 
     if (request.method === "POST" && route === "/weekly-plan/build") {
       const existing = await currentPlan(client, profile.id, weekStart);
@@ -362,10 +724,18 @@ Deno.serve(async (request) => {
       const body=await request.json(); const {data,error}=await client.rpc("start_study_session",{p_task_id:body.taskId,p_entry_source:body.entrySource??"web"}); if(error) throw error; return json(data,201);
     }
     if (request.method === "POST" && route === "/study-sessions/retroactive") {
-      const body=await request.json(); const {data,error}=await client.rpc("record_retroactive_session",{p_payload:{...body,examProfileId:profile.id,entrySource:body.entrySource??"retroactive"}}); if(error) throw error; return json(data,201);
+      const body=await request.json(); const {data,error}=await client.rpc("record_retroactive_session",{p_payload:{...body,examProfileId:profile.id,entrySource:body.entrySource??"retroactive"}}); if(error) throw error;
+      const plan=await currentPlan(client,profile.id,weekStart);
+      const replan=plan?await recalculateCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
+      return json({...data,replan},201);
     }
     const sessionMatch=route.match(/^\/study-sessions\/([0-9a-f-]+)\/(finish|cancel)$/);
-    if(request.method==="POST"&&sessionMatch){const rpc=sessionMatch[2]==="finish"?"finish_study_session":"cancel_study_session";const {data,error}=await client.rpc(rpc,{p_session_id:sessionMatch[1]});if(error)throw error;return json(data);}
+    if(request.method==="POST"&&sessionMatch){
+      const rpc=sessionMatch[2]==="finish"?"finish_study_session":"cancel_study_session";const {data,error}=await client.rpc(rpc,{p_session_id:sessionMatch[1]});if(error)throw error;
+      const plan=sessionMatch[2]==="finish"?await currentPlan(client,profile.id,weekStart):null;
+      const replan=plan?await recalculateCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
+      return json({...data,replan});
+    }
     if(request.method==="POST"&&route==="/test-results"){
       const body=await request.json();
       const {data,error}=await client.rpc("record_test_result",{p_payload:{...body,examProfileId:profile.id,entrySource:body.entrySource??"web"}});
@@ -423,6 +793,11 @@ Deno.serve(async (request) => {
         : ["complete_task", { p_task_id: taskId }];
       const { data, error } = await client.rpc(rpc[0] as string, rpc[1] as Record<string, unknown>);
       if (error) throw error;
+      if (action === "complete") {
+        const plan=await currentPlan(client,profile.id,weekStart);
+        const replan=plan?await recalculateCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
+        return json({...data,replan});
+      }
       return json(data);
     }
     return json({ error: { code: "NOT_FOUND", message: "Route not found" } }, 404);
