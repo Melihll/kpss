@@ -29,12 +29,9 @@ export function LoginPage() {
   }
 
   return <main className="auth-shell">
-    <section className="auth-visual">
-      <div className="auth-brand"><span className="brand-mark"><Icon name="target" /></span><strong>KPSS Koçu</strong></div>
-      <div className="auth-message"><span className="eyebrow">KARAR YORGUNLUĞUNU AZALT</span><h1>Her gün ne çalışacağını düşünmek yerine, çalışmaya başla.</h1><p>Plan, ilerleme, tekrar ve test sonuçları tek çalışma alanında.</p><div className="auth-orbit"><span /><i /><b /></div></div>
-    </section>
     <section className="auth-card">
-      <span className="eyebrow">TEKRAR HOŞ GELDİN</span><h2>Hesabına giriş yap</h2><p>Çalışma panelin kaldığın yerden devam etsin.</p>
+      <div className="auth-brand-inline"><span className="brand-mark"><Icon name="target" /></span><strong>KPSS Koçu</strong></div>
+      <h1>Tekrar hoş geldin.</h1>
       <form onSubmit={handleSubmit}>
         <label>E-posta<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="ornek@mail.com" /></label>
         <label>Şifre<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={6} placeholder="••••••••" /></label>

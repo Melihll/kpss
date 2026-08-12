@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@kpss-coach/domain": "workspace:*",
+    "@phosphor-icons/react": "^2.1.10",
     "@supabase/supabase-js": "^2.57.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

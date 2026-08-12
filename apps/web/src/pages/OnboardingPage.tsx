@@ -34,7 +34,7 @@ interface AvailabilityDraft {
   label: string;
 }
 
-const STEPS = ["Exam Profile", "Subjects", "Weekly Availability", "Resources", "Summary"];
+const STEPS = ["Sınav", "Dersler", "Zaman", "Kaynaklar", "Özet"];
 const WEEKDAYS = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 
 function todayInIstanbul() {
@@ -411,7 +411,7 @@ export function OnboardingPage() {
 
   return (
     <main className="card wide onboarding-card">
-      <div className="toolbar onboarding-toolbar"><div><span className="eyebrow">ÇALIŞMA PROFİLİ</span><h1>KPSS Koçu Kurulum</h1><p>Planın doğru çalışması için temel bilgileri bir kez tamamla.</p></div><Link to="/">Dashboard</Link></div>
+      <div className="toolbar onboarding-toolbar"><div><span className="eyebrow">ÇALIŞMA PROFİLİ</span><h1>Çalışma sistemini kur</h1><p>Planının sana uyum sağlaması için bu beş kısa adımı tamamla.</p></div><Link to="/">Ana sayfa</Link></div>
       <nav className="steps" aria-label="Onboarding adımları">
         {STEPS.map((label, index) => (
           <button key={label} type="button" className={step === index + 1 ? "active" : ""}
@@ -422,7 +422,7 @@ export function OnboardingPage() {
       {notice && <p className="notice" role="status">{notice}</p>}
 
       {step === 1 && (
-        <section><h2>1. Exam Profile</h2><form onSubmit={saveExam}>
+        <section><h2>1. Hedef sınavın</h2><p>Hazırlık dönemini ve hedef tarihi belirle.</p><form onSubmit={saveExam}>
           <label>Sınav dönemi<select value={editionId} onChange={(event) => setEditionId(event.target.value)} required>
             {editions.map((edition) => <option key={edition.id} value={edition.id}>{edition.exams?.name} — {edition.year}</option>)}
           </select></label>
@@ -433,7 +433,7 @@ export function OnboardingPage() {
       )}
 
       {step === 2 && (
-        <section><h2>2. Subjects</h2><p>En az bir ders seçin.</p><div className="check-grid">
+        <section><h2>2. Çalışacağın dersler</h2><p>Planına dahil etmek istediğin dersleri seç.</p><div className="check-grid">
           {subjects.map((subject) => <label key={subject.id} className="check-row"><input type="checkbox"
             checked={selectedSubjectIds.includes(subject.id)} onChange={(event) => setSelectedSubjectIds((current) =>
               event.target.checked ? [...current, subject.id] : current.filter((id) => id !== subject.id))} />{subject.name}</label>)}
@@ -441,7 +441,7 @@ export function OnboardingPage() {
       )}
 
       {step === 3 && (
-        <section><h2>3. Weekly Availability</h2><p>1 = Monday/Pazartesi, 7 = Sunday/Pazar.</p>
+        <section><h2>3. Haftalık zamanın</h2><p>Genellikle çalışabildiğin günleri ve saat aralıklarını ekle.</p>
           {windows.map((window) => <div className="inline-grid" key={window.key}>
             <select value={window.weekday} onChange={(event) => setWindows((current) => current.map((item) => item.key === window.key ? { ...item, weekday: Number(event.target.value) } : item))}>
               {WEEKDAYS.map((day, index) => <option key={day} value={index + 1}>{day}</option>)}
@@ -452,13 +452,13 @@ export function OnboardingPage() {
             <button type="button" onClick={() => setWindows((current) => current.filter((item) => item.key !== window.key))}>Sil</button>
           </div>)}
           <div className="actions"><button type="button" onClick={() => setWindows((current) => [...current, { key: crypto.randomUUID(), weekday: 1, start_time: "14:00", end_time: "18:00", label: "" }])}>Pencere Ekle</button>
-          <strong>Weekly available: {weeklyMinutes === null ? "Geçersiz" : `${Math.floor(weeklyMinutes / 60)}h ${weeklyMinutes % 60}m`}</strong></div>
+          <strong>Haftalık kapasite: {weeklyMinutes === null ? "Geçersiz" : `${Math.floor(weeklyMinutes / 60)}s ${weeklyMinutes % 60}dk`}</strong></div>
           <button disabled={saving || weeklyMinutes === null} onClick={() => void saveAvailability()}>Kaydet ve Devam Et</button>
         </section>
       )}
 
       {step === 4 && profile && (
-        <section><h2>4. Resources</h2>
+        <section><h2>4. Kaynakların</h2><p>Kullandığın kitap, video kurs ve soru bankalarını ekle.</p>
           <form className="form-grid" onSubmit={addResource}>
             <label>Ders<select name="subject_id" required>{subjects.filter((subject) => selectedSubjectIds.includes(subject.id)).map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}</select></label>
             <label>Ad<input name="name" required /></label><label>Yayıncı<input name="publisher" /></label>
@@ -474,18 +474,18 @@ export function OnboardingPage() {
             <form onSubmit={addBulkUnits}><h3>Toplu Test Oluştur</h3><label>Section<select name="section_id" required>{sections.map((section) => <option key={section.id} value={section.id}>{section.name}</option>)}</select></label><label>Prefix<input name="prefix" defaultValue="Test" required /></label><label>Başlangıç<input name="start" type="number" min="1" defaultValue="1" required /></label><label>Bitiş<input name="end" type="number" min="1" max="200" defaultValue="12" required /></label><input name="unit_type" type="hidden" value="test" /><button disabled={saving || !sections.length}>Toplu Oluştur</button></form>
           </div>}
           <p>{resources.length} kaynak, {sections.length} section, {units.length} unit.</p>
-          <button type="button" onClick={() => setStep(5)}>Summary’ye Geç</button>
+          <button type="button" onClick={() => setStep(5)}>Özete Geç</button>
         </section>
       )}
 
       {step === 5 && (
-        <section><h2>5. Summary</h2><dl>
-          <dt>Exam</dt><dd>{editions.find((edition) => edition.id === editionId)?.exams?.name ?? "—"}</dd>
-          <dt>Selected subjects</dt><dd>{selectedSubjectIds.length}</dd>
-          <dt>Weekly available</dt><dd>{weeklyMinutes === null ? "—" : `${Math.floor(weeklyMinutes / 60)}h ${weeklyMinutes % 60}m`}</dd>
-          <dt>Resource count</dt><dd>{resources.length}</dd>
-          <dt>Curriculum progress initialized</dt><dd>{progressCount}</dd>
-        </dl><button disabled={saving || !profile} onClick={() => void activateProfile()}>Onboarding’i Tamamla</button></section>
+        <section><h2>5. Her şey hazır</h2><p>Sistemin bu bilgilerle yaşayan haftalık planını oluşturacak.</p><dl>
+          <dt>Sınav</dt><dd>{editions.find((edition) => edition.id === editionId)?.exams?.name ?? "—"}</dd>
+          <dt>Seçilen ders</dt><dd>{selectedSubjectIds.length}</dd>
+          <dt>Haftalık kapasite</dt><dd>{weeklyMinutes === null ? "—" : `${Math.floor(weeklyMinutes / 60)}s ${weeklyMinutes % 60}dk`}</dd>
+          <dt>Kaynak</dt><dd>{resources.length}</dd>
+          <dt>Hazırlanan konu</dt><dd>{progressCount}</dd>
+        </dl><button disabled={saving || !profile} onClick={() => void activateProfile()}>Çalışma Sistemini Başlat</button></section>
       )}
     </main>
   );

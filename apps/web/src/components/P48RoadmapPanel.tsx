@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { AppApiError, callAppApi, FRIENDLY_API_ERRORS } from "../lib/app-api";
 import { Icon } from "./Icon";
 
@@ -15,11 +15,6 @@ interface ApiTask {
   task_progress?: Array<{ completed_minutes: number; actual_study_minutes: number }>;
 }
 
-interface CurrentWeek {
-  plan: { id: string; week_start_date: string; week_end_date: string; available_minutes: number; planned_minutes: number } | null;
-  tasks: ApiTask[];
-}
-
 interface ResourceForecast {
   resourceId: string;
   resourceName: string;
@@ -29,6 +24,8 @@ interface ResourceForecast {
   remainingMinutes: number;
   forecastFinishDate: string | null;
   completed: boolean;
+  publisher?: string | null;
+  resourceType?: string | null;
 }
 
 interface SubjectForecast {
@@ -51,56 +48,40 @@ interface MonthSummary {
   focusResources?: string[];
 }
 
+interface Milestone { type: string; date: string; endDate: string | null; title: string; subjectName: string | null }
+
 interface RoadmapResponse {
   configured: boolean;
-  strategy?: {
-    scoreType: string;
-    targetExamDate: string;
-    weeklyTargetMinutes: number;
-    monthlyTargetMinutes: number;
-    sourceNote: string;
-    daysToExam: number;
-  };
+  strategy?: { scoreType: string; targetExamDate: string; weeklyTargetMinutes: number; monthlyTargetMinutes: number; sourceNote: string; daysToExam: number };
   subjectForecasts?: SubjectForecast[];
   months?: MonthSummary[];
   periods?: Array<{ name: string; periodType: string; startDate: string; endDate: string; capacityMultiplier: number | null }>;
-  milestones?: Array<{ type: string; date: string; endDate: string | null; title: string; subjectName: string | null }>;
-  currentWeek?: CurrentWeek;
+  milestones?: Milestone[];
+  currentWeek?: { plan: { id: string; week_start_date: string; week_end_date: string; available_minutes: number; planned_minutes: number } | null; tasks: ApiTask[] };
   resourcesSummary?: { count: number; totalPlannedMinutes: number; totalActualMinutes: number; progressPercent: number };
 }
 
-const EXECUTION_CHANGED_EVENT = "kpss:execution-changed";
-const PROFILE_CHANGED_EVENT = "kpss:profile-changed";
+const DAY_NAMES = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+const WORK_MODES: Record<string, string> = { video: "Video", book: "Konu çalışması", notes: "Not çalışması", questions: "Soru çözümü", mock: "Deneme", review: "Tekrar", other: "Çalışma" };
+const RESOURCE_TYPES: Record<string, string> = { question_bank: "Soru bankası", video_course: "Video kurs", book: "Konu anlatımı", notes: "Notlar", mock_book: "Deneme kitabı", other: "Kaynak" };
 
-function minutesLabel(minutes: number) {
-  return `${Math.floor(minutes / 60)}s ${minutes % 60}dk`;
-}
+const minutesLabel = (minutes: number) => `${Math.floor(minutes / 60)}s ${minutes % 60}dk`;
+const isoToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
+const addDays = (value: string, days: number) => { const date = new Date(`${value}T12:00:00Z`); date.setUTCDate(date.getUTCDate() + days); return date.toISOString().slice(0, 10); };
+const dateLabel = (value: string, year = false) => new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", ...(year ? { year: "numeric" } : {}), timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`));
+const errorText = (error: unknown) => error instanceof AppApiError ? (FRIENDLY_API_ERRORS[error.code] ?? error.message) : error instanceof Error ? error.message : "Yol haritası yüklenemedi.";
+const taskName = (task: ApiTask) => task.title.split(" · ").at(-1) || task.title;
 
-function dateLabel(date: string) {
-  return new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`));
-}
-
-function shortDate(date: string) {
-  return new Intl.DateTimeFormat("tr-TR", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`));
-}
-
-function errorMessage(error: unknown) {
-  if (error instanceof AppApiError) return FRIENDLY_API_ERRORS[error.code] ?? error.message;
-  return error instanceof Error ? error.message : "P48 planı yüklenemedi.";
-}
-
-function groupTasks(tasks: ApiTask[]) {
-  const grouped = new Map<string, ApiTask[]>();
-  for (const task of tasks.filter((item) => item.planned_date && item.status !== "cancelled")) {
-    const list = grouped.get(task.planned_date!) ?? [];
-    list.push(task);
-    grouped.set(task.planned_date!, list);
-  }
-  return [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b));
+function milestoneLabel(type: string) {
+  if (type === "academic_gap") return "Akademik ara";
+  if (type === "new_resource") return "Yeni kaynak";
+  if (type === "exam") return "Sınav";
+  return "Takvim notu";
 }
 
 export function P48RoadmapPanel() {
   const [roadmap, setRoadmap] = useState<RoadmapResponse | null>(null);
+  const [selectedDate, setSelectedDate] = useState(isoToday());
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,13 +92,15 @@ export function P48RoadmapPanel() {
       const value = await callAppApi<RoadmapResponse>("/p48/roadmap");
       setRoadmap(value);
       setError(null);
+      if (value.currentWeek?.plan) {
+        const today = isoToday();
+        setSelectedDate(today >= value.currentWeek.plan.week_start_date && today <= value.currentWeek.plan.week_end_date ? today : value.currentWeek.plan.week_start_date);
+      }
       return value;
     } catch (caught) {
-      setError(errorMessage(caught));
+      setError(errorText(caught));
       return null;
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }, []);
 
   const bootstrap = useCallback(async () => {
@@ -126,13 +109,10 @@ export function P48RoadmapPanel() {
       const response = await callAppApi<{ roadmap: RoadmapResponse }>("/p48/bootstrap", { method: "POST" });
       setRoadmap(response.roadmap);
       setError(null);
-      window.dispatchEvent(new Event(PROFILE_CHANGED_EVENT));
-      window.dispatchEvent(new Event(EXECUTION_CHANGED_EVENT));
-    } catch (caught) {
-      setError(errorMessage(caught));
-    } finally {
-      setBusy(false);
-    }
+      window.dispatchEvent(new Event("kpss:profile-changed"));
+      window.dispatchEvent(new Event("kpss:execution-changed"));
+    } catch (caught) { setError(errorText(caught)); }
+    finally { setBusy(false); }
   }, []);
 
   const ensureWeek = useCallback(async () => {
@@ -140,130 +120,96 @@ export function P48RoadmapPanel() {
     try {
       await callAppApi("/p48/week/generate", { method: "POST" });
       await load();
-      window.dispatchEvent(new Event(EXECUTION_CHANGED_EVENT));
-    } catch (caught) {
-      setError(errorMessage(caught));
-    } finally {
-      setBusy(false);
-    }
+      window.dispatchEvent(new Event("kpss:execution-changed"));
+    } catch (caught) { setError(errorText(caught)); }
+    finally { setBusy(false); }
   }, [load]);
 
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     if (!roadmap || loading || busy) return;
-    if (!roadmap.configured) {
-      void bootstrap();
-      return;
-    }
-    if (!roadmap.currentWeek?.plan && !attemptedWeek) {
-      setAttemptedWeek(true);
-      void ensureWeek();
-    }
+    if (!roadmap.configured) { void bootstrap(); return; }
+    if (!roadmap.currentWeek?.plan && !attemptedWeek) { setAttemptedWeek(true); void ensureWeek(); }
   }, [roadmap, loading, busy, attemptedWeek, bootstrap, ensureWeek]);
   useEffect(() => {
-    const refresh = () => { void load(); };
-    window.addEventListener(EXECUTION_CHANGED_EVENT, refresh);
-    return () => window.removeEventListener(EXECUTION_CHANGED_EVENT, refresh);
+    const refresh = () => void load();
+    window.addEventListener("kpss:execution-changed", refresh);
+    return () => window.removeEventListener("kpss:execution-changed", refresh);
   }, [load]);
 
-  const groupedWeek = useMemo(() => groupTasks(roadmap?.currentWeek?.tasks ?? []), [roadmap]);
-  const upcomingMilestones = useMemo(() => (roadmap?.milestones ?? []).filter((item) => item.date >= new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date())).slice(0, 8), [roadmap]);
+  const milestonesByMonth = useMemo(() => {
+    const result = new Map<string, Milestone[]>();
+    for (const item of roadmap?.milestones ?? []) result.set(item.date.slice(0, 7), [...(result.get(item.date.slice(0, 7)) ?? []), item]);
+    return result;
+  }, [roadmap]);
 
-  if (loading || (!roadmap && !error)) {
-    return <section className="panel-card p48-roadmap-card"><div className="loading-line wide-line"/><div className="loading-line"/><div className="loading-card"/></section>;
-  }
-
-  if (!roadmap?.configured) {
-    return <section className="panel-card p48-roadmap-card">
-      <div className="p48-setup-state">
-        <span className="target-orbit"><Icon name="target" /></span>
-        <div><span className="panel-kicker">KPSSP48 · 2027</span><h2>P48 çalışma planı hazırlanıyor.</h2><p>26 gerçek kaynak, haftalık 30 saat ve üniversite sınav boşlukları çalışma takvimine yerleştiriliyor.</p></div>
-        <button className="primary-action" disabled={busy} onClick={() => void bootstrap()}>{busy ? "Hazırlanıyor…" : "Planı Hazırla"}</button>
-      </div>
-      {error && <p className="error" role="alert">{error}</p>}
-    </section>;
-  }
+  if (loading) return <section className="roadmap-loading"><div className="loading-line wide-line" /><div className="loading-card" /></section>;
+  if (!roadmap?.configured) return <section className="roadmap-setup"><span className="target-orbit"><Icon name="target" size={32} /></span><div><span className="section-kicker">KPSSP48 · 2027</span><h2>Yol haritan hazırlanıyor.</h2><p>Gerçek kaynaklar, haftalık kapasite ve okul sınavları tek takvimde buluşacak.</p></div><button className="primary-action" type="button" disabled={busy} onClick={() => void bootstrap()}>{busy ? "Hazırlanıyor…" : "Planı Hazırla"}</button>{error && <p className="state-message error">{error}</p>}</section>;
 
   const strategy = roadmap.strategy!;
   const summary = roadmap.resourcesSummary!;
-  const weekTasks = roadmap.currentWeek?.tasks.filter((task) => task.status !== "cancelled") ?? [];
-  const weekPlanned = weekTasks.reduce((sum, task) => sum + task.estimated_minutes, 0);
+  const plan = roadmap.currentWeek?.plan;
+  const tasks = (roadmap.currentWeek?.tasks ?? []).filter((task) => task.status !== "cancelled");
+  const weekStart = plan?.week_start_date ?? isoToday();
+  const weekDates = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+  const selectedTasks = tasks.filter((task) => task.planned_date === selectedDate);
+  const selectedMinutes = selectedTasks.reduce((sum, task) => sum + task.estimated_minutes, 0);
 
-  return <section className="panel-card p48-roadmap-card">
-    <div className="p48-hero">
-      <div>
-        <span className="panel-kicker">KPSSP48 · 2027 YOL HARİTASI</span>
-        <h2>6 Eylül 2027'ye kadar çalışma düzeni hazır.</h2>
-        <p>Haftalık 30 saatlik tempo; gerçek kaynakların, vize/final boşlukların ve Telegram'dan gelen gerçek çalışma sürelerinin etrafında güncellenir.</p>
-      </div>
-      <div className="p48-countdown"><strong>{strategy.daysToExam}</strong><span>gün kaldı</span><small>{dateLabel(strategy.targetExamDate)}</small></div>
-    </div>
-
-    {error && <p className="error" role="alert">{error}</p>}
-
-    <div className="p48-stat-grid">
-      <article><Icon name="timer"/><div><small>Haftalık hedef</small><strong>{minutesLabel(strategy.weeklyTargetMinutes)}</strong><span>Normal hafta</span></div></article>
-      <article><Icon name="calendar"/><div><small>Aylık nominal hedef</small><strong>{minutesLabel(strategy.monthlyTargetMinutes)}</strong><span>Vize/final aylarında düşer</span></div></article>
-      <article><Icon name="book"/><div><small>Gerçek kaynaklar</small><strong>{summary.count}</strong><span>Yaklaşık {Math.round(summary.totalPlannedMinutes / 60)} saatlik ilk havuz</span></div></article>
-      <article><Icon name="chart"/><div><small>Kaynak ilerlemesi</small><strong>%{summary.progressPercent}</strong><span>{minutesLabel(summary.totalActualMinutes)} işlendi</span></div></article>
-    </div>
-
-    <div className="p48-section-heading">
-      <div><span className="panel-kicker">BU HAFTA</span><h3>Telegram'ın takip edeceği program</h3></div>
-      <div className="p48-week-actions"><span>{weekTasks.length} blok · {minutesLabel(weekPlanned)} planlandı{roadmap.currentWeek?.plan ? ` · ${minutesLabel(roadmap.currentWeek.plan.available_minutes)} kullanılabilir` : ""}</span>{!roadmap.currentWeek?.plan && <button className="secondary-action" disabled={busy} onClick={() => void ensureWeek()}>Haftayı Oluştur</button>}</div>
-    </div>
-
-    {roadmap.currentWeek?.plan ? <div className="p48-week-grid">
-      {groupedWeek.map(([date, tasks]) => <article className="p48-day" key={date}>
-        <header><strong>{shortDate(date)}</strong><span>{minutesLabel(tasks.reduce((sum, task) => sum + task.estimated_minutes, 0))}</span></header>
-        <div>{tasks.map((task) => {
-          const actual = task.task_progress?.[0]?.actual_study_minutes ?? 0;
-          return <div className={`p48-week-task ${task.status === "completed" ? "done" : ""}`} key={task.id}>
-            <span className="p48-task-dot" />
-            <div><strong>{task.title}</strong><small>{task.resources?.name ?? task.description ?? "Plan bloğu"}</small></div>
-            <em>{actual ? `${actual}/${task.estimated_minutes} dk` : `${task.estimated_minutes} dk`}</em>
-          </div>;
-        })}</div>
-      </article>)}
-    </div> : <div className="p48-gap-state"><Icon name="calendar"/><div><strong>Bu hafta KPSS çalışma bloğu yok.</strong><p>Takvimdeki vize/final boşluğu veya kalan hafta kapasitesi nedeniyle plan boş bırakıldı.</p></div></div>}
-
-    <div className="p48-section-heading month-heading"><div><span className="panel-kicker">AYLIK YOL HARİTASI</span><h3>Sınava kadar hangi ay ne kadar çalışacağız?</h3></div></div>
-    <div className="p48-month-strip">
-      {(roadmap.months ?? []).map((month) => <article className={`p48-month ${month.blockedDays ? "has-gap" : ""}`} key={month.month}>
-        <div className="p48-month-top"><strong>{month.label}</strong>{month.blockedDays > 0 && <span>{month.blockedDays} gün okul sınavı</span>}</div>
-        <b>{minutesLabel(month.plannedMinutes)}</b>
-        <small>{month.phase}</small>
-        <p>{month.focus}</p>
-        {!!month.focusResources?.length && <div className="p48-month-resources">{month.focusResources.map((resource) => <span key={resource}>{resource}</span>)}</div>}
-      </article>)}
-    </div>
-
-    <div className="p48-resource-layout">
-      <div>
-        <div className="p48-section-heading"><div><span className="panel-kicker">KAYNAK TAKVİMİ</span><h3>Mevcut kitaplar ne zaman bitecek?</h3></div></div>
-        <div className="p48-subject-grid">
-          {(roadmap.subjectForecasts ?? []).map((subject) => {
-            const active = subject.resources.find((resource) => !resource.completed) ?? subject.resources.at(-1);
-            const subjectProgress = subject.totalPlannedMinutes > 0 ? Math.min(100, Math.round((subject.totalActualMinutes / subject.totalPlannedMinutes) * 100)) : 0;
-            return <article className="p48-subject-card" key={subject.subjectId}>
-              <div className="p48-subject-head"><div><strong>{subject.subjectName}</strong><small>{minutesLabel(subject.weeklyMinutes)} / hafta</small></div><span>%{subjectProgress}</span></div>
-              <div className="p48-resource-progress"><i style={{ width: `${subjectProgress}%` }} /></div>
-              {active && <div className="p48-active-resource"><small>Şu anki kaynak sırası</small><strong>{active.resourceName}</strong><span>{active.forecastFinishDate ? `Tahmini bitiş ${dateLabel(active.forecastFinishDate)}` : "Sınava kadar devam ediyor"}</span></div>}
-              {subject.newSourceDate && <div className="p48-new-source"><Icon name="spark"/><span><b>{dateLabel(subject.newSourceDate)}</b> itibarıyla yeni kaynak / deneme zamanı</span></div>}
-            </article>;
+  return <>
+    <section className="week-section page-enter" id="week" aria-labelledby="week-title">
+      <div className="section-heading week-heading"><div><span className="section-kicker">BU HAFTA</span><h2 id="week-title">Yedi gün, tek ritim.</h2><p>Bir güne dokun; o günün gerçek çalışma bloklarını gör.</p></div><div className="editorial-stat"><strong>{minutesLabel(tasks.reduce((sum, task) => sum + task.estimated_minutes, 0))}</strong><span>/ {minutesLabel(strategy.weeklyTargetMinutes)} hedef</span></div></div>
+      {error && <div className="state-message error" role="alert"><Icon name="warning" />{error}<button type="button" onClick={() => void load()}>Tekrar dene</button></div>}
+      <div className="week-planner">
+        <div className="week-tabs" role="tablist" aria-label="Haftanın günleri">
+          {weekDates.map((date, index) => {
+            const dayTasks = tasks.filter((task) => task.planned_date === date);
+            const dayMinutes = dayTasks.reduce((sum, task) => sum + task.estimated_minutes, 0);
+            return <button role="tab" aria-selected={selectedDate === date} className={`${selectedDate === date ? "active" : ""} ${date === isoToday() ? "today" : ""}`} type="button" key={date} onClick={() => setSelectedDate(date)}><span>{DAY_NAMES[index]}</span><strong>{new Date(`${date}T12:00:00Z`).getUTCDate()}</strong><small>{dayMinutes ? `${Math.round(dayMinutes / 60 * 10) / 10}s` : "—"}</small>{dayTasks.length > 0 && <i />}</button>;
           })}
         </div>
-      </div>
-
-      <aside className="p48-milestone-panel">
-        <div className="p48-section-heading"><div><span className="panel-kicker">TAKVİM NOKTALARI</span><h3>Boşluklar & kaynak değişimleri</h3></div></div>
-        <div className="p48-timeline">
-          {upcomingMilestones.map((milestone, index) => <div className={`p48-milestone ${milestone.type}`} key={`${milestone.type}-${milestone.date}-${index}`}>
-            <i /><div><small>{milestone.endDate ? `${dateLabel(milestone.date)} – ${dateLabel(milestone.endDate)}` : dateLabel(milestone.date)}</small><strong>{milestone.title}</strong></div>
-          </div>)}
+        <div className="selected-day" role="tabpanel">
+          <header><div><span>{dateLabel(selectedDate)}</span><h3>{selectedTasks.length ? `${selectedTasks.length} çalışma bloğu` : "Sakin bir gün"}</h3></div><strong>{selectedMinutes ? minutesLabel(selectedMinutes) : "Plan yok"}</strong></header>
+          <div className="day-task-list">
+            {selectedTasks.map((task) => {
+              const actual = task.task_progress?.[0]?.actual_study_minutes ?? 0;
+              const complete = task.status === "completed";
+              return <article className={complete ? "complete" : ""} key={task.id}><span className="subject-monogram">{(task.subjects?.name ?? "K").slice(0, 1)}</span><div><span>{task.subjects?.name ?? "Ders"}</span><h4>{task.resources?.name ?? taskName(task)}</h4><p>{task.work_mode ? WORK_MODES[task.work_mode] ?? "Çalışma" : task.description ?? "Çalışma"}</p></div><div className="day-task-time"><strong>{task.estimated_minutes}</strong><span>dk</span>{actual > 0 && <small>{actual} dk işlendi</small>}</div>{complete && <Icon name="check" className="complete-mark" />}</article>;
+            })}
+            {!selectedTasks.length && <div className="quiet-empty"><Icon name="calendar" /><div><strong>Bu gün için çalışma görevi yok.</strong><p>Plan boş bırakılmış veya haftalık program henüz tamamlanmamış olabilir.</p></div></div>}
+          </div>
         </div>
-        <p className="p48-calendar-note">Vize/final tarihleri tahmini boşluklardır. Üniversitenin kesin akademik takvimi geldiğinde tarihleri güncellemek gerekir. 6 Eylül 2027 de pilot hedef tarihidir.</p>
-      </aside>
-    </div>
-  </section>;
+      </div>
+    </section>
+
+    <section className="roadmap-section" id="roadmap" aria-labelledby="roadmap-title">
+      <div className="roadmap-intro">
+        <div><span className="section-kicker">SINAVA KADAR</span><h2 id="roadmap-title">Yol önünde.<br />Sistem arkanda.</h2><p>Kaynakların, okul takvimin ve çalışma hızın değiştikçe bu yol haritası da seninle birlikte güncellenir.</p></div>
+        <div className="countdown"><strong>{strategy.daysToExam}</strong><span>gün kaldı</span><small>{dateLabel(strategy.targetExamDate, true)}</small></div>
+      </div>
+      <div className="roadmap-context"><span><b>{minutesLabel(strategy.weeklyTargetMinutes)}</b> normal hafta</span><span><b>{minutesLabel(strategy.monthlyTargetMinutes)}</b> normal ay</span><span><b>{summary.count}</b> gerçek kaynak</span></div>
+      <div className="living-timeline">
+        {(roadmap.months ?? []).map((month, index) => {
+          const milestones = milestonesByMonth.get(month.month) ?? [];
+          return <article className={`timeline-month ${month.blockedDays ? "has-gap" : ""}`} key={month.month} style={{ "--delay": `${Math.min(index, 8) * 35}ms` } as CSSProperties}>
+            <div className="timeline-axis"><i /><span /></div>
+            <div className="month-date"><strong>{month.label}</strong><span>{month.phase}</span></div>
+            <div className="month-body"><div className="month-hours"><strong>{minutesLabel(month.plannedMinutes)}</strong><span>plan</span></div><p>{month.focus}</p>{month.blockedDays > 0 && <span className="gap-pill"><Icon name="calendar" />{month.blockedDays} gün okul sınavı</span>}{!!month.focusResources?.length && <div className="month-resources">{month.focusResources.map((resource) => <span key={resource}>{resource}</span>)}</div>}
+              {milestones.map((milestone) => <div className={`timeline-event ${milestone.type}`} key={`${milestone.type}-${milestone.date}-${milestone.title}`}><span>{milestoneLabel(milestone.type)}</span><strong>{milestone.title}</strong><small>{milestone.endDate ? `${dateLabel(milestone.date)} – ${dateLabel(milestone.endDate)}` : dateLabel(milestone.date)}</small></div>)}
+            </div>
+          </article>;
+        })}
+      </div>
+      <p className="roadmap-note"><Icon name="spark" />Vize ve final tarihleri tahmini akademik boşluklardır; kesin takvim geldiğinde güncellenmelidir. Hedef sınav tarihi pilot varsayımdır.</p>
+    </section>
+
+    <section className="resources-section" id="resources" aria-labelledby="resources-title">
+      <div className="section-heading resource-heading"><div><span className="section-kicker">KAYNAKLAR</span><h2 id="resources-title">İlk havuzun nereye gidiyor?</h2><p>Her kaynak, gerçek çalışma sürene göre yeniden hesaplanan bir bitiş tahmini taşır.</p></div><div className="editorial-stat"><strong>%{summary.progressPercent}</strong><span>havuz ilerlemesi</span></div></div>
+      <div className="subject-resource-list">
+        {(roadmap.subjectForecasts ?? []).map((subject) => <article className="subject-resource" key={subject.subjectId}>
+          <header><div><span className="subject-index">{String((roadmap.subjectForecasts ?? []).findIndex((item) => item.subjectId === subject.subjectId) + 1).padStart(2, "0")}</span><div><h3>{subject.subjectName}</h3><p>{minutesLabel(subject.weeklyMinutes)} / hafta</p></div></div>{subject.newSourceDate && <span className="new-source-date"><Icon name="spark" />{dateLabel(subject.newSourceDate)} · yeni kaynak</span>}</header>
+          <div className="resource-rows">{subject.resources.map((resource) => <div className="resource-row" key={resource.resourceId}><div className="resource-name"><span>{RESOURCE_TYPES[resource.resourceType ?? ""] ?? "Kaynak"}</span><strong>{resource.resourceName}</strong><small>{resource.publisher || "Yayıncı bilgisi yok"}</small></div><div className="resource-progress"><div><i style={{ width: `${resource.progressPercent}%` }} /></div><span>%{resource.progressPercent}</span></div><div className="resource-finish"><span>Tahmini bitiş</span><strong>{resource.completed ? "Tamamlandı" : resource.forecastFinishDate ? dateLabel(resource.forecastFinishDate, true) : "Sınava kadar"}</strong></div></div>)}</div>
+        </article>)}
+      </div>
+    </section>
+  </>;
 }

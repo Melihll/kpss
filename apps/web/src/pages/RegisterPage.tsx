@@ -29,12 +29,9 @@ export function RegisterPage() {
   }
 
   return <main className="auth-shell">
-    <section className="auth-visual">
-      <div className="auth-brand"><span className="brand-mark"><Icon name="target" /></span><strong>KPSS Koçu</strong></div>
-      <div className="auth-message"><span className="eyebrow">KENDİ ÇALIŞMA SİSTEMİN</span><h1>Planını gerçek çalışma verin yönetsin.</h1><p>Mükemmel plan aramak yerine; çalış, kaydet, ölç ve bir sonraki adıma geç.</p><div className="auth-orbit"><span /><i /><b /></div></div>
-    </section>
     <section className="auth-card">
-      <span className="eyebrow">HESABINI OLUŞTUR</span><h2>Çalışma alanını başlat</h2><p>Kurulumdan sonra koçun sana her gün tek bir net sonraki adım gösterecek.</p>
+      <div className="auth-brand-inline"><span className="brand-mark"><Icon name="target" /></span><strong>KPSS Koçu</strong></div>
+      <h1>Hesap oluştur.</h1>
       <form onSubmit={handleSubmit}>
         <label>Görünen ad<input value={displayName} onChange={(event) => setDisplayName(event.target.value)} required minLength={2} maxLength={80} placeholder="Adın" /></label>
         <label>E-posta<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="ornek@mail.com" /></label>
