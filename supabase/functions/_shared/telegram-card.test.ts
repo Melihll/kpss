@@ -1,6 +1,6 @@
 import { renderTelegramCard, renderTelegramSvg } from "./telegram-card.ts";
 import { dailyCoachCard } from "./telegram-presentation.ts";
-import { cardDelivery, deliverTelegram, telegramCardCaption } from "./telegram-transport.ts";
+import { cardDelivery, deliverTelegram, keyboardDelivery, telegramCardCaption, textDelivery } from "./telegram-transport.ts";
 
 const model = dailyCoachCard({
   date: "2026-08-13",
@@ -83,6 +83,30 @@ Deno.test("falls back to the same actionable text when visual rendering fails", 
     }
     if (result.reply_markup?.inline_keyboard?.[0]?.[0]?.callback_data !== "now") {
       throw new Error("Telegram visual fallback did not preserve inline buttons");
+    }
+  } finally {
+    if (previousMode == null) Deno.env.delete("TELEGRAM_TRANSPORT_MODE");
+    else Deno.env.set("TELEGRAM_TRANSPORT_MODE", previousMode);
+  }
+});
+
+Deno.test("retires stale keyboards and can replace a photo interaction with one current text state", async () => {
+  const previousMode = Deno.env.get("TELEGRAM_TRANSPORT_MODE");
+  Deno.env.set("TELEGRAM_TRANSPORT_MODE", "mock");
+  try {
+    const retired = await deliverTelegram(keyboardDelivery("42", 71));
+    if (retired.method !== "editMessageReplyMarkup" || retired.message_id !== 71 || retired.reply_markup?.inline_keyboard?.length !== 0) {
+      throw new Error(`Stale keyboard was not retired: ${JSON.stringify(retired)}`);
+    }
+    const current = await deliverTelegram(textDelivery(
+      "42",
+      "Çalışman devam ediyor.",
+      [[{ text: "Bitir", callback_data: "session_finish:1" }]],
+      null,
+      71,
+    ));
+    if (current.method !== "sendMessage" || current.keyboardCleared !== true || current.reply_markup?.inline_keyboard?.length !== 1) {
+      throw new Error(`Photo interaction was not replaced with one current state: ${JSON.stringify(current)}`);
     }
   } finally {
     if (previousMode == null) Deno.env.delete("TELEGRAM_TRANSPORT_MODE");

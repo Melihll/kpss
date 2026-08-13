@@ -7,6 +7,7 @@ import {
 import {
   dailyCoachCard,
   formatDailyCoachMessage,
+  TELEGRAM_BUTTON_LABELS,
   weeklyReportPresentation,
   weeklyStartPresentation,
 } from "../_shared/telegram-coach.ts";
@@ -73,13 +74,13 @@ Deno.serve(async (request) => {
               const recommendation = summary.recommendation;
               const primaryButton = recommendation?.needsResult
                 ? { text: "Sonuç Gir", callback_data: `result_begin:${recommendation.taskId}` }
-                : { text: "Şimdi başla", callback_data: "now" };
-              const buttons = [[primaryButton], [{ text: "Bugünü gör", callback_data: "today" }, { text: "Az vaktim var", callback_data: "special_less" }]];
+                : { text: TELEGRAM_BUTTON_LABELS.start, callback_data: "now" };
+              const buttons = [[primaryButton], [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }, { text: TELEGRAM_BUTTON_LABELS.lowTime, callback_data: "special_less" }]];
               const weeklyStart = new Date(`${action.payload.localDate}T12:00:00Z`).getUTCDay() === 1;
               const presentation = weeklyStart ? weeklyStartPresentation(summary) : { text: formatDailyCoachMessage(summary), card: dailyCoachCard(summary) };
               const outbound = await deliverTelegram(summary.plan
                 ? cardDelivery(identity.data.external_chat_id, presentation.card, presentation.text, buttons)
-                : textDelivery(identity.data.external_chat_id, presentation.text, [[{ text: "Tekrar dene", callback_data: "today" }]]));
+                : textDelivery(identity.data.external_chat_id, presentation.text, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]));
               result = { ...result, notification: "sent", outbound };
             } else result = { ...result, notification: "deduplicated" };
           }
@@ -127,7 +128,7 @@ Deno.serve(async (request) => {
               identity.data.external_chat_id,
               presentation.card,
               presentation.text,
-              [[{ text: "Yeni haftayı aç", callback_data: "today" }], [{ text: "Dikkat konusunu çalış", callback_data: "revisions" }]],
+              [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }], [{ text: "Dikkat Konusunu Çalış", callback_data: "revisions" }]],
             )) };
           }
           else result = { ...result, notification: "deduplicated" };

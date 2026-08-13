@@ -3,13 +3,14 @@ import type { TelegramButton, TelegramCardModel } from "./telegram-presentation.
 
 export type TelegramDelivery = {
   __telegramDelivery: true;
-  kind: "text" | "card";
+  kind: "text" | "card" | "keyboard";
   chatId: string;
   text: string;
   caption?: string;
   buttons: TelegramButton[][];
   editMessageId?: number | null;
   card?: TelegramCardModel;
+  clearKeyboardMessageId?: number | null;
 };
 
 export const textDelivery = (
@@ -17,13 +18,15 @@ export const textDelivery = (
   text: string,
   buttons: TelegramButton[][] = [],
   editMessageId?: number | null,
-): TelegramDelivery => ({ __telegramDelivery: true, kind: "text", chatId, text, buttons, editMessageId });
+  clearKeyboardMessageId?: number | null,
+): TelegramDelivery => ({ __telegramDelivery: true, kind: "text", chatId, text, buttons, editMessageId, clearKeyboardMessageId });
 
 export const cardDelivery = (
   chatId: string,
   card: TelegramCardModel,
   textFallback: string,
   buttons: TelegramButton[][] = [],
+  clearKeyboardMessageId?: number | null,
 ): TelegramDelivery => ({
   __telegramDelivery: true,
   kind: "card",
@@ -32,6 +35,20 @@ export const cardDelivery = (
   caption: telegramCardCaption(card),
   buttons,
   card,
+  clearKeyboardMessageId,
+});
+
+export const keyboardDelivery = (
+  chatId: string,
+  messageId: number,
+  buttons: TelegramButton[][] = [],
+): TelegramDelivery => ({
+  __telegramDelivery: true,
+  kind: "keyboard",
+  chatId,
+  text: "",
+  buttons,
+  editMessageId: messageId,
 });
 
 export function telegramCardCaption(card: TelegramCardModel) {
@@ -66,12 +83,25 @@ async function telegramJsonCall(method: string, payload: Record<string, unknown>
   const result = await response.json().catch(() => null);
   if (!response.ok) {
     const description = String(result?.description ?? "").toLocaleLowerCase("en-US");
-    if ((method === "editMessageText" || method === "editMessageCaption") && description.includes("message is not modified")) {
+    if (["editMessageText", "editMessageCaption", "editMessageReplyMarkup"].includes(method) && description.includes("message is not modified")) {
       return { method, ...payload, notModified: true };
     }
     throw new Error(`TELEGRAM_${method.toUpperCase()}_FAILED:${response.status}`);
   }
   return result?.result ?? { method, ...payload };
+}
+
+async function updateKeyboard(chatId: string, messageId: number, buttons: TelegramButton[][]) {
+  try {
+    return await telegramJsonCall("editMessageReplyMarkup", {
+      chat_id: chatId,
+      message_id: messageId,
+      reply_markup: { inline_keyboard: buttons },
+    });
+  } catch (error) {
+    console.error("TELEGRAM_KEYBOARD_UPDATE_FAILED", error instanceof Error ? error.message : "UNKNOWN");
+    return { method: "editMessageReplyMarkup", chat_id: chatId, message_id: messageId, keyboardUpdateFailed: true };
+  }
 }
 
 async function sendPhoto(chatId: string, png: Uint8Array, caption: string, buttons: TelegramButton[][]) {
@@ -108,19 +138,29 @@ function fallbackReason(error: unknown) {
 }
 
 export async function deliverTelegram(delivery: TelegramDelivery, options: { forceCardFailure?: boolean } = {}) {
+  if (delivery.kind === "keyboard") {
+    return await updateKeyboard(delivery.chatId, delivery.editMessageId!, delivery.buttons);
+  }
+  let keyboardCleared = false;
+  if (delivery.clearKeyboardMessageId) {
+    const cleared = await updateKeyboard(delivery.chatId, delivery.clearKeyboardMessageId, []);
+    keyboardCleared = !("keyboardUpdateFailed" in cleared);
+  }
   if (delivery.kind === "text") {
     const method = delivery.editMessageId ? "editMessageText" : "sendMessage";
-    return await telegramJsonCall(method, {
+    const result = await telegramJsonCall(method, {
       chat_id: delivery.chatId,
       ...(delivery.editMessageId ? { message_id: delivery.editMessageId } : {}),
       text: delivery.text,
       reply_markup: replyMarkup(delivery.buttons),
     });
+    return keyboardCleared ? { ...result, keyboardCleared: true } : result;
   }
   try {
     if (options.forceCardFailure && mockMode()) throw new Error("MOCK_CARD_RENDER_FAILURE");
     const png = await renderTelegramCard(delivery.card!);
-    return await sendPhoto(delivery.chatId, png, delivery.caption ?? "", delivery.buttons);
+    const result = await sendPhoto(delivery.chatId, png, delivery.caption ?? "", delivery.buttons);
+    return keyboardCleared ? { ...result, keyboardCleared: true } : result;
   } catch (error) {
     console.error("TELEGRAM_CARD_TEXT_FALLBACK", fallbackReason(error));
     const fallback = await telegramJsonCall("sendMessage", {
@@ -128,9 +168,12 @@ export async function deliverTelegram(delivery: TelegramDelivery, options: { for
       text: delivery.text,
       reply_markup: replyMarkup(delivery.buttons),
     });
-    return { ...fallback, visualFallback: true };
+    return { ...fallback, visualFallback: true, ...(keyboardCleared ? { keyboardCleared: true } : {}) };
   }
 }
 
-export const answerTelegramCallback = (callbackQueryId: string) =>
-  telegramJsonCall("answerCallbackQuery", { callback_query_id: callbackQueryId });
+export const answerTelegramCallback = (callbackQueryId: string, text?: string) =>
+  telegramJsonCall("answerCallbackQuery", {
+    callback_query_id: callbackQueryId,
+    ...(text ? { text: text.slice(0, 200) } : {}),
+  });

@@ -13,6 +13,15 @@ export type TelegramIntent =
 
 export type TelegramButton = { text: string; callback_data: string };
 
+export const TELEGRAM_BUTTON_LABELS = {
+  start: "Çalışmaya Başla",
+  finish: "Bitir",
+  next: "Sonraki Görev",
+  today: "Bugünü Gör",
+  lowTime: "Az Vaktim Var",
+  noStudy: "Bugün Çalışamam",
+} as const;
+
 export type TelegramCardMetric = { label: string; value: string };
 export type TelegramCardItem = { state?: "done" | "next" | "muted"; title: string; detail?: string };
 export type TelegramCardModel = {
@@ -152,11 +161,19 @@ export function recommendationReasonText(reason: string) {
 export const mainMenuButtons = (): TelegramButton[][] => [[
   { text: "Şimdi ne çalışayım?", callback_data: "now" },
 ], [
-  { text: "Bugünkü plan", callback_data: "today" },
+  { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
   { text: "Çalışma ekle", callback_data: "manual_begin" },
 ], [
-  { text: "Az vaktim var", callback_data: "special_less" },
+  { text: TELEGRAM_BUTTON_LABELS.lowTime, callback_data: "special_less" },
 ]];
+
+export function formatActiveSessionMessage(session: any, elapsedMinutes: number) {
+  return [
+    "Çalışman devam ediyor.",
+    session?.task?.title ?? "Aktif çalışma",
+    `${Math.max(0, Math.floor(elapsedMinutes))} dk geçti.`,
+  ].join("\n");
+}
 
 export function greetingMessage() {
   return "Bugün için en iyi sonraki adımı seçelim. İstersen yaz, istersen aşağıdan seç.";

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyTelegramText,
   dailyCoachCard,
+  formatActiveSessionMessage,
   formatDailyCoachMessage,
   formatMinutesShort,
   formatTelegramDate,
@@ -11,6 +12,7 @@ import {
   parseManualStudyText,
   parseTestResultText,
   testResultPresentation,
+  TELEGRAM_BUTTON_LABELS,
   weeklyReportPresentation,
 } from "../supabase/functions/_shared/telegram-presentation.ts";
 
@@ -20,6 +22,20 @@ describe("Telegram presentation", () => {
     const buttons = mainMenuButtons().flat();
     expect(buttons).toHaveLength(4);
     expect(buttons.map((button) => button.callback_data)).toEqual(["now", "today", "manual_begin", "special_less"]);
+  });
+
+  it("keeps active session copy concise and action labels canonical", () => {
+    expect(formatActiveSessionMessage({ task: { title: "Matematik · Soru çözümü" } }, 18)).toBe(
+      "Çalışman devam ediyor.\nMatematik · Soru çözümü\n18 dk geçti.",
+    );
+    expect(TELEGRAM_BUTTON_LABELS).toMatchObject({
+      start: "Çalışmaya Başla",
+      finish: "Bitir",
+      next: "Sonraki Görev",
+      today: "Bugünü Gör",
+      lowTime: "Az Vaktim Var",
+      noStudy: "Bugün Çalışamam",
+    });
   });
 
   it("classifies daily coach language deterministically", () => {

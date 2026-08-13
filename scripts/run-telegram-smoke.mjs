@@ -104,9 +104,14 @@ const from = { id: telegramNumericId, username: "pilot" };
 const chat = { id: telegramNumericId };
 let updateId = telegramNumericId * 10;
 const message = (text) => ({ update_id: ++updateId, message: { message_id: updateId, from, chat, text } });
-const callback = (data) => ({
+const callback = (data, { photo = false } = {}) => ({
   update_id: ++updateId,
-  callback_query: { id: `cb-${updateId}`, from, message: { message_id: updateId, chat }, data },
+  callback_query: {
+    id: `cb-${updateId}`,
+    from,
+    message: { message_id: updateId, chat, ...(photo ? { photo: [{ file_id: `photo-${updateId}`, width: 1080, height: 1080 }] } : {}) },
+    data,
+  },
 });
 
 const linked = await telegram(message(`/start ${link.token}`));
@@ -124,17 +129,20 @@ if (!now.recommendation?.taskId || now.outbound.method !== "sendPhoto" || now.ou
 const naturalNow = await telegram(message("Ne çalışayım?"));
 if (!naturalNow.recommendation?.taskId) throw new Error("natural-language now intent failed");
 
-const learnStarted = await telegram(callback(`task_start:${learnTask.id}`));
-if (learnStarted.outbound.method !== "editMessageText") throw new Error("callback did not edit the existing Telegram card");
+const learnStarted = await telegram(callback(`task_start:${learnTask.id}`, { photo: true }));
+if (learnStarted.outbound.method !== "sendMessage" || !learnStarted.outbound.keyboardCleared) throw new Error("photo callback did not retire the old card keyboard before showing session state");
 const backdated = new Date(Date.now() - (20 * 60 + 5) * 1000).toISOString();
 const backdateResult = await api.from("study_sessions").update({ started_at: backdated }).eq("id", learnStarted.session.id);
 if (backdateResult.error) throw backdateResult.error;
 const whileActive = await telegram(message("Ne çalışayım?"));
 if (!whileActive.activeSession || !whileActive.outbound.text.includes("Çalışman devam ediyor")) throw new Error("active session was not surfaced by /simdi");
-const blockedSecondStart = await telegram(callback(`task_start:${solveTask.id}`));
-if (!blockedSecondStart.activeSession || !blockedSecondStart.outbound.text.includes("Önce devam eden çalışmayı bitirmen gerekiyor")) throw new Error("second task start was not safely blocked");
+const activeButtons = whileActive.outbound.reply_markup?.inline_keyboard?.flat()?.map((button) => button.callback_data) ?? [];
+if (activeButtons.length !== 2 || !activeButtons.some((data) => data.startsWith("session_finish:")) || !activeButtons.includes("today")) throw new Error(`active session keyboard is not the current state: ${JSON.stringify(whileActive)}`);
+const blockedSecondStart = await telegram(callback(`task_start:${solveTask.id}`, { photo: true }));
+if (!blockedSecondStart.activeSession || !blockedSecondStart.outbound.text.includes("Çalışman devam ediyor") || !blockedSecondStart.outbound.keyboardCleared) throw new Error("second task start was not safely redirected to the active state");
 const learnFinished = await telegram(callback(`session_finish:${learnStarted.session.id}`));
 if (learnFinished.session.duration_minutes !== 20) throw new Error(`expected 20-minute session, got ${learnFinished.session.duration_minutes}`);
+if (learnFinished.outbound.method !== "sendPhoto" || !learnFinished.outbound.keyboardCleared || learnFinished.outbound.caption !== "Çalışma kaydedildi.") throw new Error(`finish did not produce exactly one current completion delivery: ${JSON.stringify(learnFinished)}`);
 const learnProgress = await api.from("task_progress").select("completed_minutes,actual_study_minutes").eq("task_id", learnTask.id).single();
 if (learnProgress.error || learnProgress.data.completed_minutes !== 20 || learnProgress.data.actual_study_minutes !== 20) throw learnProgress.error ?? new Error(`session progress not applied: ${JSON.stringify(learnProgress.data)}`);
 const partialNow = await telegram(message("/simdi"));
@@ -157,12 +165,14 @@ if (manualLinkedSaved.session.task_id !== learnTask.id || manualLinkedSaved.sess
 if (manualLinkedSaved.outbound.text.includes("Kaç dakika") || manualLinkedSaved.outbound.text.includes("Hangi dersi")) {
   throw new Error(`manual linked study repeated an already-known clarification: ${JSON.stringify(manualLinkedSaved)}`);
 }
+const staleManualChoice = await telegram(callback(learnTaskChoice));
+if (!staleManualChoice.stale || staleManualChoice.outbound.method !== "editMessageReplyMarkup" || staleManualChoice.session) throw new Error(`consumed manual callback was not retired safely: ${JSON.stringify(staleManualChoice)}`);
 const progressAfterManual = await api.from("task_progress").select("completed_minutes,actual_study_minutes").eq("task_id", learnTask.id).single();
 if (progressAfterManual.error || progressAfterManual.data.completed_minutes !== 30 || progressAfterManual.data.actual_study_minutes !== 30) throw progressAfterManual.error ?? new Error(`manual linked progress not applied: ${JSON.stringify(progressAfterManual.data)}`);
 const afterManualNow = await telegram(message("/simdi"));
 if (afterManualNow.recommendation?.taskId !== learnTask.id || afterManualNow.recommendation.remainingMinutes !== Math.max(0, learnTask.estimated_minutes - 30)) throw new Error(`manual study did not reduce task remaining: ${JSON.stringify(afterManualNow.recommendation)}`);
 
-const startUpdate = callback(`task_start:${solveTask.id}`);
+const startUpdate = callback(`task_start:${solveTask.id}`, { photo: true });
 const failedBeforeBusiness = await telegram(startUpdate, { failStage: "before-business", expectedStatus: 400 });
 if (failedBeforeBusiness.error !== "MOCK_FAILURE_BEFORE_BUSINESS") throw new Error("before-business failure was not recorded");
 const started = await telegram(startUpdate);
@@ -181,12 +191,23 @@ const minutesBeforeRetry = (await api.from("task_progress").select("actual_study
 const completedBeforeRetry = (await api.from("task_progress").select("completed_minutes").eq("task_id", solveTask.id).single()).data?.completed_minutes;
 const finished = await telegram(finishUpdate);
 if (finished.session.status !== "completed") throw new Error("finish failed");
+if (finished.outbound.method !== "sendPhoto" || !finished.outbound.keyboardCleared || finished.outbound.caption !== "Çalışma kaydedildi.") throw new Error(`finish retry did not resume one completion delivery: ${JSON.stringify(finished)}`);
 const minutesAfterRetry = (await api.from("task_progress").select("actual_study_minutes").eq("task_id", solveTask.id).single()).data?.actual_study_minutes;
 const completedAfterRetry = (await api.from("task_progress").select("completed_minutes").eq("task_id", solveTask.id).single()).data?.completed_minutes;
 if (minutesAfterRetry !== minutesBeforeRetry) throw new Error("delivery retry duplicated business accounting");
 if (completedAfterRetry !== completedBeforeRetry) throw new Error("delivery retry duplicated task progress");
 const completedDuplicate = await telegram(finishUpdate);
 if (!completedDuplicate.duplicate) throw new Error("completed event was not a no-op");
+const completedSessionCountBeforeStale = (await api.from("study_sessions").select("id", { count: "exact", head: true }).eq("id", started.session.id).eq("status", "completed")).count;
+const staleFinish = await telegram(callback(`session_finish:${started.session.id}`));
+const completedSessionCountAfterStale = (await api.from("study_sessions").select("id", { count: "exact", head: true }).eq("id", started.session.id).eq("status", "completed")).count;
+if (!staleFinish.stale || staleFinish.outbound.method !== "editMessageReplyMarkup" || completedSessionCountAfterStale !== completedSessionCountBeforeStale) throw new Error(`stale finish created another completion: ${JSON.stringify(staleFinish)}`);
+
+const fallbackUpdate = callback("task_start:not-a-uuid");
+const fallbackOnce = await telegram(fallbackUpdate);
+if (!fallbackOnce.recovered || fallbackOnce.outbound.method !== "editMessageText" || !fallbackOnce.outbound.text.includes("Kısa bir sorun oldu")) throw new Error(`generic fallback was not delivered once in the interaction: ${JSON.stringify(fallbackOnce)}`);
+const fallbackRetry = await telegram(fallbackUpdate);
+if (!fallbackRetry.duplicate || fallbackRetry.outbound) throw new Error(`same failed update produced a duplicate fallback: ${JSON.stringify(fallbackRetry)}`);
 
 await telegram(callback(`result_begin:${solveTask.id}`));
 await telegram(message("7"));
@@ -198,7 +219,7 @@ if (saved.result.review_status !== "pending" || saved.result.total_questions !==
 const reviewed = await telegram(callback(`result_review:${saved.result.id}`));
 if (reviewed.result.review_status !== "reviewed") throw new Error("review failed");
 const staleCompletedStart = await telegram(callback(`task_start:${solveTask.id}`));
-if (!staleCompletedStart.outbound.text.includes("artık açık değil")) throw new Error(`completed task stale button was not handled safely: ${JSON.stringify(staleCompletedStart)}`);
+if (!staleCompletedStart.stale || staleCompletedStart.outbound.method !== "editMessageReplyMarkup") throw new Error(`completed task stale button was not handled safely: ${JSON.stringify(staleCompletedStart)}`);
 
 const evidence = await app("/test-results", "POST", {
   subjectId: MATH, curriculumNodeId: TOPIC, correct: 10, wrong: 0, blank: 0, total: 10,

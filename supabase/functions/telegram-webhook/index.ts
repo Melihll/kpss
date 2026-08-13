@@ -9,6 +9,7 @@ import {
   completionCard,
   dailyCoachCard,
   foldedTelegramText,
+  formatActiveSessionMessage,
   formatDailyCoachMessage,
   formatMinutesShort,
   formatNowCoachMessage,
@@ -22,6 +23,7 @@ import {
   parseTestResultText,
   replanCard,
   testResultPresentation,
+  TELEGRAM_BUTTON_LABELS,
   unknownMessage,
   type ParsedTestResult,
   type TelegramButton,
@@ -30,6 +32,7 @@ import {
   answerTelegramCallback,
   cardDelivery,
   deliverTelegram,
+  keyboardDelivery,
   textDelivery,
   type TelegramDelivery,
 } from "../_shared/telegram-transport.ts";
@@ -110,6 +113,14 @@ Deno.serve(async (req) => {
   let lifecycleAdmin: Admin | null = null;
   let lifecycleEventId: string | null = null;
   let fallbackChatId: string | null = null;
+  let fallbackCallbackMessageId: number | null = null;
+  let fallbackCallbackMessageIsPhoto = false;
+  let lifecycleBody: Record<string, unknown> | null = null;
+  let lifecycleStatus = 200;
+  let lifecycleDelivered: Record<string, unknown> | null = null;
+  let lifecycleDeliverySucceeded = false;
+  let lifecycleCallbackQueryId: string | null = null;
+  let lifecycleCallbackAnswered = false;
   try {
     const expectedSecret = Deno.env.get("TELEGRAM_WEBHOOK_SECRET");
     if (!expectedSecret || req.headers.get("X-Telegram-Bot-Api-Secret-Token") !== expectedSecret) {
@@ -146,6 +157,16 @@ Deno.serve(async (req) => {
     const forceCardFailure = Deno.env.get("TELEGRAM_TRANSPORT_MODE") === "mock" &&
       req.headers.get("X-Telegram-Mock-Fail-Card") === "true";
 
+    const acknowledgeCallback = async (message?: string) => {
+      if (!lifecycleCallbackQueryId || lifecycleCallbackAnswered) return;
+      lifecycleCallbackAnswered = true;
+      try {
+        await answerTelegramCallback(lifecycleCallbackQueryId, message);
+      } catch (error) {
+        console.error("TELEGRAM_CALLBACK_ANSWER_FAILED", error instanceof Error ? error.message : "UNKNOWN");
+      }
+    };
+
     const complete = async () => {
       const completed = await admin.rpc("complete_external_event", {
         p_provider: "telegram",
@@ -154,7 +175,18 @@ Deno.serve(async (req) => {
       if (completed.error) throw completed.error;
       lifecycleEventId = null;
     };
-    const finalize = async (body: Record<string, unknown>, status = 200) => {
+    const checkpointDelivery = async (payload: Record<string, unknown>) => {
+      const checkpoint = await admin.rpc("checkpoint_external_event", {
+        p_provider: "telegram",
+        p_external_event_id: eventId,
+        p_result_payload: payload,
+      });
+      if (checkpoint.error) throw checkpoint.error;
+    };
+    const finalize = async (body: Record<string, unknown>, status = 200, callbackAnswer?: string) => {
+      lifecycleBody = body;
+      lifecycleStatus = status;
+      await acknowledgeCallback(callbackAnswer);
       const checkpoint = await admin.rpc("checkpoint_external_event", {
         p_provider: "telegram",
         p_external_event_id: eventId,
@@ -163,13 +195,25 @@ Deno.serve(async (req) => {
       if (checkpoint.error) throw checkpoint.error;
       if (mockFailureStage === "after-business") throw new Error("MOCK_FAILURE_AFTER_BUSINESS");
       const delivered = await deliverBody(body, forceCardFailure);
+      lifecycleDelivered = delivered;
+      lifecycleDeliverySucceeded = true;
+      await checkpointDelivery({ body, status, deliveryCompleted: true, delivered });
       await complete();
       return json(delivered, status);
     };
 
     if (claimed.data.businessCompleted && claimed.data.resultPayload) {
-      const saved = claimed.data.resultPayload as { body: Record<string, unknown>; status: number };
+      const saved = claimed.data.resultPayload as { body: Record<string, unknown>; status: number; deliveryCompleted?: boolean; delivered?: Record<string, unknown> };
+      if (saved.deliveryCompleted) {
+        await complete();
+        return json(saved.delivered ?? saved.body, saved.status);
+      }
       const delivered = await deliverBody(saved.body, forceCardFailure);
+      lifecycleBody = saved.body;
+      lifecycleStatus = saved.status;
+      lifecycleDelivered = delivered;
+      lifecycleDeliverySucceeded = true;
+      await checkpointDelivery({ ...saved, deliveryCompleted: true, delivered });
       await complete();
       return json(delivered, saved.status);
     }
@@ -184,9 +228,22 @@ Deno.serve(async (req) => {
     const text = String(update.message?.text ?? "").trim();
     const callback = String(callbackQuery?.data ?? "");
     const callbackMessageId = callbackQuery?.message?.message_id ? Number(callbackQuery.message.message_id) : null;
-    const respond = (messageText: string, buttons: Button[][] = []) => textDelivery(chatId, messageText, buttons, callbackMessageId);
-    const respondCard = (card: Parameters<typeof cardDelivery>[1], messageText: string, buttons: Button[][] = []) => cardDelivery(chatId, card, messageText, buttons);
-    if (callbackQuery?.id) await answerTelegramCallback(String(callbackQuery.id));
+    const callbackMessageIsPhoto = Boolean(callbackQuery?.message?.photo?.length);
+    lifecycleCallbackQueryId = callbackQuery?.id ? String(callbackQuery.id) : null;
+    fallbackCallbackMessageId = callbackMessageId;
+    fallbackCallbackMessageIsPhoto = callbackMessageIsPhoto;
+    const respond = (messageText: string, buttons: Button[][] = []) => textDelivery(
+      chatId,
+      messageText,
+      buttons,
+      callbackMessageIsPhoto ? null : callbackMessageId,
+      callbackMessageIsPhoto ? callbackMessageId : null,
+    );
+    const respondCard = (card: Parameters<typeof cardDelivery>[1], messageText: string, buttons: Button[][] = []) =>
+      cardDelivery(chatId, card, messageText, buttons, callbackMessageId);
+    const staleCallback = (buttons: Button[][] = []) => callbackMessageId
+      ? keyboardDelivery(chatId, callbackMessageId, buttons)
+      : textDelivery(chatId, "Bu işlem artık güncel değil.", buttons);
 
     if (text.startsWith("/start ")) {
       const linked = await admin.rpc("consume_messaging_link_token", {
@@ -369,8 +426,8 @@ Deno.serve(async (req) => {
         ok: true,
         replan: applied.replanned,
         outbound: changed > 0
-          ? respondCard(replanCard("Bugün plan dışı", applied.replanned, message), message, [[{ text: "Haftayı gör", callback_data: "today" }]])
-          : respond(message, [[{ text: "Haftayı gör", callback_data: "today" }]]),
+          ? respondCard(replanCard("Bugün plan dışı", applied.replanned, message), message, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]])
+          : respond(message, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]),
       });
     }
 
@@ -432,9 +489,19 @@ Deno.serve(async (req) => {
     }
 
     if (callback.startsWith("revision_complete:")) {
+      const revisionId = callback.slice(18);
+      const revisionState = await admin.from("revision_schedules")
+        .select("id,status")
+        .eq("id", revisionId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (revisionState.error) throw revisionState.error;
+      if (!revisionState.data || !["scheduled", "due"].includes(revisionState.data.status)) {
+        return await finalize({ ok: true, stale: true, outbound: staleCallback() }, 200, "Bu işlem artık güncel değil.");
+      }
       const completed = await admin.rpc("telegram_complete_revision", {
         p_user_id: userId,
-        p_revision_id: callback.slice(18),
+        p_revision_id: revisionId,
       });
       if (completed.error) throw completed.error;
       return await finalize({ ok: true, revision: completed.data, outbound: respond( "Tekrar tamamlandı.") });
@@ -455,8 +522,8 @@ Deno.serve(async (req) => {
       });
       const running = await activeSession();
       const buttons: Button[][] = running
-        ? [[{ text: "Bitir", callback_data: `session_finish:${running.id}` }], [{ text: "Çalışma ekle", callback_data: "manual_begin" }]]
-        : [[{ text: summary.recommendation?.needsResult ? "Sonuç gir" : "Çalışmaya başla", callback_data: summary.recommendation?.needsResult ? `result_begin:${summary.recommendation.taskId}` : summary.recommendation ? `task_start:${summary.recommendation.taskId}` : "now" }], [{ text: "Az vaktim var", callback_data: "special_less" }, { text: "Bugün çalışamam", callback_data: "today_skip" }]];
+        ? [[{ text: TELEGRAM_BUTTON_LABELS.finish, callback_data: `session_finish:${running.id}` }], [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]
+        : [[{ text: summary.recommendation?.needsResult ? "Sonuç Gir" : TELEGRAM_BUTTON_LABELS.start, callback_data: summary.recommendation?.needsResult ? `result_begin:${summary.recommendation.taskId}` : summary.recommendation ? `task_start:${summary.recommendation.taskId}` : "now" }], [{ text: TELEGRAM_BUTTON_LABELS.lowTime, callback_data: "special_less" }, { text: TELEGRAM_BUTTON_LABELS.noStudy, callback_data: "today_skip" }]];
       const message = formatDailyCoachMessage(summary);
       return await finalize({
         ok: true,
@@ -464,7 +531,7 @@ Deno.serve(async (req) => {
         outbound: !summary.plan
           ? respond(message, [[{ text: "Tekrar dene", callback_data: "today" }]])
           : running?.task
-          ? respond(`Çalışman devam ediyor.\n${running.task.title}\n\nBitirdiğinde buradan tamamla.`, buttons)
+          ? respond(formatActiveSessionMessage(running, Math.max(0, (Date.now() - new Date(running.started_at).getTime()) / 60_000)), buttons)
           : respondCard(dailyCoachCard(summary), message, buttons),
       });
     }
@@ -477,10 +544,10 @@ Deno.serve(async (req) => {
         return await finalize({
           ok: true,
           activeSession: running,
-          outbound: respond(
-            `Çalışman devam ediyor\n\n${running.task.title}\nBu oturum: yaklaşık ${elapsedMinutes} dk\nKayıtlı ilerleme: ${completed}/${running.task.estimated_minutes} dk`,
-            [[{ text: "Çalışmayı Bitir", callback_data: `session_finish:${running.id}` }]],
-          ),
+          outbound: respond(formatActiveSessionMessage(running, elapsedMinutes), [
+            [{ text: TELEGRAM_BUTTON_LABELS.finish, callback_data: `session_finish:${running.id}` }],
+            [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }],
+          ]),
         });
       }
       const profile = await admin.from("exam_profiles").select("*").eq("user_id", userId).eq("status", "active").maybeSingle();
@@ -500,11 +567,11 @@ Deno.serve(async (req) => {
       });
       const actionButton = recommendation.needsResult
         ? { text: "Sonuç Gir", callback_data: `result_begin:${recommendation.taskId}` }
-        : { text: "Çalışmaya Başla", callback_data: `task_start:${recommendation.taskId}` };
+        : { text: TELEGRAM_BUTTON_LABELS.start, callback_data: `task_start:${recommendation.taskId}` };
       return await finalize({
         ok: true,
         recommendation,
-        outbound: respondCard(nowCoachCard(recommendation, day), formatNowCoachMessage(recommendation), [[actionButton], [{ text: "Bugünü gör", callback_data: "today" }]]),
+        outbound: respondCard(nowCoachCard(recommendation, day), formatNowCoachMessage(recommendation), [[actionButton], [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]),
       });
     }
 
@@ -512,56 +579,98 @@ Deno.serve(async (req) => {
       const requestedTaskId = callback.slice(11);
       const running = await activeSession();
       if (running?.task) {
-        const sameTask = running.task.id === requestedTaskId;
+        const elapsedMinutes = Math.max(0, Math.floor((Date.now() - new Date(running.started_at).getTime()) / 60_000));
         return await finalize({
           ok: true,
           activeSession: running,
-          outbound: respond(
-            sameTask
-              ? `Bu çalışma zaten devam ediyor.\n\n${running.task.title}`
-              : `Önce devam eden çalışmayı bitirmen gerekiyor.\n\n${running.task.title}`,
-            [[{ text: "Çalışmayı Bitir", callback_data: `session_finish:${running.id}` }]],
-          ),
+          outbound: respond(formatActiveSessionMessage(running, elapsedMinutes), [
+            [{ text: TELEGRAM_BUTTON_LABELS.finish, callback_data: `session_finish:${running.id}` }],
+            [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }],
+          ]),
         });
       }
       const requestedTask = await admin.from("tasks").select("id,title,status,estimated_minutes").eq("id", requestedTaskId).eq("user_id", userId).maybeSingle();
       if (requestedTask.error) throw requestedTask.error;
-      if (!requestedTask.data) return await finalize({ ok: true, outbound: respond("Görev bulunamadı.") });
+      if (!requestedTask.data) {
+        return await finalize({
+          ok: true,
+          stale: true,
+          outbound: staleCallback([[{ text: TELEGRAM_BUTTON_LABELS.next, callback_data: "now" }, { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]),
+        }, 200, "Bu işlem artık güncel değil.");
+      }
       if (["completed", "missed", "cancelled"].includes(requestedTask.data.status)) {
         return await finalize({
           ok: true,
-          outbound: respond("Bu görev artık açık değil. Güncel sıradaki görevi gösterebilirim.", [[{ text: "Sıradaki Görev", callback_data: "now" }]]),
-        });
+          stale: true,
+          outbound: staleCallback([[{ text: TELEGRAM_BUTTON_LABELS.next, callback_data: "now" }, { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]),
+        }, 200, "Bu işlem artık güncel değil.");
       }
       const started = await admin.rpc("telegram_start_study_session", {
         p_user_id: userId,
         p_task_id: requestedTaskId,
       });
       if (started.error) {
-        if (String(started.error.message ?? started.error).includes("TASK_NOT_STARTABLE")) {
+        const startError = String(started.error.message ?? started.error);
+        if (startError.includes("ACTIVE_SESSION_EXISTS")) {
+          const current = await activeSession();
+          if (current?.task) {
+            const elapsedMinutes = Math.max(0, Math.floor((Date.now() - new Date(current.started_at).getTime()) / 60_000));
+            return await finalize({
+              ok: true,
+              activeSession: current,
+              outbound: respond(formatActiveSessionMessage(current, elapsedMinutes), [
+                [{ text: TELEGRAM_BUTTON_LABELS.finish, callback_data: `session_finish:${current.id}` }],
+                [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }],
+              ]),
+            }, 200, "Bu işlem artık güncel değil.");
+          }
+        }
+        if (startError.includes("TASK_NOT_STARTABLE")) {
           return await finalize({
             ok: true,
-            outbound: respond("Bu görev artık açık değil. Güncel sıradaki görevi gösterebilirim.", [[{ text: "Sıradaki Görev", callback_data: "now" }]]),
-          });
+            stale: true,
+            outbound: staleCallback([[{ text: TELEGRAM_BUTTON_LABELS.next, callback_data: "now" }, { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]),
+          }, 200, "Bu işlem artık güncel değil.");
         }
         throw started.error;
       }
       return await finalize({
         ok: true,
-        outbound: respond(`${requestedTask.data.title} başladı.\nPlanlanan: ${formatMinutesShort(requestedTask.data.estimated_minutes)}.\n\nBitirdiğinde buradan tamamla.`, [[{
-          text: "Bitir",
+        outbound: respond(`Çalışman başladı.\n${requestedTask.data.title}\nPlanlanan: ${formatMinutesShort(requestedTask.data.estimated_minutes)}.`, [[{
+          text: TELEGRAM_BUTTON_LABELS.finish,
           callback_data: `session_finish:${started.data.id}`,
-        }]]),
+        }], [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]),
         session: started.data,
       });
     }
 
     if (callback.startsWith("session_finish:")) {
+      const sessionId = callback.slice(15);
+      const staleFinish = () => finalize({
+        ok: true,
+        stale: true,
+        outbound: staleCallback([[
+          { text: TELEGRAM_BUTTON_LABELS.next, callback_data: "now" },
+          { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
+        ]]),
+      }, 200, "Bu işlem artık güncel değil.");
+      const sessionState = await admin.from("study_sessions")
+        .select("id,status")
+        .eq("id", sessionId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (sessionState.error) throw sessionState.error;
+      if (!sessionState.data || sessionState.data.status !== "active") {
+        return await staleFinish();
+      }
       const finished = await admin.rpc("telegram_finish_study_session", {
         p_user_id: userId,
-        p_session_id: callback.slice(15),
+        p_session_id: sessionId,
       });
-      if (finished.error) throw finished.error;
+      if (finished.error) {
+        if (String(finished.error.message ?? finished.error).includes("SESSION_NOT_ACTIVE")) return await staleFinish();
+        throw finished.error;
+      }
       const replan = finished.data.exam_profile_id ? await replanAfterStudy(admin,userId,finished.data.exam_profile_id,day) : null;
       const task = finished.data.task_id
         ? await admin.from("tasks")
@@ -586,14 +695,23 @@ Deno.serve(async (req) => {
       const pendingUnits = pendingLinks.length;
       const needsResult = task.data?.task_type === "solve_resource_units" && pendingUnits > 0 && remainingMinutes === 0;
       const buttons: Button[][] = [];
-      if (task.data?.task_type === "solve_resource_units" && pendingUnits > 0) {
-        buttons.push([{ text: "Sonuç Gir", callback_data: `result_begin:${finished.data.task_id}` }]);
-      }
-      if (task.data && task.data.status !== "completed" && remainingMinutes > 0) {
-        if (task.data.task_type === "custom") buttons.push([{ text: "Görev bitti", callback_data: `task_done:${task.data.id}` }]);
-        buttons.push([{ text: "Devam et", callback_data: `task_start:${task.data.id}` }, { text: "Bugünü gör", callback_data: "today" }]);
+      if (needsResult) {
+        buttons.push([
+          { text: "Sonuç Gir", callback_data: `result_begin:${finished.data.task_id}` },
+          { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
+        ]);
+      } else if (task.data && task.data.status !== "completed" && remainingMinutes > 0) {
+        buttons.push([
+          task.data.task_type === "custom"
+            ? { text: "Görev Bitti", callback_data: `task_done:${task.data.id}` }
+            : { text: TELEGRAM_BUTTON_LABELS.start, callback_data: `task_start:${task.data.id}` },
+          { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
+        ]);
       } else {
-        buttons.push([{ text: "Sonraki görev", callback_data: "now" }, { text: "Bugünü gör", callback_data: "today" }]);
+        buttons.push([
+          { text: TELEGRAM_BUTTON_LABELS.next, callback_data: "now" },
+          { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
+        ]);
       }
       let nextRecommendation = null;
       if (finished.data.exam_profile_id) {
@@ -609,10 +727,9 @@ Deno.serve(async (req) => {
         nextRecommendation ? `\n${nextRecommendation.taskId === task.data?.id ? "Devam" : "Sıradaki"}: ${nextRecommendation.title} · ${formatMinutesShort(nextRecommendation.remainingMinutes)}` : "",
         formatReplanSummary(replan) ? `\n${formatReplanSummary(replan)}` : "",
       ].filter(Boolean).join("\n");
-      const meaningful = actualMinutes >= 20 || remainingMinutes === 0 || Number(replan?.decision?.changedTaskCount ?? 0) > 0;
       return await finalize({
         ok: true,
-        outbound: meaningful && task.data
+        outbound: task.data
           ? respondCard(completionCard({ title: task.data.title, actualMinutes, remainingMinutes, next: nextRecommendation, replan }), message, buttons)
           : respond(message, buttons),
         session: finished.data,
@@ -629,8 +746,15 @@ Deno.serve(async (req) => {
         .eq("user_id",userId)
         .maybeSingle();
       if (task.error) throw task.error;
-      if (!task.data || task.data.task_type !== "custom") {
-        return await finalize({ ok:true, outbound:respond("Bu çalışma artık tamamlanabilir durumda değil.") });
+      if (!task.data || task.data.task_type !== "custom" || ["completed", "missed", "cancelled"].includes(task.data.status)) {
+        return await finalize({
+          ok: true,
+          stale: true,
+          outbound: staleCallback([[
+            { text: TELEGRAM_BUTTON_LABELS.next, callback_data: "now" },
+            { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
+          ]]),
+        }, 200, "Bu işlem artık güncel değil.");
       }
       const completed = await admin.rpc("telegram_complete_task", { p_user_id:userId, p_task_id:taskId });
       if (completed.error) throw completed.error;
@@ -643,8 +767,8 @@ Deno.serve(async (req) => {
         task:completed.data,
         replan,
         outbound:moved > 0
-          ? respondCard(replanCard("Görev tamamlandı", replan, message), message, [[{text:"Sonraki görev",callback_data:"now"},{text:"Bugünü gör",callback_data:"today"}]])
-          : respond(message, [[{text:"Sonraki görev",callback_data:"now"},{text:"Bugünü gör",callback_data:"today"}]])
+          ? respondCard(replanCard("Görev tamamlandı", replan, message), message, [[{text:TELEGRAM_BUTTON_LABELS.next,callback_data:"now"},{text:TELEGRAM_BUTTON_LABELS.today,callback_data:"today"}]])
+          : respond(message, [[{text:TELEGRAM_BUTTON_LABELS.next,callback_data:"now"},{text:TELEGRAM_BUTTON_LABELS.today,callback_data:"today"}]])
       });
     }
 
@@ -664,7 +788,7 @@ Deno.serve(async (req) => {
 
     if (callback.startsWith("result_task:")) {
       const state = await getState(admin, userId, chatId);
-      if (state?.state !== "result_task") return await finalize({ ok: true, outbound: respond("Bu test seçimi artık geçerli değil. Sonucu yeniden yazabilirsin.") });
+      if (state?.state !== "result_task") return await finalize({ ok: true, stale: true, outbound: staleCallback() }, 200, "Bu işlem artık güncel değil.");
       const tasks = await openSolveTasks();
       const task = tasks.find((candidate: any) => candidate.id === callback.slice(12));
       const parsed = state.payload.parsedResult as ParsedTestResult | undefined;
@@ -696,7 +820,7 @@ Deno.serve(async (req) => {
     if (callback === "result_save") {
       const state = await getState(admin, userId, chatId);
       if (state?.state !== "result_confirm") {
-        return await finalize({ ok: true, outbound: respond("Bu sonuç girişi artık geçerli değil. Test sonucunu yeniden başlatabilirsin.") });
+        return await finalize({ ok: true, stale: true, outbound: staleCallback() }, 200, "Bu işlem artık güncel değil.");
       }
       const payload = state.payload as Record<string, unknown>;
       const result = await admin.rpc("telegram_record_test_result", {
@@ -775,7 +899,7 @@ Deno.serve(async (req) => {
         if (globalTaskMatches.length === 1) {
           const task = globalTaskMatches[0];
           const saved = await saveManualStudy({ ...statePayload, subjectId: task.subject_id, taskId: task.id, curriculumNodeId: task.curriculum_node_id, resourceId: task.resource_id }, parsedManual.minutes);
-          return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+          return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]) });
         }
         const matchedTaskSubjects = new Set(globalTaskMatches.map((task: any) => task.subject_id));
         if (globalTaskMatches.length > 1 && matchedTaskSubjects.size === 1) {
@@ -793,11 +917,11 @@ Deno.serve(async (req) => {
           const task = taskMatches.length === 1 ? taskMatches[0] : tasks.length === 1 ? tasks[0] : null;
           if (task) {
             const saved = await saveManualStudy({ ...statePayload, subjectId, taskId: task.id, curriculumNodeId: task.curriculum_node_id, resourceId: task.resource_id }, parsedManual.minutes);
-            return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+            return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]) });
           }
           if (!tasks.length) {
             const saved = await saveManualStudy({ ...statePayload, subjectId }, parsedManual.minutes);
-            return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+            return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]) });
           }
           await setState(admin, userId, chatId, "manual_task", { ...statePayload, subjectId });
           const taskButtons = tasks.slice(0, 3).map((item: any) => [{ text: item.title.slice(0, 54), callback_data: `manual_task:${item.id}` }]);
@@ -816,7 +940,7 @@ Deno.serve(async (req) => {
     if (callback.startsWith("manual_subject:")) {
       const state = await getState(admin, userId, chatId);
       if (state?.state !== "manual_subject") {
-        return await finalize({ ok: true, outbound: respond("Bu çalışma ekleme adımı artık geçerli değil. Çalışma Ekle ile yeniden başlayabilirsin.") });
+        return await finalize({ ok: true, stale: true, outbound: staleCallback() }, 200, "Bu işlem artık güncel değil.");
       }
       const subjectId = callback.slice(15);
       const tasks = await manualTasksForSubject(state.payload, subjectId);
@@ -832,7 +956,7 @@ Deno.serve(async (req) => {
         };
         if (knownDuration > 0) {
           const saved = await saveManualStudy(payload, knownDuration);
-          return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+          return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]) });
         }
         await setState(admin, userId, chatId, "manual_duration", payload);
         return await finalize({ ok: true, outbound: respond(`“${task.title}” göreviyle eşleştirdim. Kaç dakika çalıştın?`) });
@@ -845,7 +969,7 @@ Deno.serve(async (req) => {
       }
       if (knownDuration > 0) {
         const saved = await saveManualStudy({ ...state.payload, subjectId }, knownDuration);
-        return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+        return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]) });
       }
       await setState(admin, userId, chatId, "manual_duration", { ...state.payload, subjectId });
       return await finalize({ ok: true, outbound: respond("Açık bir görevle eşleştiremedim; genel çalışma olarak kaydedeceğim. Kaç dakika çalıştın?") });
@@ -854,14 +978,14 @@ Deno.serve(async (req) => {
     if (callback.startsWith("manual_task:")) {
       const state = await getState(admin, userId, chatId);
       if (state?.state !== "manual_task") {
-        return await finalize({ ok: true, outbound: respond("Bu çalışma seçimi artık geçerli değil. Çalışma Ekle ile yeniden başlayabilirsin.") });
+        return await finalize({ ok: true, stale: true, outbound: staleCallback() }, 200, "Bu işlem artık güncel değil.");
       }
       const taskId = callback.slice(12);
       const knownDuration = Number(state.payload.durationMinutes ?? 0);
       if (taskId === "none") {
         if (knownDuration > 0) {
           const saved = await saveManualStudy(state.payload, knownDuration);
-          return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+          return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]) });
         }
         await setState(admin, userId, chatId, "manual_duration", state.payload);
         return await finalize({ ok: true, outbound: respond("Genel çalışma olarak kaydedeceğim. Kaç dakika çalıştın?") });
@@ -874,7 +998,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (task.error) throw task.error;
       if (!task.data || ["completed", "missed", "cancelled"].includes(task.data.status)) {
-        return await finalize({ ok: true, outbound: respond("Bu görev artık açık değil. Çalışma Ekle ile güncel görevlerden yeniden seçebilirsin.") });
+        return await finalize({ ok: true, stale: true, outbound: staleCallback() }, 200, "Bu işlem artık güncel değil.");
       }
       const payload = {
         ...state.payload,
@@ -884,7 +1008,7 @@ Deno.serve(async (req) => {
       };
       if (knownDuration > 0) {
         const saved = await saveManualStudy(payload, knownDuration);
-        return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+        return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]) });
       }
       await setState(admin, userId, chatId, "manual_duration", payload);
       return await finalize({ ok: true, outbound: respond(`“${task.data.title}” göreviyle eşleştirdim. Kaç dakika çalıştın?`) });
@@ -918,7 +1042,7 @@ Deno.serve(async (req) => {
       if (state.state === "manual_duration") {
         if (value <= 0) return await finalize({ ok: true, outbound: respond( "Süre sıfırdan büyük olmalı.") });
         const saved = await saveManualStudy(state.payload, value);
-        return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+        return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]) });
       }
       if (state.state === "special_less_minutes" || state.state === "special_extra_minutes") {
         const normal=Number(state.payload.normalMinutes??0);const less=state.state==="special_less_minutes";
@@ -960,20 +1084,64 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    if (lifecycleAdmin && lifecycleEventId && fallbackChatId && !errorMessage.startsWith("MOCK_FAILURE_")) {
+    if (lifecycleCallbackQueryId && !lifecycleCallbackAnswered) {
+      lifecycleCallbackAnswered = true;
       try {
-        const outbound = await deliverTelegram(textDelivery(
-          fallbackChatId,
-          "Kısa bir sorun oldu. Bugünkü planını yeniden kontrol edelim.",
-          [[{ text: "Bugünü kontrol et", callback_data: "today" }]],
-        ));
+        await answerTelegramCallback(lifecycleCallbackQueryId, "Kısa bir sorun oldu.");
+      } catch {
+        // Fallback delivery remains the user-visible recovery path.
+      }
+    }
+    if (lifecycleAdmin && lifecycleEventId && lifecycleDeliverySucceeded && lifecycleBody && lifecycleDelivered) {
+      try {
+        await lifecycleAdmin.rpc("checkpoint_external_event", {
+          p_provider: "telegram",
+          p_external_event_id: lifecycleEventId,
+          p_result_payload: {
+            body: lifecycleBody,
+            status: lifecycleStatus,
+            deliveryCompleted: true,
+            delivered: lifecycleDelivered,
+          },
+        });
         const completed = await lifecycleAdmin.rpc("complete_external_event", {
           p_provider: "telegram",
           p_external_event_id: lifecycleEventId,
         });
         if (!completed.error) {
           lifecycleEventId = null;
-          return json({ ok: false, recovered: true, outbound });
+          return json(lifecycleDelivered, lifecycleStatus);
+        }
+      } catch {
+        // The lifecycle failure below keeps Telegram's retry semantics intact.
+      }
+    }
+    if (lifecycleAdmin && lifecycleEventId && fallbackChatId && !lifecycleDeliverySucceeded && !errorMessage.startsWith("MOCK_FAILURE_")) {
+      try {
+        const fallbackBody = {
+          ok: false,
+          recovered: true,
+          outbound: textDelivery(
+            fallbackChatId,
+            "Kısa bir sorun oldu. Bugünkü planını yeniden kontrol edelim.",
+            [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]],
+            fallbackCallbackMessageIsPhoto ? null : fallbackCallbackMessageId,
+            fallbackCallbackMessageIsPhoto ? fallbackCallbackMessageId : null,
+          ),
+        };
+        const delivered = await deliverBody(fallbackBody);
+        await lifecycleAdmin.rpc("checkpoint_external_event", {
+          p_provider: "telegram",
+          p_external_event_id: lifecycleEventId,
+          p_result_payload: { body: fallbackBody, status: 200, deliveryCompleted: true, delivered },
+        });
+        const completed = await lifecycleAdmin.rpc("complete_external_event", {
+          p_provider: "telegram",
+          p_external_event_id: lifecycleEventId,
+        });
+        if (!completed.error) {
+          lifecycleEventId = null;
+          return json(delivered);
         }
       } catch {
         // The lifecycle failure below keeps Telegram's retry semantics intact.
