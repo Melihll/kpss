@@ -9,7 +9,9 @@ async function loadRenderer() {
       if (Deno.env.get("TELEGRAM_CARD_RENDER_MODE") === "fail") throw new Error("CARD_RENDER_DISABLED");
       const [wasm, font] = await Promise.all([
         Deno.readFile(new URL("./telegram-assets/resvg.wasm", import.meta.url)),
-        Deno.readFile(new URL("./telegram-assets/inter-latin-ext.woff2", import.meta.url)),
+        // resvg receives the complete desktop font, not a browser unicode-range
+        // subset. This keeps Latin, digits and every Turkish glyph deterministic.
+        Deno.readFile(new URL("./telegram-assets/inter-variable.ttf", import.meta.url)),
       ]);
       await initWasm(wasm);
       return font;
@@ -144,9 +146,9 @@ export function telegramCardSvg(model: TelegramCardModel) {
   </svg>`;
 }
 
-export async function renderTelegramCard(model: TelegramCardModel) {
+export async function renderTelegramSvg(svg: string) {
   const font = await loadRenderer();
-  const renderer = new Resvg(telegramCardSvg(model), {
+  const renderer = new Resvg(svg, {
     fitTo: { mode: "width", value: 1080 },
     background: "#fbfbfa",
     font: { loadSystemFonts: false, fontBuffers: [font], defaultFontFamily: "Inter" },
@@ -160,4 +162,8 @@ export async function renderTelegramCard(model: TelegramCardModel) {
     image.free();
     renderer.free();
   }
+}
+
+export async function renderTelegramCard(model: TelegramCardModel) {
+  return await renderTelegramSvg(telegramCardSvg(model));
 }

@@ -6,6 +6,7 @@ export type TelegramDelivery = {
   kind: "text" | "card";
   chatId: string;
   text: string;
+  caption?: string;
   buttons: TelegramButton[][];
   editMessageId?: number | null;
   card?: TelegramCardModel;
@@ -23,7 +24,28 @@ export const cardDelivery = (
   card: TelegramCardModel,
   textFallback: string,
   buttons: TelegramButton[][] = [],
-): TelegramDelivery => ({ __telegramDelivery: true, kind: "card", chatId, text: textFallback, buttons, card });
+): TelegramDelivery => ({
+  __telegramDelivery: true,
+  kind: "card",
+  chatId,
+  text: textFallback,
+  caption: telegramCardCaption(card),
+  buttons,
+  card,
+});
+
+export function telegramCardCaption(card: TelegramCardModel) {
+  const captions: Record<TelegramCardModel["variant"], string> = {
+    today: "Bugünün planı hazır.",
+    now: "Şimdi başlayabilirsin.",
+    week: "Haftanın planı hazır.",
+    report: "Haftalık özetin hazır.",
+    completion: "Çalışma kaydedildi.",
+    result: "Test sonucun hazır.",
+    replan: "Planın güncellendi.",
+  };
+  return captions[card.variant];
+}
 
 function replyMarkup(buttons: TelegramButton[][]) {
   return buttons.length ? { inline_keyboard: buttons } : undefined;
@@ -68,7 +90,7 @@ async function sendPhoto(chatId: string, png: Uint8Array, caption: string, butto
   }
   const form = new FormData();
   form.set("chat_id", chatId);
-  form.set("caption", caption.slice(0, 1024));
+  if (caption) form.set("caption", caption.slice(0, 1024));
   const pngBuffer = Uint8Array.from(png).buffer;
   form.set("photo", new Blob([pngBuffer], { type: "image/png" }), "kpss-kocu.png");
   if (markup) form.set("reply_markup", JSON.stringify(markup));
@@ -98,7 +120,7 @@ export async function deliverTelegram(delivery: TelegramDelivery, options: { for
   try {
     if (options.forceCardFailure && mockMode()) throw new Error("MOCK_CARD_RENDER_FAILURE");
     const png = await renderTelegramCard(delivery.card!);
-    return await sendPhoto(delivery.chatId, png, delivery.text, delivery.buttons);
+    return await sendPhoto(delivery.chatId, png, delivery.caption ?? "", delivery.buttons);
   } catch (error) {
     console.error("TELEGRAM_CARD_TEXT_FALLBACK", fallbackReason(error));
     const fallback = await telegramJsonCall("sendMessage", {

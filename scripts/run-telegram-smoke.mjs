@@ -116,11 +116,11 @@ if (identity.data?.external_user_id !== String(from.id)) throw new Error("identi
 const greeting = await telegram(message("Merhaba"));
 if (!greeting.outbound.text.includes("en iyi sonraki adımı") || greeting.outbound.reply_markup.inline_keyboard.flat().length !== 4) throw new Error("friendly greeting failed");
 const today = await telegram(message("/bugun"));
-if (today.outbound.method !== "sendPhoto" || !today.outbound.visual || !today.outbound.text.includes("Bugün") || !(today.summary?.taskCount > 0)) throw new Error(`bugun actionable visual plan failed: ${JSON.stringify(today)}`);
+if (today.outbound.method !== "sendPhoto" || !today.outbound.visual || today.outbound.caption !== "Bugünün planı hazır." || !(today.summary?.taskCount > 0)) throw new Error(`bugun actionable visual plan failed: ${JSON.stringify(today)}`);
 const todayFallback = await telegram(message("/bugun"), { failCard: true });
 if (todayFallback.outbound.method !== "sendMessage" || !todayFallback.outbound.visualFallback || !todayFallback.outbound.text.includes("Bugün")) throw new Error("daily visual renderer fallback failed");
 const now = await telegram(message("/simdi"));
-if (!now.recommendation?.taskId || now.outbound.method !== "sendPhoto") throw new Error("simdi visual recommendation failed");
+if (!now.recommendation?.taskId || now.outbound.method !== "sendPhoto" || now.outbound.caption !== "Şimdi başlayabilirsin.") throw new Error("simdi visual recommendation failed");
 const naturalNow = await telegram(message("Ne çalışayım?"));
 if (!naturalNow.recommendation?.taskId) throw new Error("natural-language now intent failed");
 
@@ -291,7 +291,7 @@ sunday.setUTCDate(sunday.getUTCDate() - isoDay - 6);
 const previousSunday = sunday.toISOString().slice(0, 10);
 await scheduler(`${previousSunday}T20:00:00+03:00`);
 const weeklyAction = await api.from("scheduled_actions").select("result_payload,dedupe_key").eq("action_type", "weekly_report").eq("status", "completed").limit(1).single();
-if (weeklyAction.error || weeklyAction.data.result_payload?.notification !== "sent" || weeklyAction.data.result_payload?.outbound?.method !== "sendPhoto" || !weeklyAction.data.result_payload?.outbound?.text?.includes("Haftalık rapor")) throw weeklyAction.error ?? new Error("weekly report Telegram visual send missing");
+if (weeklyAction.error || weeklyAction.data.result_payload?.notification !== "sent" || weeklyAction.data.result_payload?.outbound?.method !== "sendPhoto" || weeklyAction.data.result_payload?.outbound?.caption !== "Haftalık özetin hazır.") throw weeklyAction.error ?? new Error("weekly report Telegram visual send missing");
 const actionCountBefore = (await api.from("scheduled_actions").select("id", { count: "exact", head: true })).count;
 await scheduler(`${previousSunday}T20:00:00+03:00`);
 const actionCountAfter = (await api.from("scheduled_actions").select("id", { count: "exact", head: true })).count;
