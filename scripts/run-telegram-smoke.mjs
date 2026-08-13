@@ -74,13 +74,14 @@ if (!solveTask) throw new Error("solve task missing");
 if (!learnTask) throw new Error("learn task missing");
 const link = await app("/messaging/telegram/link-token", "POST");
 
-const telegram = async (update, { failStage, expectedStatus = 200 } = {}) => {
+const telegram = async (update, { failStage, failCard = false, expectedStatus = 200 } = {}) => {
   const response = await fetch(`${url}/functions/v1/telegram-webhook`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Telegram-Bot-Api-Secret-Token": "local-test-secret",
       ...(failStage ? { "X-Telegram-Mock-Fail-Stage": failStage } : {}),
+      ...(failCard ? { "X-Telegram-Mock-Fail-Card": "true" } : {}),
     },
     body: JSON.stringify(update),
   });
@@ -113,11 +114,13 @@ if (!linked.outbound.text.includes("bağlandı")) throw new Error("link failed")
 const identity = await api.from("messaging_identities").select("external_user_id").single();
 if (identity.data?.external_user_id !== String(from.id)) throw new Error("identity missing");
 const greeting = await telegram(message("Merhaba"));
-if (!greeting.outbound.text.includes("KPSS Koçu hazır")) throw new Error("friendly greeting failed");
+if (!greeting.outbound.text.includes("en iyi sonraki adımı") || greeting.outbound.reply_markup.inline_keyboard.flat().length !== 4) throw new Error("friendly greeting failed");
 const today = await telegram(message("/bugun"));
-if (!today.outbound.text.includes("Bugünkü çalışma planın") || today.outbound.text.includes("0 görev") || !(today.summary?.taskCount > 0)) throw new Error(`bugun actionable plan failed: ${JSON.stringify(today)}`);
+if (today.outbound.method !== "sendPhoto" || !today.outbound.visual || !today.outbound.text.includes("Bugün") || !(today.summary?.taskCount > 0)) throw new Error(`bugun actionable visual plan failed: ${JSON.stringify(today)}`);
+const todayFallback = await telegram(message("/bugun"), { failCard: true });
+if (todayFallback.outbound.method !== "sendMessage" || !todayFallback.outbound.visualFallback || !todayFallback.outbound.text.includes("Bugün")) throw new Error("daily visual renderer fallback failed");
 const now = await telegram(message("/simdi"));
-if (!now.recommendation?.taskId) throw new Error("simdi failed");
+if (!now.recommendation?.taskId || now.outbound.method !== "sendPhoto") throw new Error("simdi visual recommendation failed");
 const naturalNow = await telegram(message("Ne çalışayım?"));
 if (!naturalNow.recommendation?.taskId) throw new Error("natural-language now intent failed");
 
@@ -141,14 +144,19 @@ if (afterStudyToday.summary?.studiedMinutes !== 20 || afterStudyToday.summary?.r
   throw new Error(`daily capacity did not account for completed study: ${JSON.stringify(afterStudyToday.summary)}`);
 }
 const manualLinked = await telegram(message("10 dk çalıştım"));
-const manualMathCallback = manualLinked.outbound.reply_markup.inline_keyboard.find((row) => row[0]?.callback_data?.startsWith("manual_subject:"))?.[0]?.callback_data;
-if (!manualMathCallback) throw new Error("manual linked study subject choice missing");
-const manualTaskStep = await telegram(callback(manualMathCallback));
-const learnTaskChoice = manualTaskStep.outbound.reply_markup?.inline_keyboard?.flat()?.find((button) => button.callback_data === `manual_task:${learnTask.id}`)?.callback_data;
-if (!learnTaskChoice) throw new Error(`manual linked study task choice missing: ${JSON.stringify(manualTaskStep)}`);
-await telegram(callback(learnTaskChoice));
-const manualLinkedSaved = await telegram(message("10"));
+const manualChoices = manualLinked.outbound.reply_markup?.inline_keyboard?.flat() ?? [];
+if (manualChoices.some((button) => button.callback_data?.startsWith("manual_subject:"))) {
+  throw new Error(`manual linked study added an unnecessary subject step: ${JSON.stringify(manualLinked)}`);
+}
+const realTaskChoices = manualChoices.filter((button) => button.callback_data?.startsWith("manual_task:") && button.callback_data !== "manual_task:none");
+if (realTaskChoices.length > 3) throw new Error(`manual linked study exposed too many task choices: ${JSON.stringify(manualLinked)}`);
+const learnTaskChoice = realTaskChoices.find((button) => button.callback_data === `manual_task:${learnTask.id}`)?.callback_data;
+if (!learnTaskChoice) throw new Error(`manual linked study task choice missing: ${JSON.stringify(manualLinked)}`);
+const manualLinkedSaved = await telegram(callback(learnTaskChoice));
 if (manualLinkedSaved.session.task_id !== learnTask.id || manualLinkedSaved.session.duration_minutes !== 10) throw new Error("manual linked study did not attach to the selected task");
+if (manualLinkedSaved.outbound.text.includes("Kaç dakika") || manualLinkedSaved.outbound.text.includes("Hangi dersi")) {
+  throw new Error(`manual linked study repeated an already-known clarification: ${JSON.stringify(manualLinkedSaved)}`);
+}
 const progressAfterManual = await api.from("task_progress").select("completed_minutes,actual_study_minutes").eq("task_id", learnTask.id).single();
 if (progressAfterManual.error || progressAfterManual.data.completed_minutes !== 30 || progressAfterManual.data.actual_study_minutes !== 30) throw progressAfterManual.error ?? new Error(`manual linked progress not applied: ${JSON.stringify(progressAfterManual.data)}`);
 const afterManualNow = await telegram(message("/simdi"));
@@ -210,10 +218,12 @@ const dueSetup = await api.rpc("apply_topic_mastery_assessment", { p_payload: {
 } });
 if (dueSetup.error) throw dueSetup.error;
 const specialMenu = await telegram(message("/ozel"));
-const lessCallback = specialMenu.outbound.reply_markup.inline_keyboard[0][0].callback_data;
+const lessCallback = "special_less";
 await telegram(callback(lessCallback));
 const specialApplied = await telegram(message("90"));
-if (!specialApplied.outbound.text.includes("→ 90 dk") || !specialApplied.replan?.revision) throw new Error("special situation replan failed");
+if (specialApplied.replan?.dayCapacities?.[dueDate] !== 90 || !specialApplied.replan?.revision) {
+  throw new Error(`special situation replan failed: ${JSON.stringify(specialApplied)}`);
+}
 const minimumPlan = await telegram(message("/minimum"));
 if (!minimumPlan.minimum || minimumPlan.minimum.totalMinutes > 90) throw new Error("minimum plan failed");
 const adaptiveNow = await telegram(message("/simdi"));
@@ -281,7 +291,7 @@ sunday.setUTCDate(sunday.getUTCDate() - isoDay - 6);
 const previousSunday = sunday.toISOString().slice(0, 10);
 await scheduler(`${previousSunday}T20:00:00+03:00`);
 const weeklyAction = await api.from("scheduled_actions").select("result_payload,dedupe_key").eq("action_type", "weekly_report").eq("status", "completed").limit(1).single();
-if (weeklyAction.error || weeklyAction.data.result_payload?.notification !== "sent" || !weeklyAction.data.result_payload?.outbound?.text?.includes("Haftalık özet")) throw weeklyAction.error ?? new Error("weekly report Telegram send missing");
+if (weeklyAction.error || weeklyAction.data.result_payload?.notification !== "sent" || weeklyAction.data.result_payload?.outbound?.method !== "sendPhoto" || !weeklyAction.data.result_payload?.outbound?.text?.includes("Haftalık rapor")) throw weeklyAction.error ?? new Error("weekly report Telegram visual send missing");
 const actionCountBefore = (await api.from("scheduled_actions").select("id", { count: "exact", head: true })).count;
 await scheduler(`${previousSunday}T20:00:00+03:00`);
 const actionCountAfter = (await api.from("scheduled_actions").select("id", { count: "exact", head: true })).count;
@@ -310,6 +320,10 @@ console.log(JSON.stringify({
   schedulerNotificationDeduplicated: true,
   schedulerDailyPlanSuppressedAfterManualView: true,
   callbackCardsEditedInPlace: true,
+  visualDailyCardSent: true,
+  visualNowCardSent: true,
+  visualWeeklyReportSent: true,
+  visualRendererFallbackToText: true,
   activeSessionGuarded: true,
   sessionMinutesUpdateTaskRemaining: true,
   dailyCapacityAccountsForStudy: true,

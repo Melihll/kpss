@@ -70,10 +70,12 @@ verify_jwt = true
 [functions.telegram-webhook]
 enabled = true
 verify_jwt = false
+static_files = ["./functions/_shared/telegram-assets/*"]
 
 [functions.scheduler-worker]
 enabled = true
 verify_jwt = false
+static_files = ["./functions/_shared/telegram-assets/*"]
 
 [analytics]
 enabled = false

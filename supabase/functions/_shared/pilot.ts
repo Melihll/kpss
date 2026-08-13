@@ -4,9 +4,24 @@ import {
   getNextBestTask,
   getZonedWeekRange,
   interpretWeeklyReport,
-  type RecommendationTask,
 } from "./planning.bundle.js";
 import { loadAdaptiveBase, syllabusProjection } from "./adaptive.ts";
+
+type RecommendationTask = {
+  id: string;
+  status: string;
+  importance: string;
+  priorityScore: number;
+  plannedDate: string | null;
+  estimatedMinutes: number;
+  completedMinutes: number;
+  pendingUnitMinutes?: number | null;
+  createdAt: string;
+  isRevision?: boolean;
+  revisionUrgency?: string | null;
+  masteryLevel?: string | null;
+  topicState?: string | null;
+};
 
 export const PILOT_TIMEZONE = "Europe/Istanbul";
 export const localDate = (instant = new Date()) =>
@@ -336,6 +351,3 @@ export async function pilotMetrics(client: SupabaseClient, userId: string, profi
     backlog_risk_count: (risks.data??[]).filter(row=>row.severity==="risk"||row.severity==="critical").length,
   };
 }
-
-export const formatMinutes = (minutes: number) => `${Math.floor(minutes/60)}s ${minutes%60}dk`;
-export const weeklyReportMessage = (report: any) => `Haftalık özet\n\n${formatMinutes(report.actual_minutes)} / ${formatMinutes(report.planned_minutes)}\n${report.completed_task_count} / ${report.planned_task_count} görev\n${report.question_count} soru\n${report.completed_topic_count} konu\n${report.revision_completed_count} / ${report.revision_due_count} tekrar\n\nDurum: ${String(report.plan_status).toLocaleUpperCase("tr-TR")}`;

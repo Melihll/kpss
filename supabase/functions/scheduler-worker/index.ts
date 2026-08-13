@@ -3,9 +3,14 @@ import {
   buildDailyPlanSummary,
   generateWeeklyReport,
   localDayRange,
-  weeklyReportMessage,
 } from "../_shared/pilot.ts";
-import { formatDailyCoachMessage } from "../_shared/telegram-coach.ts";
+import {
+  dailyCoachCard,
+  formatDailyCoachMessage,
+  weeklyReportPresentation,
+  weeklyStartPresentation,
+} from "../_shared/telegram-coach.ts";
+import { cardDelivery, deliverTelegram, textDelivery } from "../_shared/telegram-transport.ts";
 import { recalculateCurrentPlan } from "../_shared/adaptive.ts";
 import { ensureP48WeekPlanForService } from "../_shared/p48-week.ts";
 
@@ -13,19 +18,6 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
   status,
   headers: { "Content-Type": "application/json" },
 });
-
-async function sendTelegram(chatId: string, text: string, buttons: Array<Array<{text:string;callback_data:string}>> = []) {
-  const payload: Record<string, unknown> = { chat_id: chatId, text };
-  if (buttons.length) payload.reply_markup = { inline_keyboard: buttons };
-  const token = Deno.env.get("TELEGRAM_BOT_TOKEN");
-  const mock = Deno.env.get("TELEGRAM_TRANSPORT_MODE") === "mock";
-  if (mock || !token) return { ...payload, transport: mock ? "mock" : "TELEGRAM_NOT_CONFIGURED" };
-  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
-  });
-  if (!response.ok) throw new Error(`TELEGRAM_SEND_FAILED:${response.status}`);
-  return await response.json();
-}
 
 Deno.serve(async (request) => {
   if (request.method !== "POST") return json({ error: "METHOD_NOT_ALLOWED" }, 405);
@@ -81,12 +73,13 @@ Deno.serve(async (request) => {
               const recommendation = summary.recommendation;
               const primaryButton = recommendation?.needsResult
                 ? { text: "Sonuç Gir", callback_data: `result_begin:${recommendation.taskId}` }
-                : { text: "Şimdi Ne Yapmalıyım?", callback_data: "now" };
-              const outbound = await sendTelegram(
-                identity.data.external_chat_id,
-                formatDailyCoachMessage(summary),
-                [[primaryButton], [{ text: "Minimum Plan", callback_data: "minimum" }], [{ text: "Özel Durum", callback_data: "special" }, { text: "Çalışma Ekle", callback_data: "manual_begin" }]],
-              );
+                : { text: "Şimdi başla", callback_data: "now" };
+              const buttons = [[primaryButton], [{ text: "Bugünü gör", callback_data: "today" }, { text: "Az vaktim var", callback_data: "special_less" }]];
+              const weeklyStart = new Date(`${action.payload.localDate}T12:00:00Z`).getUTCDay() === 1;
+              const presentation = weeklyStart ? weeklyStartPresentation(summary) : { text: formatDailyCoachMessage(summary), card: dailyCoachCard(summary) };
+              const outbound = await deliverTelegram(summary.plan
+                ? cardDelivery(identity.data.external_chat_id, presentation.card, presentation.text, buttons)
+                : textDelivery(identity.data.external_chat_id, presentation.text, [[{ text: "Tekrar dene", callback_data: "today" }]]));
               result = { ...result, notification: "sent", outbound };
             } else result = { ...result, notification: "deduplicated" };
           }
@@ -113,11 +106,11 @@ Deno.serve(async (request) => {
               .eq("id", event.data.id).eq("user_id", action.user_id).is("notified_at", null).select("id").maybeSingle();
             if (reserved.error) throw reserved.error;
             if (reserved.data) {
-              const outbound = await sendTelegram(identity.data.external_chat_id,
-                "Dün için çalışma kaydı göremiyorum.", [[
+              const outbound = await deliverTelegram(textDelivery(identity.data.external_chat_id,
+                "Dün için çalışma kaydı görünmüyor. Çalıştıysan ekleyebilirsin.", [[
                   { text: "Çalışmadım", callback_data: `gap_no_study:${event.data.id}` },
-                  { text: "Çalıştım — Ekle", callback_data: `gap_add_study:${event.data.id}` },
-                ]]);
+                  { text: "Çalışma ekle", callback_data: `gap_add_study:${event.data.id}` },
+                ]]));
               result = { ...result, notification: "sent", outbound };
             } else result = { ...result, notification: "deduplicated" };
           }
@@ -128,7 +121,15 @@ Deno.serve(async (request) => {
         if (identity.data?.external_chat_id) {
           const reserved = await admin.rpc("reserve_scheduled_action_notification", { p_action_id: action.id });
           if (reserved.error) throw reserved.error;
-          if (reserved.data) result = { ...result, notification: "sent", outbound: await sendTelegram(identity.data.external_chat_id, weeklyReportMessage(report)) };
+          if (reserved.data) {
+            const presentation = weeklyReportPresentation(report);
+            result = { ...result, notification: "sent", outbound: await deliverTelegram(cardDelivery(
+              identity.data.external_chat_id,
+              presentation.card,
+              presentation.text,
+              [[{ text: "Yeni haftayı aç", callback_data: "today" }], [{ text: "Dikkat konusunu çalış", callback_data: "revisions" }]],
+            )) };
+          }
           else result = { ...result, notification: "deduplicated" };
         }
       }

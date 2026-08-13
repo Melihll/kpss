@@ -6,12 +6,33 @@ import { DEFAULT_RESOURCE_UNIT_MINUTES, remainingTaskMinutes } from "../_shared/
 import { ensureP48WeekPlanForService } from "../_shared/p48-week.ts";
 import {
   classifyTelegramText,
+  completionCard,
+  dailyCoachCard,
+  foldedTelegramText,
   formatDailyCoachMessage,
   formatMinutesShort,
   formatNowCoachMessage,
+  formatReplanSummary,
   friendlyHelpMessage,
   greetingMessage,
+  mainMenuButtons,
+  nowCoachCard,
+  parseAvailableMinutes,
+  parseManualStudyText,
+  parseTestResultText,
+  replanCard,
+  testResultPresentation,
+  unknownMessage,
+  type ParsedTestResult,
+  type TelegramButton,
 } from "../_shared/telegram-coach.ts";
+import {
+  answerTelegramCallback,
+  cardDelivery,
+  deliverTelegram,
+  textDelivery,
+  type TelegramDelivery,
+} from "../_shared/telegram-transport.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -21,64 +42,18 @@ const hash = async (value: string) =>
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
 
-type Button = { text: string; callback_data: string };
-type Admin = ReturnType<typeof createClient>;
-type TelegramDelivery = {
-  __telegramDelivery: true;
-  method: string;
-  payload: Record<string, unknown>;
-};
-
-async function telegramCall(method: string, payload: Record<string, unknown>) {
-  const token = Deno.env.get("TELEGRAM_BOT_TOKEN");
-  const mock = Deno.env.get("TELEGRAM_TRANSPORT_MODE") === "mock";
-  if (mock || !token) return { method, ...payload, transport: mock ? "mock" : "TELEGRAM_NOT_CONFIGURED" };
-  const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const result = await response.json().catch(() => null);
-  if (!response.ok) {
-    const description = String(result?.description ?? "");
-    if (method === "editMessageText" && description.toLowerCase().includes("message is not modified")) {
-      return { method, ...payload, notModified: true };
-    }
-    throw new Error(`TELEGRAM_${method.toUpperCase()}_FAILED:${response.status}:${description}`);
-  }
-  return result?.result ?? { method, ...payload };
-}
-
-const sendMessage = (chatId: string, text: string, buttons: Button[][] = []): TelegramDelivery => ({
-  __telegramDelivery: true,
-  method: "sendMessage",
-  payload: {
-    chat_id: chatId,
-    text,
-    reply_markup: buttons.length ? { inline_keyboard: buttons } : undefined,
-  },
-});
-
-const editMessageDelivery = (chatId: string, messageId: number, text: string, buttons: Button[][] = []): TelegramDelivery => ({
-  __telegramDelivery: true,
-  method: "editMessageText",
-  payload: {
-    chat_id: chatId,
-    message_id: messageId,
-    text,
-    reply_markup: buttons.length ? { inline_keyboard: buttons } : undefined,
-  },
-});
-
-const answerCallbackQuery = (callbackQueryId: string) =>
-  telegramCall("answerCallbackQuery", { callback_query_id: callbackQueryId });
-
-async function deliverBody(body: Record<string, unknown>) {
+type Button = TelegramButton;
+// The edge helpers intentionally work with the service-role client across several
+// RPC/table result shapes. Pinning this alias to createClient's inferred schema
+// makes newer supabase-js releases collapse ungenerated tables to `never`.
+// Keep the boundary permissive until generated Database types are introduced.
+type Admin = ReturnType<typeof createClient<any>>;
+async function deliverBody(body: Record<string, unknown>, forceCardFailure = false) {
   const outbound = body.outbound as TelegramDelivery | undefined;
   if (!outbound?.__telegramDelivery) return body;
   return {
     ...body,
-    outbound: await telegramCall(outbound.method, outbound.payload),
+    outbound: await deliverTelegram(outbound, { forceCardFailure }),
   };
 }
 
@@ -134,6 +109,7 @@ async function getState(admin: Admin, userId: string, chatId: string) {
 Deno.serve(async (req) => {
   let lifecycleAdmin: Admin | null = null;
   let lifecycleEventId: string | null = null;
+  let fallbackChatId: string | null = null;
   try {
     const expectedSecret = Deno.env.get("TELEGRAM_WEBHOOK_SECRET");
     if (!expectedSecret || req.headers.get("X-Telegram-Bot-Api-Secret-Token") !== expectedSecret) {
@@ -167,6 +143,8 @@ Deno.serve(async (req) => {
     const mockFailureStage = Deno.env.get("TELEGRAM_TRANSPORT_MODE") === "mock"
       ? req.headers.get("X-Telegram-Mock-Fail-Stage")
       : null;
+    const forceCardFailure = Deno.env.get("TELEGRAM_TRANSPORT_MODE") === "mock" &&
+      req.headers.get("X-Telegram-Mock-Fail-Card") === "true";
 
     const complete = async () => {
       const completed = await admin.rpc("complete_external_event", {
@@ -184,14 +162,14 @@ Deno.serve(async (req) => {
       });
       if (checkpoint.error) throw checkpoint.error;
       if (mockFailureStage === "after-business") throw new Error("MOCK_FAILURE_AFTER_BUSINESS");
-      const delivered = await deliverBody(body);
+      const delivered = await deliverBody(body, forceCardFailure);
       await complete();
       return json(delivered, status);
     };
 
     if (claimed.data.businessCompleted && claimed.data.resultPayload) {
       const saved = claimed.data.resultPayload as { body: Record<string, unknown>; status: number };
-      const delivered = await deliverBody(saved.body);
+      const delivered = await deliverBody(saved.body, forceCardFailure);
       await complete();
       return json(delivered, saved.status);
     }
@@ -202,13 +180,13 @@ Deno.serve(async (req) => {
     const from = update.message?.from ?? callbackQuery?.from;
     if (!from || !message?.chat?.id) throw new Error("INVALID_TELEGRAM_UPDATE");
     const chatId = String(message.chat.id);
+    fallbackChatId = chatId;
     const text = String(update.message?.text ?? "").trim();
     const callback = String(callbackQuery?.data ?? "");
     const callbackMessageId = callbackQuery?.message?.message_id ? Number(callbackQuery.message.message_id) : null;
-    const respond = (messageText: string, buttons: Button[][] = []) => callbackMessageId
-      ? editMessageDelivery(chatId, callbackMessageId, messageText, buttons)
-      : sendMessage(chatId, messageText, buttons);
-    if (callbackQuery?.id) await answerCallbackQuery(String(callbackQuery.id));
+    const respond = (messageText: string, buttons: Button[][] = []) => textDelivery(chatId, messageText, buttons, callbackMessageId);
+    const respondCard = (card: Parameters<typeof cardDelivery>[1], messageText: string, buttons: Button[][] = []) => cardDelivery(chatId, card, messageText, buttons);
+    if (callbackQuery?.id) await answerTelegramCallback(String(callbackQuery.id));
 
     if (text.startsWith("/start ")) {
       const linked = await admin.rpc("consume_messaging_link_token", {
@@ -218,10 +196,7 @@ Deno.serve(async (req) => {
         p_username: from.username ?? null,
       });
       if (linked.error) throw linked.error;
-      return await finalize({ ok: true, outbound: respond("Telegram hesabın KPSS Koçu'na bağlandı.\n\nBugünkü planına bakabilir veya ne çalışman gerektiğini sorabilirsin.", [[
-        { text: "Bugünkü Plan", callback_data: "today" },
-        { text: "Şimdi Ne Yapmalıyım?", callback_data: "now" },
-      ]]) });
+      return await finalize({ ok: true, outbound: respond("Telegram hesabın KPSS Koçu’na bağlandı.\n\nBugünün en iyi adımıyla başlayabiliriz.", mainMenuButtons()) });
     }
 
     const identity = await admin.from("messaging_identities")
@@ -231,7 +206,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (identity.error) throw identity.error;
     if (!identity.data) {
-      return await finalize({ ok: true, outbound: respond("Önce web dashboard üzerinden Telegram hesabını bağla.") });
+      return await finalize({ ok: true, outbound: respond("Önce web uygulamasındaki Ayarlar bölümünden Telegram hesabını bağla.") });
     }
 
     const userId = identity.data.user_id;
@@ -239,6 +214,9 @@ Deno.serve(async (req) => {
     const week = monday(day);
     const conversationState = await getState(admin, userId, chatId);
     const intent = conversationState ? "unknown" : classifyTelegramText(text);
+    const availableMinutes = conversationState ? null : parseAvailableMinutes(text);
+    const parsedManual = conversationState ? null : parseManualStudyText(text);
+    const parsedResult = conversationState ? null : parseTestResultText(text);
     const activeSession = async () => {
       const session = await admin.from("study_sessions")
         .select("id,task_id,started_at")
@@ -257,6 +235,104 @@ Deno.serve(async (req) => {
       if (task.error) throw task.error;
       return { ...session.data, task: task.data };
     };
+
+    const applyTotalCapacity = async (totalMinutes: number, note: string) => {
+      const profile = await admin.from("exam_profiles").select("*").eq("user_id", userId).eq("status", "active").maybeSingle();
+      const plan = profile.data ? await admin.from("weekly_plans").select("*").eq("user_id", userId).eq("exam_profile_id", profile.data.id).eq("week_start_date", week).eq("status", "active").maybeSingle() : { data: null, error: null };
+      if (profile.error) throw profile.error;
+      if (plan.error) throw plan.error;
+      if (!profile.data || !plan.data) return null;
+      const base = await loadAdaptiveBase(admin, userId, profile.data, plan.data);
+      const normal = Number(base.dayCapacities[day] ?? 0);
+      const inserted = await admin.from("schedule_exceptions").insert({
+        user_id: userId,
+        exam_profile_id: profile.data.id,
+        exception_date: day,
+        exception_type: "custom",
+        minutes_delta: Math.max(0, totalMinutes) - normal,
+        note,
+      });
+      if (inserted.error) throw inserted.error;
+      const replanned = await recalculateCurrentPlan(admin, userId, profile.data, plan.data, "capacity_change", true);
+      return { normal, updated: Number(replanned.dayCapacities[day] ?? totalMinutes), replanned };
+    };
+
+    const openSolveTasks = async () => {
+      const profile = await admin.from("exam_profiles").select("id").eq("user_id", userId).eq("status", "active").maybeSingle();
+      if (profile.error) throw profile.error;
+      if (!profile.data) return [];
+      const plan = await admin.from("weekly_plans").select("id").eq("user_id", userId).eq("exam_profile_id", profile.data.id).eq("week_start_date", week).eq("status", "active").maybeSingle();
+      if (plan.error) throw plan.error;
+      if (!plan.data) return [];
+      const result = await admin.from("tasks")
+        .select("id,title,exam_profile_id,subject_id,curriculum_node_id,resource_id,status,task_resource_units(resource_unit_id,status)")
+        .eq("user_id", userId)
+        .eq("weekly_plan_id", plan.data.id)
+        .eq("task_type", "solve_resource_units")
+        .in("status", ["planned", "ready", "in_progress", "partially_completed", "rescheduled"])
+        .order("priority_score", { ascending: false });
+      if (result.error) throw result.error;
+      return result.data ?? [];
+    };
+
+    const setParsedResultState = async (parsed: ParsedTestResult, task: any) => {
+      const unit = task.task_resource_units?.find((candidate: any) => candidate.status !== "completed");
+      if (!unit) return false;
+      await setState(admin, userId, chatId, "result_confirm", {
+        taskId: task.id,
+        examProfileId: task.exam_profile_id,
+        subjectId: task.subject_id,
+        curriculumNodeId: task.curriculum_node_id,
+        resourceId: task.resource_id,
+        resourceUnitId: unit.resource_unit_id,
+        correct: parsed.correct,
+        wrong: parsed.wrong,
+        blank: parsed.blank,
+        total: parsed.total,
+      });
+      return true;
+    };
+
+    const saveManualStudy = async (payload: Record<string, unknown>, durationMinutes: number) => {
+      const session = await admin.rpc("telegram_record_retroactive_session", {
+        p_user_id: userId,
+        p_payload: { ...payload, durationMinutes },
+      });
+      if (session.error) throw session.error;
+      const targetDay = String(payload.endedAt ?? day).slice(0, 10);
+      const replan = session.data.exam_profile_id ? await replanAfterStudy(admin, userId, session.data.exam_profile_id, targetDay) : null;
+      if (payload.dataGapEventId) {
+        const resolved = await admin.from("data_gap_events").update({ status: "resolved", resolution_result: "study_added", resolved_at: new Date().toISOString() }).eq("id", payload.dataGapEventId).eq("user_id", userId).eq("status", "open");
+        if (resolved.error) throw resolved.error;
+      }
+      await clearState(admin, userId, chatId);
+      const summary = formatReplanSummary(replan);
+      return { session: session.data, replan, message: `${formatMinutesShort(durationMinutes)} çalışma kaydedildi.${summary ? `\n${summary}` : ""}` };
+    };
+
+    const manualOpenTasks = async (payload: Record<string, unknown>, subjectId?: string) => {
+      const targetDate = typeof payload.endedAt === "string" ? payload.endedAt.slice(0, 10) : day;
+      const plan = await admin.from("weekly_plans")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("exam_profile_id", payload.examProfileId)
+        .eq("week_start_date", monday(targetDate))
+        .eq("status", "active")
+        .maybeSingle();
+      if (plan.error) throw plan.error;
+      if (!plan.data) return [];
+      let openTasksQuery = admin.from("tasks")
+        .select("id,title,subject_id,curriculum_node_id,resource_id,status,priority_score")
+        .eq("user_id", userId)
+        .eq("weekly_plan_id", plan.data.id)
+        .in("status", ["planned", "ready", "in_progress", "partially_completed", "rescheduled"])
+        .order("priority_score", { ascending: false });
+      if (subjectId) openTasksQuery = openTasksQuery.eq("subject_id", subjectId);
+      const openTasks = await openTasksQuery;
+      if (openTasks.error) throw openTasks.error;
+      return openTasks.data ?? [];
+    };
+    const manualTasksForSubject = (payload: Record<string, unknown>, subjectId: string) => manualOpenTasks(payload, subjectId);
 
     if (callback.startsWith("gap_no_study:")) {
       const eventId=callback.slice(13);
@@ -277,8 +353,25 @@ Deno.serve(async (req) => {
       const subjects=await admin.from("user_subjects").select("subject_id,subjects(name)").eq("user_id",userId).eq("exam_profile_id",event.data.exam_profile_id).eq("status","active");
       if(subjects.error)throw subjects.error;
       await setState(admin,userId,chatId,"manual_subject",{examProfileId:event.data.exam_profile_id,dataGapEventId:eventId,endedAt:`${event.data.gap_date}T21:00:00+03:00`});
-      const buttons=(subjects.data??[]).map((item:any)=>[{text:item.subjects?.name??"Ders",callback_data:`manual_subject:${item.subject_id}`}]);
+      const buttons=(subjects.data??[]).slice(0,4).map((item:any)=>[{text:item.subjects?.name??"Ders",callback_data:`manual_subject:${item.subject_id}`}]);
       return await finalize({ok:true,outbound:respond("Hangi dersi çalıştın?",buttons)});
+    }
+
+    if (intent === "no_study" || callback === "today_skip") {
+      const applied = await applyTotalCapacity(0, "Telegram: bugün çalışamayacak");
+      if (!applied) return await finalize({ ok: true, outbound: respond("Aktif haftalık plan bulunamadı.") });
+      const summary = formatReplanSummary(applied.replanned);
+      const message = summary
+        ? `Bugünün kalan planını yeniden dağıttım.\n${summary}`
+        : "Bugünün kapasitesini kapattım. Haftanın kalanında ek değişiklik gerekmiyor.";
+      const changed = Number(applied.replanned?.decision?.changedTaskCount ?? 0);
+      return await finalize({
+        ok: true,
+        replan: applied.replanned,
+        outbound: changed > 0
+          ? respondCard(replanCard("Bugün plan dışı", applied.replanned, message), message, [[{ text: "Haftayı gör", callback_data: "today" }]])
+          : respond(message, [[{ text: "Haftayı gör", callback_data: "today" }]]),
+      });
     }
 
     if (text === "/minimum" || callback === "minimum" || intent === "minimum") {
@@ -291,9 +384,18 @@ Deno.serve(async (req) => {
       return await finalize({ok:true,minimum,outbound:respond(minimum.tasks.length?`Minimum planın (${minimum.totalMinutes} dk)\n\n${lines}`:"Bugünkü sürene uyan anlamlı minimum görev yok.")});
     }
 
+    if ((intent === "special" && availableMinutes !== null) || callback.startsWith("special_total:")) {
+      const total = callback.startsWith("special_total:") ? Number(callback.slice(14)) : Number(availableMinutes);
+      if (!Number.isFinite(total) || total < 0) return await finalize({ ok: true, outbound: respond("Süreyi dakika olarak yazabilir misin?") });
+      const applied = await applyTotalCapacity(total, "Telegram: sınırlı zaman");
+      if (!applied) return await finalize({ ok: true, outbound: respond("Aktif haftalık plan bulunamadı.") });
+      const message = `Bugünkü çalışma alanını ${formatMinutesShort(applied.updated)} olarak güncelledim.${formatReplanSummary(applied.replanned) ? `\n${formatReplanSummary(applied.replanned)}` : ""}`;
+      return await finalize({ ok: true, replan: applied.replanned, outbound: respond(message, [[{ text: "Şimdi ne çalışayım?", callback_data: "now" }]]) });
+    }
+
     if (text === "/ozel" || callback === "special" || intent === "special") {
       await setState(admin,userId,chatId,"special_mode",{});
-      return await finalize({ok:true,outbound:respond("Bugünkü planını etkileyen durum?",[[{text:"Bugün daha az vaktim var",callback_data:"special_less"}],[{text:"Ekstra vaktim var",callback_data:"special_extra"}],[{text:"İptal",callback_data:"form_cancel"}]])});
+      return await finalize({ok:true,outbound:respond("Bugün toplam ne kadar vaktin var? İstersen süreyi yazarak da devam edebilirsin.",[[{text:"20 dk",callback_data:"special_total:20"},{text:"30 dk",callback_data:"special_total:30"}],[{text:"45 dk",callback_data:"special_total:45"},{text:"60 dk",callback_data:"special_total:60"}]])});
     }
     if (callback === "special_less" || callback === "special_extra") {
       const profile = await admin.from("exam_profiles").select("*").eq("user_id",userId).eq("status","active").maybeSingle();
@@ -325,7 +427,7 @@ Deno.serve(async (req) => {
         const timing = urgency === "due" ? "Bugün" : "Gecikmiş";
         return `${index + 1}. ${subject} — ${topic}\n${typeNames[row.revision_type]} — ${row.estimated_minutes} dk — ${timing}`;
       });
-      const buttons = revisions.data.map((row: any) => [{ text: "Tekrarı Tamamla", callback_data: `revision_complete:${row.id}` }]);
+      const buttons = revisions.data.slice(0, 4).map((row: any) => [{ text: "Tekrarı Tamamla", callback_data: `revision_complete:${row.id}` }]);
       return await finalize({ ok: true, revisions: revisions.data, outbound: respond( `Bugünkü tekrarların\n\n${rows.join("\n\n")}`, buttons) });
     }
 
@@ -352,16 +454,18 @@ Deno.serve(async (req) => {
         reason: "manual_daily_plan_view",
       });
       const running = await activeSession();
-      const runningText = running?.task
-        ? `⏱ Devam eden çalışma: ${running.task.title}\n\n`
-        : "";
       const buttons: Button[][] = running
-        ? [[{ text: "Çalışmayı Bitir", callback_data: `session_finish:${running.id}` }], [{ text: "Minimum Plan", callback_data: "minimum" }], [{ text: "Özel Durum", callback_data: "special" }, { text: "Çalışma Ekle", callback_data: "manual_begin" }]]
-        : [[{ text: "Şimdi Ne Yapmalıyım?", callback_data: "now" }], [{ text: "Minimum Plan", callback_data: "minimum" }], [{ text: "Özel Durum", callback_data: "special" }, { text: "Çalışma Ekle", callback_data: "manual_begin" }]];
+        ? [[{ text: "Bitir", callback_data: `session_finish:${running.id}` }], [{ text: "Çalışma ekle", callback_data: "manual_begin" }]]
+        : [[{ text: summary.recommendation?.needsResult ? "Sonuç gir" : "Çalışmaya başla", callback_data: summary.recommendation?.needsResult ? `result_begin:${summary.recommendation.taskId}` : summary.recommendation ? `task_start:${summary.recommendation.taskId}` : "now" }], [{ text: "Az vaktim var", callback_data: "special_less" }, { text: "Bugün çalışamam", callback_data: "today_skip" }]];
+      const message = formatDailyCoachMessage(summary);
       return await finalize({
         ok: true,
         summary,
-        outbound: respond(`${runningText}${formatDailyCoachMessage(summary)}`, buttons),
+        outbound: !summary.plan
+          ? respond(message, [[{ text: "Tekrar dene", callback_data: "today" }]])
+          : running?.task
+          ? respond(`Çalışman devam ediyor.\n${running.task.title}\n\nBitirdiğinde buradan tamamla.`, buttons)
+          : respondCard(dailyCoachCard(summary), message, buttons),
       });
     }
 
@@ -400,7 +504,7 @@ Deno.serve(async (req) => {
       return await finalize({
         ok: true,
         recommendation,
-        outbound: respond(formatNowCoachMessage(recommendation), [[actionButton], [{ text: "Bugünkü Plan", callback_data: "today" }]]),
+        outbound: respondCard(nowCoachCard(recommendation, day), formatNowCoachMessage(recommendation), [[actionButton], [{ text: "Bugünü gör", callback_data: "today" }]]),
       });
     }
 
@@ -420,7 +524,7 @@ Deno.serve(async (req) => {
           ),
         });
       }
-      const requestedTask = await admin.from("tasks").select("id,title,status").eq("id", requestedTaskId).eq("user_id", userId).maybeSingle();
+      const requestedTask = await admin.from("tasks").select("id,title,status,estimated_minutes").eq("id", requestedTaskId).eq("user_id", userId).maybeSingle();
       if (requestedTask.error) throw requestedTask.error;
       if (!requestedTask.data) return await finalize({ ok: true, outbound: respond("Görev bulunamadı.") });
       if (["completed", "missed", "cancelled"].includes(requestedTask.data.status)) {
@@ -444,8 +548,8 @@ Deno.serve(async (req) => {
       }
       return await finalize({
         ok: true,
-        outbound: respond(`Çalışma başladı.\n\n${requestedTask.data.title}\n\nBitirdiğinde aşağıdaki düğmeyi kullan.`, [[{
-          text: "Çalışmayı Bitir",
+        outbound: respond(`${requestedTask.data.title} başladı.\nPlanlanan: ${formatMinutesShort(requestedTask.data.estimated_minutes)}.\n\nBitirdiğinde buradan tamamla.`, [[{
+          text: "Bitir",
           callback_data: `session_finish:${started.data.id}`,
         }]]),
         session: started.data,
@@ -486,22 +590,31 @@ Deno.serve(async (req) => {
         buttons.push([{ text: "Sonuç Gir", callback_data: `result_begin:${finished.data.task_id}` }]);
       }
       if (task.data && task.data.status !== "completed" && remainingMinutes > 0) {
-        if (task.data.task_type === "custom") {
-          buttons.push([{ text: "✅ Görev Bitti", callback_data: `task_done:${task.data.id}` }]);
-        }
-        buttons.push([{ text: "Devam Et", callback_data: `task_start:${task.data.id}` }, { text: "Sıradaki Görev", callback_data: "now" }]);
+        if (task.data.task_type === "custom") buttons.push([{ text: "Görev bitti", callback_data: `task_done:${task.data.id}` }]);
+        buttons.push([{ text: "Devam et", callback_data: `task_start:${task.data.id}` }, { text: "Bugünü gör", callback_data: "today" }]);
       } else {
-        buttons.push([{ text: "Sıradaki Görev", callback_data: "now" }]);
+        buttons.push([{ text: "Sonraki görev", callback_data: "now" }, { text: "Bugünü gör", callback_data: "today" }]);
       }
-      const progressText = task.data
-        ? `\n${task.data.title}\nİlerleme: ${completedMinutes}/${estimatedMinutes} dk${remainingMinutes > 0 ? `\nKalan: ${formatMinutesShort(remainingMinutes)}` : ""}${needsResult ? "\nTest sonucu girişi bekliyor." : ""}`
-        : "";
-      const replanText = Number(replan?.decision?.changedTaskCount ?? 0) > 0
-        ? `\n\n📅 Gerçek çalışma sürene göre haftanın kalanında ${replan.decision.changedTaskCount} görev yeniden yerleştirildi.`
-        : "";
+      let nextRecommendation = null;
+      if (finished.data.exam_profile_id) {
+        const profile = await admin.from("exam_profiles").select("*").eq("id", finished.data.exam_profile_id).eq("user_id", userId).maybeSingle();
+        if (profile.error) throw profile.error;
+        if (profile.data) nextRecommendation = (await loadDailyCoachContext(admin, userId, profile.data, day, { respectCurrentTime: true })).recommendation;
+      }
+      const actualMinutes = Number(finished.data.duration_minutes ?? 0);
+      const message = [
+        `${formatMinutesShort(actualMinutes)} kaydedildi.`,
+        task.data && remainingMinutes > 0 ? `Bu görevde ${formatMinutesShort(remainingMinutes)} kaldı.` : task.data ? "Görev tamamlandı." : "",
+        needsResult ? "Test sonucu girişi bekliyor." : "",
+        nextRecommendation ? `\n${nextRecommendation.taskId === task.data?.id ? "Devam" : "Sıradaki"}: ${nextRecommendation.title} · ${formatMinutesShort(nextRecommendation.remainingMinutes)}` : "",
+        formatReplanSummary(replan) ? `\n${formatReplanSummary(replan)}` : "",
+      ].filter(Boolean).join("\n");
+      const meaningful = actualMinutes >= 20 || remainingMinutes === 0 || Number(replan?.decision?.changedTaskCount ?? 0) > 0;
       return await finalize({
         ok: true,
-        outbound: respond(`✅ Çalışma kaydedildi.\nSüre: ${finished.data.duration_minutes} dk${progressText}${replanText}`, buttons),
+        outbound: meaningful && task.data
+          ? respondCard(completionCard({ title: task.data.title, actualMinutes, remainingMinutes, next: nextRecommendation, replan }), message, buttons)
+          : respond(message, buttons),
         session: finished.data,
         replan,
         taskProgress: task.data ? { completedMinutes, estimatedMinutes, remainingMinutes, status: task.data.status, needsResult } : null,
@@ -523,15 +636,40 @@ Deno.serve(async (req) => {
       if (completed.error) throw completed.error;
       const replan = await replanAfterStudy(admin,userId,task.data.exam_profile_id,day);
       const moved = Number(replan?.decision?.changedTaskCount ?? 0);
-      const note = moved > 0
-        ? `\n\n📅 Beklenenden hızlı/yavaş ilerlemene göre haftanın kalanında ${moved} görev yeniden yerleştirildi.`
-        : "\n\nHaftanın kalanında değişiklik gerekmiyor.";
+      const note = formatReplanSummary(replan);
+      const message = `Görev tamamlandı.\n${task.data.title}${note ? `\n\n${note}` : ""}`;
       return await finalize({
         ok:true,
         task:completed.data,
         replan,
-        outbound:respond(`✅ Görev tamamlandı.\n${task.data.title}${note}`, [[{text:"Sıradaki Görev",callback_data:"now"},{text:"Bugünkü Plan",callback_data:"today"}]])
+        outbound:moved > 0
+          ? respondCard(replanCard("Görev tamamlandı", replan, message), message, [[{text:"Sonraki görev",callback_data:"now"},{text:"Bugünü gör",callback_data:"today"}]])
+          : respond(message, [[{text:"Sonraki görev",callback_data:"now"},{text:"Bugünü gör",callback_data:"today"}]])
       });
+    }
+
+    if (parsedResult) {
+      const tasks = await openSolveTasks();
+      const query = foldedTelegramText(parsedResult.query);
+      const matches = query ? tasks.filter((task: any) => foldedTelegramText(task.title).includes(query) || query.split(" ").every((part) => foldedTelegramText(task.title).includes(part))) : tasks;
+      const selected = matches.length === 1 ? matches[0] : tasks.length === 1 ? tasks[0] : null;
+      if (selected && await setParsedResultState(parsedResult, selected)) {
+        return await finalize({ ok: true, outbound: respond(`${selected.title}\n\n${parsedResult.correct} doğru · ${parsedResult.wrong} yanlış${parsedResult.blank ? ` · ${parsedResult.blank} boş` : ""}\nToplam ${parsedResult.total} soru`, [[{ text: "Kaydet", callback_data: "result_save" }, { text: "İptal", callback_data: "form_cancel" }]]) });
+      }
+      if (!tasks.length) return await finalize({ ok: true, outbound: respond("Sonuçla eşleştirilecek açık bir test görevi bulunamadı.") });
+      await setState(admin, userId, chatId, "result_task", { parsedResult });
+      const buttons = (matches.length ? matches : tasks).slice(0, 4).map((task: any) => [{ text: task.title.slice(0, 54), callback_data: `result_task:${task.id}` }]);
+      return await finalize({ ok: true, outbound: respond("Bu sonuç hangi teste ait?", buttons) });
+    }
+
+    if (callback.startsWith("result_task:")) {
+      const state = await getState(admin, userId, chatId);
+      if (state?.state !== "result_task") return await finalize({ ok: true, outbound: respond("Bu test seçimi artık geçerli değil. Sonucu yeniden yazabilirsin.") });
+      const tasks = await openSolveTasks();
+      const task = tasks.find((candidate: any) => candidate.id === callback.slice(12));
+      const parsed = state.payload.parsedResult as ParsedTestResult | undefined;
+      if (!task || !parsed || !await setParsedResultState(parsed, task)) return await finalize({ ok: true, outbound: respond("Bu test artık sonuç girişine açık değil.") });
+      return await finalize({ ok: true, outbound: respond(`${task.title}\n\n${parsed.correct} doğru · ${parsed.wrong} yanlış${parsed.blank ? ` · ${parsed.blank} boş` : ""}\nToplam ${parsed.total} soru`, [[{ text: "Kaydet", callback_data: "result_save" }, { text: "İptal", callback_data: "form_cancel" }]]) });
     }
 
     if (callback.startsWith("result_begin:")) {
@@ -587,15 +725,15 @@ Deno.serve(async (req) => {
       const buttons = result.data.review_status === "pending"
         ? [[{ text: "İnceledim", callback_data: `result_review:${result.data.id}` }, { text: "Sonra", callback_data: "result_later" }]]
         : [];
+      const presentation = testResultPresentation(result.data, mastery);
       return await finalize({
         ok: true,
         result: result.data,
         mastery,
         masteryPending,
-        outbound: respond(
-          `Sonuç kaydedildi: ${result.data.correct_count}D ${result.data.wrong_count}Y ${result.data.blank_count}B\nBaşarı: %${(Number(result.data.accuracy) * 100).toFixed(1)}${buttons.length ? "\n\nYanlışlarının çözümlerini inceledin mi?" : ""}`,
-          buttons,
-        ),
+        outbound: presentation.card
+          ? respondCard(presentation.card, `${presentation.text}${buttons.length ? "\n\nYanlışlarının çözümlerini inceledin mi?" : ""}`, buttons)
+          : respond(`${presentation.text}${buttons.length ? "\n\nYanlışlarının çözümlerini inceledin mi?" : ""}`, buttons),
       });
     }
 
@@ -622,12 +760,57 @@ Deno.serve(async (req) => {
         .eq("exam_profile_id", profile.data.id)
         .eq("status", "active");
       if (subjects.error) throw subjects.error;
-      await setState(admin, userId, chatId, "manual_subject", { examProfileId: profile.data.id });
-      const buttons = (subjects.data ?? []).map((item: any) => [{
+      const statePayload: Record<string, unknown> = {
+        examProfileId: profile.data.id,
+        ...(parsedManual ? { durationMinutes: parsedManual.minutes, manualQuery: parsedManual.query } : {}),
+      };
+      if (parsedManual) {
+        const query = foldedTelegramText(parsedManual.query);
+        const allTasks = await manualOpenTasks(statePayload);
+        const queryParts = query.split(" ").filter((part) => part.length > 3);
+        const globalTaskMatches = allTasks.filter((task: any) => {
+          const title = foldedTelegramText(task.title);
+          return title.includes(query) || queryParts.some((part) => title.includes(part));
+        });
+        if (globalTaskMatches.length === 1) {
+          const task = globalTaskMatches[0];
+          const saved = await saveManualStudy({ ...statePayload, subjectId: task.subject_id, taskId: task.id, curriculumNodeId: task.curriculum_node_id, resourceId: task.resource_id }, parsedManual.minutes);
+          return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+        }
+        const matchedTaskSubjects = new Set(globalTaskMatches.map((task: any) => task.subject_id));
+        if (globalTaskMatches.length > 1 && matchedTaskSubjects.size === 1) {
+          const subjectId = globalTaskMatches[0].subject_id;
+          await setState(admin, userId, chatId, "manual_task", { ...statePayload, subjectId });
+          const taskButtons = globalTaskMatches.slice(0, 3).map((item: any) => [{ text: item.title.slice(0, 54), callback_data: `manual_task:${item.id}` }]);
+          taskButtons.push([{ text: "Genel çalışma", callback_data: "manual_task:none" }]);
+          return await finalize({ ok: true, outbound: respond("Hangi konuydu?", taskButtons) });
+        }
+        const matchedSubjects = ((subjects.data ?? []) as any[]).filter((item: any) => query && query.includes(foldedTelegramText(item.subjects?.name ?? "")));
+        if (matchedSubjects.length === 1) {
+          const subjectId = matchedSubjects[0].subject_id;
+          const tasks = await manualTasksForSubject(statePayload, subjectId);
+          const taskMatches = tasks.filter((task: any) => query.split(" ").some((part) => part.length > 3 && foldedTelegramText(task.title).includes(part)));
+          const task = taskMatches.length === 1 ? taskMatches[0] : tasks.length === 1 ? tasks[0] : null;
+          if (task) {
+            const saved = await saveManualStudy({ ...statePayload, subjectId, taskId: task.id, curriculumNodeId: task.curriculum_node_id, resourceId: task.resource_id }, parsedManual.minutes);
+            return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+          }
+          if (!tasks.length) {
+            const saved = await saveManualStudy({ ...statePayload, subjectId }, parsedManual.minutes);
+            return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+          }
+          await setState(admin, userId, chatId, "manual_task", { ...statePayload, subjectId });
+          const taskButtons = tasks.slice(0, 3).map((item: any) => [{ text: item.title.slice(0, 54), callback_data: `manual_task:${item.id}` }]);
+          taskButtons.push([{ text: "Genel çalışma", callback_data: "manual_task:none" }]);
+          return await finalize({ ok: true, outbound: respond(`${matchedSubjects[0].subjects?.name ?? "Bu derste"} hangi konuydu?`, taskButtons) });
+        }
+      }
+      await setState(admin, userId, chatId, "manual_subject", statePayload);
+      const buttons = (subjects.data ?? []).slice(0, 4).map((item: any) => [{
         text: item.subjects?.name ?? "Ders",
         callback_data: `manual_subject:${item.subject_id}`,
       }]);
-      return await finalize({ ok: true, outbound: respond( "Hangi dersi çalıştın?", buttons) });
+      return await finalize({ ok: true, outbound: respond(parsedManual ? "Hangi dersti?" : "Hangi dersi çalıştın?", buttons) });
     }
 
     if (callback.startsWith("manual_subject:")) {
@@ -636,43 +819,33 @@ Deno.serve(async (req) => {
         return await finalize({ ok: true, outbound: respond("Bu çalışma ekleme adımı artık geçerli değil. Çalışma Ekle ile yeniden başlayabilirsin.") });
       }
       const subjectId = callback.slice(15);
-      const targetDate = typeof state.payload.endedAt === "string" ? state.payload.endedAt.slice(0, 10) : day;
-      const targetWeek = monday(targetDate);
-      const plan = await admin.from("weekly_plans")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("exam_profile_id", state.payload.examProfileId)
-        .eq("week_start_date", targetWeek)
-        .eq("status", "active")
-        .maybeSingle();
-      if (plan.error) throw plan.error;
-      const openTasks = plan.data
-        ? await admin.from("tasks")
-          .select("id,title,curriculum_node_id,resource_id,status,priority_score")
-          .eq("user_id", userId)
-          .eq("weekly_plan_id", plan.data.id)
-          .eq("subject_id", subjectId)
-          .in("status", ["planned", "ready", "in_progress", "partially_completed", "rescheduled"])
-          .order("priority_score", { ascending: false })
-        : { data: [], error: null };
-      if (openTasks.error) throw openTasks.error;
-      const tasks = openTasks.data ?? [];
+      const tasks = await manualTasksForSubject(state.payload, subjectId);
+      const knownDuration = Number(state.payload.durationMinutes ?? 0);
       if (tasks.length === 1) {
         const task = tasks[0];
-        await setState(admin, userId, chatId, "manual_duration", {
+        const payload = {
           ...state.payload,
           subjectId,
           taskId: task.id,
           curriculumNodeId: task.curriculum_node_id,
           resourceId: task.resource_id,
-        });
+        };
+        if (knownDuration > 0) {
+          const saved = await saveManualStudy(payload, knownDuration);
+          return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+        }
+        await setState(admin, userId, chatId, "manual_duration", payload);
         return await finalize({ ok: true, outbound: respond(`“${task.title}” göreviyle eşleştirdim. Kaç dakika çalıştın?`) });
       }
       if (tasks.length > 1) {
         await setState(admin, userId, chatId, "manual_task", { ...state.payload, subjectId });
-        const buttons: Button[][] = tasks.slice(0, 6).map((task: any) => [{ text: task.title.slice(0, 50), callback_data: `manual_task:${task.id}` }]);
+        const buttons: Button[][] = tasks.slice(0, 3).map((task: any) => [{ text: task.title.slice(0, 50), callback_data: `manual_task:${task.id}` }]);
         buttons.push([{ text: "Genel çalışma", callback_data: "manual_task:none" }]);
-        return await finalize({ ok: true, outbound: respond("Bu çalışma hangi göreve aitti?", buttons) });
+        return await finalize({ ok: true, outbound: respond(knownDuration > 0 ? "Hangi konuydu?" : "Bu çalışma hangi göreve aitti?", buttons) });
+      }
+      if (knownDuration > 0) {
+        const saved = await saveManualStudy({ ...state.payload, subjectId }, knownDuration);
+        return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
       }
       await setState(admin, userId, chatId, "manual_duration", { ...state.payload, subjectId });
       return await finalize({ ok: true, outbound: respond("Açık bir görevle eşleştiremedim; genel çalışma olarak kaydedeceğim. Kaç dakika çalıştın?") });
@@ -684,7 +857,12 @@ Deno.serve(async (req) => {
         return await finalize({ ok: true, outbound: respond("Bu çalışma seçimi artık geçerli değil. Çalışma Ekle ile yeniden başlayabilirsin.") });
       }
       const taskId = callback.slice(12);
+      const knownDuration = Number(state.payload.durationMinutes ?? 0);
       if (taskId === "none") {
+        if (knownDuration > 0) {
+          const saved = await saveManualStudy(state.payload, knownDuration);
+          return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+        }
         await setState(admin, userId, chatId, "manual_duration", state.payload);
         return await finalize({ ok: true, outbound: respond("Genel çalışma olarak kaydedeceğim. Kaç dakika çalıştın?") });
       }
@@ -698,12 +876,17 @@ Deno.serve(async (req) => {
       if (!task.data || ["completed", "missed", "cancelled"].includes(task.data.status)) {
         return await finalize({ ok: true, outbound: respond("Bu görev artık açık değil. Çalışma Ekle ile güncel görevlerden yeniden seçebilirsin.") });
       }
-      await setState(admin, userId, chatId, "manual_duration", {
+      const payload = {
         ...state.payload,
         taskId: task.data.id,
         curriculumNodeId: task.data.curriculum_node_id,
         resourceId: task.data.resource_id,
-      });
+      };
+      if (knownDuration > 0) {
+        const saved = await saveManualStudy(payload, knownDuration);
+        return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
+      }
+      await setState(admin, userId, chatId, "manual_duration", payload);
       return await finalize({ ok: true, outbound: respond(`“${task.data.title}” göreviyle eşleştirdim. Kaç dakika çalıştın?`) });
     }
 
@@ -734,23 +917,15 @@ Deno.serve(async (req) => {
       }
       if (state.state === "manual_duration") {
         if (value <= 0) return await finalize({ ok: true, outbound: respond( "Süre sıfırdan büyük olmalı.") });
-        const session = await admin.rpc("telegram_record_retroactive_session", {
-          p_user_id: userId,
-          p_payload: { ...state.payload, durationMinutes: value },
-        });
-        if (session.error) throw session.error;
-        const replan = session.data.exam_profile_id ? await replanAfterStudy(admin,userId,session.data.exam_profile_id,String(state.payload.endedAt??day).slice(0,10)) : null;
-        if(state.payload.dataGapEventId){const resolved=await admin.from("data_gap_events").update({status:"resolved",resolution_result:"study_added",resolved_at:new Date().toISOString()}).eq("id",state.payload.dataGapEventId).eq("user_id",userId).eq("status","open");if(resolved.error)throw resolved.error;}
-        await clearState(admin, userId, chatId);
-        const changed=Number(replan?.decision?.changedTaskCount??0);
-        return await finalize({ ok: true, session: session.data, replan, outbound: respond(`${value} dakikalık çalışma kaydedildi.${changed>0?`\nHaftanın kalanında ${changed} görev gerçek sürene göre yeniden yerleştirildi.`:""}`) });
+        const saved = await saveManualStudy(state.payload, value);
+        return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: "Bugünü gör", callback_data: "today" }]]) });
       }
       if (state.state === "special_less_minutes" || state.state === "special_extra_minutes") {
         const normal=Number(state.payload.normalMinutes??0);const less=state.state==="special_less_minutes";
         const inserted=await admin.from("schedule_exceptions").insert({user_id:userId,exam_profile_id:state.payload.profileId,exception_date:day,exception_type:less?"custom":"extra_available",minutes_delta:less?value-normal:value,note:"Telegram özel durum"});if(inserted.error)throw inserted.error;
         const profile=await admin.from("exam_profiles").select("*").eq("id",state.payload.profileId).eq("user_id",userId).single();const plan=await admin.from("weekly_plans").select("*").eq("id",state.payload.planId).eq("user_id",userId).single();
         const replanned=await recalculateCurrentPlan(admin,userId,profile.data,plan.data,"capacity_change",true);await clearState(admin,userId,chatId);
-        const updated=replanned.dayCapacities[day]??0;return await finalize({ok:true,replan:replanned,outbound:respond(`Bugünkü kapasite ${normal} dk → ${updated} dk olarak güncellendi.\n${replanned.decision.explanation}`)});
+        const updated=replanned.dayCapacities[day]??0;const summary=formatReplanSummary(replanned);return await finalize({ok:true,replan:replanned,outbound:respond(`Bugünkü çalışma alanı ${formatMinutesShort(normal)} → ${formatMinutesShort(updated)} olarak güncellendi.${summary?`\n${summary}`:""}`,[[{text:"Şimdi ne çalışayım?",callback_data:"now"}]])});
       }
     }
 
@@ -771,35 +946,46 @@ Deno.serve(async (req) => {
     if (intent === "greeting") {
       return await finalize({
         ok: true,
-        outbound: respond(greetingMessage(), [[
-          { text: "Bugünkü Plan", callback_data: "today" },
-          { text: "Şimdi Ne Yapmalıyım?", callback_data: "now" },
-        ], [{ text: "Tekrarlar", callback_data: "revisions" }, { text: "Çalışma Ekle", callback_data: "manual_begin" }]]),
+        outbound: respond(greetingMessage(), mainMenuButtons()),
       });
     }
 
     if (intent === "help") {
-      return await finalize({ ok: true, outbound: respond(friendlyHelpMessage(), [[
-        { text: "Bugünkü Plan", callback_data: "today" },
-        { text: "Şimdi Ne Yapmalıyım?", callback_data: "now" },
-      ]]) });
+      return await finalize({ ok: true, outbound: respond(friendlyHelpMessage(), mainMenuButtons()) });
     }
 
     return await finalize({
       ok: true,
-      outbound: respond(`${friendlyHelpMessage()}\n\nYazdığını anlayamadıysam aşağıdaki seçeneklerden devam edebilirsin.`, [[
-        { text: "Bugünkü Plan", callback_data: "today" },
-        { text: "Şimdi Ne Yapmalıyım?", callback_data: "now" },
-      ], [{ text: "Minimum Plan", callback_data: "minimum" }, { text: "Özel Durum", callback_data: "special" }], [{ text: "Çalışma Ekle", callback_data: "manual_begin" }]]),
+      outbound: respond(unknownMessage(), mainMenuButtons()),
     });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (lifecycleAdmin && lifecycleEventId && fallbackChatId && !errorMessage.startsWith("MOCK_FAILURE_")) {
+      try {
+        const outbound = await deliverTelegram(textDelivery(
+          fallbackChatId,
+          "Kısa bir sorun oldu. Bugünkü planını yeniden kontrol edelim.",
+          [[{ text: "Bugünü kontrol et", callback_data: "today" }]],
+        ));
+        const completed = await lifecycleAdmin.rpc("complete_external_event", {
+          p_provider: "telegram",
+          p_external_event_id: lifecycleEventId,
+        });
+        if (!completed.error) {
+          lifecycleEventId = null;
+          return json({ ok: false, recovered: true, outbound });
+        }
+      } catch {
+        // The lifecycle failure below keeps Telegram's retry semantics intact.
+      }
+    }
     if (lifecycleAdmin && lifecycleEventId) {
       await lifecycleAdmin.rpc("fail_external_event", {
         p_provider: "telegram",
         p_external_event_id: lifecycleEventId,
-        p_last_error: error instanceof Error ? error.message : String(error),
+        p_last_error: errorMessage,
       });
     }
-    return json({ ok: false, error: error instanceof Error ? error.message : String(error) }, 400);
+    return json({ ok: false, error: errorMessage }, 400);
   }
 });
