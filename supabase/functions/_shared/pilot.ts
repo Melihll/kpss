@@ -6,6 +6,7 @@ import {
   interpretWeeklyReport,
 } from "./planning.bundle.js";
 import { loadAdaptiveBase, syllabusProjection } from "./adaptive.ts";
+import { recommendationWindow } from "./recommendation-window.ts";
 
 type RecommendationTask = {
   id: string;
@@ -173,6 +174,8 @@ export async function loadDailyCoachContext(
     taskType: string;
     reason: string;
     remainingMinutes: number;
+    taskRemainingMinutes: number;
+    recommendedSessionMinutes: number;
     completedMinutes: number;
     estimatedMinutes: number;
     pendingUnitCount: number;
@@ -181,16 +184,21 @@ export async function loadDailyCoachContext(
   try {
     const selected = getNextBestTask(mapped, { today: date, availableMinutes: availableNowMinutes });
     const item = enriched.find((candidate) => candidate.raw.id === selected.recommendedTask.id);
-    if (item) recommendation = {
+    const window = recommendationWindow(selected.remainingMinutes, availableNowMinutes);
+    const taskRemainingMinutes = window.taskRemainingMinutes;
+    const needsResult = item?.raw.task_type === "solve_resource_units" && item.pendingUnitCount > 0 && taskRemainingMinutes === 0;
+    if (item && (needsResult || availableNowMinutes > 0)) recommendation = {
       taskId: item.raw.id,
       title: item.raw.title,
       taskType: item.raw.task_type,
       reason: selected.reason,
       remainingMinutes: selected.remainingMinutes,
+      taskRemainingMinutes,
+      recommendedSessionMinutes: needsResult ? 0 : window.recommendedSessionMinutes,
       completedMinutes: item.mapped.completedMinutes,
       estimatedMinutes: item.mapped.estimatedMinutes,
       pendingUnitCount: item.pendingUnitCount,
-      needsResult: item.raw.task_type === "solve_resource_units" && item.pendingUnitCount > 0 && selected.remainingMinutes === 0,
+      needsResult,
     };
   } catch {
     recommendation = null;

@@ -6,10 +6,12 @@ import { DEFAULT_RESOURCE_UNIT_MINUTES, remainingTaskMinutes } from "../_shared/
 import { ensureP48WeekPlanForService } from "../_shared/p48-week.ts";
 import {
   classifyTelegramText,
+  completionActionButtons,
   completionCard,
   dailyCoachCard,
   foldedTelegramText,
   formatActiveSessionMessage,
+  formatStartedSessionMessage,
   formatDailyCoachMessage,
   formatMinutesShort,
   formatNowCoachMessage,
@@ -17,21 +19,25 @@ import {
   friendlyHelpMessage,
   greetingMessage,
   mainMenuButtons,
+  manualTaskChoiceButtons,
   nowCoachCard,
   parseAvailableMinutes,
   parseManualStudyText,
   parseTestResultText,
   replanCard,
   testResultPresentation,
+  totalCapacityForRemainingAvailability,
   TELEGRAM_BUTTON_LABELS,
   unknownMessage,
   type ParsedTestResult,
   type TelegramButton,
 } from "../_shared/telegram-coach.ts";
 import {
+  activeSessionDelivery,
   answerTelegramCallback,
   cardDelivery,
   deliverTelegram,
+  interactiveStateDelivery,
   keyboardDelivery,
   textDelivery,
   type TelegramDelivery,
@@ -78,12 +84,26 @@ async function replanAfterStudy(admin: Admin, userId: string, examProfileId: str
   return await recalculateCurrentPlan(admin,userId,profile.data,plan.data,"study_deviation",true);
 }
 
+const ACTIVE_MESSAGE_KEY = "_activeSessionMessage";
+
+async function conversationRecord(admin: Admin, userId: string, chatId: string) {
+  const result = await admin.from("telegram_conversation_states")
+    .select("state,payload,expires_at")
+    .eq("user_id", userId)
+    .eq("chat_id", chatId)
+    .maybeSingle();
+  if (result.error) throw result.error;
+  return result.data;
+}
+
 async function setState(admin: Admin, userId: string, chatId: string, state: string, payload: Record<string, unknown>) {
+  const current = await conversationRecord(admin, userId, chatId);
+  const activeMessage = current?.payload?.[ACTIVE_MESSAGE_KEY];
   const result = await admin.from("telegram_conversation_states").upsert({
     user_id: userId,
     chat_id: chatId,
     state,
-    payload,
+    payload: { ...payload, ...(activeMessage ? { [ACTIVE_MESSAGE_KEY]: activeMessage } : {}) },
     expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
     updated_at: new Date().toISOString(),
   }, { onConflict: "user_id,chat_id" });
@@ -91,22 +111,67 @@ async function setState(admin: Admin, userId: string, chatId: string, state: str
 }
 
 async function clearState(admin: Admin, userId: string, chatId: string) {
+  const current = await conversationRecord(admin, userId, chatId);
+  const activeMessage = current?.payload?.[ACTIVE_MESSAGE_KEY];
+  if (activeMessage) {
+    const result = await admin.from("telegram_conversation_states").upsert({
+      user_id: userId,
+      chat_id: chatId,
+      state: "__idle",
+      payload: { [ACTIVE_MESSAGE_KEY]: activeMessage },
+      expires_at: new Date(Date.now() + 48 * 60 * 60_000).toISOString(),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "user_id,chat_id" });
+    if (result.error) throw result.error;
+    return;
+  }
   const result = await admin.from("telegram_conversation_states").delete().eq("user_id", userId).eq("chat_id", chatId);
   if (result.error) throw result.error;
 }
 
 async function getState(admin: Admin, userId: string, chatId: string) {
-  const result = await admin.from("telegram_conversation_states")
-    .select("state,payload,expires_at")
-    .eq("user_id", userId)
-    .eq("chat_id", chatId)
-    .maybeSingle();
-  if (result.error) throw result.error;
-  if (result.data && new Date(result.data.expires_at).getTime() <= Date.now()) {
+  const data = await conversationRecord(admin, userId, chatId);
+  if (data && new Date(data.expires_at).getTime() <= Date.now()) {
     await clearState(admin, userId, chatId);
     return null;
   }
-  return result.data;
+  return data?.state === "__idle" ? null : data;
+}
+
+async function activeMessageState(admin: Admin, userId: string, chatId: string, sessionId: string) {
+  const current = await conversationRecord(admin, userId, chatId);
+  const active = current?.payload?.[ACTIVE_MESSAGE_KEY];
+  return active?.sessionId === sessionId && Number(active.messageId) > 0 ? active : null;
+}
+
+async function setActiveMessageState(admin: Admin, userId: string, chatId: string, active: Record<string, unknown>) {
+  const current = await conversationRecord(admin, userId, chatId);
+  const state = current?.state && current.state !== "__idle" ? current.state : "__idle";
+  const result = await admin.from("telegram_conversation_states").upsert({
+    user_id: userId,
+    chat_id: chatId,
+    state,
+    payload: { ...(current?.payload ?? {}), [ACTIVE_MESSAGE_KEY]: active },
+    expires_at: state === "__idle" ? new Date(Date.now() + 48 * 60 * 60_000).toISOString() : current?.expires_at,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "user_id,chat_id" });
+  if (result.error) throw result.error;
+}
+
+async function clearActiveMessageState(admin: Admin, userId: string, chatId: string, sessionId: string) {
+  const current = await conversationRecord(admin, userId, chatId);
+  const active = current?.payload?.[ACTIVE_MESSAGE_KEY];
+  if (!current || active?.sessionId !== sessionId) return;
+  const payload = { ...(current.payload ?? {}) };
+  delete payload[ACTIVE_MESSAGE_KEY];
+  if (current.state === "__idle") {
+    const removed = await admin.from("telegram_conversation_states").delete().eq("user_id", userId).eq("chat_id", chatId);
+    if (removed.error) throw removed.error;
+    return;
+  }
+  const updated = await admin.from("telegram_conversation_states").update({ payload, updated_at: new Date().toISOString() })
+    .eq("user_id", userId).eq("chat_id", chatId);
+  if (updated.error) throw updated.error;
 }
 
 Deno.serve(async (req) => {
@@ -119,8 +184,11 @@ Deno.serve(async (req) => {
   let lifecycleStatus = 200;
   let lifecycleDelivered: Record<string, unknown> | null = null;
   let lifecycleDeliverySucceeded = false;
+  let lifecycleBusinessCheckpointed = false;
   let lifecycleCallbackQueryId: string | null = null;
   let lifecycleCallbackAnswered = false;
+  let messageOwnerUserId: string | null = null;
+  let messageOwnerChatId: string | null = null;
   try {
     const expectedSecret = Deno.env.get("TELEGRAM_WEBHOOK_SECRET");
     if (!expectedSecret || req.headers.get("X-Telegram-Bot-Api-Secret-Token") !== expectedSecret) {
@@ -183,7 +251,31 @@ Deno.serve(async (req) => {
       });
       if (checkpoint.error) throw checkpoint.error;
     };
+    const syncCanonicalMessageState = async (body: Record<string, unknown>, delivered: Record<string, unknown>) => {
+      const delivery = body.outbound as TelegramDelivery | undefined;
+      const canonical = delivery?.canonicalActiveSession;
+      if (canonical) {
+        const deliveredOutbound = delivered.outbound as Record<string, unknown> | undefined;
+        const messageId = Number(deliveredOutbound?.message_id ?? delivery.editCaptionMessageId ?? delivery.editMessageId ?? 0);
+        if (messageId > 0) {
+          await setActiveMessageState(admin, String(body.userId ?? ""), String(body.chatId ?? ""), {
+            sessionId: canonical.sessionId,
+            messageId,
+            isPhoto: deliveredOutbound?.stateReplaced ? false : Boolean(delivery.editCaptionMessageId),
+            plannedMinutes: canonical.plannedMinutes ?? null,
+          });
+        }
+      }
+      const clearSessionId = typeof body.clearCanonicalActiveSession === "string" ? body.clearCanonicalActiveSession : null;
+      if (clearSessionId) await clearActiveMessageState(admin, String(body.userId ?? ""), String(body.chatId ?? ""), clearSessionId);
+    };
     const finalize = async (body: Record<string, unknown>, status = 200, callbackAnswer?: string) => {
+      const delivery = body.outbound as TelegramDelivery | undefined;
+      if (delivery?.canonicalActiveSession || typeof body.clearCanonicalActiveSession === "string") {
+        if (!messageOwnerUserId || !messageOwnerChatId) throw new Error("TELEGRAM_MESSAGE_OWNER_MISSING");
+        body.userId ??= messageOwnerUserId;
+        body.chatId ??= messageOwnerChatId;
+      }
       lifecycleBody = body;
       lifecycleStatus = status;
       await acknowledgeCallback(callbackAnswer);
@@ -193,8 +285,10 @@ Deno.serve(async (req) => {
         p_result_payload: { body, status },
       });
       if (checkpoint.error) throw checkpoint.error;
+      lifecycleBusinessCheckpointed = true;
       if (mockFailureStage === "after-business") throw new Error("MOCK_FAILURE_AFTER_BUSINESS");
       const delivered = await deliverBody(body, forceCardFailure);
+      await syncCanonicalMessageState(body, delivered);
       lifecycleDelivered = delivered;
       lifecycleDeliverySucceeded = true;
       await checkpointDelivery({ body, status, deliveryCompleted: true, delivered });
@@ -203,12 +297,14 @@ Deno.serve(async (req) => {
     };
 
     if (claimed.data.businessCompleted && claimed.data.resultPayload) {
+      lifecycleBusinessCheckpointed = true;
       const saved = claimed.data.resultPayload as { body: Record<string, unknown>; status: number; deliveryCompleted?: boolean; delivered?: Record<string, unknown> };
       if (saved.deliveryCompleted) {
         await complete();
         return json(saved.delivered ?? saved.body, saved.status);
       }
       const delivered = await deliverBody(saved.body, forceCardFailure);
+      await syncCanonicalMessageState(saved.body, delivered);
       lifecycleBody = saved.body;
       lifecycleStatus = saved.status;
       lifecycleDelivered = delivered;
@@ -267,6 +363,8 @@ Deno.serve(async (req) => {
     }
 
     const userId = identity.data.user_id;
+    messageOwnerUserId = userId;
+    messageOwnerChatId = chatId;
     const day = today();
     const week = monday(day);
     const conversationState = await getState(admin, userId, chatId);
@@ -284,13 +382,47 @@ Deno.serve(async (req) => {
       if (!session.data) return null;
       const task = session.data.task_id
         ? await admin.from("tasks")
-          .select("id,title,task_type,estimated_minutes,status,task_progress(completed_minutes)")
+          .select("id,title,task_type,estimated_minutes,status,task_progress(completed_minutes),task_resource_units(status,resource_units(unit_type,estimated_minutes))")
           .eq("id", session.data.task_id)
           .eq("user_id", userId)
           .maybeSingle()
         : { data: null, error: null };
       if (task.error) throw task.error;
       return { ...session.data, task: task.data };
+    };
+    const taskRemainingDisplayMinutes = (task: any) => {
+      const pendingLinks = (task?.task_resource_units ?? []).filter((unit: any) => unit.status === "pending");
+      const pendingUnitMinutes = pendingLinks.length
+        ? pendingLinks.reduce((total: number, link: any) => total + Number(
+          link.resource_units?.estimated_minutes ??
+            (DEFAULT_RESOURCE_UNIT_MINUTES as Record<string, number>)[link.resource_units?.unit_type ?? "other"] ?? 30,
+        ), 0)
+        : null;
+      return remainingTaskMinutes({
+        estimatedMinutes: Number(task?.estimated_minutes ?? 0),
+        completedMinutes: Number(task?.task_progress?.[0]?.completed_minutes ?? 0),
+        pendingUnitMinutes,
+      } as any);
+    };
+    const activeSessionOutbound = async (running: any, options: { started?: boolean; plannedMinutes?: number } = {}) => {
+      const canonical = await activeMessageState(admin, userId, chatId, running.id);
+      const target = callbackMessageId
+        ? { messageId: callbackMessageId, isPhoto: callbackMessageIsPhoto }
+        : canonical ? { messageId: Number(canonical.messageId), isPhoto: Boolean(canonical.isPhoto) } : null;
+      const taskRemaining = taskRemainingDisplayMinutes(running.task);
+      const plannedMinutes = Math.max(0, Math.min(
+        Number(options.plannedMinutes ?? canonical?.plannedMinutes ?? taskRemaining),
+        taskRemaining,
+      ));
+      const elapsedMinutes = Math.max(0, Math.floor((Date.now() - new Date(running.started_at).getTime()) / 60_000));
+      const messageText = options.started
+        ? formatStartedSessionMessage(running.task?.title ?? "Aktif çalışma", plannedMinutes)
+        : formatActiveSessionMessage(running, elapsedMinutes);
+      const retireIds = canonical && Number(canonical.messageId) !== target?.messageId ? [Number(canonical.messageId)] : [];
+      return activeSessionDelivery(chatId, messageText, [
+        [{ text: TELEGRAM_BUTTON_LABELS.finish, callback_data: `session_finish:${running.id}` }],
+        [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }],
+      ], running.id, target, plannedMinutes, retireIds);
     };
 
     const applyTotalCapacity = async (totalMinutes: number, note: string) => {
@@ -301,17 +433,25 @@ Deno.serve(async (req) => {
       if (!profile.data || !plan.data) return null;
       const base = await loadAdaptiveBase(admin, userId, profile.data, plan.data);
       const normal = Number(base.dayCapacities[day] ?? 0);
+      const target = Math.max(0, totalMinutes);
+      if (normal === target) {
+        return {
+          normal,
+          updated: normal,
+          replanned: { idempotent: true, noChange: true, dayCapacities: base.dayCapacities, decision: { changedTaskCount: 0 } },
+        };
+      }
       const inserted = await admin.from("schedule_exceptions").insert({
         user_id: userId,
         exam_profile_id: profile.data.id,
         exception_date: day,
         exception_type: "custom",
-        minutes_delta: Math.max(0, totalMinutes) - normal,
+        minutes_delta: target - normal,
         note,
       });
       if (inserted.error) throw inserted.error;
       const replanned = await recalculateCurrentPlan(admin, userId, profile.data, plan.data, "capacity_change", true);
-      return { normal, updated: Number(replanned.dayCapacities[day] ?? totalMinutes), replanned };
+      return { normal, updated: Number(replanned.dayCapacities[day] ?? target), replanned };
     };
 
     const openSolveTasks = async () => {
@@ -379,7 +519,7 @@ Deno.serve(async (req) => {
       if (plan.error) throw plan.error;
       if (!plan.data) return [];
       let openTasksQuery = admin.from("tasks")
-        .select("id,title,subject_id,curriculum_node_id,resource_id,status,priority_score")
+        .select("id,title,subject_id,curriculum_node_id,resource_id,status,priority_score,planned_date,task_type,estimated_minutes,task_progress(completed_minutes),curriculum_nodes(name),resources(name)")
         .eq("user_id", userId)
         .eq("weekly_plan_id", plan.data.id)
         .in("status", ["planned", "ready", "in_progress", "partially_completed", "rescheduled"])
@@ -442,25 +582,34 @@ Deno.serve(async (req) => {
     }
 
     if ((intent === "special" && availableMinutes !== null) || callback.startsWith("special_total:")) {
-      const total = callback.startsWith("special_total:") ? Number(callback.slice(14)) : Number(availableMinutes);
-      if (!Number.isFinite(total) || total < 0) return await finalize({ ok: true, outbound: respond("Süreyi dakika olarak yazabilir misin?") });
+      const remaining = callback.startsWith("special_total:") ? Number(callback.slice(14)) : Number(availableMinutes);
+      if (!Number.isFinite(remaining) || remaining < 0) return await finalize({ ok: true, outbound: respond("Süreyi dakika olarak yazabilir misin?") });
+      const profile = await admin.from("exam_profiles").select("*").eq("user_id", userId).eq("status", "active").maybeSingle();
+      if (profile.error) throw profile.error;
+      const completed = profile.data ? Number((await loadDailyCoachContext(admin, userId, profile.data, day)).studiedMinutes ?? 0) : 0;
+      const total = totalCapacityForRemainingAvailability(completed, remaining);
       const applied = await applyTotalCapacity(total, "Telegram: sınırlı zaman");
       if (!applied) return await finalize({ ok: true, outbound: respond("Aktif haftalık plan bulunamadı.") });
-      const message = `Bugünkü çalışma alanını ${formatMinutesShort(applied.updated)} olarak güncelledim.${formatReplanSummary(applied.replanned) ? `\n${formatReplanSummary(applied.replanned)}` : ""}`;
-      return await finalize({ ok: true, replan: applied.replanned, outbound: respond(message, [[{ text: "Şimdi ne çalışayım?", callback_data: "now" }]]) });
+      await clearState(admin, userId, chatId);
+      const message = `Bugün bundan sonrası için ${formatMinutesShort(remaining)} ayırdın. Tamamlanan ${formatMinutesShort(completed)} korunuyor; toplam çalışma alanı ${formatMinutesShort(applied.updated)} oldu.${formatReplanSummary(applied.replanned) ? `\n${formatReplanSummary(applied.replanned)}` : ""}`;
+      const buttons = remaining > 0
+        ? [[{ text: "Şimdi ne çalışayım?", callback_data: "now" }]]
+        : [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }, { text: TELEGRAM_BUTTON_LABELS.addStudy, callback_data: "manual_begin" }]];
+      return await finalize({ ok: true, replan: applied.replanned, outbound: respond(message, buttons) });
     }
 
     if (text === "/ozel" || callback === "special" || intent === "special") {
       await setState(admin,userId,chatId,"special_mode",{});
-      return await finalize({ok:true,outbound:respond("Bugün toplam ne kadar vaktin var? İstersen süreyi yazarak da devam edebilirsin.",[[{text:"20 dk",callback_data:"special_total:20"},{text:"30 dk",callback_data:"special_total:30"}],[{text:"45 dk",callback_data:"special_total:45"},{text:"60 dk",callback_data:"special_total:60"}]])});
+      return await finalize({ok:true,outbound:respond("Bugün bundan sonra ne kadar vakit ayırabilirsin? İstersen süreyi yazarak da devam edebilirsin.",[[{text:"20 dk",callback_data:"special_total:20"},{text:"30 dk",callback_data:"special_total:30"}],[{text:"45 dk",callback_data:"special_total:45"},{text:"60 dk",callback_data:"special_total:60"}]])});
     }
     if (callback === "special_less" || callback === "special_extra") {
       const profile = await admin.from("exam_profiles").select("*").eq("user_id",userId).eq("status","active").maybeSingle();
       const plan = profile.data ? await admin.from("weekly_plans").select("*").eq("user_id",userId).eq("exam_profile_id",profile.data.id).eq("week_start_date",week).eq("status","active").maybeSingle() : {data:null};
       if(!profile.data||!plan.data)return await finalize({ok:true,outbound:respond("Aktif haftalık plan bulunamadı.")});
       const base=await loadAdaptiveBase(admin,userId,profile.data,plan.data);
-      await setState(admin,userId,chatId,callback==="special_less"?"special_less_minutes":"special_extra_minutes",{profileId:profile.data.id,planId:plan.data.id,normalMinutes:base.dayCapacities[day]??0});
-      return await finalize({ok:true,outbound:respond(callback==="special_less"?"Bugün toplam kaç dakika çalışabilirsin?":"Bugün kaç dakika fazladan çalışabilirsin?")});
+      const completedMinutes = Number((await loadDailyCoachContext(admin, userId, profile.data, day)).studiedMinutes ?? 0);
+      await setState(admin,userId,chatId,callback==="special_less"?"special_less_minutes":"special_extra_minutes",{profileId:profile.data.id,planId:plan.data.id,normalMinutes:base.dayCapacities[day]??0,completedMinutes});
+      return await finalize({ok:true,outbound:respond(callback==="special_less"?"Bugün bundan sonra kaç dakika ayırabilirsin?":"Bugün kaç dakika fazladan çalışabilirsin?")});
     }
 
     if (text === "/tekrar" || callback === "revisions" || intent === "revision") {
@@ -521,17 +670,21 @@ Deno.serve(async (req) => {
         reason: "manual_daily_plan_view",
       });
       const running = await activeSession();
+      const dayClosed = Number(summary.remainingCapacityMinutes ?? 0) <= 0;
       const buttons: Button[][] = running
         ? [[{ text: TELEGRAM_BUTTON_LABELS.finish, callback_data: `session_finish:${running.id}` }], [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]
-        : [[{ text: summary.recommendation?.needsResult ? "Sonuç Gir" : TELEGRAM_BUTTON_LABELS.start, callback_data: summary.recommendation?.needsResult ? `result_begin:${summary.recommendation.taskId}` : summary.recommendation ? `task_start:${summary.recommendation.taskId}` : "now" }], [{ text: TELEGRAM_BUTTON_LABELS.lowTime, callback_data: "special_less" }, { text: TELEGRAM_BUTTON_LABELS.noStudy, callback_data: "today_skip" }]];
+        : dayClosed
+        ? [[{ text: TELEGRAM_BUTTON_LABELS.reopenDay, callback_data: "special" }], [{ text: TELEGRAM_BUTTON_LABELS.addStudy, callback_data: "manual_begin" }]]
+        : [[{ text: summary.recommendation?.needsResult ? "Sonuç Gir" : TELEGRAM_BUTTON_LABELS.start, callback_data: summary.recommendation?.needsResult ? `result_begin:${summary.recommendation.taskId}` : summary.recommendation ? `task_start:${summary.recommendation.taskId}:${summary.recommendation.recommendedSessionMinutes}` : "now" }], [{ text: TELEGRAM_BUTTON_LABELS.lowTime, callback_data: "special_less" }, { text: TELEGRAM_BUTTON_LABELS.noStudy, callback_data: "today_skip" }]];
       const message = formatDailyCoachMessage(summary);
       return await finalize({
         ok: true,
         summary,
+        ...(running ? { activeSession: running } : {}),
         outbound: !summary.plan
           ? respond(message, [[{ text: "Tekrar dene", callback_data: "today" }]])
           : running?.task
-          ? respond(formatActiveSessionMessage(running, Math.max(0, (Date.now() - new Date(running.started_at).getTime()) / 60_000)), buttons)
+          ? await activeSessionOutbound(running)
           : respondCard(dailyCoachCard(summary), message, buttons),
       });
     }
@@ -539,15 +692,10 @@ Deno.serve(async (req) => {
     if (text === "/simdi" || callback === "now" || intent === "now") {
       const running = await activeSession();
       if (running?.task) {
-        const elapsedMinutes = Math.max(0, Math.floor((Date.now() - new Date(running.started_at).getTime()) / 60_000));
-        const completed = Number(running.task.task_progress?.[0]?.completed_minutes ?? 0);
         return await finalize({
           ok: true,
           activeSession: running,
-          outbound: respond(formatActiveSessionMessage(running, elapsedMinutes), [
-            [{ text: TELEGRAM_BUTTON_LABELS.finish, callback_data: `session_finish:${running.id}` }],
-            [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }],
-          ]),
+          outbound: await activeSessionOutbound(running),
         });
       }
       const profile = await admin.from("exam_profiles").select("*").eq("user_id", userId).eq("status", "active").maybeSingle();
@@ -556,7 +704,15 @@ Deno.serve(async (req) => {
       await ensureP48WeekPlanForService(admin, userId, profile.data, day);
       const context = await loadDailyCoachContext(admin, userId, profile.data, day, { respectCurrentTime: true });
       const recommendation = context.recommendation;
-      if (!recommendation) return await finalize({ ok: true, outbound: respond("Şu anda önerebileceğim açık bir görev yok.") });
+      if (!recommendation) {
+        const dayClosed = Number(context.remainingCapacityMinutes ?? 0) <= 0;
+        return await finalize({
+          ok: true,
+          outbound: respond(dayClosed ? "Bugün için ayırdığın süre kalmadı." : "Şu anda önerebileceğim açık bir görev yok.", dayClosed
+            ? [[{ text: TELEGRAM_BUTTON_LABELS.reopenDay, callback_data: "special" }], [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }, { text: TELEGRAM_BUTTON_LABELS.addStudy, callback_data: "manual_begin" }]]
+            : [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]),
+        });
+      }
       await recordRecommendationEvent(admin, {
         userId,
         examProfileId: profile.data.id,
@@ -567,7 +723,7 @@ Deno.serve(async (req) => {
       });
       const actionButton = recommendation.needsResult
         ? { text: "Sonuç Gir", callback_data: `result_begin:${recommendation.taskId}` }
-        : { text: TELEGRAM_BUTTON_LABELS.start, callback_data: `task_start:${recommendation.taskId}` };
+        : { text: TELEGRAM_BUTTON_LABELS.start, callback_data: `task_start:${recommendation.taskId}:${recommendation.recommendedSessionMinutes}` };
       return await finalize({
         ok: true,
         recommendation,
@@ -576,20 +732,19 @@ Deno.serve(async (req) => {
     }
 
     if (callback.startsWith("task_start:")) {
-      const requestedTaskId = callback.slice(11);
+      const [requestedTaskId, requestedMinutesText] = callback.slice(11).split(":");
+      const requestedMinutes = Number(requestedMinutesText ?? 0);
       const running = await activeSession();
       if (running?.task) {
-        const elapsedMinutes = Math.max(0, Math.floor((Date.now() - new Date(running.started_at).getTime()) / 60_000));
         return await finalize({
           ok: true,
           activeSession: running,
-          outbound: respond(formatActiveSessionMessage(running, elapsedMinutes), [
-            [{ text: TELEGRAM_BUTTON_LABELS.finish, callback_data: `session_finish:${running.id}` }],
-            [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }],
-          ]),
+          outbound: await activeSessionOutbound(running),
         });
       }
-      const requestedTask = await admin.from("tasks").select("id,title,status,estimated_minutes").eq("id", requestedTaskId).eq("user_id", userId).maybeSingle();
+      const requestedTask = await admin.from("tasks")
+        .select("id,title,status,estimated_minutes,task_progress(completed_minutes),task_resource_units(status,resource_units(unit_type,estimated_minutes))")
+        .eq("id", requestedTaskId).eq("user_id", userId).maybeSingle();
       if (requestedTask.error) throw requestedTask.error;
       if (!requestedTask.data) {
         return await finalize({
@@ -614,14 +769,10 @@ Deno.serve(async (req) => {
         if (startError.includes("ACTIVE_SESSION_EXISTS")) {
           const current = await activeSession();
           if (current?.task) {
-            const elapsedMinutes = Math.max(0, Math.floor((Date.now() - new Date(current.started_at).getTime()) / 60_000));
             return await finalize({
               ok: true,
               activeSession: current,
-              outbound: respond(formatActiveSessionMessage(current, elapsedMinutes), [
-                [{ text: TELEGRAM_BUTTON_LABELS.finish, callback_data: `session_finish:${current.id}` }],
-                [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }],
-              ]),
+              outbound: await activeSessionOutbound(current),
             }, 200, "Bu işlem artık güncel değil.");
           }
         }
@@ -636,23 +787,25 @@ Deno.serve(async (req) => {
       }
       return await finalize({
         ok: true,
-        outbound: respond(`Çalışman başladı.\n${requestedTask.data.title}\nPlanlanan: ${formatMinutesShort(requestedTask.data.estimated_minutes)}.`, [[{
-          text: TELEGRAM_BUTTON_LABELS.finish,
-          callback_data: `session_finish:${started.data.id}`,
-        }], [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]),
+        outbound: await activeSessionOutbound({ ...started.data, task: requestedTask.data }, {
+          started: true,
+          plannedMinutes: requestedMinutes > 0 ? requestedMinutes : taskRemainingDisplayMinutes(requestedTask.data),
+        }),
         session: started.data,
       });
     }
 
     if (callback.startsWith("session_finish:")) {
       const sessionId = callback.slice(15);
+      const canonical = await activeMessageState(admin, userId, chatId, sessionId);
       const staleFinish = () => finalize({
         ok: true,
         stale: true,
-        outbound: staleCallback([[
+        outbound: interactiveStateDelivery(chatId, "Bu çalışma tamamlandı.", [[
           { text: TELEGRAM_BUTTON_LABELS.next, callback_data: "now" },
           { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
-        ]]),
+        ]], callbackMessageId ? { messageId: callbackMessageId, isPhoto: callbackMessageIsPhoto } : null),
+        clearCanonicalActiveSession: sessionId,
       }, 200, "Bu işlem artık güncel değil.");
       const sessionState = await admin.from("study_sessions")
         .select("id,status")
@@ -694,25 +847,11 @@ Deno.serve(async (req) => {
         : 0;
       const pendingUnits = pendingLinks.length;
       const needsResult = task.data?.task_type === "solve_resource_units" && pendingUnits > 0 && remainingMinutes === 0;
-      const buttons: Button[][] = [];
-      if (needsResult) {
-        buttons.push([
-          { text: "Sonuç Gir", callback_data: `result_begin:${finished.data.task_id}` },
-          { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
-        ]);
-      } else if (task.data && task.data.status !== "completed" && remainingMinutes > 0) {
-        buttons.push([
-          task.data.task_type === "custom"
-            ? { text: "Görev Bitti", callback_data: `task_done:${task.data.id}` }
-            : { text: TELEGRAM_BUTTON_LABELS.start, callback_data: `task_start:${task.data.id}` },
-          { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
-        ]);
-      } else {
-        buttons.push([
-          { text: TELEGRAM_BUTTON_LABELS.next, callback_data: "now" },
-          { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
-        ]);
-      }
+      const buttons = completionActionButtons({
+        taskId: task.data?.id,
+        remainingMinutes,
+        needsResult,
+      });
       let nextRecommendation = null;
       if (finished.data.exam_profile_id) {
         const profile = await admin.from("exam_profiles").select("*").eq("id", finished.data.exam_profile_id).eq("user_id", userId).maybeSingle();
@@ -727,14 +866,20 @@ Deno.serve(async (req) => {
         nextRecommendation ? `\n${nextRecommendation.taskId === task.data?.id ? "Devam" : "Sıradaki"}: ${nextRecommendation.title} · ${formatMinutesShort(nextRecommendation.remainingMinutes)}` : "",
         formatReplanSummary(replan) ? `\n${formatReplanSummary(replan)}` : "",
       ].filter(Boolean).join("\n");
+      const completionOutbound = task.data
+        ? respondCard(completionCard({ title: task.data.title, actualMinutes, remainingMinutes, next: nextRecommendation, replan }), message, buttons)
+        : respond(message, buttons);
+      completionOutbound.clearKeyboardMessageIds = [...new Set([
+        ...(callbackMessageId ? [callbackMessageId] : []),
+        ...(canonical?.messageId ? [Number(canonical.messageId)] : []),
+      ])];
       return await finalize({
         ok: true,
-        outbound: task.data
-          ? respondCard(completionCard({ title: task.data.title, actualMinutes, remainingMinutes, next: nextRecommendation, replan }), message, buttons)
-          : respond(message, buttons),
+        outbound: completionOutbound,
         session: finished.data,
         replan,
         taskProgress: task.data ? { completedMinutes, estimatedMinutes, remainingMinutes, status: task.data.status, needsResult } : null,
+        clearCanonicalActiveSession: sessionId,
       });
     }
 
@@ -780,10 +925,25 @@ Deno.serve(async (req) => {
       if (selected && await setParsedResultState(parsedResult, selected)) {
         return await finalize({ ok: true, outbound: respond(`${selected.title}\n\n${parsedResult.correct} doğru · ${parsedResult.wrong} yanlış${parsedResult.blank ? ` · ${parsedResult.blank} boş` : ""}\nToplam ${parsedResult.total} soru`, [[{ text: "Kaydet", callback_data: "result_save" }, { text: "İptal", callback_data: "form_cancel" }]]) });
       }
-      if (!tasks.length) return await finalize({ ok: true, outbound: respond("Sonuçla eşleştirilecek açık bir test görevi bulunamadı.") });
+      if (!tasks.length) return await finalize({ ok: true, outbound: respond("Sonuçla eşleştirilecek açık bir test görevi bulunamadı.", [[
+        { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
+        { text: TELEGRAM_BUTTON_LABELS.findTest, callback_data: "result_find" },
+      ]]) });
       await setState(admin, userId, chatId, "result_task", { parsedResult });
       const buttons = (matches.length ? matches : tasks).slice(0, 4).map((task: any) => [{ text: task.title.slice(0, 54), callback_data: `result_task:${task.id}` }]);
       return await finalize({ ok: true, outbound: respond("Bu sonuç hangi teste ait?", buttons) });
+    }
+
+    if (callback === "result_find") {
+      const tasks = await openSolveTasks();
+      if (!tasks.length) {
+        return await finalize({ ok: true, outbound: respond("Şu anda sonuç bekleyen açık bir test görevi yok.", [[
+          { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
+          { text: TELEGRAM_BUTTON_LABELS.addStudy, callback_data: "manual_begin" },
+        ]]) });
+      }
+      const buttons = tasks.slice(0, 3).map((task: any) => [{ text: task.title.slice(0, 54), callback_data: `result_begin:${task.id}` }]);
+      return await finalize({ ok: true, outbound: respond("Sonuç gireceğin testi seç.", buttons) });
     }
 
     if (callback.startsWith("result_task:")) {
@@ -905,7 +1065,7 @@ Deno.serve(async (req) => {
         if (globalTaskMatches.length > 1 && matchedTaskSubjects.size === 1) {
           const subjectId = globalTaskMatches[0].subject_id;
           await setState(admin, userId, chatId, "manual_task", { ...statePayload, subjectId });
-          const taskButtons = globalTaskMatches.slice(0, 3).map((item: any) => [{ text: item.title.slice(0, 54), callback_data: `manual_task:${item.id}` }]);
+          const taskButtons = manualTaskChoiceButtons(globalTaskMatches);
           taskButtons.push([{ text: "Genel çalışma", callback_data: "manual_task:none" }]);
           return await finalize({ ok: true, outbound: respond("Hangi konuydu?", taskButtons) });
         }
@@ -924,7 +1084,7 @@ Deno.serve(async (req) => {
             return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]) });
           }
           await setState(admin, userId, chatId, "manual_task", { ...statePayload, subjectId });
-          const taskButtons = tasks.slice(0, 3).map((item: any) => [{ text: item.title.slice(0, 54), callback_data: `manual_task:${item.id}` }]);
+          const taskButtons = manualTaskChoiceButtons(tasks);
           taskButtons.push([{ text: "Genel çalışma", callback_data: "manual_task:none" }]);
           return await finalize({ ok: true, outbound: respond(`${matchedSubjects[0].subjects?.name ?? "Bu derste"} hangi konuydu?`, taskButtons) });
         }
@@ -963,7 +1123,7 @@ Deno.serve(async (req) => {
       }
       if (tasks.length > 1) {
         await setState(admin, userId, chatId, "manual_task", { ...state.payload, subjectId });
-        const buttons: Button[][] = tasks.slice(0, 3).map((task: any) => [{ text: task.title.slice(0, 50), callback_data: `manual_task:${task.id}` }]);
+        const buttons: Button[][] = manualTaskChoiceButtons(tasks);
         buttons.push([{ text: "Genel çalışma", callback_data: "manual_task:none" }]);
         return await finalize({ ok: true, outbound: respond(knownDuration > 0 ? "Hangi konuydu?" : "Bu çalışma hangi göreve aitti?", buttons) });
       }
@@ -1045,11 +1205,31 @@ Deno.serve(async (req) => {
         return await finalize({ ok: true, session: saved.session, replan: saved.replan, outbound: respond(saved.message, [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]) });
       }
       if (state.state === "special_less_minutes" || state.state === "special_extra_minutes") {
-        const normal=Number(state.payload.normalMinutes??0);const less=state.state==="special_less_minutes";
-        const inserted=await admin.from("schedule_exceptions").insert({user_id:userId,exam_profile_id:state.payload.profileId,exception_date:day,exception_type:less?"custom":"extra_available",minutes_delta:less?value-normal:value,note:"Telegram özel durum"});if(inserted.error)throw inserted.error;
+        const normal = Number(state.payload.normalMinutes ?? 0);
+        const less = state.state === "special_less_minutes";
+        const completedMinutes = Number(state.payload.completedMinutes ?? 0);
+        const targetTotal = less ? totalCapacityForRemainingAvailability(completedMinutes, value) : normal + value;
+        const inserted = await admin.from("schedule_exceptions").insert({
+          user_id: userId,
+          exam_profile_id: state.payload.profileId,
+          exception_date: day,
+          exception_type: less ? "custom" : "extra_available",
+          minutes_delta: targetTotal - normal,
+          note: "Telegram özel durum",
+        });
+        if (inserted.error) throw inserted.error;
         const profile=await admin.from("exam_profiles").select("*").eq("id",state.payload.profileId).eq("user_id",userId).single();const plan=await admin.from("weekly_plans").select("*").eq("id",state.payload.planId).eq("user_id",userId).single();
         const replanned=await recalculateCurrentPlan(admin,userId,profile.data,plan.data,"capacity_change",true);await clearState(admin,userId,chatId);
-        const updated=replanned.dayCapacities[day]??0;const summary=formatReplanSummary(replanned);return await finalize({ok:true,replan:replanned,outbound:respond(`Bugünkü çalışma alanı ${formatMinutesShort(normal)} → ${formatMinutesShort(updated)} olarak güncellendi.${summary?`\n${summary}`:""}`,[[{text:"Şimdi ne çalışayım?",callback_data:"now"}]])});
+        const updated=replanned.dayCapacities[day]??0;
+        const summary=formatReplanSummary(replanned);
+        const message = less
+          ? `Bugün bundan sonrası için ${formatMinutesShort(value)} ayırdın. Tamamlanan ${formatMinutesShort(completedMinutes)} korunuyor; toplam çalışma alanı ${formatMinutesShort(updated)} oldu.`
+          : `Bugünkü çalışma alanına ${formatMinutesShort(value)} eklendi; toplam ${formatMinutesShort(updated)} oldu.`;
+        const remainingAvailability = less ? value : Math.max(0, updated - completedMinutes);
+        const buttons = remainingAvailability > 0
+          ? [[{text:"Şimdi ne çalışayım?",callback_data:"now"}]]
+          : [[{text:TELEGRAM_BUTTON_LABELS.today,callback_data:"today"},{text:TELEGRAM_BUTTON_LABELS.addStudy,callback_data:"manual_begin"}]];
+        return await finalize({ok:true,replan:replanned,remainingAvailabilityMinutes:remainingAvailability,outbound:respond(`${message}${summary?`\n${summary}`:""}`,buttons)});
       }
     }
 
@@ -1060,7 +1240,7 @@ Deno.serve(async (req) => {
         result_blank: "Boş sayısını sayı olarak yaz. Örnek: 4",
         manual_duration: "Çalışma süresini dakika olarak yaz. Örnek: 45",
         manual_task: "Aşağıdaki görevlerden birini veya ‘Genel çalışma’ seçeneğini kullan.",
-        special_less_minutes: "Bugün çalışabileceğin toplam süreyi dakika olarak yaz. Örnek: 90",
+        special_less_minutes: "Bugün bundan sonra ayırabileceğin süreyi dakika olarak yaz. Örnek: 25",
         special_extra_minutes: "Ekstra süreni dakika olarak yaz. Örnek: 30",
         special_mode: "Aşağıdaki seçeneklerden birini kullan: ‘Bugün daha az vaktim var’ veya ‘Ekstra vaktim var’.",
       };
@@ -1068,9 +1248,13 @@ Deno.serve(async (req) => {
     }
 
     if (intent === "greeting") {
+      const profile = await admin.from("exam_profiles").select("*").eq("user_id", userId).eq("status", "active").maybeSingle();
+      if (profile.error) throw profile.error;
+      const greetingContext = profile.data ? await loadDailyCoachContext(admin, userId, profile.data, day) : null;
+      const remainingCapacity = greetingContext?.plan ? Number(greetingContext.remainingCapacityMinutes ?? 0) : undefined;
       return await finalize({
         ok: true,
-        outbound: respond(greetingMessage(), mainMenuButtons()),
+        outbound: respond(greetingMessage(), mainMenuButtons(remainingCapacity)),
       });
     }
 
@@ -1083,7 +1267,11 @@ Deno.serve(async (req) => {
       outbound: respond(unknownMessage(), mainMenuButtons()),
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error
+      ? error.message
+      : error && typeof error === "object" && "message" in error
+      ? String((error as { message?: unknown }).message ?? error)
+      : String(error);
     if (lifecycleCallbackQueryId && !lifecycleCallbackAnswered) {
       lifecycleCallbackAnswered = true;
       try {
@@ -1116,7 +1304,7 @@ Deno.serve(async (req) => {
         // The lifecycle failure below keeps Telegram's retry semantics intact.
       }
     }
-    if (lifecycleAdmin && lifecycleEventId && fallbackChatId && !lifecycleDeliverySucceeded && !errorMessage.startsWith("MOCK_FAILURE_")) {
+    if (lifecycleAdmin && lifecycleEventId && fallbackChatId && !lifecycleBusinessCheckpointed && !lifecycleDeliverySucceeded && !errorMessage.startsWith("MOCK_FAILURE_")) {
       try {
         const fallbackBody = {
           ok: false,

@@ -1,20 +1,27 @@
 import { describe, expect, it } from "vitest";
 import {
   classifyTelegramText,
+  completionActionButtons,
   dailyCoachCard,
   formatActiveSessionMessage,
   formatDailyCoachMessage,
   formatMinutesShort,
+  formatNowCoachMessage,
+  formatStartedSessionMessage,
   formatTelegramDate,
   greetingMessage,
   mainMenuButtons,
+  manualTaskChoiceButtons,
+  nowCoachCard,
   parseAvailableMinutes,
   parseManualStudyText,
   parseTestResultText,
   testResultPresentation,
   TELEGRAM_BUTTON_LABELS,
+  totalCapacityForRemainingAvailability,
   weeklyReportPresentation,
 } from "../supabase/functions/_shared/telegram-presentation.ts";
+import { recommendationWindow } from "../supabase/functions/_shared/recommendation-window.ts";
 
 describe("Telegram presentation", () => {
   it("uses a short greeting and a four-action main menu", () => {
@@ -36,6 +43,17 @@ describe("Telegram presentation", () => {
       lowTime: "Az Vaktim Var",
       noStudy: "Bugün Çalışamam",
     });
+  });
+
+  it("uses the real planned session duration and truthful completion actions", () => {
+    expect(formatStartedSessionMessage("Tarih · Not", 35)).toContain("Planlanan: 35 dk");
+    expect(formatStartedSessionMessage("Tarih · Not", 35)).not.toContain("Planlanan: 1s");
+    expect(completionActionButtons({ taskId: "task", remainingMinutes: 31 }).flat().map((button) => button.text))
+      .toContain("Devam Et");
+    expect(completionActionButtons({ taskId: "task", remainingMinutes: 31 }).flat().map((button) => button.text))
+      .not.toContain("Görev Bitti");
+    expect(completionActionButtons({ taskId: "task", remainingMinutes: 0 }).flat().map((button) => button.text))
+      .toContain("Sonraki Görev");
   });
 
   it("classifies daily coach language deterministically", () => {
@@ -85,6 +103,56 @@ describe("Telegram presentation", () => {
     expect(card.items).toHaveLength(2);
     expect(card.items?.[0]?.state).toBe("done");
     expect(card.primary?.title).toContain("İktisat");
+  });
+
+  it("never renders a now block when remaining day capacity is zero", () => {
+    const summary = {
+      date: "2026-08-13",
+      plan: { id: "plan" },
+      capacityMinutes: 0,
+      studiedMinutes: 97,
+      remainingCapacityMinutes: 0,
+      recommendation: { taskId: "task", title: "Tarih · Not", remainingMinutes: 21, recommendedSessionMinutes: 21 },
+      tasks: [],
+      allTasks: [],
+    };
+    expect(dailyCoachCard(summary).primary).toBeUndefined();
+    expect(formatDailyCoachMessage(summary)).toContain("planın kapalı");
+    expect(mainMenuButtons(0).flat().map((button) => button.callback_data)).not.toContain("now");
+    expect(mainMenuButtons(0).flat().map((button) => button.callback_data)).not.toContain("special_less");
+  });
+
+  it("time-boxes recommendation presentation without changing task remaining", () => {
+    expect(recommendationWindow(21, 20)).toEqual({ taskRemainingMinutes: 21, recommendedSessionMinutes: 20 });
+    expect(recommendationWindow(31, 25)).toEqual({ taskRemainingMinutes: 31, recommendedSessionMinutes: 25 });
+    const recommendation = {
+      title: "Tarih · Not",
+      remainingMinutes: 21,
+      taskRemainingMinutes: 21,
+      recommendedSessionMinutes: 20,
+      reason: "continue_partial",
+    };
+    expect(nowCoachCard(recommendation, "2026-08-13").headline).toBe("20 dk");
+    expect(formatNowCoachMessage(recommendation)).toContain("1 dk kalır");
+    expect(recommendation.remainingMinutes).toBe(21);
+    const longer = { ...recommendation, remainingMinutes: 31, taskRemainingMinutes: 31, recommendedSessionMinutes: 25 };
+    expect(nowCoachCard(longer, "2026-08-13").headline).toBe("25 dk");
+    expect(formatNowCoachMessage(longer)).not.toContain("\n31 dk\n");
+  });
+
+  it("preserves completed study when applying a remaining-availability answer", () => {
+    expect(totalCapacityForRemainingAvailability(97, 25)).toBe(122);
+  });
+
+  it("makes duplicate-looking manual task choices distinguishable or collapses exact duplicates", () => {
+    const choices = manualTaskChoiceButtons([
+      { id: "a", title: "Tarih · Not · Ders Notları", estimated_minutes: 35, planned_date: "2026-08-13", task_progress: [{ completed_minutes: 14 }] },
+      { id: "b", title: "Tarih · Not · Ders Notları", estimated_minutes: 35, planned_date: "2026-08-14", task_progress: [{ completed_minutes: 0 }] },
+      { id: "c", title: "Tarih · Not · Ders Notları", estimated_minutes: 35, planned_date: "2026-08-14", task_progress: [{ completed_minutes: 0 }] },
+    ]).flat();
+    expect(new Set(choices.map((choice) => choice.text)).size).toBe(choices.length);
+    expect(choices.map((choice) => choice.text).join(" ")).toContain("21 dk");
+    expect(choices).toHaveLength(2);
   });
 
   it("uses mastery labels without unnecessary precision", () => {

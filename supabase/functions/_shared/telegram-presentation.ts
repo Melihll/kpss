@@ -16,10 +16,14 @@ export type TelegramButton = { text: string; callback_data: string };
 export const TELEGRAM_BUTTON_LABELS = {
   start: "Çalışmaya Başla",
   finish: "Bitir",
+  continue: "Devam Et",
   next: "Sonraki Görev",
   today: "Bugünü Gör",
   lowTime: "Az Vaktim Var",
   noStudy: "Bugün Çalışamam",
+  addStudy: "Çalışma Ekle",
+  reopenDay: "Bugün Plan Aç",
+  findTest: "Test Görevini Bul",
 } as const;
 
 export type TelegramCardMetric = { label: string; value: string };
@@ -158,14 +162,22 @@ export function recommendationReasonText(reason: string) {
   return labels[reason] ?? "";
 }
 
-export const mainMenuButtons = (): TelegramButton[][] => [[
-  { text: "Şimdi ne çalışayım?", callback_data: "now" },
-], [
-  { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
-  { text: "Çalışma ekle", callback_data: "manual_begin" },
-], [
-  { text: TELEGRAM_BUTTON_LABELS.lowTime, callback_data: "special_less" },
-]];
+export const mainMenuButtons = (remainingCapacityMinutes?: number): TelegramButton[][] =>
+  remainingCapacityMinutes === 0
+    ? [[
+      { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
+      { text: TELEGRAM_BUTTON_LABELS.addStudy, callback_data: "manual_begin" },
+    ], [
+      { text: TELEGRAM_BUTTON_LABELS.reopenDay, callback_data: "special" },
+    ]]
+    : [[
+      { text: "Şimdi ne çalışayım?", callback_data: "now" },
+    ], [
+      { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
+      { text: TELEGRAM_BUTTON_LABELS.addStudy, callback_data: "manual_begin" },
+    ], [
+      { text: TELEGRAM_BUTTON_LABELS.lowTime, callback_data: "special_less" },
+    ]];
 
 export function formatActiveSessionMessage(session: any, elapsedMinutes: number) {
   return [
@@ -173,6 +185,29 @@ export function formatActiveSessionMessage(session: any, elapsedMinutes: number)
     session?.task?.title ?? "Aktif çalışma",
     `${Math.max(0, Math.floor(elapsedMinutes))} dk geçti.`,
   ].join("\n");
+}
+
+export function formatStartedSessionMessage(title: string, plannedMinutes: number) {
+  return `Çalışman başladı.\n${title}\nPlanlanan: ${formatMinutesShort(plannedMinutes)}.`;
+}
+
+export function totalCapacityForRemainingAvailability(completedMinutes: number, remainingAvailableMinutes: number) {
+  return Math.max(0, Number(completedMinutes) || 0) + Math.max(0, Number(remainingAvailableMinutes) || 0);
+}
+
+export function completionActionButtons(input: { taskId?: string | null; remainingMinutes: number; needsResult?: boolean }): TelegramButton[][] {
+  if (input.needsResult && input.taskId) return [[
+    { text: "Sonuç Gir", callback_data: `result_begin:${input.taskId}` },
+    { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
+  ]];
+  if (input.taskId && input.remainingMinutes > 0) return [[
+    { text: TELEGRAM_BUTTON_LABELS.continue, callback_data: `task_start:${input.taskId}:${input.remainingMinutes}` },
+    { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
+  ]];
+  return [[
+    { text: TELEGRAM_BUTTON_LABELS.next, callback_data: "now" },
+    { text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" },
+  ]];
 }
 
 export function greetingMessage() {
@@ -189,6 +224,11 @@ export function unknownMessage() {
 
 export function formatDailyCoachMessage(summary: any) {
   if (!summary?.plan) return "Aktif haftalık plan görünmüyor. Planını web uygulamasından açtıktan sonra tekrar deneyebilirsin.";
+  if (Number(summary.remainingCapacityMinutes ?? 0) <= 0 && !summary.activeSession) {
+    return Number(summary.studiedMinutes ?? 0) > 0
+      ? `Bugün için çalışma planın kapalı. ${formatMinutesShort(summary.studiedMinutes)} çalışma kaydedildi.`
+      : "Bugün için çalışma planın kapalı.";
+  }
   const tasks = (summary.tasks ?? []).slice(0, 4);
   if (!tasks.length) {
     if (summary.recommendation?.needsResult) return `${summary.recommendation.title}\nTest sonucu girişi bekliyor.`;
@@ -207,7 +247,9 @@ export function formatDailyCoachMessage(summary: any) {
 }
 
 export function dailyCoachCard(summary: any): TelegramCardModel {
-  const recommendation = summary.recommendation;
+  const recommendation = Number(summary.remainingCapacityMinutes ?? 0) > 0 || summary.recommendation?.needsResult
+    ? summary.recommendation
+    : null;
   const completedIds = new Set((summary.allTasks ?? []).filter((task: any) => task.status === "completed").map((task: any) => task.id));
   const planned = Number(summary.capacityMinutes ?? 0);
   const studied = Number(summary.studiedMinutes ?? 0);
@@ -222,7 +264,7 @@ export function dailyCoachCard(summary: any): TelegramCardModel {
     ],
     primary: recommendation ? (() => {
       const parts = taskParts(recommendation.title);
-      return { label: "ŞİMDİ", title: `${parts.subject} · ${parts.topic}`, detail: parts.resource || undefined, meta: recommendation.needsResult ? "Sonuç girişi" : formatMinutesShort(recommendation.remainingMinutes) };
+      return { label: "ŞİMDİ", title: `${parts.subject} · ${parts.topic}`, detail: parts.resource || undefined, meta: recommendation.needsResult ? "Sonuç girişi" : formatMinutesShort(recommendation.recommendedSessionMinutes ?? recommendation.remainingMinutes) };
     })() : undefined,
     items: (summary.tasks ?? []).slice(0, 4).map((task: any) => ({
       state: completedIds.has(task.id) ? "done" : "next",
@@ -240,7 +282,12 @@ export function formatNowCoachMessage(recommendation: any) {
   if (!recommendation) return "Şu anda önerebileceğim açık bir görev yok.";
   if (recommendation.needsResult) return `${recommendation.title}\nÇalışma tamamlandı; test sonucunu girmen gerekiyor.`;
   const reason = recommendationReasonText(recommendation.reason);
-  return [`Şimdi`, recommendation.title, formatMinutesShort(recommendation.remainingMinutes), reason ? `Neden: ${reason}` : ""].filter(Boolean).join("\n");
+  const sessionMinutes = Number(recommendation.recommendedSessionMinutes ?? recommendation.remainingMinutes ?? 0);
+  const taskRemainingMinutes = Number(recommendation.taskRemainingMinutes ?? recommendation.remainingMinutes ?? 0);
+  const partial = sessionMinutes > 0 && taskRemainingMinutes > sessionMinutes
+    ? `Bugün ${formatMinutesShort(sessionMinutes)} ilerle, ${formatMinutesShort(taskRemainingMinutes - sessionMinutes)} kalır.`
+    : "";
+  return ["Şimdi", recommendation.title, formatMinutesShort(sessionMinutes), partial, reason ? `Neden: ${reason}` : ""].filter(Boolean).join("\n");
 }
 
 export function nowCoachCard(recommendation: any, date: string): TelegramCardModel {
@@ -250,10 +297,40 @@ export function nowCoachCard(recommendation: any, date: string): TelegramCardMod
     eyebrow: "ŞİMDİ",
     title: `${parts.subject} · ${parts.topic}`,
     date: formatTelegramDate(date, true),
-    headline: recommendation.needsResult ? "Sonuç girişi" : formatMinutesShort(recommendation.remainingMinutes),
+    headline: recommendation.needsResult ? "Sonuç girişi" : formatMinutesShort(recommendation.recommendedSessionMinutes ?? recommendation.remainingMinutes),
     subhead: parts.resource || undefined,
     note: recommendationReasonText(recommendation.reason) || undefined,
   };
+}
+
+function manualTaskRemaining(task: any) {
+  return Math.max(0, Number(task.estimated_minutes ?? 0) - Number(task.task_progress?.[0]?.completed_minutes ?? 0));
+}
+
+export function manualTaskChoiceButtons(tasks: any[]): TelegramButton[][] {
+  const candidates = tasks.map((task) => {
+    const remaining = manualTaskRemaining(task);
+    const topic = task.curriculum_nodes?.name;
+    const resource = task.resources?.name;
+    const parts = [task.title, topic && !String(task.title).includes(topic) ? topic : null, resource && !String(task.title).includes(resource) ? resource : null]
+      .filter(Boolean);
+    return { task, base: parts.join(" · "), remaining };
+  });
+  const baseCounts = new Map<string, number>();
+  for (const candidate of candidates) baseCounts.set(candidate.base, (baseCounts.get(candidate.base) ?? 0) + 1);
+  const seen = new Set<string>();
+  const buttons: TelegramButton[][] = [];
+  for (const candidate of candidates) {
+    const suffix = (baseCounts.get(candidate.base) ?? 0) > 1
+      ? ` · ${formatMinutesShort(candidate.remaining)}${candidate.task.planned_date ? ` · ${formatTelegramDate(candidate.task.planned_date)}` : ""}`
+      : candidate.remaining > 0 ? ` · ${formatMinutesShort(candidate.remaining)}` : "";
+    const label = `${candidate.base.slice(0, Math.max(12, 58 - suffix.length))}${suffix}`;
+    if (seen.has(label)) continue;
+    seen.add(label);
+    buttons.push([{ text: label, callback_data: `manual_task:${candidate.task.id}` }]);
+    if (buttons.length === 3) break;
+  }
+  return buttons;
 }
 
 export function completionCard(input: { title: string; actualMinutes: number; remainingMinutes: number; next?: any; replan?: any }): TelegramCardModel {
@@ -264,7 +341,7 @@ export function completionCard(input: { title: string; actualMinutes: number; re
     title: formatMinutesShort(input.actualMinutes),
     subhead: input.title,
     metrics: input.remainingMinutes > 0 ? [{ label: "BU GÖREVDE KALAN", value: formatMinutesShort(input.remainingMinutes) }] : [{ label: "DURUM", value: "Tamamlandı" }],
-    primary: next ? { label: "SIRADAKİ", title: `${next.subject} · ${next.topic}`, detail: next.resource || undefined, meta: formatMinutesShort(input.next.remainingMinutes) } : undefined,
+    primary: next ? { label: "SIRADAKİ", title: `${next.subject} · ${next.topic}`, detail: next.resource || undefined, meta: formatMinutesShort(input.next.recommendedSessionMinutes ?? input.next.remainingMinutes) } : undefined,
     note: formatReplanSummary(input.replan) || undefined,
   };
 }

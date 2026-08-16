@@ -9,8 +9,11 @@ export type TelegramDelivery = {
   caption?: string;
   buttons: TelegramButton[][];
   editMessageId?: number | null;
+  editCaptionMessageId?: number | null;
   card?: TelegramCardModel;
   clearKeyboardMessageId?: number | null;
+  clearKeyboardMessageIds?: number[];
+  canonicalActiveSession?: { sessionId: string; plannedMinutes?: number | null };
 };
 
 export const textDelivery = (
@@ -36,6 +39,35 @@ export const cardDelivery = (
   buttons,
   card,
   clearKeyboardMessageId,
+});
+
+export const interactiveStateDelivery = (
+  chatId: string,
+  text: string,
+  buttons: TelegramButton[][],
+  target?: { messageId: number; isPhoto: boolean } | null,
+  clearKeyboardMessageIds: number[] = [],
+): TelegramDelivery => ({
+  __telegramDelivery: true,
+  kind: "text",
+  chatId,
+  text,
+  buttons,
+  ...(target?.isPhoto ? { editCaptionMessageId: target.messageId } : { editMessageId: target?.messageId ?? null }),
+  clearKeyboardMessageIds,
+});
+
+export const activeSessionDelivery = (
+  chatId: string,
+  text: string,
+  buttons: TelegramButton[][],
+  sessionId: string,
+  target?: { messageId: number; isPhoto: boolean } | null,
+  plannedMinutes?: number | null,
+  clearKeyboardMessageIds: number[] = [],
+): TelegramDelivery => ({
+  ...interactiveStateDelivery(chatId, text, buttons, target, clearKeyboardMessageIds),
+  canonicalActiveSession: { sessionId, plannedMinutes },
 });
 
 export const keyboardDelivery = (
@@ -142,19 +174,42 @@ export async function deliverTelegram(delivery: TelegramDelivery, options: { for
     return await updateKeyboard(delivery.chatId, delivery.editMessageId!, delivery.buttons);
   }
   let keyboardCleared = false;
-  if (delivery.clearKeyboardMessageId) {
-    const cleared = await updateKeyboard(delivery.chatId, delivery.clearKeyboardMessageId, []);
-    keyboardCleared = !("keyboardUpdateFailed" in cleared);
+  const clearIds = [...new Set([
+    ...(delivery.clearKeyboardMessageIds ?? []),
+    ...(delivery.clearKeyboardMessageId ? [delivery.clearKeyboardMessageId] : []),
+  ])];
+  for (const messageId of clearIds) {
+    const cleared = await updateKeyboard(delivery.chatId, messageId, []);
+    keyboardCleared = !("keyboardUpdateFailed" in cleared) || keyboardCleared;
   }
   if (delivery.kind === "text") {
-    const method = delivery.editMessageId ? "editMessageText" : "sendMessage";
-    const result = await telegramJsonCall(method, {
+    const editMessageId = delivery.editCaptionMessageId ?? delivery.editMessageId;
+    const editMethod = delivery.editCaptionMessageId ? "editMessageCaption" : "editMessageText";
+    let stateReplaced = false;
+    if (editMessageId) {
+      try {
+        const result = await telegramJsonCall(editMethod, {
+          chat_id: delivery.chatId,
+          message_id: editMessageId,
+          ...(delivery.editCaptionMessageId ? { caption: delivery.text.slice(0, 1024) } : { text: delivery.text }),
+          reply_markup: replyMarkup(delivery.buttons),
+        });
+        const stateResult = { ...result, text: delivery.text };
+        return keyboardCleared ? { ...stateResult, keyboardCleared: true } : stateResult;
+      } catch (error) {
+        console.error("TELEGRAM_STATE_EDIT_FAILED", error instanceof Error ? error.message : "UNKNOWN");
+        const cleared = await updateKeyboard(delivery.chatId, editMessageId, []);
+        keyboardCleared = !("keyboardUpdateFailed" in cleared) || keyboardCleared;
+        stateReplaced = true;
+      }
+    }
+    const result = await telegramJsonCall("sendMessage", {
       chat_id: delivery.chatId,
-      ...(delivery.editMessageId ? { message_id: delivery.editMessageId } : {}),
       text: delivery.text,
       reply_markup: replyMarkup(delivery.buttons),
     });
-    return keyboardCleared ? { ...result, keyboardCleared: true } : result;
+    const stateResult = stateReplaced ? { ...result, stateReplaced: true } : result;
+    return keyboardCleared ? { ...stateResult, keyboardCleared: true } : stateResult;
   }
   try {
     if (options.forceCardFailure && mockMode()) throw new Error("MOCK_CARD_RENDER_FAILURE");

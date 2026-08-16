@@ -1,6 +1,6 @@
 import { renderTelegramCard, renderTelegramSvg } from "./telegram-card.ts";
 import { dailyCoachCard } from "./telegram-presentation.ts";
-import { cardDelivery, deliverTelegram, keyboardDelivery, telegramCardCaption, textDelivery } from "./telegram-transport.ts";
+import { activeSessionDelivery, cardDelivery, deliverTelegram, interactiveStateDelivery, keyboardDelivery, telegramCardCaption, textDelivery } from "./telegram-transport.ts";
 
 const model = dailyCoachCard({
   date: "2026-08-13",
@@ -107,6 +107,36 @@ Deno.test("retires stale keyboards and can replace a photo interaction with one 
     ));
     if (current.method !== "sendMessage" || current.keyboardCleared !== true || current.reply_markup?.inline_keyboard?.length !== 1) {
       throw new Error(`Photo interaction was not replaced with one current state: ${JSON.stringify(current)}`);
+    }
+  } finally {
+    if (previousMode == null) Deno.env.delete("TELEGRAM_TRANSPORT_MODE");
+    else Deno.env.set("TELEGRAM_TRANSPORT_MODE", previousMode);
+  }
+});
+
+Deno.test("edits the canonical active photo caption and keeps stale completion copy coherent", async () => {
+  const previousMode = Deno.env.get("TELEGRAM_TRANSPORT_MODE");
+  Deno.env.set("TELEGRAM_TRANSPORT_MODE", "mock");
+  try {
+    const active = await deliverTelegram(activeSessionDelivery(
+      "42",
+      "Çalışman devam ediyor.\nTarih · Not\n2 dk geçti.",
+      [[{ text: "Bitir", callback_data: "session_finish:session" }]],
+      "session",
+      { messageId: 81, isPhoto: true },
+      35,
+    ));
+    if (active.method !== "editMessageCaption" || active.message_id !== 81 || active.caption.includes("Planlanan: 1s")) {
+      throw new Error(`Canonical photo state was not edited coherently: ${JSON.stringify(active)}`);
+    }
+    const stale = await deliverTelegram(interactiveStateDelivery(
+      "42",
+      "Bu çalışma tamamlandı.",
+      [[{ text: "Sonraki Görev", callback_data: "now" }]],
+      { messageId: 81, isPhoto: true },
+    ));
+    if (stale.method !== "editMessageCaption" || stale.caption !== "Bu çalışma tamamlandı.") {
+      throw new Error(`Stale completion caption was not finalized: ${JSON.stringify(stale)}`);
     }
   } finally {
     if (previousMode == null) Deno.env.delete("TELEGRAM_TRANSPORT_MODE");

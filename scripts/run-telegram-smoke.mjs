@@ -61,9 +61,17 @@ const headers = {
   apikey: anonKey,
   "Content-Type": "application/json",
 };
+const responseJson = async (response, label) => {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`${label} returned non-JSON ${response.status}: ${text.slice(0, 300)}`);
+  }
+};
 const app = async (path, method = "GET", body) => {
   const response = await fetch(`${url}/functions/v1/app-api${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
-  const payload = await response.json();
+  const payload = await responseJson(response, `app-api ${method} ${path}`);
   if (!response.ok) throw new Error(JSON.stringify(payload));
   return payload;
 };
@@ -85,7 +93,7 @@ const telegram = async (update, { failStage, failCard = false, expectedStatus = 
     },
     body: JSON.stringify(update),
   });
-  const payload = await response.json();
+  const payload = await responseJson(response, `telegram update ${update.update_id}`);
   if (response.status !== expectedStatus) throw new Error(`Expected ${expectedStatus}, got ${response.status}: ${JSON.stringify(payload)}`);
   return payload;
 };
@@ -95,9 +103,36 @@ const scheduler = async (reference) => {
     headers: { "Content-Type": "application/json", "X-Scheduler-Secret": "local-scheduler-secret" },
     body: JSON.stringify({ reference, limit: 100 }),
   });
-  const payload = await response.json();
+  const payload = await responseJson(response, `scheduler ${reference}`);
   if (!response.ok) throw new Error(`Scheduler ${response.status}: ${JSON.stringify(payload)}`);
   return payload;
+};
+const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+const shiftDate = (date, days) => {
+  const value = new Date(`${date}T12:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+};
+const waitForScheduledAction = async ({ reference, dedupeKey, timeoutMs = 60_000, intervalMs = 100 }) => {
+  const deadline = Date.now() + timeoutMs;
+  let lastState = null;
+  while (Date.now() < deadline) {
+    const action = await api.from("scheduled_actions")
+      .select("id,user_id,exam_profile_id,action_type,status,attempt_count,last_error,result_payload,dedupe_key")
+      .eq("user_id", user.id)
+      .eq("exam_profile_id", profile.data.id)
+      .eq("dedupe_key", dedupeKey)
+      .maybeSingle();
+    if (action.error) throw new Error(`scheduled action lookup ${dedupeKey}: ${action.error.code} ${action.error.message}`);
+    lastState = action.data;
+    if (action.data?.status === "completed") return action.data;
+    if (action.data?.status === "failed" && Number(action.data.attempt_count ?? 0) >= 3) {
+      throw new Error(`scheduled action permanently failed ${dedupeKey}: ${action.data.last_error ?? "UNKNOWN"}`);
+    }
+    await scheduler(reference);
+    await delay(intervalMs);
+  }
+  throw new Error(`scheduled action timeout ${dedupeKey}: ${JSON.stringify(lastState)}`);
 };
 const telegramNumericId = 1_000_000_000 + Number.parseInt(unique.slice(0, 7), 16);
 const from = { id: telegramNumericId, username: "pilot" };
@@ -114,10 +149,23 @@ const callback = (data, { photo = false } = {}) => ({
   },
 });
 
-const linked = await telegram(message(`/start ${link.token}`));
+const linkUpdate = message(`/start ${link.token}`);
+const failedLinked = await telegram(linkUpdate, { failStage: "after-business", expectedStatus: 400 });
+if (failedLinked.error !== "MOCK_FAILURE_AFTER_BUSINESS") throw new Error(`link post-business failure was not checkpointed: ${JSON.stringify(failedLinked)}`);
+const identityAfterLinkMutation = await api.from("messaging_identities").select("external_user_id", { count: "exact" }).eq("user_id", user.id).eq("external_user_id", String(from.id)).single();
+if (identityAfterLinkMutation.data?.external_user_id !== String(from.id) || identityAfterLinkMutation.count !== 1) throw new Error(`link business mutation was not committed exactly once: ${JSON.stringify(identityAfterLinkMutation)}`);
+const linked = await telegram(linkUpdate);
 if (!linked.outbound.text.includes("bağlandı")) throw new Error("link failed");
-const identity = await api.from("messaging_identities").select("external_user_id").single();
+if (linked.recovered || linked.ok !== true) throw new Error(`link success was hidden by fallback: ${JSON.stringify(linked)}`);
+const linkRetry = await telegram(linkUpdate);
+if (!linkRetry.duplicate || linkRetry.outbound) throw new Error(`link retry was not lifecycle-idempotent: ${JSON.stringify(linkRetry)}`);
+const identity = await api.from("messaging_identities").select("external_user_id", { count: "exact" }).eq("user_id", user.id).eq("external_user_id", String(from.id)).single();
 if (identity.data?.external_user_id !== String(from.id)) throw new Error("identity missing");
+if (identity.count !== 1) throw new Error(`link retry created duplicate identities: ${JSON.stringify(identity)}`);
+if (process.env.TELEGRAM_SMOKE_LINK_ONLY === "true") {
+  console.log(JSON.stringify({ TELEGRAM_LINK_SMOKE: "PASS", identityCreatedOnce: true, checkpointRetryDeliveredSuccess: true, duplicateRetryNoOp: true }, null, 2));
+  process.exit(0);
+}
 const greeting = await telegram(message("Merhaba"));
 if (!greeting.outbound.text.includes("en iyi sonraki adımı") || greeting.outbound.reply_markup.inline_keyboard.flat().length !== 4) throw new Error("friendly greeting failed");
 const today = await telegram(message("/bugun"));
@@ -130,20 +178,26 @@ const naturalNow = await telegram(message("Ne çalışayım?"));
 if (!naturalNow.recommendation?.taskId) throw new Error("natural-language now intent failed");
 
 const learnStarted = await telegram(callback(`task_start:${learnTask.id}`, { photo: true }));
-if (learnStarted.outbound.method !== "sendMessage" || !learnStarted.outbound.keyboardCleared) throw new Error("photo callback did not retire the old card keyboard before showing session state");
+if (learnStarted.outbound.method !== "editMessageCaption" || !learnStarted.outbound.text.includes("Planlanan:")) throw new Error(`photo callback did not become the canonical session state: ${JSON.stringify(learnStarted)}`);
+const canonicalActiveMessageId = learnStarted.outbound.message_id;
 const backdated = new Date(Date.now() - (20 * 60 + 5) * 1000).toISOString();
 const backdateResult = await api.from("study_sessions").update({ started_at: backdated }).eq("id", learnStarted.session.id);
 if (backdateResult.error) throw backdateResult.error;
 const whileActive = await telegram(message("Ne çalışayım?"));
 if (!whileActive.activeSession || !whileActive.outbound.text.includes("Çalışman devam ediyor")) throw new Error("active session was not surfaced by /simdi");
+if (whileActive.outbound.method !== "editMessageCaption" || whileActive.outbound.message_id !== canonicalActiveMessageId) throw new Error(`slash /simdi did not edit the canonical active message: ${JSON.stringify(whileActive)}`);
 const activeButtons = whileActive.outbound.reply_markup?.inline_keyboard?.flat()?.map((button) => button.callback_data) ?? [];
 if (activeButtons.length !== 2 || !activeButtons.some((data) => data.startsWith("session_finish:")) || !activeButtons.includes("today")) throw new Error(`active session keyboard is not the current state: ${JSON.stringify(whileActive)}`);
+const todayWhileActive = await telegram(message("/bugun"));
+if (!todayWhileActive.activeSession || todayWhileActive.outbound.method !== "editMessageCaption" || todayWhileActive.outbound.message_id !== canonicalActiveMessageId) throw new Error(`active /bugun did not reuse the canonical state: ${JSON.stringify(todayWhileActive)}`);
 const blockedSecondStart = await telegram(callback(`task_start:${solveTask.id}`, { photo: true }));
 if (!blockedSecondStart.activeSession || !blockedSecondStart.outbound.text.includes("Çalışman devam ediyor") || !blockedSecondStart.outbound.keyboardCleared) throw new Error("second task start was not safely redirected to the active state");
 const learnFinished = await telegram(callback(`session_finish:${learnStarted.session.id}`));
 if (learnFinished.session.duration_minutes !== 20) throw new Error(`expected 20-minute session, got ${learnFinished.session.duration_minutes}`);
 if (learnFinished.outbound.method !== "sendPhoto" || !learnFinished.outbound.keyboardCleared || learnFinished.outbound.caption !== "Çalışma kaydedildi.") throw new Error(`finish did not produce exactly one current completion delivery: ${JSON.stringify(learnFinished)}`);
-const learnProgress = await api.from("task_progress").select("completed_minutes,actual_study_minutes").eq("task_id", learnTask.id).single();
+const partialCompletionLabels = learnFinished.outbound.reply_markup?.inline_keyboard?.flat()?.map((button) => button.text) ?? [];
+if (partialCompletionLabels.includes("Görev Bitti") || !partialCompletionLabels.includes("Devam Et")) throw new Error(`partial completion actions are misleading: ${JSON.stringify(learnFinished)}`);
+const learnProgress = await api.from("task_progress").select("completed_minutes,actual_study_minutes").eq("user_id", user.id).eq("task_id", learnTask.id).single();
 if (learnProgress.error || learnProgress.data.completed_minutes !== 20 || learnProgress.data.actual_study_minutes !== 20) throw learnProgress.error ?? new Error(`session progress not applied: ${JSON.stringify(learnProgress.data)}`);
 const partialNow = await telegram(message("/simdi"));
 if (partialNow.recommendation?.taskId !== learnTask.id || partialNow.recommendation.remainingMinutes !== Math.max(0, learnTask.estimated_minutes - 20)) throw new Error(`remaining minutes did not decrease after session: ${JSON.stringify(partialNow.recommendation)}`);
@@ -167,7 +221,7 @@ if (manualLinkedSaved.outbound.text.includes("Kaç dakika") || manualLinkedSaved
 }
 const staleManualChoice = await telegram(callback(learnTaskChoice));
 if (!staleManualChoice.stale || staleManualChoice.outbound.method !== "editMessageReplyMarkup" || staleManualChoice.session) throw new Error(`consumed manual callback was not retired safely: ${JSON.stringify(staleManualChoice)}`);
-const progressAfterManual = await api.from("task_progress").select("completed_minutes,actual_study_minutes").eq("task_id", learnTask.id).single();
+const progressAfterManual = await api.from("task_progress").select("completed_minutes,actual_study_minutes").eq("user_id", user.id).eq("task_id", learnTask.id).single();
 if (progressAfterManual.error || progressAfterManual.data.completed_minutes !== 30 || progressAfterManual.data.actual_study_minutes !== 30) throw progressAfterManual.error ?? new Error(`manual linked progress not applied: ${JSON.stringify(progressAfterManual.data)}`);
 const afterManualNow = await telegram(message("/simdi"));
 if (afterManualNow.recommendation?.taskId !== learnTask.id || afterManualNow.recommendation.remainingMinutes !== Math.max(0, learnTask.estimated_minutes - 30)) throw new Error(`manual study did not reduce task remaining: ${JSON.stringify(afterManualNow.recommendation)}`);
@@ -184,16 +238,16 @@ if (activeCount.count !== 1) throw new Error("retry created duplicate active ses
 
 const finishUpdate = callback(`session_finish:${started.session.id}`);
 const failedAfterBusiness = await telegram(finishUpdate, { failStage: "after-business", expectedStatus: 400 });
-if (failedAfterBusiness.error !== "MOCK_FAILURE_AFTER_BUSINESS") throw new Error("after-business failure was not recorded");
-const storedAfterFailure = await api.from("study_sessions").select("status,duration_minutes").eq("id", started.session.id).single();
+if (failedAfterBusiness.error !== "MOCK_FAILURE_AFTER_BUSINESS") throw new Error(`after-business failure was not recorded: ${JSON.stringify(failedAfterBusiness)}`);
+const storedAfterFailure = await api.from("study_sessions").select("status,duration_minutes").eq("user_id", user.id).eq("id", started.session.id).single();
 if (storedAfterFailure.data?.status !== "completed") throw new Error("business mutation did not commit before delivery failure");
-const minutesBeforeRetry = (await api.from("task_progress").select("actual_study_minutes").eq("task_id", solveTask.id).single()).data?.actual_study_minutes;
-const completedBeforeRetry = (await api.from("task_progress").select("completed_minutes").eq("task_id", solveTask.id).single()).data?.completed_minutes;
+const minutesBeforeRetry = (await api.from("task_progress").select("actual_study_minutes").eq("user_id", user.id).eq("task_id", solveTask.id).single()).data?.actual_study_minutes;
+const completedBeforeRetry = (await api.from("task_progress").select("completed_minutes").eq("user_id", user.id).eq("task_id", solveTask.id).single()).data?.completed_minutes;
 const finished = await telegram(finishUpdate);
 if (finished.session.status !== "completed") throw new Error("finish failed");
 if (finished.outbound.method !== "sendPhoto" || !finished.outbound.keyboardCleared || finished.outbound.caption !== "Çalışma kaydedildi.") throw new Error(`finish retry did not resume one completion delivery: ${JSON.stringify(finished)}`);
-const minutesAfterRetry = (await api.from("task_progress").select("actual_study_minutes").eq("task_id", solveTask.id).single()).data?.actual_study_minutes;
-const completedAfterRetry = (await api.from("task_progress").select("completed_minutes").eq("task_id", solveTask.id).single()).data?.completed_minutes;
+const minutesAfterRetry = (await api.from("task_progress").select("actual_study_minutes").eq("user_id", user.id).eq("task_id", solveTask.id).single()).data?.actual_study_minutes;
+const completedAfterRetry = (await api.from("task_progress").select("completed_minutes").eq("user_id", user.id).eq("task_id", solveTask.id).single()).data?.completed_minutes;
 if (minutesAfterRetry !== minutesBeforeRetry) throw new Error("delivery retry duplicated business accounting");
 if (completedAfterRetry !== completedBeforeRetry) throw new Error("delivery retry duplicated task progress");
 const completedDuplicate = await telegram(finishUpdate);
@@ -201,7 +255,7 @@ if (!completedDuplicate.duplicate) throw new Error("completed event was not a no
 const completedSessionCountBeforeStale = (await api.from("study_sessions").select("id", { count: "exact", head: true }).eq("id", started.session.id).eq("status", "completed")).count;
 const staleFinish = await telegram(callback(`session_finish:${started.session.id}`));
 const completedSessionCountAfterStale = (await api.from("study_sessions").select("id", { count: "exact", head: true }).eq("id", started.session.id).eq("status", "completed")).count;
-if (!staleFinish.stale || staleFinish.outbound.method !== "editMessageReplyMarkup" || completedSessionCountAfterStale !== completedSessionCountBeforeStale) throw new Error(`stale finish created another completion: ${JSON.stringify(staleFinish)}`);
+if (!staleFinish.stale || staleFinish.outbound.method !== "editMessageText" || staleFinish.outbound.text !== "Bu çalışma tamamlandı." || completedSessionCountAfterStale !== completedSessionCountBeforeStale) throw new Error(`stale finish was not a coherent business no-op: ${JSON.stringify(staleFinish)}`);
 
 const fallbackUpdate = callback("task_start:not-a-uuid");
 const fallbackOnce = await telegram(fallbackUpdate);
@@ -238,11 +292,15 @@ const dueSetup = await api.rpc("apply_topic_mastery_assessment", { p_payload: {
   revision: { shouldSchedule: true, scheduledFor: dueDate, revisionType: "short_review", estimatedMinutes: 15, reason: "TELEGRAM_DUE_FIXTURE" },
 } });
 if (dueSetup.error) throw dueSetup.error;
+const beforeSpecialToday = await telegram(message("/bugun"));
+const completedBeforeSpecial = Number(beforeSpecialToday.summary?.studiedMinutes ?? 0);
 const specialMenu = await telegram(message("/ozel"));
 const lessCallback = "special_less";
 await telegram(callback(lessCallback));
 const specialApplied = await telegram(message("90"));
-if (specialApplied.replan?.dayCapacities?.[dueDate] !== 90 || !specialApplied.replan?.revision) {
+if (specialApplied.remainingAvailabilityMinutes !== 90
+  || specialApplied.replan?.dayCapacities?.[dueDate] !== completedBeforeSpecial + 90
+  || !specialApplied.replan?.revision) {
   throw new Error(`special situation replan failed: ${JSON.stringify(specialApplied)}`);
 }
 const minimumPlan = await telegram(message("/minimum"));
@@ -261,7 +319,7 @@ const repeatCompleted = await telegram(completeUpdate);
 if (repeatCompleted.revision.status !== "completed") throw new Error("revision callback failed");
 const repeatDuplicate = await telegram(completeUpdate);
 if (!repeatDuplicate.duplicate) throw new Error("revision callback retry was not deduplicated");
-const storedRevision = await api.from("revision_schedules").select("status,completed_at").eq("id", evidence.mastery.revision.id).single();
+const storedRevision = await api.from("revision_schedules").select("status,completed_at").eq("user_id", user.id).eq("exam_profile_id", profile.data.id).eq("id", evidence.mastery.revision.id).single();
 if (storedRevision.data?.status !== "completed" || !storedRevision.data.completed_at) throw new Error("revision completion was not persisted");
 
 const manual = await telegram(message("/calisma_ekle"));
@@ -273,10 +331,24 @@ const retroactive = await telegram(message("35"));
 if (retroactive.session.duration_minutes !== 35 || retroactive.session.entry_source !== "telegram") throw new Error("manual log failed");
 
 const calendarToday = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
-await scheduler(`${calendarToday}T12:00:00+03:00`);
-const dailyAction = await api.from("scheduled_actions").select("result_payload").eq("action_type", "daily_plan").eq("status", "completed").limit(1).single();
-if (dailyAction.error || dailyAction.data.result_payload?.notification !== "suppressed_manual_view") throw dailyAction.error ?? new Error(`manual /bugun did not suppress duplicate scheduler message: ${JSON.stringify(dailyAction.data)}`);
-const openGap = await api.from("data_gap_events").select("*").eq("status", "open").order("gap_date", { ascending: false }).limit(1).single();
+const todaySchedulerReference = `${calendarToday}T12:00:00+03:00`;
+const dailyAction = await waitForScheduledAction({
+  reference: todaySchedulerReference,
+  dedupeKey: `daily_plan:${user.id}:${calendarToday}`,
+});
+if (dailyAction.result_payload?.notification !== "suppressed_manual_view") throw new Error(`manual /bugun did not suppress duplicate scheduler message: ${JSON.stringify(dailyAction)}`);
+await waitForScheduledAction({
+  reference: todaySchedulerReference,
+  dedupeKey: `data_gap_check:${user.id}:${calendarToday}`,
+});
+const currentGapDate = shiftDate(calendarToday, -1);
+const openGap = await api.from("data_gap_events").select("*")
+  .eq("user_id", user.id)
+  .eq("exam_profile_id", profile.data.id)
+  .eq("gap_date", currentGapDate)
+  .eq("gap_type", "missing_study_confirmation")
+  .eq("status", "open")
+  .single();
 if (openGap.error || !openGap.data.notified_at) throw openGap.error ?? new Error("data gap notification missing");
 const noStudy = await telegram(callback(`gap_no_study:${openGap.data.id}`));
 if (noStudy.dataGap?.resolution_result !== "confirmed_no_study") throw new Error("data gap no-study callback failed");
@@ -284,8 +356,19 @@ if (noStudy.dataGap?.resolution_result !== "confirmed_no_study") throw new Error
 const referenceDate = new Date(`${calendarToday}T12:00:00Z`);
 referenceDate.setUTCDate(referenceDate.getUTCDate() - 1);
 const previousDate = referenceDate.toISOString().slice(0, 10);
-await scheduler(`${previousDate}T12:00:00+03:00`);
-const addGap = await api.from("data_gap_events").select("*").eq("status", "open").order("gap_date", { ascending: false }).limit(1).single();
+const previousSchedulerReference = `${previousDate}T12:00:00+03:00`;
+await waitForScheduledAction({
+  reference: previousSchedulerReference,
+  dedupeKey: `data_gap_check:${user.id}:${previousDate}`,
+});
+const previousGapDate = shiftDate(previousDate, -1);
+const addGap = await api.from("data_gap_events").select("*")
+  .eq("user_id", user.id)
+  .eq("exam_profile_id", profile.data.id)
+  .eq("gap_date", previousGapDate)
+  .eq("gap_type", "missing_study_confirmation")
+  .eq("status", "open")
+  .single();
 if (addGap.error) throw addGap.error;
 const addBegin = await telegram(callback(`gap_add_study:${addGap.data.id}`));
 const gapSubjectData = addBegin.outbound.reply_markup.inline_keyboard[0][0].callback_data;
@@ -303,20 +386,47 @@ if (gapGeneralChoice) {
 }
 const gapStudy = await telegram(message("25"));
 if (gapStudy.session?.duration_minutes !== 25 || !gapStudy.session?.ended_at?.startsWith(addGap.data.gap_date)) throw new Error(`data gap retroactive date flow failed: ${JSON.stringify(gapStudy)}`);
-const resolvedGap = await api.from("data_gap_events").select("status,resolution_result").eq("id", addGap.data.id).single();
+const resolvedGap = await api.from("data_gap_events").select("status,resolution_result").eq("user_id", user.id).eq("id", addGap.data.id).single();
 if (resolvedGap.data?.status !== "resolved" || resolvedGap.data.resolution_result !== "study_added") throw new Error("data gap study resolution missing");
 
 const sunday = new Date(`${calendarToday}T12:00:00Z`);
 const isoDay = sunday.getUTCDay() || 7;
 sunday.setUTCDate(sunday.getUTCDate() - isoDay - 6);
 const previousSunday = sunday.toISOString().slice(0, 10);
-await scheduler(`${previousSunday}T20:00:00+03:00`);
-const weeklyAction = await api.from("scheduled_actions").select("result_payload,dedupe_key").eq("action_type", "weekly_report").eq("status", "completed").limit(1).single();
-if (weeklyAction.error || weeklyAction.data.result_payload?.notification !== "sent" || weeklyAction.data.result_payload?.outbound?.method !== "sendPhoto" || weeklyAction.data.result_payload?.outbound?.caption !== "Haftalık özetin hazır.") throw weeklyAction.error ?? new Error("weekly report Telegram visual send missing");
-const actionCountBefore = (await api.from("scheduled_actions").select("id", { count: "exact", head: true })).count;
-await scheduler(`${previousSunday}T20:00:00+03:00`);
-const actionCountAfter = (await api.from("scheduled_actions").select("id", { count: "exact", head: true })).count;
+const weeklySchedulerReference = `${previousSunday}T20:00:00+03:00`;
+const weeklyDedupeKey = `weekly_report:${user.id}:${previousSunday}`;
+const weeklyAction = await waitForScheduledAction({ reference: weeklySchedulerReference, dedupeKey: weeklyDedupeKey });
+if (weeklyAction.result_payload?.notification !== "sent" || weeklyAction.result_payload?.outbound?.method !== "sendPhoto" || weeklyAction.result_payload?.outbound?.caption !== "Haftalık özetin hazır.") throw new Error(`weekly report Telegram visual send missing: ${JSON.stringify(weeklyAction)}`);
+const actionCountBefore = (await api.from("scheduled_actions").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("dedupe_key", weeklyDedupeKey)).count;
+await scheduler(weeklySchedulerReference);
+const actionCountAfter = (await api.from("scheduled_actions").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("dedupe_key", weeklyDedupeKey)).count;
 if (actionCountAfter !== actionCountBefore) throw new Error("scheduler retry created duplicate actions");
+
+const noOpenResult = await telegram(message("30 soru 7 yanlış"));
+const noOpenResultActions = noOpenResult.outbound.reply_markup?.inline_keyboard?.flat()?.map((button) => button.callback_data) ?? [];
+if (noOpenResult.result || !noOpenResultActions.includes("today") || !noOpenResultActions.includes("result_find")) throw new Error(`unmatched result flow is still a dead end: ${JSON.stringify(noOpenResult)}`);
+
+await telegram(callback("today_skip"));
+const closedToday = await telegram(message("/bugun"));
+const closedTodayActions = closedToday.outbound.reply_markup?.inline_keyboard?.flat()?.map((button) => button.callback_data) ?? [];
+if (closedToday.summary?.remainingCapacityMinutes !== 0 || closedToday.summary?.recommendation || closedTodayActions.some((action) => action.startsWith("task_start:") || action === "special_less" || action === "today_skip")) {
+  throw new Error(`closed day still exposes a study recommendation: ${JSON.stringify(closedToday)}`);
+}
+const closedNow = await telegram(message("/simdi"));
+if (closedNow.recommendation || !closedNow.outbound.text.includes("süre kalmadı")) throw new Error(`closed day /simdi is inconsistent: ${JSON.stringify(closedNow)}`);
+const closedGreeting = await telegram(message("Merhaba"));
+const closedGreetingActions = closedGreeting.outbound.reply_markup?.inline_keyboard?.flat()?.map((button) => button.callback_data) ?? [];
+if (closedGreetingActions.includes("now") || closedGreetingActions.includes("special_less")) throw new Error(`closed-day greeting is not state-aware: ${JSON.stringify(closedGreeting)}`);
+const closedMinimum = await telegram(message("/minimum"));
+if (closedMinimum.minimum?.totalMinutes !== 0) throw new Error(`minimum flow regressed at zero capacity: ${JSON.stringify(closedMinimum)}`);
+await telegram(message("/ozel"));
+const reopened = await telegram(callback("special_total:20"));
+const reopenedToday = await telegram(message("/bugun"));
+if (reopenedToday.summary?.remainingCapacityMinutes !== 20) throw new Error(`0→20 remaining override failed: ${JSON.stringify({ reopened, reopenedToday })}`);
+const timeBoxedNow = await telegram(message("/simdi"));
+if (timeBoxedNow.recommendation && (timeBoxedNow.recommendation.recommendedSessionMinutes > 20 || timeBoxedNow.recommendation.taskRemainingMinutes < timeBoxedNow.recommendation.recommendedSessionMinutes)) {
+  throw new Error(`recommendation exceeded the reopened window: ${JSON.stringify(timeBoxedNow)}`);
+}
 
 console.log(JSON.stringify({
   TELEGRAM_SMOKE: "PASS",
@@ -346,6 +456,12 @@ console.log(JSON.stringify({
   visualWeeklyReportSent: true,
   visualRendererFallbackToText: true,
   activeSessionGuarded: true,
+  activeSessionCanonicalMessage: true,
+  staleSessionMessageCoherent: true,
+  zeroCapacityStateAware: true,
+  remainingAvailabilityPreservesCompleted: true,
+  recommendationTimeBoxed: true,
+  unmatchedResultActionable: true,
   sessionMinutesUpdateTaskRemaining: true,
   dailyCapacityAccountsForStudy: true,
   manualStudyCanReduceTaskRemaining: true,
