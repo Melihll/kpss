@@ -103,6 +103,25 @@ describe("Telegram presentation", () => {
     expect(card.items).toHaveLength(2);
     expect(card.items?.[0]?.state).toBe("done");
     expect(card.primary?.title).toContain("İktisat");
+    expect(card.primary?.meta).toBe("60 dk");
+  });
+
+  it("summarizes daily flow after three visible tasks", () => {
+    const tasks = Array.from({ length: 5 }, (_, index) => ({ id: `t${index}`, title: `Tarih · Konu ${index + 1}`, minutes: 20 }));
+    const card = dailyCoachCard({
+      date: "2026-08-13",
+      plan: { id: "plan" },
+      capacityMinutes: 100,
+      studiedMinutes: 0,
+      remainingCapacityMinutes: 100,
+      recommendation: { title: tasks[0].title, remainingMinutes: 20, reason: "today_core" },
+      tasks,
+      allTasks: [],
+    });
+    expect(card.items).toHaveLength(3);
+    expect(card.moreItems).toBe(2);
+    expect(card.primary?.reason).toBe("Bugünün çekirdek görevi.");
+    expect(card.date).toBe("Perşembe");
   });
 
   it("never renders a now block when remaining day capacity is zero", () => {
@@ -138,6 +157,7 @@ describe("Telegram presentation", () => {
     const longer = { ...recommendation, remainingMinutes: 31, taskRemainingMinutes: 31, recommendedSessionMinutes: 25 };
     expect(nowCoachCard(longer, "2026-08-13").headline).toBe("25 dk");
     expect(formatNowCoachMessage(longer)).not.toContain("\n31 dk\n");
+    expect(nowCoachCard({ ...recommendation, remainingMinutes: 60, taskRemainingMinutes: 60, recommendedSessionMinutes: 60 }, "2026-08-13").headline).toBe("60 dk");
   });
 
   it("preserves completed study when applying a remaining-availability answer", () => {
@@ -160,6 +180,8 @@ describe("Telegram presentation", () => {
     expect(presentation.text).toContain("Dikkat istiyor");
     expect(presentation.text).not.toMatch(/\.\d{2,}/);
     expect(presentation.card?.variant).toBe("result");
+    expect(presentation.card?.headline).toBe("30 SORU");
+    expect(presentation.card?.metrics?.map((metric) => metric.label)).toEqual(["DOĞRU", "YANLIŞ", "BOŞ"]);
   });
 
   it("only computes weekly completion when a real plan exists", () => {
@@ -167,5 +189,24 @@ describe("Telegram presentation", () => {
     const withoutPlan = weeklyReportPresentation({ week_start_date: "2026-08-07", week_end_date: "2026-08-13", actual_minutes: 120, planned_minutes: 0, completed_task_count: 2, planned_task_count: 0, question_count: 0, revision_completed_count: 0, revision_due_count: 0 });
     expect(withPlan.text).toContain("%50");
     expect(withoutPlan.text).not.toContain("%0");
+  });
+
+  it("summarizes available weekly status signals in at most three review sections", () => {
+    const presentation = weeklyReportPresentation({
+      week_start_date: "2026-08-07",
+      week_end_date: "2026-08-13",
+      actual_minutes: 180,
+      planned_minutes: 240,
+      completed_task_count: 4,
+      planned_task_count: 6,
+      question_count: 80,
+      revision_completed_count: 1,
+      revision_due_count: 2,
+      plan_status: "attention",
+      backlog_severity: "risk",
+      explanation: "Gelecek hafta açık görevleri sadeleştir.",
+    });
+    expect(presentation.card.items).toHaveLength(3);
+    expect(presentation.card.items?.map((item) => item.title)).toEqual(["PLAN DURUMU", "AÇIK İŞ YÜKÜ", "SONRAKİ HAFTA"]);
   });
 });

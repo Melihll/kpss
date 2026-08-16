@@ -36,8 +36,9 @@ export type TelegramCardModel = {
   headline?: string;
   subhead?: string;
   metrics?: TelegramCardMetric[];
-  primary?: { label: string; title: string; detail?: string; meta?: string };
+  primary?: { label: string; title: string; detail?: string; meta?: string; reason?: string };
   items?: TelegramCardItem[];
+  moreItems?: number;
   progress?: { label: string; value: string; percent: number };
   note?: string;
 };
@@ -119,6 +120,10 @@ export function formatMinutesShort(minutes: number, padMinutes = false) {
   if (!hours) return `${rest} dk`;
   if (!rest) return `${hours}s`;
   return `${hours}s ${padMinutes ? String(rest).padStart(2, "0") : rest}dk`;
+}
+
+function formatCardSessionMinutes(minutes: unknown) {
+  return `${Math.max(0, Math.round(Number(minutes) || 0))} dk`;
 }
 
 export function formatTelegramDate(value: string, weekday = false) {
@@ -257,6 +262,8 @@ export function dailyCoachCard(summary: any): TelegramCardModel {
     variant: "today",
     eyebrow: "BUGÜN",
     title: formatTelegramDate(summary.date).toLocaleUpperCase("tr-TR"),
+    date: new Intl.DateTimeFormat("tr-TR", { weekday: "long", timeZone: "UTC" })
+      .format(new Date(`${String(summary.date).slice(0, 10)}T12:00:00Z`)),
     metrics: [
       { label: "PLANLANAN", value: formatMinutesShort(planned) },
       { label: "TAMAMLANAN", value: formatMinutesShort(studied) },
@@ -264,9 +271,15 @@ export function dailyCoachCard(summary: any): TelegramCardModel {
     ],
     primary: recommendation ? (() => {
       const parts = taskParts(recommendation.title);
-      return { label: "ŞİMDİ", title: `${parts.subject} · ${parts.topic}`, detail: parts.resource || undefined, meta: recommendation.needsResult ? "Sonuç girişi" : formatMinutesShort(recommendation.recommendedSessionMinutes ?? recommendation.remainingMinutes) };
+      return {
+        label: "ŞİMDİ",
+        title: `${parts.subject} · ${parts.topic}`,
+        detail: parts.resource || undefined,
+        meta: recommendation.needsResult ? "Sonuç girişi" : formatCardSessionMinutes(recommendation.recommendedSessionMinutes ?? recommendation.remainingMinutes),
+        reason: recommendationReasonText(recommendation.reason) || undefined,
+      };
     })() : undefined,
-    items: (summary.tasks ?? []).slice(0, 4).map((task: any) => ({
+    items: (summary.tasks ?? []).slice(0, 3).map((task: any) => ({
       state: completedIds.has(task.id) ? "done" : "next",
       title: (() => {
         const parts = taskParts(task.title);
@@ -274,7 +287,13 @@ export function dailyCoachCard(summary: any): TelegramCardModel {
       })(),
       detail: task.needsResult ? "Sonuç bekliyor" : formatMinutesShort(task.minutes),
     })),
+    moreItems: Math.max(0, Number(summary.tasks?.length ?? 0) - 3) || undefined,
     progress: planned > 0 ? { label: "GÜNLÜK İLERLEME", value: `%${Math.min(100, Math.round(studied / planned * 100))}`, percent: Math.min(100, studied / planned * 100) } : undefined,
+    note: !recommendation && !(summary.tasks ?? []).length
+      ? Number(summary.remainingCapacityMinutes ?? 0) <= 0
+        ? "Bugün için çalışma planın kapalı."
+        : "Bugün için açık çalışma kalmadı."
+      : undefined,
   };
 }
 
@@ -297,7 +316,7 @@ export function nowCoachCard(recommendation: any, date: string): TelegramCardMod
     eyebrow: "ŞİMDİ",
     title: `${parts.subject} · ${parts.topic}`,
     date: formatTelegramDate(date, true),
-    headline: recommendation.needsResult ? "Sonuç girişi" : formatMinutesShort(recommendation.recommendedSessionMinutes ?? recommendation.remainingMinutes),
+    headline: recommendation.needsResult ? "Sonuç girişi" : formatCardSessionMinutes(recommendation.recommendedSessionMinutes ?? recommendation.remainingMinutes),
     subhead: parts.resource || undefined,
     note: recommendationReasonText(recommendation.reason) || undefined,
   };
@@ -338,10 +357,10 @@ export function completionCard(input: { title: string; actualMinutes: number; re
   return {
     variant: "completion",
     eyebrow: "ÇALIŞMA KAYDEDİLDİ",
-    title: formatMinutesShort(input.actualMinutes),
+    title: formatCardSessionMinutes(input.actualMinutes),
     subhead: input.title,
-    metrics: input.remainingMinutes > 0 ? [{ label: "BU GÖREVDE KALAN", value: formatMinutesShort(input.remainingMinutes) }] : [{ label: "DURUM", value: "Tamamlandı" }],
-    primary: next ? { label: "SIRADAKİ", title: `${next.subject} · ${next.topic}`, detail: next.resource || undefined, meta: formatMinutesShort(input.next.recommendedSessionMinutes ?? input.next.remainingMinutes) } : undefined,
+    metrics: input.remainingMinutes > 0 ? [{ label: "BU GÖREVDE KALAN", value: formatMinutesShort(input.remainingMinutes) }] : [{ label: "DURUM", value: "Görev tamamlandı" }],
+    primary: next ? { label: input.remainingMinutes > 0 ? "DEVAM" : "SIRADAKİ", title: `${next.subject} · ${next.topic}`, detail: next.resource || undefined, meta: formatCardSessionMinutes(input.next.recommendedSessionMinutes ?? input.next.remainingMinutes) } : undefined,
     note: formatReplanSummary(input.replan) || undefined,
   };
 }
@@ -372,8 +391,11 @@ export function testResultPresentation(result: any, mastery: any) {
   const level = mastery?.assessment?.resulting_mastery_level ?? mastery?.assessment?.resultingMasteryLevel;
   const revision = mastery?.revision;
   const status = level ? MASTERY_LABELS[level] ?? "Değerlendirildi" : null;
-  const revisionText = revision?.scheduled_for || revision?.scheduledFor
-    ? `${formatTelegramDate(revision.scheduled_for ?? revision.scheduledFor)} kısa tekrar`
+  const intervalDays = Number(revision?.interval_days ?? revision?.intervalDays);
+  const revisionText = Number.isFinite(intervalDays) && intervalDays > 0
+    ? `Tekrar planlandı · ${intervalDays} gün sonra`
+    : revision?.scheduled_for || revision?.scheduledFor
+    ? `Tekrar planlandı · ${formatTelegramDate(revision.scheduled_for ?? revision.scheduledFor)}`
     : null;
   const text = [
     "Test değerlendirmesi",
@@ -385,12 +407,13 @@ export function testResultPresentation(result: any, mastery: any) {
     variant: "result",
     eyebrow: "TEST DEĞERLENDİRMESİ",
     title: status,
+    headline: `${result.total_questions} SORU`,
     metrics: [
-      { label: "SORU", value: String(result.total_questions) },
       { label: "DOĞRU", value: String(result.correct_count) },
       { label: "YANLIŞ", value: String(result.wrong_count) },
+      { label: "BOŞ", value: String(result.blank_count ?? 0) },
     ],
-    note: revisionText ? `Önerilen: ${revisionText}` : undefined,
+    note: revisionText || undefined,
   } : null;
   return { text, card };
 }
@@ -400,6 +423,21 @@ export function weeklyReportPresentation(report: any) {
   const actual = Number(report.actual_minutes ?? 0);
   const percent = planned > 0 ? Math.min(100, Math.round(actual / planned * 100)) : null;
   const range = formatTelegramWeek(report.week_start_date, report.week_end_date);
+  const planStatus: Record<string, string> = {
+    good: "Plan dengeli ilerliyor.",
+    attention: "Plan ritmi dikkat istiyor.",
+    risk: "Plan yeni haftada sadeleştirilmeli.",
+  };
+  const backlogStatus: Record<string, string> = {
+    normal: "Açık görev yükü kontrol altında.",
+    attention: "Açık görev yükünü yakından izle.",
+    risk: "Açık görev yükü kapasiteyi zorluyor.",
+    critical: "Açık görev yükü kapasiteyi aşıyor.",
+  };
+  const insights: TelegramCardItem[] = [];
+  if (report.plan_status) insights.push({ title: "PLAN DURUMU", detail: planStatus[report.plan_status] ?? String(report.plan_status) });
+  if (report.backlog_severity) insights.push({ title: "AÇIK İŞ YÜKÜ", detail: backlogStatus[report.backlog_severity] ?? String(report.backlog_severity) });
+  if (report.explanation) insights.push({ title: "SONRAKİ HAFTA", detail: String(report.explanation) });
   const text = [
     `Haftalık rapor · ${range}`,
     planned > 0 ? `${formatMinutesShort(actual, true)} / ${formatMinutesShort(planned, true)}` : `${formatMinutesShort(actual, true)} çalışma`,
@@ -421,7 +459,7 @@ export function weeklyReportPresentation(report: any) {
         { label: "TEKRAR", value: `${report.revision_completed_count}/${report.revision_due_count}` },
       ],
       progress: percent !== null ? { label: "PLAN TAMAMLAMA", value: `%${percent}`, percent } : undefined,
-      note: report.explanation || undefined,
+      items: insights.length ? insights : undefined,
     } satisfies TelegramCardModel,
   };
 }
@@ -443,6 +481,6 @@ export function weeklyStartPresentation(summary: any) {
     title: `${formatMinutesShort(summary.plan?.planned_minutes ?? 0)} HEDEF`,
     metrics: [{ label: "GÖREV", value: String(tasks.length) }, { label: "TEKRAR", value: String(revisions) }],
     headline: focuses.join(" + ") || undefined,
-    primary: first ? { label: "BUGÜNÜN İLK GÖREVİ", title: first.title, meta: formatMinutesShort(first.remainingMinutes) } : undefined,
+    primary: first ? { label: "BUGÜNÜN İLK GÖREVİ", title: first.title, meta: formatCardSessionMinutes(first.remainingMinutes) } : undefined,
   } satisfies TelegramCardModel };
 }

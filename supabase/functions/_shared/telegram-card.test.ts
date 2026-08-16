@@ -1,4 +1,4 @@
-import { renderTelegramCard, renderTelegramSvg } from "./telegram-card.ts";
+import { renderTelegramCard, renderTelegramSvg, telegramCardSvg } from "./telegram-card.ts";
 import { dailyCoachCard } from "./telegram-presentation.ts";
 import { activeSessionDelivery, cardDelivery, deliverTelegram, interactiveStateDelivery, keyboardDelivery, telegramCardCaption, textDelivery } from "./telegram-transport.ts";
 
@@ -18,6 +18,141 @@ Deno.test("renders a valid Telegram PNG with packaged assets", async () => {
   const signature = [137, 80, 78, 71];
   if (png.byteLength < 1_000 || !signature.every((byte, index) => png[index] === byte)) {
     throw new Error("Telegram card renderer did not return a valid PNG");
+  }
+});
+
+Deno.test("uses mobile-first type, format-specific canvases and a dominant hero", () => {
+  const today = telegramCardSvg(model);
+  const now = telegramCardSvg({
+    variant: "now",
+    eyebrow: "ŞİMDİ",
+    title: "Tarih · Osmanlı Devleti kültür ve medeniyet çalışması",
+    date: "13 Ağustos Perşembe",
+    headline: "10 dk",
+    subhead: "2026 KPSS Tarih Ders Notları",
+    note: "Yarım kalan görevin önce geliyor.",
+  });
+  const report = telegramCardSvg({
+    variant: "report",
+    eyebrow: "HAFTALIK RAPOR",
+    title: "7–13 AĞUSTOS",
+    headline: "2s 05dk",
+    metrics: [{ label: "GÖREV", value: "3/5" }],
+  });
+  const todayHeight = Number(today.match(/<svg[^>]+height="(\d+)"/)?.[1]);
+  const nowHeight = Number(now.match(/<svg[^>]+height="(\d+)"/)?.[1]);
+  const reportHeight = Number(report.match(/<svg[^>]+height="(\d+)"/)?.[1]);
+  if (!today.includes('data-card-format="standard"') || todayHeight < 1100 || todayHeight > 1320) {
+    throw new Error("Daily card did not use the standard content-sized canvas");
+  }
+  if (!now.includes('data-card-format="compact"') || nowHeight < 600 || nowHeight > 800) {
+    throw new Error("Now card did not use a compact content-sized canvas");
+  }
+  if (!report.includes('data-card-format="report"') || reportHeight < 850 || reportHeight > 1500) {
+    throw new Error("Weekly report did not use the report canvas");
+  }
+  if (!now.includes('data-role="hero-duration"') || !now.includes('font-size="76"')) {
+    throw new Error("Now duration is not visually dominant");
+  }
+  const fontSizes = [...today.matchAll(/font-size="(\d+)"/g)].map((match) => Number(match[1]));
+  if (Math.min(...fontSizes.filter((size) => size !== 20)) < 21) {
+    throw new Error(`Daily card contains undersized content type: ${fontSizes.join(",")}`);
+  }
+});
+
+Deno.test("keeps sparse cards tight while preserving a footer safety reserve", () => {
+  const heights = {
+    todayEmpty: Number(telegramCardSvg({
+      variant: "today",
+      eyebrow: "BUGÜN",
+      title: "13 AĞUSTOS",
+      metrics: [{ label: "KALAN", value: "0 dk" }],
+      note: "Bugün için çalışma planın kapalı.",
+    }).match(/<svg[^>]+height="(\d+)"/)?.[1]),
+    now: Number(telegramCardSvg({
+      variant: "now",
+      eyebrow: "ŞİMDİ",
+      title: "Tarih · Not",
+      headline: "10 dk",
+      note: "Yarım kalan görevin önce geliyor.",
+    }).match(/<svg[^>]+height="(\d+)"/)?.[1]),
+    completion: Number(telegramCardSvg({
+      variant: "completion",
+      eyebrow: "ÇALIŞMA KAYDEDİLDİ",
+      title: "25 dk",
+      subhead: "Türkçe · Paragraf",
+      metrics: [{ label: "DURUM", value: "Görev tamamlandı" }],
+    }).match(/<svg[^>]+height="(\d+)"/)?.[1]),
+    replan: Number(telegramCardSvg({
+      variant: "replan",
+      eyebrow: "PLAN GÜNCELLENDİ",
+      title: "Bugün plan dışı",
+      metrics: [{ label: "YERİ DEĞİŞEN", value: "1" }],
+      note: "1 görev yeniden yerleştirildi.",
+    }).match(/<svg[^>]+height="(\d+)"/)?.[1]),
+    reportLow: Number(telegramCardSvg({
+      variant: "report",
+      eyebrow: "HAFTALIK RAPOR",
+      title: "7–13 AĞUSTOS",
+      headline: "25 dk",
+      metrics: [{ label: "GÖREV", value: "1/0" }],
+    }).match(/<svg[^>]+height="(\d+)"/)?.[1]),
+  };
+  const maximums = { todayEmpty: 760, now: 680, completion: 700, replan: 730, reportLow: 900 };
+  for (const [variant, height] of Object.entries(heights)) {
+    if (!height || height > maximums[variant as keyof typeof maximums]) {
+      throw new Error(`Sparse ${variant} card retained excess height: ${height}`);
+    }
+  }
+});
+
+Deno.test("limits the daily flow to three task rows and summarizes overflow", () => {
+  const svg = telegramCardSvg({
+    ...model,
+    items: [
+      { title: "Tarih · Not", detail: "10 dk" },
+      { title: "Coğrafya · Harita", detail: "15 dk" },
+      { title: "Türkçe · Paragraf", detail: "20 dk" },
+      { title: "Matematik · Problemler", detail: "25 dk" },
+    ],
+    moreItems: 2,
+  });
+  const rows = svg.match(/data-role="task-row"/g)?.length ?? 0;
+  if (rows !== 3 || !svg.includes('data-role="task-overflow"') || !svg.includes("+2 görev daha")) {
+    throw new Error("Daily flow density rule was not preserved");
+  }
+});
+
+Deno.test("wraps primary Turkish titles without clipping the first line", () => {
+  const svg = telegramCardSvg({
+    variant: "now",
+    eyebrow: "ŞİMDİ",
+    title: "Türkiye’nin fiziki coğrafyasında dağların uzanış yönleri ve sonuçları",
+    date: "16 Ağustos Pazar",
+    headline: "60 dk",
+  });
+  if (!svg.includes("Türkiye’nin fiziki") || (svg.match(/<tspan/g)?.length ?? 0) < 2 || !svg.includes("ğ")) {
+    throw new Error("Long Turkish hero title did not wrap safely");
+  }
+});
+
+Deno.test("keeps each semantic detail in one dedicated section", () => {
+  const result = telegramCardSvg({
+    variant: "result",
+    eyebrow: "TEST DEĞERLENDİRMESİ",
+    title: "Dikkat istiyor",
+    headline: "30 SORU",
+    metrics: [
+      { label: "DOĞRU", value: "23" },
+      { label: "YANLIŞ", value: "7" },
+      { label: "BOŞ", value: "0" },
+    ],
+    note: "Tekrar planlandı · 3 gün sonra",
+  });
+  if ((result.match(/data-role="mastery-status"/g)?.length ?? 0) !== 1 ||
+    (result.match(/data-role="revision-status"/g)?.length ?? 0) !== 1 ||
+    (result.match(/data-role="score-metric"/g)?.length ?? 0) !== 3) {
+    throw new Error("Result card duplicated or omitted a detail section");
   }
 });
 
