@@ -65,6 +65,9 @@ async function request(path, method = "GET", body) {
 
 const built = await request("/weekly-plan/build", "POST");
 if (!built.plan || built.tasks.length < 1) throw new Error("Build did not create a plan with tasks");
+const smokeToday = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
+const alignToday = await client.from("tasks").update({ planned_date: smokeToday }).eq("weekly_plan_id", built.plan.id);
+if (alignToday.error) throw alignToday.error;
 const current = await request("/weekly-plan/current");
 if (current.plan.id !== built.plan.id) throw new Error("Current plan does not match built plan");
 const next = await request("/tasks/next");

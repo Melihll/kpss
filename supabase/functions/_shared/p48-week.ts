@@ -1,4 +1,5 @@
 import { buildP48WeekBlocks, calculateEffectiveDayCapacity } from "./planning.bundle.js";
+import { aggregateCompletedStudySessions } from "./completed-study.ts";
 
 const P48_SUBJECT_TARGETS = [
   { subjectId: "20000000-0000-0000-0000-000000000006", subjectName: "Hukuk", weeklyMinutes: 450, scoreWeight: 20 },
@@ -107,26 +108,23 @@ export async function ensureP48WeekPlanForService(
     client.from("p48_resource_targets")
       .select("planned_minutes,sequence_order,work_mode,resources(id,subject_id,name,status)")
       .eq("user_id", userId).eq("exam_profile_id", profile.id),
-    client.from("study_sessions").select("resource_id,duration_minutes")
-      .eq("user_id", userId).eq("exam_profile_id", profile.id).eq("status", "completed").not("resource_id", "is", null),
+    client.from("study_sessions").select("resource_id,duration_minutes,started_at")
+      .eq("user_id", userId).eq("exam_profile_id", profile.id).eq("status", "completed"),
   ]);
   for (const result of [availability, periods, exceptions, targets, sessions]) if (result.error) throw result.error;
 
-  const actualByResource = new Map<string, number>();
-  for (const row of sessions.data ?? []) {
-    if (!row.resource_id) continue;
-    actualByResource.set(row.resource_id, (actualByResource.get(row.resource_id) ?? 0) + Number(row.duration_minutes ?? 0));
-  }
+  const { actualByDate, actualByResource } = aggregateCompletedStudySessions(sessions.data ?? []);
 
   const dayCapacities: Record<string, number> = {};
   for (let index = 0; index < 7; index += 1) {
     const date = addDays(weekStart, index);
-    dayCapacities[date] = calculateEffectiveDayCapacity({
+    const effectiveCapacity = calculateEffectiveDayCapacity({
       date,
       weeklyAvailability: p48Windows(availability.data ?? []),
       calendarPeriods: p48Periods(periods.data ?? []),
       scheduleExceptions: p48Exceptions(exceptions.data ?? []),
     });
+    dayCapacities[date] = date < referenceDate ? 0 : Math.max(0, effectiveCapacity - (actualByDate.get(date) ?? 0));
   }
 
   const resources = (targets.data ?? []).map((row: any) => ({

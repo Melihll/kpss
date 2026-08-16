@@ -355,6 +355,52 @@ function transitionTopicForLearnTask(current, event) {
   return current;
 }
 
+// packages/domain/src/planning/daily.ts
+var OPEN_STATUSES = /* @__PURE__ */ new Set(["planned", "ready", "in_progress", "partially_completed", "rescheduled"]);
+function buildDailyPlanProjection(input) {
+  const capacityMinutes = Math.max(0, Math.floor(input.capacityMinutes));
+  const completedStudyMinutes = Math.max(0, Math.floor(input.completedStudyMinutes));
+  const remainingCapacityMinutes = Math.max(0, capacityMinutes - completedStudyMinutes);
+  const todayTasks = input.tasks.filter((task) => task.plannedDate === input.date);
+  const completedTaskIds = todayTasks.filter((task) => task.status === "completed").map((task) => task.id);
+  const openTasks = todayTasks.filter((task) => OPEN_STATUSES.has(task.status) && task.remainingMinutes > 0);
+  const openItems = [];
+  const deferredTaskIds = [];
+  let capacityLeft = remainingCapacityMinutes;
+  let deferredMinutes = 0;
+  for (const task of openTasks) {
+    const remainingMinutes = Math.max(0, Math.floor(task.remainingMinutes));
+    const scheduledMinutes = Math.min(remainingMinutes, capacityLeft);
+    if (scheduledMinutes > 0) {
+      openItems.push({ taskId: task.id, remainingMinutes, scheduledMinutes });
+      capacityLeft -= scheduledMinutes;
+    } else {
+      deferredTaskIds.push(task.id);
+    }
+    deferredMinutes += remainingMinutes - scheduledMinutes;
+  }
+  const scheduledOpenMinutes = openItems.reduce((sum, item) => sum + item.scheduledMinutes, 0);
+  return {
+    date: input.date,
+    capacityMinutes,
+    completedStudyMinutes,
+    remainingCapacityMinutes,
+    scheduledOpenMinutes,
+    totalCommittedMinutes: completedStudyMinutes + scheduledOpenMinutes,
+    openItems,
+    completedTaskIds,
+    deferredTaskIds,
+    deferredMinutes
+  };
+}
+function findDailyCapacityOverloads(blocks, dayCapacities) {
+  const plannedByDate = /* @__PURE__ */ new Map();
+  for (const block of blocks) {
+    plannedByDate.set(block.plannedDate, (plannedByDate.get(block.plannedDate) ?? 0) + Math.max(0, block.estimatedMinutes));
+  }
+  return [...plannedByDate.entries()].map(([date, plannedMinutes]) => ({ date, plannedMinutes, capacityMinutes: Math.max(0, dayCapacities[date] ?? 0) })).filter((day) => day.plannedMinutes > day.capacityMinutes).sort((left, right) => left.date.localeCompare(right.date));
+}
+
 // packages/domain/src/time-boundaries.ts
 var DEFAULT_TIMEZONE = "Europe/Istanbul";
 function parseDate(date) {
@@ -670,56 +716,113 @@ function taskRank(task) {
   return 6;
 }
 function calculatePriorityV1(input) {
-  return Math.max(0, Math.min(100, Math.round(Object.values(input).reduce((a, b) => a + b, 0))));
+  return Math.max(0, Math.min(100, Math.round(Object.values(input).reduce((sum, value) => sum + value, 0))));
 }
 function replanWeeklyPlanV1(context) {
-  const availableMinutes = Object.values(context.dailyCapacities).reduce((a, b) => a + Math.max(0, b), 0);
+  const availableMinutes = Object.values(context.dailyCapacities).reduce((sum, minutes) => sum + Math.max(0, minutes), 0);
   const planBudget = Math.min(context.planningBudgetMinutes, availableMinutes);
   const revisionBudget = calculateWeeklyRevisionBudget(planBudget);
-  const activeTasks = context.tasks.filter((t) => !["completed", "cancelled", "missed"].includes(t.status)).sort((a, b) => taskRank(a) - taskRank(b) || b.priorityScore - a.priorityScore || a.id.localeCompare(b.id));
-  const selectedRevisions = (context.trigger === "study_deviation" ? [] : [...context.revisions]).sort((a, b) => urgencyRank[a.urgency] - urgencyRank[b.urgency] || masteryRank[a.masteryLevel] - masteryRank[b.masteryLevel] || a.id.localeCompare(b.id));
+  const dayRemaining = Object.fromEntries(Object.entries(context.dailyCapacities).map(([date, minutes]) => [
+    date,
+    date < context.currentDate ? 0 : Math.max(0, minutes - (context.actualMinutesByDate?.[date] ?? 0))
+  ]));
+  const dates = Object.keys(dayRemaining).sort();
+  const activeTasks = context.tasks.filter((task) => !["completed", "cancelled", "missed"].includes(task.status)).sort((left, right) => taskRank(left) - taskRank(right) || right.priorityScore - left.priorityScore || left.id.localeCompare(right.id));
+  const currentDeviation = (context.actualMinutesByDate?.[context.currentDate] ?? 0) - (context.plannedConsumedMinutesByDate?.[context.currentDate] ?? 0);
+  const allowPullForward = currentDeviation <= 0;
+  const keep = [];
+  const moves = [];
+  const tasksToBacklog = [];
+  const cancel = [];
+  let used = 0;
+  for (const task of activeTasks.filter((item) => ["in_progress", "partially_completed"].includes(item.status))) {
+    keep.push(task.id);
+    const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
+    used += remaining;
+    if (task.plannedDate && task.plannedDate >= context.currentDate && task.plannedDate in dayRemaining) {
+      dayRemaining[task.plannedDate] = Math.max(0, dayRemaining[task.plannedDate] - remaining);
+    }
+  }
+  const selectedRevisions = context.trigger === "study_deviation" ? [] : [...context.revisions].sort((left, right) => urgencyRank[left.urgency] - urgencyRank[right.urgency] || masteryRank[left.masteryLevel] - masteryRank[right.masteryLevel] || left.id.localeCompare(right.id));
   let revisionMinutes = 0;
   const creates = [];
   for (const revision of selectedRevisions) {
-    if (revisionMinutes + revision.estimatedMinutes > revisionBudget) continue;
+    if (revisionMinutes + revision.estimatedMinutes > revisionBudget || used + revision.estimatedMinutes > planBudget) continue;
+    const earliest = revision.scheduledFor < context.currentDate ? context.currentDate : revision.scheduledFor;
+    const chosen = dates.find((date) => date >= earliest && (dayRemaining[date] ?? 0) >= revision.estimatedMinutes);
+    if (!chosen) continue;
+    dayRemaining[chosen] = (dayRemaining[chosen] ?? 0) - revision.estimatedMinutes;
     revisionMinutes += revision.estimatedMinutes;
-    creates.push({ revisionScheduleId: revision.id, subjectId: revision.subjectId, curriculumNodeId: revision.curriculumNodeId, title: revision.title, plannedDate: revision.scheduledFor < context.currentDate ? context.currentDate : revision.scheduledFor, estimatedMinutes: revision.estimatedMinutes, importance: revision.masteryLevel === "critical" || revision.masteryLevel === "weak" ? "core" : "important", priorityScore: calculatePriorityV1({ scheduleUrgency: revision.urgency.includes("overdue") ? 25 : 18, weakness: 25 - masteryRank[revision.masteryLevel] * 5, revisionUrgency: 20 - urgencyRank[revision.urgency] * 5, planDeviation: 0, postponement: 0, dependency: 0 }), dedupeKey: `revision|${revision.id}` });
+    used += revision.estimatedMinutes;
+    creates.push({
+      revisionScheduleId: revision.id,
+      subjectId: revision.subjectId,
+      curriculumNodeId: revision.curriculumNodeId,
+      title: revision.title,
+      plannedDate: chosen,
+      estimatedMinutes: revision.estimatedMinutes,
+      importance: revision.masteryLevel === "critical" || revision.masteryLevel === "weak" ? "core" : "important",
+      priorityScore: calculatePriorityV1({
+        scheduleUrgency: revision.urgency.includes("overdue") ? 25 : 18,
+        weakness: 25 - masteryRank[revision.masteryLevel] * 5,
+        revisionUrgency: 20 - urgencyRank[revision.urgency] * 5,
+        planDeviation: 0,
+        postponement: 0,
+        dependency: 0
+      }),
+      dedupeKey: `revision|${revision.id}`
+    });
   }
-  let used = revisionMinutes;
-  const keep = [];
-  const cancel = [];
-  for (const task of activeTasks) {
-    const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
-    if (task.status === "in_progress" || task.status === "partially_completed" || used + remaining <= planBudget) {
-      keep.push(task.id);
-      used += remaining;
-    } else if (task.importance === "optional") cancel.push(task.id);
-    else keep.push(task.id);
-  }
-  const moves = [];
-  const dayRemaining = Object.fromEntries(Object.entries(context.dailyCapacities).map(([date, minutes]) => [date, date < context.currentDate ? 0 : Math.max(0, minutes - (context.actualMinutesByDate?.[date] ?? 0))]));
-  const currentDeviation = (context.actualMinutesByDate?.[context.currentDate] ?? 0) - (context.plannedConsumedMinutesByDate?.[context.currentDate] ?? 0);
-  const allowPullForward = currentDeviation <= 0;
-  const placementTasks = activeTasks.filter((t) => keep.includes(t.id) && !["in_progress", "partially_completed"].includes(t.status));
+  const placementTasks = activeTasks.filter((task) => !["in_progress", "partially_completed"].includes(task.status));
   if (!allowPullForward) {
-    placementTasks.sort((a, b) => (a.plannedDate ?? context.currentDate).localeCompare(b.plannedDate ?? context.currentDate) || taskRank(a) - taskRank(b) || b.priorityScore - a.priorityScore || a.id.localeCompare(b.id));
+    placementTasks.sort((left, right) => (left.plannedDate ?? context.currentDate).localeCompare(right.plannedDate ?? context.currentDate) || taskRank(left) - taskRank(right) || right.priorityScore - left.priorityScore || left.id.localeCompare(right.id));
   }
   for (const task of placementTasks) {
     const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
+    if (remaining === 0) {
+      keep.push(task.id);
+      continue;
+    }
     const current = task.plannedDate;
     const earliest = allowPullForward ? context.currentDate : current && current > context.currentDate ? current : context.currentDate;
-    const dates = Object.keys(dayRemaining).sort();
-    const chosen = dates.find((d) => d >= earliest && (dayRemaining[d] ?? 0) >= remaining);
-    if (chosen) {
-      dayRemaining[chosen] = (dayRemaining[chosen] ?? 0) - remaining;
-      if (current !== chosen) moves.push({ taskId: task.id, fromDate: current, toDate: chosen, reason: "replanning" });
+    const chosen = used + remaining <= planBudget ? dates.find((date) => date >= earliest && (dayRemaining[date] ?? 0) >= remaining) : void 0;
+    if (!chosen) {
+      if (current !== null) tasksToBacklog.push(task.id);
+      continue;
     }
+    keep.push(task.id);
+    used += remaining;
+    dayRemaining[chosen] = (dayRemaining[chosen] ?? 0) - remaining;
+    if (current !== chosen) moves.push({ taskId: task.id, fromDate: current, toDate: chosen, reason: "replanning" });
   }
-  const changed = moves.length + cancel.length + creates.length;
-  const revisionType = context.trigger === "study_deviation" ? "automatic_informed" : changed <= REPLAN_LEVEL_1_CHANGE_LIMIT ? "automatic_minor" : changed <= REPLAN_LEVEL_2_CHANGE_LIMIT ? "automatic_informed" : "strategic_proposal";
+  const changed = moves.length + tasksToBacklog.length + cancel.length + creates.length;
+  const revisionType = context.trigger === "capacity_change" || context.trigger === "study_deviation" ? "automatic_informed" : changed <= REPLAN_LEVEL_1_CHANGE_LIMIT ? "automatic_minor" : changed <= REPLAN_LEVEL_2_CHANGE_LIMIT ? "automatic_informed" : "strategic_proposal";
   const reasonCode = context.trigger.toUpperCase();
   const explanation = context.trigger === "capacity_change" ? `Kapasiten de\u011Fi\u015Fti\u011Fi i\xE7in ${changed} plan \xF6\u011Fesi yeniden d\xFCzenlendi.` : context.trigger === "study_deviation" ? changed ? `Ger\xE7ek \xE7al\u0131\u015Fma s\xFCrene g\xF6re haftan\u0131n kalan\u0131nda ${changed} g\xF6rev yeniden yerle\u015Ftirildi.` : "Ger\xE7ek \xE7al\u0131\u015Fma s\xFCren plana uygun; g\xF6revlerin yerini de\u011Fi\u015Ftirmeye gerek kalmad\u0131." : context.trigger === "revision_due" ? `${creates.length} \xF6ncelikli tekrar haftal\u0131k plana eklendi.` : `Plan\u0131ndaki ${changed} \xF6\u011Fe g\xFCncel ilerlemene g\xF6re d\xFCzenlendi.`;
-  return { tasksToKeep: keep, tasksToMove: moves, tasksToCancel: cancel, tasksToCreate: creates, availableMinutes, afterPlannedMinutes: used, revisionMinutes, revisionBudgetMinutes: revisionBudget, changedTaskCount: changed, revisionType, reasonCode, explanation, dedupeKey: [context.planId, context.trigger, availableMinutes, keep.join(","), moves.map((m) => `${m.taskId}:${m.toDate}`).join(","), creates.map((c) => c.revisionScheduleId).join(",")].join("|") };
+  return {
+    tasksToKeep: keep,
+    tasksToMove: moves,
+    tasksToBacklog,
+    tasksToCancel: cancel,
+    tasksToCreate: creates,
+    availableMinutes,
+    afterPlannedMinutes: used,
+    revisionMinutes,
+    revisionBudgetMinutes: revisionBudget,
+    changedTaskCount: changed,
+    revisionType,
+    reasonCode,
+    explanation,
+    dedupeKey: [
+      context.planId,
+      context.trigger,
+      availableMinutes,
+      keep.join(","),
+      moves.map((move) => `${move.taskId}:${move.toDate}`).join(","),
+      tasksToBacklog.join(","),
+      creates.map((create) => create.revisionScheduleId).join(",")
+    ].join("|")
+  };
 }
 
 // packages/domain/src/adaptive/minimum.ts
@@ -1022,6 +1125,7 @@ export {
   addCalendarDays,
   addP48Days,
   addRevisionCalendarDays,
+  buildDailyPlanProjection,
   buildMinimumDayPlan,
   buildP48Months,
   buildP48WeekBlocks,
@@ -1039,6 +1143,7 @@ export {
   deriveTaskStatus,
   evaluateBacklog,
   evaluateTopicMastery,
+  findDailyCapacityOverloads,
   forecastP48Resources,
   getNextBestTask,
   getRevisionUrgency,

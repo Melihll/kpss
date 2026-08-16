@@ -30,6 +30,12 @@ export async function loadAdaptiveBase(client:Client,userId:string,profile:any,p
  return{availability:availability.data??[],calendar:calendar.data??[],exceptions:exceptionRows.data??[],tasks:tasks.data??[],adaptiveTasks,adaptiveRevisions,allAdaptiveRevisions,dayCapacities,actualMinutesByDate,plannedConsumedMinutesByDate,actualMinutes:(sessions.data??[]).reduce((s:number,row:any)=>s+(row.duration_minutes??0),0)};
 }
 
+export async function persistTasksToBacklog(client:Client,userId:string,planId:string,taskIds:string[]){
+ if(!taskIds.length)return{applied:false,taskIds:[]};
+ const deferred=await client.from("tasks").update({planned_date:null,status:"rescheduled"}).eq("user_id",userId).eq("weekly_plan_id",planId).in("id",taskIds).not("planned_date","is",null).in("status",["planned","ready","rescheduled"]);
+ if(deferred.error)throw deferred.error;return{applied:true,taskIds};
+}
+
 export async function recalculateCurrentPlan(client:Client,userId:string,profile:any,plan:any,trigger:any,serviceRole=false){
  const base=await loadAdaptiveBase(client,userId,profile,plan);const today=calendarToday();const remainingCapacity=Object.entries(base.dayCapacities).filter(([date])=>date>=today).reduce((s,[,m])=>s+m,0);
  const backlog=evaluateBacklog(base.adaptiveTasks.map((task:any)=>({importance:task.importance,status:task.status,remainingMinutes:Math.max(0,task.estimatedMinutes-task.completedMinutes)})),remainingCapacity);
@@ -40,6 +46,7 @@ export async function recalculateCurrentPlan(client:Client,userId:string,profile
  if(revisionDemand>output.revisionBudgetMinutes)risks.push({riskType:"revision_overload",severity:revisionDemand>output.revisionBudgetMinutes*1.5?"risk":"attention",reasonCode:"REVISION_BUDGET_EXCEEDED",metricValue:revisionDemand,message:"Tekrar talebi haftalık tekrar bütçesini aşıyor."});
  if(output.changedTaskCount===0){const [storedBacklog,storedRisks]=await Promise.all([client.from("backlog_states").select("open_task_count,estimated_remaining_minutes,remaining_capacity_minutes,severity").eq("user_id",userId).eq("weekly_plan_id",plan.id).maybeSingle(),client.from("plan_risks").select("risk_type").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","open")]);if(storedBacklog.error)throw storedBacklog.error;if(storedRisks.error)throw storedRisks.error;const storedTypes=(storedRisks.data??[]).map((row:any)=>row.risk_type).sort().join(","),nextTypes=risks.map(row=>row.riskType).sort().join(",");const snapshotSame=storedBacklog.data&&storedBacklog.data.open_task_count===backlog.openTaskCount&&storedBacklog.data.estimated_remaining_minutes===backlog.estimatedRemainingMinutes&&storedBacklog.data.remaining_capacity_minutes===backlog.remainingCapacityMinutes&&storedBacklog.data.severity===backlog.severity&&storedTypes===nextTypes;if(snapshotSame)return{idempotent:true,noChange:true,decision:output,backlog,risks,dayCapacities:base.dayCapacities};}
  const snapshotKey=`${backlog.openTaskCount}:${backlog.estimatedRemainingMinutes}:${backlog.remainingCapacityMinutes}:${backlog.severity}|${risks.map(row=>row.riskType).sort().join(",")}`;const manualFullCapacityBudget=Number(plan.planning_budget_minutes??0)>=Number(plan.available_minutes??0);const nextPlanningBudget=manualFullCapacityBudget?output.availableMinutes:Math.min(Number(plan.planning_budget_minutes??Math.floor(output.availableMinutes*.85)),Math.floor(output.availableMinutes*.85));const payload={weeklyPlanId:plan.id,...output,dedupeKey:`${output.dedupeKey}|snapshot:${snapshotKey}`,explanation:output.changedTaskCount===0&&risks.length?"Kapasite ve risk durumu güncel koşullara göre yenilendi.":output.explanation,planningBudgetMinutes:nextPlanningBudget,backlog:{...backlog,capacityRatio:Number.isFinite(backlog.capacityRatio)?backlog.capacityRatio:999},risks};
+ await persistTasksToBacklog(client,userId,plan.id,output.tasksToBacklog);
  const applied=serviceRole?await client.rpc("telegram_apply_plan_revision",{p_user_id:userId,p_payload:payload}):await client.rpc("apply_plan_revision",{p_payload:payload});if(applied.error)throw applied.error;return{...applied.data,decision:output,backlog,risks,dayCapacities:base.dayCapacities};
 }
 

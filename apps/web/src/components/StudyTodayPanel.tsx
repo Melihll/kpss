@@ -1,12 +1,27 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type PointerEvent } from "react";
 import { useRoadmap } from "../hooks/useRoadmap";
 import { callAppApi } from "../lib/app-api";
-import { compactMinutesLabel, isoToday, taskName, WORK_MODE_LABELS, type RoadmapTask } from "../lib/roadmap";
+import { compactMinutesLabel, taskName, WORK_MODE_LABELS, type RoadmapTask } from "../lib/roadmap";
 import { Icon } from "./Icon";
 
-interface ActiveSession { id: string; started_at: string; tasks: { title: string } | null }
+interface ActiveSession { id: string; task_id: string | null; started_at: string; tasks: { title: string } | null }
 interface Recommendation { task: RoadmapTask; reason: string; remainingMinutes: number }
-interface Summary { todayStudyMinutes: number; weekStudyMinutes: number }
+interface DailyPlanSummary {
+  tasks: Array<{ id: string; minutes: number }>;
+  completedTaskIds: string[];
+  deferredTaskCount: number;
+  deferredMinutes: number;
+  capacityMinutes: number;
+  remainingCapacityMinutes: number;
+  totalMinutes: number;
+  totalCommittedMinutes: number;
+}
+interface Summary { todayStudyMinutes: number; weekStudyMinutes: number; dailyPlan: DailyPlanSummary }
+
+const EMPTY_DAILY_PLAN: DailyPlanSummary = {
+  tasks: [], completedTaskIds: [], deferredTaskCount: 0, deferredMinutes: 0,
+  capacityMinutes: 0, remainingCapacityMinutes: 0, totalMinutes: 0, totalCommittedMinutes: 0,
+};
 
 const REASON_LABELS: Record<string, string> = {
   overdue_important: "Önceliği yükselen bu görevle devam et.",
@@ -50,7 +65,7 @@ export function StudyTodayPanel() {
   const [tasks, setTasks] = useState<RoadmapTask[]>([]);
   const [active, setActive] = useState<ActiveSession | null>(null);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
-  const [summary, setSummary] = useState<Summary>({ todayStudyMinutes: 0, weekStudyMinutes: 0 });
+  const [summary, setSummary] = useState<Summary>({ todayStudyMinutes: 0, weekStudyMinutes: 0, dailyPlan: EMPTY_DAILY_PLAN });
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
@@ -58,14 +73,25 @@ export function StudyTodayPanel() {
 
   const load = useCallback(async () => {
     try {
-      const [planResult, activeResult, summaryResult] = await Promise.all([
+      let [planResult, activeResult, summaryResult] = await Promise.all([
         callAppApi<{ tasks: RoadmapTask[] }>("/weekly-plan/current"),
         callAppApi<{ session: ActiveSession | null }>("/study-sessions/active"),
         callAppApi<Summary>("/execution/summary"),
       ]);
+      if (summaryResult.dailyPlan?.deferredTaskCount > 0) {
+        try {
+          await callAppApi("/plans/current/recalculate", { method: "POST", body: { trigger: "capacity_change" } });
+          [planResult, summaryResult] = await Promise.all([
+            callAppApi<{ tasks: RoadmapTask[] }>("/weekly-plan/current"),
+            callAppApi<Summary>("/execution/summary"),
+          ]);
+        } catch (caught) {
+          console.error("TODAY_CAPACITY_REPAIR_FAILED", caught);
+        }
+      }
       setTasks((planResult.tasks ?? []).filter((task) => task.status !== "cancelled"));
       setActive(activeResult.session);
-      setSummary(summaryResult);
+      setSummary({ ...summaryResult, dailyPlan: summaryResult.dailyPlan ?? EMPTY_DAILY_PLAN });
       if (!activeResult.session) {
         try { setRecommendation(await callAppApi<Recommendation>("/tasks/next")); }
         catch { setRecommendation(null); }
@@ -104,12 +130,14 @@ export function StudyTodayPanel() {
     event.currentTarget.style.setProperty("--spot-y", `${event.clientY - rect.top}px`);
   }
 
-  const todayTasks = useMemo(() => tasks.filter((task) => task.planned_date === isoToday()), [tasks]);
+  const dailyMinutes = useMemo(() => new Map(summary.dailyPlan.tasks.map((task) => [task.id, task.minutes])), [summary.dailyPlan.tasks]);
+  const dailyTaskIds = useMemo(() => new Set([...dailyMinutes.keys(), ...summary.dailyPlan.completedTaskIds]), [dailyMinutes, summary.dailyPlan.completedTaskIds]);
+  const todayTasks = useMemo(() => tasks.filter((task) => dailyTaskIds.has(task.id)), [dailyTaskIds, tasks]);
   const focusTask = recommendation?.task;
   const continuationTasks = todayTasks.filter((task) => task.id !== focusTask?.id && task.title !== active?.tasks?.title);
-  const pendingTasks = continuationTasks.filter((task) => task.status !== "completed");
-  const todayPlanned = todayTasks.reduce((sum, task) => sum + task.estimated_minutes, 0);
-  const activePlanned = tasks.find((task) => task.title === active?.tasks?.title)?.estimated_minutes ?? 0;
+  const pendingTasks = continuationTasks.filter((task) => task.status !== "completed" && (dailyMinutes.get(task.id) ?? 0) > 0);
+  const todayPlanned = summary.dailyPlan.totalCommittedMinutes;
+  const activePlanned = active?.task_id ? dailyMinutes.get(active.task_id) ?? 0 : 0;
   const formattedDate = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", weekday: "long", day: "numeric", month: "long" }).format(new Date());
   const animatedDays = useAnimatedNumber(roadmap?.strategy?.daysToExam ?? 0);
   const animatedPlannedMinutes = useAnimatedNumber(todayPlanned);
@@ -139,7 +167,7 @@ export function StudyTodayPanel() {
     </article>
 
     <section className="today-remaining" aria-labelledby="remaining-title">
-      <div className="section-bar"><h2 id="remaining-title">Bugünün devamı</h2><span>{pendingTasks.length} görev · {compactMinutesLabel(pendingTasks.reduce((sum, task) => sum + task.estimated_minutes, 0))}</span></div>
+      <div className="section-bar"><h2 id="remaining-title">Bugünün devamı</h2><span>{pendingTasks.length} görev · {compactMinutesLabel(pendingTasks.reduce((sum, task) => sum + (dailyMinutes.get(task.id) ?? 0), 0))}</span></div>
       {loading ? <div className="page-skeleton list-skeleton"><span /><span /><span /></div> : continuationTasks.length ? <div className="editorial-task-list">{continuationTasks.map((task, index) => {
         const completed = task.status === "completed";
         const next = !completed && pendingTasks[0]?.id === task.id;
@@ -147,7 +175,7 @@ export function StudyTodayPanel() {
         <span className="task-number">{String(index + 1).padStart(2, "0")}</span>
         <div className="task-subject"><span>{task.subjects?.name ?? "Ders"}</span><strong>{task.resources?.name ?? taskName(task)}</strong></div>
         <span className="task-mode">{task.work_mode ? WORK_MODE_LABELS[task.work_mode] ?? "Çalışma" : "Çalışma"}</span>
-        <strong className="task-minutes">{completed ? <Icon name="check" weight="bold" /> : <>{task.estimated_minutes}<small>dk</small></>}</strong>
+        <strong className="task-minutes">{completed ? <Icon name="check" weight="bold" /> : <>{dailyMinutes.get(task.id) ?? 0}<small>dk</small></>}</strong>
       </article>})}</div> : <div className="plain-empty">Bugün için başka görev yok.</div>}
     </section>
 

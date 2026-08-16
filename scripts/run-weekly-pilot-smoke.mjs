@@ -32,12 +32,15 @@ const isoWeekday = (date) => {
 };
 const runtimeToday = istanbulToday();
 const runtimeWeekday = isoWeekday(runtimeToday);
-const sourceDate = runtimeWeekday === 7 ? addDateDays(runtimeToday, -1) : runtimeToday;
+const sourceDate = runtimeToday;
 const targetDate = runtimeWeekday === 7 ? runtimeToday : addDateDays(runtimeToday, 1);
-const availability = await api.from("weekly_availability").insert([
-  { user_id: user, exam_profile_id: profile.data.id, weekday: isoWeekday(sourceDate), start_time: "14:00", end_time: "18:00" },
-  { user_id: user, exam_profile_id: profile.data.id, weekday: isoWeekday(targetDate), start_time: "14:00", end_time: "18:00" },
-]);
+const availabilityRows = runtimeWeekday === 7
+  ? [{ user_id: user, exam_profile_id: profile.data.id, weekday: runtimeWeekday, start_time: "09:00", end_time: "18:00" }]
+  : [
+    { user_id: user, exam_profile_id: profile.data.id, weekday: isoWeekday(sourceDate), start_time: "14:00", end_time: "18:00" },
+    { user_id: user, exam_profile_id: profile.data.id, weekday: isoWeekday(targetDate), start_time: "14:00", end_time: "18:00" },
+  ];
+const availability = await api.from("weekly_availability").insert(availabilityRows);
 if (availability.error) throw availability.error;
 const resource = await api.from("resources").insert({ user_id: user, exam_profile_id: profile.data.id, subject_id: MATH, name: "Pilot Matematik Kitabı", resource_type: "question_bank", resource_role: "primary", difficulty: "normal", status: "active" }).select("id").single();
 if (resource.error) throw resource.error;
@@ -51,7 +54,8 @@ async function http(path, { method = "GET", body } = {}) {
 }
 
 const options = await http("/weekly-plan/options");
-if (options.availableMinutes !== 480) throw new Error(`expected 480 available minutes, got ${options.availableMinutes}`);
+const expectedCapacity = runtimeWeekday === 7 ? 540 : 480;
+if (options.availableMinutes !== expectedCapacity) throw new Error(`expected ${expectedCapacity} available minutes, got ${options.availableMinutes}`);
 if (sourceDate < options.weekStartDate || targetDate > options.weekEndDate) throw new Error(`pilot fixture escaped current week: ${sourceDate} -> ${targetDate}`);
 const saved = await http("/weekly-plan/manual", { method: "POST", body: { blocks: [
   { plannedDate: sourceDate, subjectId: MATH, workMode: "video", resourceId: null, detail: "Temel Kavramlar videosu", estimatedMinutes: 60 },
@@ -65,7 +69,7 @@ const video = active.find((task) => task.work_mode === "video");
 const longTask = active.find((task) => task.work_mode === "questions");
 if (!video || !longTask) throw new Error("manual plan fixtures missing");
 
-const endedAt = `${sourceDate}T17:35:00+03:00`;
+const endedAt = new Date().toISOString();
 const retro = await http("/study-sessions/retroactive", { method: "POST", body: { taskId: video.id, subjectId: MATH, durationMinutes: 95, endedAt, note: "Plan 60, gerçek 95" } });
 if (retro.duration_minutes !== 95) throw new Error("retroactive actual duration failed");
 if (!retro.replan?.decision) throw new Error("automatic study deviation replan missing");

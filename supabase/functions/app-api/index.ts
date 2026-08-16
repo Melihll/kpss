@@ -5,18 +5,34 @@ import {
   buildWeeklyPlanV0,
   calculateEffectiveDayCapacity,
   calculateWeeklyAvailableMinutes,
+  findDailyCapacityOverloads,
   forecastP48Resources,
-  DEFAULT_RESOURCE_UNIT_MINUTES,
-  getZonedDayRange,
   getZonedWeekRange,
-  getNextBestTask,
   PlanningDomainError,
-  type RecommendationTask,
-  type WeeklyPlanningContext,
 } from "../_shared/planning.bundle.js";
 import { recalculateTopicMastery, revisionWithUrgency } from "../_shared/mastery.ts";
-import { loadAdaptiveBase, minimumDayPlan, recalculateCurrentPlan, syllabusProjection } from "../_shared/adaptive.ts";
-import { generateWeeklyReport, pilotMetrics, recordRecommendationEvent } from "../_shared/pilot.ts";
+import { minimumDayPlan, recalculateCurrentPlan, syllabusProjection } from "../_shared/adaptive.ts";
+import { generateWeeklyReport, loadDailyCoachContext, pilotMetrics, recordRecommendationEvent } from "../_shared/pilot.ts";
+import { aggregateCompletedStudySessions } from "../_shared/completed-study.ts";
+
+type WeeklyPlanningContext = {
+  examProfileId: string;
+  weekStartDate: string;
+  subjects: Array<{ id: string; name: string; status: "active" | "paused" | "completed"; sortOrder: number }>;
+  curriculum: Array<{ id: string; subjectId: string; parentId: string | null; nodeType: "topic" | "subtopic"; name: string; sortOrder: number; isActive: boolean }>;
+  topicProgress: Array<{ curriculumNodeId: string; state: "not_started" | "learning" | "practicing" | "remediation" | "learned" | "maintenance" }>;
+  weeklyAvailability: Array<{ weekday: number; start_time: string; end_time: string; is_active?: boolean }>;
+  resources: Array<{ id: string; subjectId: string; name: string; role: "primary" | "reinforcement" | "revision" | "advanced" | "mock"; difficulty: "unknown" | "easy" | "normal" | "hard"; status: "active" | "paused" | "completed" | "abandoned" }>;
+  resourceSections: Array<{ id: string; resourceId: string; curriculumNodeId: string | null; name: string; sortOrder: number }>;
+  resourceUnits: Array<{ id: string; resourceId: string; sectionId: string | null; name: string; unitType: "test" | "video" | "chapter" | "reading" | "mock" | "other"; sortOrder: number; estimatedMinutes: number | null }>;
+  resourceUnitProgress: Array<{ resourceUnitId: string; status: "not_started" | "in_progress" | "completed" | "skipped" }>;
+  existingCarryoverTasks: Array<{
+    id: string; subjectId: string; curriculumNodeId: string | null; resourceId: string | null;
+    taskType: "learn_topic" | "solve_resource_units" | "review_topic" | "custom";
+    title: string; description: string | null; estimatedMinutes: number;
+    importance: "core" | "important" | "optional"; priorityScore: number; resourceUnitIds: string[];
+  }>;
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -235,30 +251,6 @@ async function planWithTasks(client: SupabaseClient, plan: any) {
   return { plan, tasks: tasks ?? [] };
 }
 
-function remainingTodayMinutes(windows: any[]) {
-  const nowParts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/Istanbul", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
-  }).formatToParts(new Date()).map((part) => [part.type, part.value]));
-  const weekdays: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
-  const weekday = weekdays[nowParts.weekday] ?? 1;
-  const current = Number(nowParts.hour) * 60 + Number(nowParts.minute);
-  const intervals = windows.filter((window) => window.weekday === weekday && window.is_active !== false)
-    .map((window) => {
-      const [startHour, startMinute] = window.start_time.split(":").map(Number);
-      const [endHour, endMinute] = window.end_time.split(":").map(Number);
-      return { start: Math.max(current, startHour * 60 + startMinute), end: endHour * 60 + endMinute };
-    }).filter((interval) => interval.end > interval.start).sort((a, b) => a.start - b.start);
-  let total = 0;
-  let end = -1;
-  for (const interval of intervals) {
-    if (interval.start > end) total += interval.end - interval.start;
-    else if (interval.end > end) total += interval.end - end;
-    end = Math.max(end, interval.end);
-  }
-  return total;
-}
-
-
 const P48_SUBJECT_TARGETS = [
   { subjectId: "20000000-0000-0000-0000-000000000006", subjectName: "Hukuk", weeklyMinutes: 450, scoreWeight: 20 },
   { subjectId: "20000000-0000-0000-0000-000000000007", subjectName: "İktisat", weeklyMinutes: 360, scoreWeight: 20 },
@@ -370,9 +362,9 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
     const monthStart = `${month.month}-01`;
     const monthEnd = new Date(Date.UTC(year, monthNumber, 0, 12)).toISOString().slice(0, 10);
     const focusResources = subjectForecasts.flatMap((subject) => subject.resources
-      .filter((resource) => resource.forecastStartDate && resource.forecastFinishDate
+      .filter((resource: any) => resource.forecastStartDate && resource.forecastFinishDate
         && resource.forecastStartDate <= monthEnd && resource.forecastFinishDate >= monthStart)
-      .map((resource) => `${subject.subjectName}: ${resource.resourceName}`));
+      .map((resource: any) => `${subject.subjectName}: ${resource.resourceName}`));
     for (const subject of subjectForecasts) {
       if (subject.newSourceDate && subject.newSourceDate >= monthStart && subject.newSourceDate <= monthEnd) {
         focusResources.push(`${subject.subjectName}: Yeni kaynak zamanı`);
@@ -458,21 +450,17 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
       .select("planned_minutes,sequence_order,work_mode,resources(id,subject_id,name,status)")
       .eq("user_id", userId).eq("exam_profile_id", profile.id),
     client.from("study_sessions")
-      .select("resource_id,duration_minutes")
-      .eq("user_id", userId).eq("exam_profile_id", profile.id).eq("status", "completed").not("resource_id", "is", null),
+      .select("resource_id,duration_minutes,started_at")
+      .eq("user_id", userId).eq("exam_profile_id", profile.id).eq("status", "completed"),
   ]);
   for (const result of [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult]) if (result.error) throw result.error;
 
-  const actualByResource = new Map<string, number>();
-  for (const row of sessionsResult.data ?? []) {
-    if (!row.resource_id) continue;
-    actualByResource.set(row.resource_id, (actualByResource.get(row.resource_id) ?? 0) + Number(row.duration_minutes ?? 0));
-  }
+  const { actualByDate, actualByResource } = aggregateCompletedStudySessions(sessionsResult.data ?? []);
 
   const dayCapacities: Record<string, number> = {};
   for (let index = 0; index < 7; index += 1) {
     const date = addDays(weekStart, index);
-    dayCapacities[date] = calculateEffectiveDayCapacity({
+    const effectiveCapacity = calculateEffectiveDayCapacity({
       date,
       weeklyAvailability: p48Windows(availabilityResult.data ?? []),
       calendarPeriods: p48Periods(periodsResult.data ?? []).map((period) => ({
@@ -482,6 +470,7 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
       })),
       scheduleExceptions: p48Exceptions(exceptionsResult.data ?? []),
     });
+    dayCapacities[date] = date < today ? 0 : Math.max(0, effectiveCapacity - (actualByDate.get(date) ?? 0));
   }
 
   const resources = (targetResult.data ?? []).map((row: any) => ({
@@ -534,45 +523,18 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
   return { ...(await planWithTasks(client, plan)), created: true, dayCapacities, generatedBlocks: normalized.length };
 }
 
-async function nextTask(client: SupabaseClient, profile: any, userId: string, weekStart: string) {
-  const plan = await currentPlan(client, profile.id, weekStart);
-  if (!plan) throw new PlanningDomainError("NO_RECOMMENDABLE_TASK");
-  const [{ data: tasks, error: taskError }, { data: windows, error: windowError }] = await Promise.all([
-    client.from("tasks").select("*, task_progress(completed_minutes)").eq("weekly_plan_id", plan.id),
-    client.from("weekly_availability").select("weekday, start_time, end_time, is_active").eq("exam_profile_id", profile.id),
-  ]);
-  if (taskError) throw taskError;
-  if (windowError) throw windowError;
-  const adaptive = await loadAdaptiveBase(client, userId, profile, plan);
-  const adaptiveMap = new Map(adaptive.adaptiveTasks.map((task: any) => [task.id, task]));
-  const taskIds = (tasks ?? []).map((task) => task.id);
-  const linksResult = taskIds.length
-    ? await client.from("task_resource_units").select("task_id, status, resource_units(unit_type, estimated_minutes)").in("task_id", taskIds)
-    : { data: [], error: null };
-  if (linksResult.error) throw linksResult.error;
-  const recommendationTasks: RecommendationTask[] = (tasks ?? []).map((task) => {
-    const links = (linksResult.data ?? []).filter((link) => link.task_id === task.id && link.status === "pending");
-    const pendingUnitMinutes = links.length
-      ? links.reduce((sum, link: any) => sum + (link.resource_units?.estimated_minutes ?? DEFAULT_RESOURCE_UNIT_MINUTES[link.resource_units?.unit_type ?? "other"]), 0)
-      : null;
-    const signal: any = adaptiveMap.get(task.id) ?? {};
-    const revision = task.revision_schedule_id
-      ? adaptive.allAdaptiveRevisions.find((row: any) => row.id === task.revision_schedule_id)
-      : null;
-    return {
-      id: task.id, status: task.status, importance: task.importance, priorityScore: task.priority_score,
-      plannedDate: task.planned_date, estimatedMinutes: task.estimated_minutes,
-      completedMinutes: task.task_progress?.[0]?.completed_minutes ?? 0,
-      pendingUnitMinutes, createdAt: task.created_at,
-      isRevision: Boolean(task.revision_schedule_id), revisionUrgency: revision?.urgency ?? null,
-      masteryLevel: signal.masteryLevel ?? null, topicState: signal.topicState ?? null,
-    };
-  });
-  const recommendation = getNextBestTask(recommendationTasks, {
-    today: istanbulDate(), availableMinutes: Math.min(remainingTodayMinutes(windows ?? []), adaptive.dayCapacities[istanbulDate()] ?? 0),
-  });
-  const task = (tasks ?? []).find((candidate) => candidate.id === recommendation.recommendedTask.id);
-  return { task, reason: recommendation.reason, remainingMinutes: recommendation.remainingMinutes };
+async function nextTask(client: SupabaseClient, profile: any, userId: string) {
+  const context = await loadDailyCoachContext(client, userId, profile, istanbulDate(), { respectCurrentTime: true });
+  const recommendation = context.recommendation;
+  if (!context.plan || !recommendation) throw new PlanningDomainError("NO_RECOMMENDABLE_TASK");
+  const task = context.allTasks.find((candidate: any) => candidate.id === recommendation.taskId);
+  if (!task) throw new PlanningDomainError("NO_RECOMMENDABLE_TASK");
+  return {
+    task,
+    reason: recommendation.reason,
+    remainingMinutes: recommendation.recommendedSessionMinutes,
+    taskRemainingMinutes: recommendation.taskRemainingMinutes,
+  };
 }
 
 Deno.serve(async (request) => {
@@ -625,16 +587,22 @@ Deno.serve(async (request) => {
     if (request.method === "POST" && route === "/weekly-plan/manual") {
       const body=await request.json();
       const blocks=Array.isArray(body.blocks)?body.blocks:[];
-      const [subjectsResult,resourcesResult,availabilityResult]=await Promise.all([
+      const [subjectsResult,resourcesResult,availabilityResult,periodsResult,exceptionsResult,sessionsResult]=await Promise.all([
         client.from("user_subjects").select("subject_id, subjects(name)").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","active"),
         client.from("resources").select("id,subject_id,name,resource_type").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","active"),
         client.from("weekly_availability").select("weekday,start_time,end_time,is_active").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("is_active",true),
+        client.from("calendar_periods").select("*").eq("user_id",userId).eq("exam_profile_id",profile.id),
+        client.from("schedule_exceptions").select("*").eq("user_id",userId).eq("exam_profile_id",profile.id).gte("exception_date",weekStart).lte("exception_date",addDays(weekStart,6)),
+        client.from("study_sessions").select("duration_minutes,started_at").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","completed").gte("started_at",`${weekStart}T00:00:00+03:00`).lt("started_at",`${addDays(weekStart,7)}T00:00:00+03:00`),
       ]);
-      for(const result of [subjectsResult,resourcesResult,availabilityResult]) if(result.error) throw result.error;
+      for(const result of [subjectsResult,resourcesResult,availabilityResult,periodsResult,exceptionsResult,sessionsResult]) if(result.error) throw result.error;
       const subjectNames=new Map((subjectsResult.data??[]).map((row:any)=>[row.subject_id,row.subjects?.name??"Ders"]));
       const resources=new Map((resourcesResult.data??[]).map((row:any)=>[row.id,row]));
       const availability=(availabilityResult.data??[]).map((row:any)=>({weekday:row.weekday,start_time:row.start_time,end_time:row.end_time,is_active:row.is_active}));
-      const availableMinutes=calculateWeeklyAvailableMinutes(availability);
+      const {actualByDate}=aggregateCompletedStudySessions(sessionsResult.data??[]);
+      const dayCapacities:Record<string,number>={};
+      for(let index=0;index<7;index++){const date=addDays(weekStart,index);const effective=calculateEffectiveDayCapacity({date,weeklyAvailability:availability,calendarPeriods:p48Periods(periodsResult.data??[]),scheduleExceptions:p48Exceptions(exceptionsResult.data??[])});dayCapacities[date]=date<today?0:Math.max(0,effective-(actualByDate.get(date)??0));}
+      const availableMinutes=Object.values(dayCapacities).reduce((sum,minutes)=>sum+minutes,0);
       const normalized=blocks.map((block:any)=>{
         const subjectName=subjectNames.get(block.subjectId);
         const resource=block.resourceId?resources.get(block.resourceId):null;
@@ -649,6 +617,7 @@ Deno.serve(async (request) => {
           description:resource?.name?`Kaynak: ${resource.name}${detail&&detail!==resource.name?` · ${detail}`:""}`:(detail||null),
         };
       });
+      if(findDailyCapacityOverloads(normalized,dayCapacities).length)throw new Error("MANUAL_PLAN_OVER_CAPACITY");
       const stored=await client.rpc("replace_manual_weekly_plan",{p_payload:{weekStartDate:weekStart,availableMinutes,blocks:normalized}});
       if(stored.error) throw stored.error;
       const plan=await currentPlan(client,profile.id,weekStart);
@@ -673,7 +642,7 @@ Deno.serve(async (request) => {
       return json((await planWithTasks(client, plan)).tasks);
     }
     if (request.method === "GET" && route === "/tasks/next") {
-      const recommendation=await nextTask(client, profile, userId, weekStart);
+      const recommendation=await nextTask(client, profile, userId);
       await recordRecommendationEvent(client,{userId,examProfileId:profile.id,taskId:recommendation.task.id,eventType:"next_best_task",channel:"web",reason:recommendation.reason});
       return json(recommendation);
     }
@@ -710,15 +679,29 @@ Deno.serve(async (request) => {
       if (error) throw error; return json({ session: data });
     }
     if (request.method === "GET" && route === "/execution/summary") {
-      const dayRange = getZonedDayRange(today);
       const weekRange = getZonedWeekRange(today);
-      const [todayRows,weekRows,results] = await Promise.all([
-        client.from("study_sessions").select("duration_minutes").eq("status","completed").gte("ended_at",dayRange.startUtc).lt("ended_at",dayRange.endUtc),
+      const [dailyPlan,weekRows,results] = await Promise.all([
+        loadDailyCoachContext(client,userId,profile,today),
         client.from("study_sessions").select("duration_minutes").eq("status","completed").gte("ended_at",weekRange.startUtc).lt("ended_at",weekRange.endUtc),
         client.from("test_results").select("*, subjects(name), resource_units(name)").order("completed_at",{ascending:false}).limit(5),
       ]);
-      for(const result of [todayRows,weekRows,results]) if(result.error) throw result.error;
-      return json({todayStudyMinutes:(todayRows.data??[]).reduce((s,r)=>s+(r.duration_minutes??0),0),weekStudyMinutes:(weekRows.data??[]).reduce((s,r)=>s+(r.duration_minutes??0),0),recentResults:results.data??[]});
+      for(const result of [weekRows,results]) if(result.error) throw result.error;
+      return json({
+        todayStudyMinutes:dailyPlan.studiedMinutes,
+        weekStudyMinutes:(weekRows.data??[]).reduce((s,r)=>s+(r.duration_minutes??0),0),
+        recentResults:results.data??[],
+        dailyPlan:{
+          date:dailyPlan.date,
+          tasks:dailyPlan.tasks,
+          completedTaskIds:dailyPlan.completedTaskIds,
+          deferredTaskCount:dailyPlan.deferredTaskCount,
+          deferredMinutes:dailyPlan.deferredMinutes,
+          capacityMinutes:dailyPlan.capacityMinutes,
+          remainingCapacityMinutes:dailyPlan.remainingCapacityMinutes,
+          totalMinutes:dailyPlan.totalMinutes,
+          totalCommittedMinutes:dailyPlan.totalCommittedMinutes??dailyPlan.studiedMinutes+dailyPlan.totalMinutes,
+        },
+      });
     }
     if (request.method === "POST" && route === "/study-sessions/start") {
       const body=await request.json(); const {data,error}=await client.rpc("start_study_session",{p_task_id:body.taskId,p_entry_source:body.entrySource??"web"}); if(error) throw error; return json(data,201);

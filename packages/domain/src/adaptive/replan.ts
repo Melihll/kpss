@@ -1,16 +1,155 @@
 import { calculateWeeklyRevisionBudget } from "../mastery";
-import { REPLAN_LEVEL_1_CHANGE_LIMIT,REPLAN_LEVEL_2_CHANGE_LIMIT } from "./config";
-import type { AdaptiveRevision,AdaptiveTask,ReplanContext,ReplanResult } from "./types";
-const urgencyRank={critical_overdue:0,overdue:1,due:2,upcoming:3};const masteryRank={critical:0,weak:1,fragile:2,sufficient:3,strong:4};
-function taskRank(task:AdaptiveTask){if(task.status==="in_progress")return 0;if(task.status==="partially_completed")return 1;if(task.plannedDate&&task.importance==="core")return 2;if(task.topicState==="remediation"||task.masteryLevel==="critical"||task.masteryLevel==="weak")return 3;if(task.importance==="core")return 4;if(task.importance==="important")return 5;return 6;}
-export function calculatePriorityV1(input:{scheduleUrgency:number;weakness:number;revisionUrgency:number;planDeviation:number;postponement:number;dependency:number}){return Math.max(0,Math.min(100,Math.round(Object.values(input).reduce((a,b)=>a+b,0))));}
-export function replanWeeklyPlanV1(context:ReplanContext):ReplanResult{
- const availableMinutes=Object.values(context.dailyCapacities).reduce((a,b)=>a+Math.max(0,b),0);const planBudget=Math.min(context.planningBudgetMinutes,availableMinutes);const revisionBudget=calculateWeeklyRevisionBudget(planBudget);
- const activeTasks=context.tasks.filter(t=>!["completed","cancelled","missed"].includes(t.status)).sort((a,b)=>taskRank(a)-taskRank(b)||b.priorityScore-a.priorityScore||a.id.localeCompare(b.id));
- const selectedRevisions=(context.trigger==="study_deviation"?[]:[...context.revisions]).sort((a,b)=>urgencyRank[a.urgency]-urgencyRank[b.urgency]||masteryRank[a.masteryLevel]-masteryRank[b.masteryLevel]||a.id.localeCompare(b.id));let revisionMinutes=0;const creates=[] as ReplanResult["tasksToCreate"];
- for(const revision of selectedRevisions){if(revisionMinutes+revision.estimatedMinutes>revisionBudget)continue;revisionMinutes+=revision.estimatedMinutes;creates.push({revisionScheduleId:revision.id,subjectId:revision.subjectId,curriculumNodeId:revision.curriculumNodeId,title:revision.title,plannedDate:revision.scheduledFor<context.currentDate?context.currentDate:revision.scheduledFor,estimatedMinutes:revision.estimatedMinutes,importance:revision.masteryLevel==="critical"||revision.masteryLevel==="weak"?"core":"important",priorityScore:calculatePriorityV1({scheduleUrgency:revision.urgency.includes("overdue")?25:18,weakness:25-masteryRank[revision.masteryLevel]*5,revisionUrgency:20-urgencyRank[revision.urgency]*5,planDeviation:0,postponement:0,dependency:0}),dedupeKey:`revision|${revision.id}`});}
- let used=revisionMinutes;const keep:string[]=[];const cancel:string[]=[];for(const task of activeTasks){const remaining=Math.max(0,task.estimatedMinutes-task.completedMinutes);if(task.status==="in_progress"||task.status==="partially_completed"||used+remaining<=planBudget){keep.push(task.id);used+=remaining;}else if(task.importance==="optional")cancel.push(task.id);else keep.push(task.id);}
- const moves=[] as ReplanResult["tasksToMove"];const dayRemaining=Object.fromEntries(Object.entries(context.dailyCapacities).map(([date,minutes])=>[date,date<context.currentDate?0:Math.max(0,minutes-(context.actualMinutesByDate?.[date]??0))]));const currentDeviation=(context.actualMinutesByDate?.[context.currentDate]??0)-(context.plannedConsumedMinutesByDate?.[context.currentDate]??0);const allowPullForward=currentDeviation<=0;const placementTasks=activeTasks.filter(t=>keep.includes(t.id)&&!["in_progress","partially_completed"].includes(t.status));if(!allowPullForward){placementTasks.sort((a,b)=>(a.plannedDate??context.currentDate).localeCompare(b.plannedDate??context.currentDate)||taskRank(a)-taskRank(b)||b.priorityScore-a.priorityScore||a.id.localeCompare(b.id));}for(const task of placementTasks){const remaining=Math.max(0,task.estimatedMinutes-task.completedMinutes);const current=task.plannedDate;const earliest=allowPullForward?context.currentDate:(current&&current>context.currentDate?current:context.currentDate);const dates=Object.keys(dayRemaining).sort();const chosen=dates.find(d=>d>=earliest&&(dayRemaining[d]??0)>=remaining);if(chosen){dayRemaining[chosen]=(dayRemaining[chosen]??0)-remaining;if(current!==chosen)moves.push({taskId:task.id,fromDate:current,toDate:chosen,reason:"replanning"});}}
- const changed=moves.length+cancel.length+creates.length;const revisionType=context.trigger==="study_deviation"?"automatic_informed":changed<=REPLAN_LEVEL_1_CHANGE_LIMIT?"automatic_minor":changed<=REPLAN_LEVEL_2_CHANGE_LIMIT?"automatic_informed":"strategic_proposal";const reasonCode=context.trigger.toUpperCase();const explanation=context.trigger==="capacity_change"?`Kapasiten değiştiği için ${changed} plan öğesi yeniden düzenlendi.`:context.trigger==="study_deviation"?changed?`Gerçek çalışma sürene göre haftanın kalanında ${changed} görev yeniden yerleştirildi.`:"Gerçek çalışma süren plana uygun; görevlerin yerini değiştirmeye gerek kalmadı.":context.trigger==="revision_due"?`${creates.length} öncelikli tekrar haftalık plana eklendi.`:`Planındaki ${changed} öğe güncel ilerlemene göre düzenlendi.`;
- return{tasksToKeep:keep,tasksToMove:moves,tasksToCancel:cancel,tasksToCreate:creates,availableMinutes,afterPlannedMinutes:used,revisionMinutes,revisionBudgetMinutes:revisionBudget,changedTaskCount:changed,revisionType,reasonCode,explanation,dedupeKey:[context.planId,context.trigger,availableMinutes,keep.join(","),moves.map(m=>`${m.taskId}:${m.toDate}`).join(","),creates.map(c=>c.revisionScheduleId).join(",")].join("|")};
+import { REPLAN_LEVEL_1_CHANGE_LIMIT, REPLAN_LEVEL_2_CHANGE_LIMIT } from "./config";
+import type { AdaptiveTask, ReplanContext, ReplanResult } from "./types";
+
+const urgencyRank = { critical_overdue: 0, overdue: 1, due: 2, upcoming: 3 };
+const masteryRank = { critical: 0, weak: 1, fragile: 2, sufficient: 3, strong: 4 };
+
+function taskRank(task: AdaptiveTask) {
+  if (task.status === "in_progress") return 0;
+  if (task.status === "partially_completed") return 1;
+  if (task.plannedDate && task.importance === "core") return 2;
+  if (task.topicState === "remediation" || task.masteryLevel === "critical" || task.masteryLevel === "weak") return 3;
+  if (task.importance === "core") return 4;
+  if (task.importance === "important") return 5;
+  return 6;
+}
+
+export function calculatePriorityV1(input: { scheduleUrgency: number; weakness: number; revisionUrgency: number; planDeviation: number; postponement: number; dependency: number }) {
+  return Math.max(0, Math.min(100, Math.round(Object.values(input).reduce((sum, value) => sum + value, 0))));
+}
+
+export function replanWeeklyPlanV1(context: ReplanContext): ReplanResult {
+  const availableMinutes = Object.values(context.dailyCapacities).reduce((sum, minutes) => sum + Math.max(0, minutes), 0);
+  const planBudget = Math.min(context.planningBudgetMinutes, availableMinutes);
+  const revisionBudget = calculateWeeklyRevisionBudget(planBudget);
+  const dayRemaining: Record<string, number> = Object.fromEntries(Object.entries(context.dailyCapacities).map(([date, minutes]) => [
+    date,
+    date < context.currentDate ? 0 : Math.max(0, minutes - (context.actualMinutesByDate?.[date] ?? 0)),
+  ]));
+  const dates = Object.keys(dayRemaining).sort();
+  const activeTasks = context.tasks
+    .filter((task) => !["completed", "cancelled", "missed"].includes(task.status))
+    .sort((left, right) => taskRank(left) - taskRank(right) || right.priorityScore - left.priorityScore || left.id.localeCompare(right.id));
+  const currentDeviation = (context.actualMinutesByDate?.[context.currentDate] ?? 0) - (context.plannedConsumedMinutesByDate?.[context.currentDate] ?? 0);
+  const allowPullForward = currentDeviation <= 0;
+  const keep: string[] = [];
+  const moves: ReplanResult["tasksToMove"] = [];
+  const tasksToBacklog: string[] = [];
+  const cancel: string[] = [];
+  let used = 0;
+
+  // Preserve an active task and its progress, while reserving its remaining
+  // capacity so new work cannot be stacked on the same day.
+  for (const task of activeTasks.filter((item) => ["in_progress", "partially_completed"].includes(item.status))) {
+    keep.push(task.id);
+    const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
+    used += remaining;
+    if (task.plannedDate && task.plannedDate >= context.currentDate && task.plannedDate in dayRemaining) {
+      dayRemaining[task.plannedDate] = Math.max(0, dayRemaining[task.plannedDate]! - remaining);
+    }
+  }
+
+  const selectedRevisions = context.trigger === "study_deviation" ? [] : [...context.revisions]
+    .sort((left, right) => urgencyRank[left.urgency] - urgencyRank[right.urgency]
+      || masteryRank[left.masteryLevel] - masteryRank[right.masteryLevel]
+      || left.id.localeCompare(right.id));
+  let revisionMinutes = 0;
+  const creates: ReplanResult["tasksToCreate"] = [];
+  for (const revision of selectedRevisions) {
+    if (revisionMinutes + revision.estimatedMinutes > revisionBudget || used + revision.estimatedMinutes > planBudget) continue;
+    const earliest = revision.scheduledFor < context.currentDate ? context.currentDate : revision.scheduledFor;
+    const chosen = dates.find((date) => date >= earliest && (dayRemaining[date] ?? 0) >= revision.estimatedMinutes);
+    if (!chosen) continue;
+    dayRemaining[chosen] = (dayRemaining[chosen] ?? 0) - revision.estimatedMinutes;
+    revisionMinutes += revision.estimatedMinutes;
+    used += revision.estimatedMinutes;
+    creates.push({
+      revisionScheduleId: revision.id,
+      subjectId: revision.subjectId,
+      curriculumNodeId: revision.curriculumNodeId,
+      title: revision.title,
+      plannedDate: chosen,
+      estimatedMinutes: revision.estimatedMinutes,
+      importance: revision.masteryLevel === "critical" || revision.masteryLevel === "weak" ? "core" : "important",
+      priorityScore: calculatePriorityV1({
+        scheduleUrgency: revision.urgency.includes("overdue") ? 25 : 18,
+        weakness: 25 - masteryRank[revision.masteryLevel] * 5,
+        revisionUrgency: 20 - urgencyRank[revision.urgency] * 5,
+        planDeviation: 0,
+        postponement: 0,
+        dependency: 0,
+      }),
+      dedupeKey: `revision|${revision.id}`,
+    });
+  }
+
+  const placementTasks = activeTasks.filter((task) => !["in_progress", "partially_completed"].includes(task.status));
+  if (!allowPullForward) {
+    placementTasks.sort((left, right) => (left.plannedDate ?? context.currentDate).localeCompare(right.plannedDate ?? context.currentDate)
+      || taskRank(left) - taskRank(right)
+      || right.priorityScore - left.priorityScore
+      || left.id.localeCompare(right.id));
+  }
+  for (const task of placementTasks) {
+    const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
+    if (remaining === 0) {
+      keep.push(task.id);
+      continue;
+    }
+    const current = task.plannedDate;
+    const earliest = allowPullForward ? context.currentDate : current && current > context.currentDate ? current : context.currentDate;
+    const chosen = used + remaining <= planBudget
+      ? dates.find((date) => date >= earliest && (dayRemaining[date] ?? 0) >= remaining)
+      : undefined;
+    if (!chosen) {
+      if (current !== null) tasksToBacklog.push(task.id);
+      continue;
+    }
+    keep.push(task.id);
+    used += remaining;
+    dayRemaining[chosen] = (dayRemaining[chosen] ?? 0) - remaining;
+    if (current !== chosen) moves.push({ taskId: task.id, fromDate: current, toDate: chosen, reason: "replanning" });
+  }
+
+  const changed = moves.length + tasksToBacklog.length + cancel.length + creates.length;
+  const revisionType = context.trigger === "capacity_change" || context.trigger === "study_deviation"
+    ? "automatic_informed"
+    : changed <= REPLAN_LEVEL_1_CHANGE_LIMIT
+      ? "automatic_minor"
+      : changed <= REPLAN_LEVEL_2_CHANGE_LIMIT
+        ? "automatic_informed"
+        : "strategic_proposal";
+  const reasonCode = context.trigger.toUpperCase();
+  const explanation = context.trigger === "capacity_change"
+    ? `Kapasiten değiştiği için ${changed} plan öğesi yeniden düzenlendi.`
+    : context.trigger === "study_deviation"
+      ? changed ? `Gerçek çalışma sürene göre haftanın kalanında ${changed} görev yeniden yerleştirildi.` : "Gerçek çalışma süren plana uygun; görevlerin yerini değiştirmeye gerek kalmadı."
+      : context.trigger === "revision_due"
+        ? `${creates.length} öncelikli tekrar haftalık plana eklendi.`
+        : `Planındaki ${changed} öğe güncel ilerlemene göre düzenlendi.`;
+  return {
+    tasksToKeep: keep,
+    tasksToMove: moves,
+    tasksToBacklog,
+    tasksToCancel: cancel,
+    tasksToCreate: creates,
+    availableMinutes,
+    afterPlannedMinutes: used,
+    revisionMinutes,
+    revisionBudgetMinutes: revisionBudget,
+    changedTaskCount: changed,
+    revisionType,
+    reasonCode,
+    explanation,
+    dedupeKey: [
+      context.planId,
+      context.trigger,
+      availableMinutes,
+      keep.join(","),
+      moves.map((move) => `${move.taskId}:${move.toDate}`).join(","),
+      tasksToBacklog.join(","),
+      creates.map((create) => create.revisionScheduleId).join(","),
+    ].join("|"),
+  };
 }

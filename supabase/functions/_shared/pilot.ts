@@ -1,9 +1,11 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
+  buildDailyPlanProjection,
   DEFAULT_RESOURCE_UNIT_MINUTES,
   getNextBestTask,
   getZonedWeekRange,
   interpretWeeklyReport,
+  remainingTaskMinutes,
 } from "./planning.bundle.js";
 import { loadAdaptiveBase, syllabusProjection } from "./adaptive.ts";
 import { recommendationWindow } from "./recommendation-window.ts";
@@ -114,6 +116,10 @@ export async function loadDailyCoachContext(
     availableNowMinutes: 0,
     tasks: [],
     allTasks: [],
+    completedTaskIds: [],
+    deferredTaskIds: [],
+    deferredTaskCount: 0,
+    deferredMinutes: 0,
     recommendation: null,
   };
 
@@ -163,8 +169,34 @@ export async function loadDailyCoachContext(
     };
   });
   const mapped = enriched.map((item) => item.mapped);
+  const rankedToday: Array<{ mapped: RecommendationTask; reason: string; remainingMinutes: number }> = [];
+  let todayCandidates = mapped.filter((task) => task.plannedDate === date);
+  while (todayCandidates.length) {
+    try {
+      const selected = getNextBestTask(todayCandidates, { today: date });
+      rankedToday.push({ mapped: selected.recommendedTask as RecommendationTask, reason: selected.reason, remainingMinutes: selected.remainingMinutes });
+      todayCandidates = todayCandidates.filter((task) => task.id !== selected.recommendedTask.id);
+    } catch {
+      break;
+    }
+  }
+  const rankedIds = new Set(rankedToday.map((item) => item.mapped.id));
   const dayCapacity = Number(adaptive.dayCapacities[date] ?? 0);
-  const remainingCapacityMinutes = Math.max(0, dayCapacity - studiedMinutes);
+  const projection = buildDailyPlanProjection({
+    date,
+    capacityMinutes: dayCapacity,
+    completedStudyMinutes: studiedMinutes,
+    tasks: [
+      ...rankedToday.map((item) => ({ id: item.mapped.id, plannedDate: item.mapped.plannedDate, status: item.mapped.status, remainingMinutes: item.remainingMinutes })),
+      ...mapped.filter((task) => !rankedIds.has(task.id)).map((task) => ({
+        id: task.id,
+        plannedDate: task.plannedDate,
+        status: task.status,
+        remainingMinutes: remainingTaskMinutes(task as any),
+      })),
+    ],
+  });
+  const remainingCapacityMinutes = projection.remainingCapacityMinutes;
   const availableNowMinutes = options.respectCurrentTime
     ? Math.min(remainingCapacityMinutes, remainingClockMinutes(adaptive.availability ?? [], date))
     : remainingCapacityMinutes;
@@ -182,12 +214,14 @@ export async function loadDailyCoachContext(
     needsResult: boolean;
   } = null;
   try {
-    const selected = getNextBestTask(mapped, { today: date, availableMinutes: availableNowMinutes });
+    const scheduledIds = new Set(projection.openItems.map((item: any) => item.taskId));
+    const selected = getNextBestTask(mapped.filter((task) => scheduledIds.has(task.id)), { today: date, availableMinutes: availableNowMinutes });
     const item = enriched.find((candidate) => candidate.raw.id === selected.recommendedTask.id);
-    const window = recommendationWindow(selected.remainingMinutes, availableNowMinutes);
+    const allocated = projection.openItems.find((candidate: any) => candidate.taskId === selected.recommendedTask.id)?.scheduledMinutes ?? 0;
+    const window = recommendationWindow(selected.remainingMinutes, Math.min(availableNowMinutes, allocated));
     const taskRemainingMinutes = window.taskRemainingMinutes;
     const needsResult = item?.raw.task_type === "solve_resource_units" && item.pendingUnitCount > 0 && taskRemainingMinutes === 0;
-    if (item && (needsResult || availableNowMinutes > 0)) recommendation = {
+    if (item && availableNowMinutes > 0 && window.recommendedSessionMinutes > 0) recommendation = {
       taskId: item.raw.id,
       title: item.raw.title,
       taskType: item.raw.task_type,
@@ -213,47 +247,37 @@ export async function loadDailyCoachContext(
     reason: string;
     needsResult: boolean;
   }> = [];
-  let candidates = [...mapped];
-  let remainingCapacity = remainingCapacityMinutes;
-  while (candidates.length && focusTasks.length < 5) {
-    let selected;
-    try {
-      selected = getNextBestTask(candidates, { today: date, availableMinutes: Math.max(0, remainingCapacity) });
-    } catch {
-      break;
-    }
-    const item = enriched.find((candidate) => candidate.raw.id === selected.recommendedTask.id);
-    candidates = candidates.filter((candidate) => candidate.id !== selected.recommendedTask.id);
-    if (!item) continue;
-    const needsResult = item.raw.task_type === "solve_resource_units" && item.pendingUnitCount > 0 && selected.remainingMinutes === 0;
-    if (remainingCapacity <= 0 && !needsResult) break;
-    const minutes = needsResult ? 0 : Math.min(selected.remainingMinutes, remainingCapacity);
+  for (const projected of projection.openItems) {
+    const item = enriched.find((candidate) => candidate.raw.id === projected.taskId);
+    const ranked = rankedToday.find((candidate) => candidate.mapped.id === projected.taskId);
+    if (!item || !ranked) continue;
     focusTasks.push({
       id: item.raw.id,
       title: item.raw.title,
       taskType: item.raw.task_type,
-      minutes,
-      remainingMinutes: selected.remainingMinutes,
-      reason: selected.reason,
-      needsResult,
+      minutes: projected.scheduledMinutes,
+      remainingMinutes: projected.remainingMinutes,
+      reason: ranked.reason,
+      needsResult: false,
     });
-    remainingCapacity = Math.max(0, remainingCapacity - minutes);
   }
-
-  const scheduledToday = (tasksResult.data ?? []).filter((task: any) => task.planned_date === date &&
-    ["planned", "ready", "in_progress", "partially_completed", "rescheduled"].includes(task.status));
   return {
     date,
     plan: planResult.data,
     taskCount: focusTasks.length,
-    scheduledTaskCount: scheduledToday.length,
-    totalMinutes: focusTasks.reduce((total, task) => total + task.minutes, 0),
+    scheduledTaskCount: focusTasks.length,
+    totalMinutes: projection.scheduledOpenMinutes,
+    totalCommittedMinutes: projection.totalCommittedMinutes,
     capacityMinutes: dayCapacity,
     studiedMinutes,
     remainingCapacityMinutes,
     availableNowMinutes,
     tasks: focusTasks,
     allTasks: tasksResult.data ?? [],
+    completedTaskIds: projection.completedTaskIds,
+    deferredTaskIds: projection.deferredTaskIds,
+    deferredTaskCount: projection.deferredTaskIds.length,
+    deferredMinutes: projection.deferredMinutes,
     recommendation,
   };
 }

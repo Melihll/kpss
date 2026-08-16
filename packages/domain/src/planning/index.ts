@@ -4,6 +4,7 @@ export * from "./types";
 export * from "./engine";
 export * from "./recommendation";
 export * from "./lifecycle";
+export * from "./daily";
 export * from "../time-boundaries";
 export * from "../mastery/index";
 export * from "../adaptive/index";
