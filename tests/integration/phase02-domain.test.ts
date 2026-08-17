@@ -63,8 +63,10 @@ describe("Phase 02 catalog, ownership and resource RLS", () => {
       .select("id, name, parent_id")
       .order("id");
     expect(error).toBeNull();
-    expect(data).toHaveLength(108);
+    expect(data).toHaveLength(113);
     expect(data?.some((node) => node.name === "Hareket Problemleri" && node.parent_id)).toBe(true);
+    expect(data?.some((node) => node.id === "30000000-0000-0000-0000-000000000306" && node.name === "Su, Toprak ve Bitki Varlığı")).toBe(true);
+    expect(data?.some((node) => node.id === "30000000-0000-0000-0000-000000001310" && node.name === "Anlatım Bilgileri")).toBe(true);
   });
 
   it("lets User A create an owned draft exam profile", async () => {

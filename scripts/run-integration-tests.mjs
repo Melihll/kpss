@@ -3,7 +3,8 @@ import { readLocalSupabaseStatus } from "./supabase-status.mjs";
 import { resolve } from "node:path";
 import { repositoryRoot } from "./supabase-command.mjs";
 
-const { url, anonKey } = readLocalSupabaseStatus();
+const { url, anonKey, serviceRoleKey } = readLocalSupabaseStatus();
+if (!serviceRoleKey) throw new Error("Local Supabase status did not return a service-role key.");
 const vitest = resolve(repositoryRoot, "node_modules/vitest/vitest.mjs");
 const result = spawnSync(
   process.execPath,
@@ -14,6 +15,7 @@ const result = spawnSync(
       ...process.env,
       SUPABASE_URL: url,
       SUPABASE_ANON_KEY: anonKey,
+      SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey,
     },
   },
 );

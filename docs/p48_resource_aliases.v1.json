@@ -1,0 +1,218 @@
+{
+  "manifest_version": "1.0",
+  "source_file": "docs/P48_RESOURCE_CATALOG.json",
+  "matching_policy": "Resolve aliases to reference_resource_id first; then follow p48_resource_targets to the user resource. Never create or join user resources by canonical display name.",
+  "resource_count": 26,
+  "resources": [
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000001",
+      "subject": "Türkçe",
+      "canonical_name": "20 Günde Zemin Hazırla – Paragraf Anlam Bilgisi Soru Bankası",
+      "aliases": [
+        "20 Günde Zemin Hazırla – Paragraf Anlam Bilgisi Soru Bankası"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000002",
+      "subject": "Türkçe",
+      "canonical_name": "2026 KPSS Türkçe – Tamamı Çözümlü Soru Bankası",
+      "aliases": [
+        "2026 KPSS Türkçe – Tamamı Çözümlü Soru Bankası"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000003",
+      "subject": "Matematik",
+      "canonical_name": "2026 KPSS Matematik Soru Bankası",
+      "aliases": [
+        "2026 KPSS Matematik Soru Bankası"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000004",
+      "subject": "Matematik",
+      "canonical_name": "2026 KPSS Genel Yetenek Matematik Soru Bankası – Tamamı Çözümlü",
+      "aliases": [
+        "2026 KPSS Genel Yetenek Matematik Soru Bankası – Tamamı Çözümlü"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000005",
+      "subject": "Coğrafya",
+      "canonical_name": "2026 KPSS Genel Kültür Coğrafya Video Ders Notları",
+      "aliases": [
+        "2026 KPSS Genel Kültür Coğrafya Video Ders Notları"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000006",
+      "subject": "Coğrafya",
+      "canonical_name": "2026 KPSS Genel Kültür Coğrafya Soru Bankası – Tamamı Çözümlü",
+      "aliases": [
+        "2026 KPSS Genel Kültür Coğrafya Soru Bankası – Tamamı Çözümlü"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000007",
+      "subject": "Tarih",
+      "canonical_name": "2026 KPSS Tarih Ders Notları",
+      "aliases": [
+        "2026 KPSS Tarih Ders Notları"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000008",
+      "subject": "Tarih",
+      "canonical_name": "2026 KPSS Tarih Soru Bankası – Tamamı Çözümlü",
+      "aliases": [
+        "2026 KPSS Tarih Soru Bankası – Tamamı Çözümlü"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000009",
+      "subject": "Hukuk",
+      "canonical_name": "Libertus Anayasa Hukuku – Konu Anlatımlı",
+      "aliases": [
+        "Libertus Anayasa Hukuku – Konu Anlatımlı"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000010",
+      "subject": "Hukuk",
+      "canonical_name": "Libertus İdare Hukuku – Konu Anlatımlı",
+      "aliases": [
+        "Libertus İdare Hukuku – Konu Anlatımlı"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000011",
+      "subject": "Hukuk",
+      "canonical_name": "Libertus Ceza Hukuku – Konu Anlatımlı",
+      "aliases": [
+        "Libertus Ceza Hukuku – Konu Anlatımlı"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000012",
+      "subject": "Hukuk",
+      "canonical_name": "Libertus Medeni Hukuk – Konu Anlatımlı",
+      "aliases": [
+        "Libertus Medeni Hukuk – Konu Anlatımlı"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000013",
+      "subject": "Hukuk",
+      "canonical_name": "Libertus Borçlar Hukuku – Konu Anlatımlı",
+      "aliases": [
+        "Libertus Borçlar Hukuku – Konu Anlatımlı"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000014",
+      "subject": "Hukuk",
+      "canonical_name": "Libertus Ticaret Hukuku – Konu Anlatımlı",
+      "aliases": [
+        "Libertus Ticaret Hukuku – Konu Anlatımlı"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000015",
+      "subject": "Hukuk",
+      "canonical_name": "Libertus İcra-İflas Hukuku – Konu Anlatımlı",
+      "aliases": [
+        "Libertus İcra-İflas Hukuku – Konu Anlatımlı"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000016",
+      "subject": "Hukuk",
+      "canonical_name": "Libertus Hukuk Soru Bankası – Kamu Hukuku",
+      "aliases": [
+        "Libertus Hukuk Soru Bankası – Kamu Hukuku"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000017",
+      "subject": "Hukuk",
+      "canonical_name": "Libertus Hukuk Soru Bankası – Özel Hukuk",
+      "aliases": [
+        "Libertus Hukuk Soru Bankası – Özel Hukuk"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000018",
+      "subject": "İktisat",
+      "canonical_name": "Economicus Mikro İktisat – Konu Anlatımlı",
+      "aliases": [
+        "Economicus Mikro İktisat – Konu Anlatımlı"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000019",
+      "subject": "İktisat",
+      "canonical_name": "Economicus Makro İktisat Para-Banka-Kredi – Konu Anlatımlı",
+      "aliases": [
+        "Economicus Makro İktisat Para-Banka-Kredi – Konu Anlatımlı"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000020",
+      "subject": "İktisat",
+      "canonical_name": "Economicus Türkiye Ekonomisi, Uluslararası İktisat, Büyüme-Kalkınma ve İktisat Politikası – Ders Notları",
+      "aliases": [
+        "Economicus Türkiye Ekonomisi, Uluslararası İktisat, Büyüme-Kalkınma ve İktisat Politikası – Ders Notları"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000021",
+      "subject": "İktisat",
+      "canonical_name": "Economicus İktisat Soru Bankası Cilt 1 – Mikro / Uluslararası / Büyüme-Kalkınma / Türkiye Ekonomisi / Doktrinler",
+      "aliases": [
+        "Economicus İktisat Soru Bankası 1 – Mikro İktisat",
+        "Economicus İktisat Soru Bankası Cilt 1 – Mikro / Uluslararası / Büyüme-Kalkınma / Türkiye Ekonomisi / Doktrinler"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000022",
+      "subject": "İktisat",
+      "canonical_name": "Economicus İktisat Soru Bankası Cilt 2 – Makro İktisat / Para-Banka-Kredi",
+      "aliases": [
+        "Economicus İktisat Soru Bankası 2 – Makro İktisat / Para-Banka-Kredi",
+        "Economicus İktisat Soru Bankası Cilt 2 – Makro İktisat / Para-Banka-Kredi"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000023",
+      "subject": "Maliye",
+      "canonical_name": "Optimus Maliye – Konu Anlatımlı",
+      "aliases": [
+        "Optimus Maliye – Konu Anlatımlı"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000024",
+      "subject": "Maliye",
+      "canonical_name": "Optimus Maliye – Soru Bankası",
+      "aliases": [
+        "Optimus Maliye – Soru Bankası"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000025",
+      "subject": "Muhasebe",
+      "canonical_name": "Reditus Muhasebe – Konu Anlatımlı",
+      "aliases": [
+        "Reditus Muhasebe – Konu Anlatımlı"
+      ]
+    },
+    {
+      "reference_resource_id": "31000000-0000-0000-0000-000000000026",
+      "subject": "Muhasebe",
+      "canonical_name": "Reditus Muhasebe – Soru Bankası",
+      "aliases": [
+        "Reditus Muhasebe – Soru Bankası"
+      ]
+    }
+  ]
+}

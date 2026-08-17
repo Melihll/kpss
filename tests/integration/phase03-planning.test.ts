@@ -127,9 +127,9 @@ describe("Phase 03 weekly plan, task lifecycle and RLS", () => {
         weekday: index + 1, start_time: "14:00", end_time: "20:00",
       })),
       resources: [{ id: resourceId, subjectId: MATH_ID, name: "Primary Matematik", role: "primary", difficulty: "normal", status: "active" }],
-      resourceSections: [{ id: sectionId, resourceId, curriculumNodeId: MATH_TOPIC_ID, name: "Temel Kavramlar", sortOrder: 1 }],
+      resourceSections: [{ id: sectionId, resourceId, curriculumNodeId: MATH_TOPIC_ID, name: "Temel Kavramlar", sortOrder: 1, planningRole: "curriculum", isActive: true }],
       resourceUnits: unitIds.map((id, index) => ({
-        id, resourceId, sectionId, name: `Test ${index + 1}`, unitType: "test", sortOrder: index + 1, estimatedMinutes: 30,
+        id, resourceId, sectionId, name: `Test ${index + 1}`, unitType: "test", sortOrder: index + 1, estimatedMinutes: 30, isActive: true,
       })),
       resourceUnitProgress: [],
       existingCarryoverTasks: [],

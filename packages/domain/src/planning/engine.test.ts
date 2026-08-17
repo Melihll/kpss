@@ -46,12 +46,12 @@ describe("Planning Engine V0", () => {
         { id: "history-book", subjectId: "history", name: "T", role: "primary", difficulty: "normal", status: "active" },
       ],
       resourceSections: [
-        { id: "math-section", resourceId: "math-book", curriculumNodeId: "math-1", name: "M", sortOrder: 1 },
-        { id: "history-section", resourceId: "history-book", curriculumNodeId: "history-1", name: "T", sortOrder: 1 },
+        { id: "math-section", resourceId: "math-book", curriculumNodeId: "math-1", name: "M", sortOrder: 1, planningRole: "curriculum", isActive: true },
+        { id: "history-section", resourceId: "history-book", curriculumNodeId: "history-1", name: "T", sortOrder: 1, planningRole: "curriculum", isActive: true },
       ],
       resourceUnits: [
-        { id: "mu", resourceId: "math-book", sectionId: "math-section", name: "Test 1", unitType: "test", sortOrder: 1, estimatedMinutes: 30 },
-        { id: "hu", resourceId: "history-book", sectionId: "history-section", name: "Test 1", unitType: "test", sortOrder: 1, estimatedMinutes: 30 },
+        { id: "mu", resourceId: "math-book", sectionId: "math-section", name: "Test 1", unitType: "test", sortOrder: 1, estimatedMinutes: 30, isActive: true },
+        { id: "hu", resourceId: "history-book", sectionId: "history-section", name: "Test 1", unitType: "test", sortOrder: 1, estimatedMinutes: 30, isActive: true },
       ],
     }));
     expect(plan.tasks.map((task) => task.subjectId)).toEqual(["math", "history", "math", "history"]);
@@ -66,8 +66,8 @@ describe("Planning Engine V0", () => {
     const plan = buildWeeklyPlanV0(context({
       subjects: [{ id: "math", name: "Matematik", status: "active", sortOrder: 1 }],
       resources: [{ id: "book", subjectId: "math", name: "Book", role: "primary", difficulty: "normal", status: "active" }],
-      resourceSections: [{ id: "section", resourceId: "book", curriculumNodeId: "math-1", name: "Section", sortOrder: 1 }],
-      resourceUnits: [1, 2, 3, 4].map((number) => ({ id: `u${number}`, resourceId: "book", sectionId: "section", name: `Test ${number}`, unitType: "test" as const, sortOrder: number, estimatedMinutes: 30 })),
+      resourceSections: [{ id: "section", resourceId: "book", curriculumNodeId: "math-1", name: "Section", sortOrder: 1, planningRole: "curriculum", isActive: true }],
+      resourceUnits: [1, 2, 3, 4].map((number) => ({ id: `u${number}`, resourceId: "book", sectionId: "section", name: `Test ${number}`, unitType: "test" as const, sortOrder: number, estimatedMinutes: 30, isActive: true })),
       resourceUnitProgress: [{ resourceUnitId: "u1", status: "completed" }],
     }));
     const solve = plan.tasks.find((task) => task.taskType === "solve_resource_units");
@@ -82,15 +82,72 @@ describe("Planning Engine V0", () => {
         { id: "primary", subjectId: "math", name: "P", role: "primary", difficulty: "normal", status: "active" },
       ],
       resourceSections: [
-        { id: "rs", resourceId: "reinforcement", curriculumNodeId: "math-1", name: "R", sortOrder: 1 },
-        { id: "ps", resourceId: "primary", curriculumNodeId: "math-1", name: "P", sortOrder: 2 },
+        { id: "rs", resourceId: "reinforcement", curriculumNodeId: "math-1", name: "R", sortOrder: 1, planningRole: "curriculum", isActive: true },
+        { id: "ps", resourceId: "primary", curriculumNodeId: "math-1", name: "P", sortOrder: 2, planningRole: "curriculum", isActive: true },
       ],
       resourceUnits: [
-        { id: "ru", resourceId: "reinforcement", sectionId: "rs", name: "R1", unitType: "test", sortOrder: 1, estimatedMinutes: 30 },
-        { id: "pu", resourceId: "primary", sectionId: "ps", name: "P1", unitType: "test", sortOrder: 1, estimatedMinutes: 30 },
+        { id: "ru", resourceId: "reinforcement", sectionId: "rs", name: "R1", unitType: "test", sortOrder: 1, estimatedMinutes: 30, isActive: true },
+        { id: "pu", resourceId: "primary", sectionId: "ps", name: "P1", unitType: "test", sortOrder: 1, estimatedMinutes: 30, isActive: true },
       ],
     }));
     expect(plan.tasks.find((task) => task.taskType === "solve_resource_units")?.resourceId).toBe("primary");
+  });
+
+  it("moves to the next unfinished section mapped to the same curriculum node", () => {
+    const plan = buildWeeklyPlanV0(context({
+      subjects: [{ id: "math", name: "Matematik", status: "active", sortOrder: 1 }],
+      resources: [{ id: "primary", subjectId: "math", name: "P", role: "primary", difficulty: "normal", status: "active" }],
+      resourceSections: [
+        { id: "s1", resourceId: "primary", curriculumNodeId: "math-1", name: "First", sortOrder: 1, planningRole: "curriculum", isActive: true },
+        { id: "s2", resourceId: "primary", curriculumNodeId: "math-1", name: "Second", sortOrder: 2, planningRole: "curriculum", isActive: true },
+      ],
+      resourceUnits: [
+        { id: "u1", resourceId: "primary", sectionId: "s1", name: "First unit", unitType: "chapter", sortOrder: 1, estimatedMinutes: 30, isActive: true },
+        { id: "u2", resourceId: "primary", sectionId: "s2", name: "Second unit", unitType: "chapter", sortOrder: 1, estimatedMinutes: 30, isActive: true },
+      ],
+      resourceUnitProgress: [{ resourceUnitId: "u1", status: "completed" }],
+    }));
+    expect(plan.tasks.find((task) => task.taskType === "solve_resource_units")?.resourceUnitIds).toEqual(["u2"]);
+  });
+
+  it("finishes eligible primary sections before selecting reinforcement", () => {
+    const plan = buildWeeklyPlanV0(context({
+      subjects: [{ id: "math", name: "Matematik", status: "active", sortOrder: 1 }],
+      resources: [
+        { id: "primary", subjectId: "math", name: "P", role: "primary", difficulty: "normal", status: "active" },
+        { id: "reinforcement", subjectId: "math", name: "R", role: "reinforcement", difficulty: "normal", status: "active" },
+      ],
+      resourceSections: [
+        { id: "p1", resourceId: "primary", curriculumNodeId: "math-1", name: "P1", sortOrder: 1, planningRole: "curriculum", isActive: true },
+        { id: "p2", resourceId: "primary", curriculumNodeId: "math-1", name: "P2", sortOrder: 2, planningRole: "curriculum", isActive: true },
+        { id: "r1", resourceId: "reinforcement", curriculumNodeId: "math-1", name: "R1", sortOrder: 1, planningRole: "curriculum", isActive: true },
+      ],
+      resourceUnits: [
+        { id: "pu1", resourceId: "primary", sectionId: "p1", name: "PU1", unitType: "chapter", sortOrder: 1, estimatedMinutes: 30, isActive: true },
+        { id: "pu2", resourceId: "primary", sectionId: "p2", name: "PU2", unitType: "chapter", sortOrder: 1, estimatedMinutes: 30, isActive: true },
+        { id: "ru1", resourceId: "reinforcement", sectionId: "r1", name: "RU1", unitType: "test", sortOrder: 1, estimatedMinutes: 30, isActive: true },
+      ],
+      resourceUnitProgress: [{ resourceUnitId: "pu1", status: "completed" }],
+    }));
+    const solve = plan.tasks.find((task) => task.taskType === "solve_resource_units");
+    expect(solve?.resourceId).toBe("primary");
+    expect(solve?.resourceUnitIds).toEqual(["pu2"]);
+  });
+
+  it("excludes reference-only and review sections from normal curriculum progression", () => {
+    const plan = buildWeeklyPlanV0(context({
+      subjects: [{ id: "math", name: "Matematik", status: "active", sortOrder: 1 }],
+      resources: [{ id: "primary", subjectId: "math", name: "P", role: "primary", difficulty: "normal", status: "active" }],
+      resourceSections: [
+        { id: "reference", resourceId: "primary", curriculumNodeId: "math-1", name: "Answers", sortOrder: 1, planningRole: "reference_only", isActive: true },
+        { id: "review", resourceId: "primary", curriculumNodeId: "math-1", name: "Review", sortOrder: 2, planningRole: "review_only", isActive: true },
+      ],
+      resourceUnits: [
+        { id: "answer", resourceId: "primary", sectionId: "reference", name: "Answer key", unitType: "reading", sortOrder: 1, estimatedMinutes: 10, isActive: true },
+        { id: "review-unit", resourceId: "primary", sectionId: "review", name: "Review", unitType: "reading", sortOrder: 1, estimatedMinutes: 20, isActive: true },
+      ],
+    }));
+    expect(plan.tasks.some((task) => task.taskType === "solve_resource_units")).toBe(false);
   });
 
   it("does not emit duplicate candidates for duplicate context references", () => {

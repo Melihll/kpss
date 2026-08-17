@@ -76,13 +76,21 @@ function activeTopicForSubject(context: WeeklyPlanningContext, subjectId: string
 function bestMappedResource(
   context: WeeklyPlanningContext,
   topic: PlanningCurriculumNode,
-): { resource: PlanningResource; sectionId: string } | null {
+  completedUnitIds: ReadonlySet<string>,
+): { resource: PlanningResource; sectionId: string; units: WeeklyPlanningContext["resourceUnits"] } | null {
   return context.resourceSections
-    .filter((section) => section.curriculumNodeId === topic.id)
-    .map((section) => ({ section, resource: context.resources.find((resource) => resource.id === section.resourceId) }))
-    .filter((item): item is { section: typeof item.section; resource: PlanningResource } => Boolean(item.resource && item.resource.status === "active"))
+    .filter((section) => section.curriculumNodeId === topic.id && section.planningRole === "curriculum" && section.isActive)
+    .map((section) => ({
+      section,
+      resource: context.resources.find((resource) => resource.id === section.resourceId),
+      units: context.resourceUnits
+        .filter((unit) => unit.sectionId === section.id && unit.isActive && !completedUnitIds.has(unit.id))
+        .sort((left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id)),
+    }))
+    .filter((item): item is { section: typeof item.section; resource: PlanningResource; units: typeof item.units } =>
+      Boolean(item.resource && item.resource.status === "active" && item.units.length))
     .sort((left, right) => roleRank(left.resource.role) - roleRank(right.resource.role) || left.section.sortOrder - right.section.sortOrder || left.resource.id.localeCompare(right.resource.id))
-    .map(({ section, resource }) => ({ resource, sectionId: section.id }))[0] ?? null;
+    .map(({ section, resource, units }) => ({ resource, sectionId: section.id, units }))[0] ?? null;
 }
 
 function subjectCandidates(context: WeeklyPlanningContext): Candidate[][] {
@@ -121,12 +129,9 @@ function subjectCandidates(context: WeeklyPlanningContext): Candidate[][] {
         });
       }
 
-      const mapped = bestMappedResource(context, node);
+      const mapped = bestMappedResource(context, node, completedUnitIds);
       if (mapped) {
-        const units = context.resourceUnits
-          .filter((unit) => unit.sectionId === mapped.sectionId && !completedUnitIds.has(unit.id))
-          .sort((left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id))
-          .slice(0, MAX_RESOURCE_UNITS_PER_TASK);
+        const units = mapped.units.slice(0, MAX_RESOURCE_UNITS_PER_TASK);
         if (units.length) {
           const unitIds = units.map((unit) => unit.id);
           candidates.push({

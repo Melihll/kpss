@@ -1,0 +1,681 @@
+{
+  "generated_at": "2026-08-16T16:04:00+03:00",
+  "plan_start": "2026-08-17",
+  "plan_end": "2026-08-23",
+  "daily_capacity_minutes": 360,
+  "weekly_capacity_minutes": 2520,
+  "tasks": [
+    {
+      "date": "2026-08-17",
+      "day": "Pazartesi",
+      "order": 1,
+      "subject": "İktisat",
+      "resource": "Economicus Mikro İktisat – Konu Anlatımlı",
+      "task": "İktisada Giriş",
+      "physical_range": "s.3–22",
+      "minutes": 90,
+      "task_type": "Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-17",
+      "day": "Pazartesi",
+      "order": 2,
+      "subject": "Hukuk",
+      "resource": "Libertus Anayasa Hukuku – Konu Anlatımlı",
+      "task": "Anayasa Teorisi",
+      "physical_range": "s.1–20",
+      "minutes": 90,
+      "task_type": "Konu",
+      "purpose": "İlk geçiş / önceki canonical blok",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-17",
+      "day": "Pazartesi",
+      "order": 3,
+      "subject": "Türkçe",
+      "resource": "2026 KPSS Türkçe – Tamamı Çözümlü Soru Bankası",
+      "task": "Dil Bilgisi — Bölüm 1",
+      "physical_range": "s.7–18",
+      "minutes": 45,
+      "task_type": "Soru çözümü",
+      "purpose": "Temel tarama",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-17",
+      "day": "Pazartesi",
+      "order": 4,
+      "subject": "Matematik",
+      "resource": "2026 KPSS Matematik Soru Bankası",
+      "task": "Temel Kavramlar — Bölüm 1",
+      "physical_range": "s.1–16",
+      "minutes": 60,
+      "task_type": "Soru çözümü",
+      "purpose": "Temel hız + doğruluk",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-17",
+      "day": "Pazartesi",
+      "order": 5,
+      "subject": "Tarih",
+      "resource": "2026 KPSS Tarih Ders Notları",
+      "task": "İslamiyet Öncesi Türk Tarihi",
+      "physical_range": "s.5–22",
+      "minutes": 45,
+      "task_type": "Not/Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-17",
+      "day": "Pazartesi",
+      "order": 6,
+      "subject": "Sistem",
+      "resource": "—",
+      "task": "Gün sonu tekrar + eksik tamamlama",
+      "physical_range": "—",
+      "minutes": 30,
+      "task_type": "Adaptif blok",
+      "purpose": "Tamamlanmayanı kapat / kısa tekrar",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-18",
+      "day": "Salı",
+      "order": 1,
+      "subject": "İktisat",
+      "resource": "Economicus Mikro İktisat – Konu Anlatımlı",
+      "task": "Tüketici Dengesi Analizi — Bölüm 1",
+      "physical_range": "s.23–46",
+      "minutes": 90,
+      "task_type": "Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-18",
+      "day": "Salı",
+      "order": 2,
+      "subject": "Maliye",
+      "resource": "Optimus Maliye – Konu Anlatımlı",
+      "task": "Maliye Teorisi — Bölüm 1",
+      "physical_range": "s.3–25",
+      "minutes": 75,
+      "task_type": "Konu",
+      "purpose": "İlk geçiş / önceki canonical blok",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-18",
+      "day": "Salı",
+      "order": 3,
+      "subject": "Coğrafya",
+      "resource": "2026 KPSS Genel Kültür Coğrafya Video Ders Notları",
+      "task": "Türkiye’nin Coğrafi Konumu",
+      "physical_range": "s.8–29",
+      "minutes": 60,
+      "task_type": "Not/Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-18",
+      "day": "Salı",
+      "order": 4,
+      "subject": "Matematik",
+      "resource": "2026 KPSS Matematik Soru Bankası",
+      "task": "Temel Kavramlar — Bölüm 2",
+      "physical_range": "s.18–43",
+      "minutes": 60,
+      "task_type": "Soru çözümü",
+      "purpose": "Temel tarama",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-18",
+      "day": "Salı",
+      "order": 5,
+      "subject": "Türkçe",
+      "resource": "2026 KPSS Türkçe – Tamamı Çözümlü Soru Bankası",
+      "task": "Dil Bilgisi — Bölüm 2",
+      "physical_range": "s.19–37",
+      "minutes": 60,
+      "task_type": "Soru çözümü",
+      "purpose": "Temel tarama",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-18",
+      "day": "Salı",
+      "order": 6,
+      "subject": "Sistem",
+      "resource": "—",
+      "task": "Kısa adaptif tekrar",
+      "physical_range": "—",
+      "minutes": 15,
+      "task_type": "Adaptif blok",
+      "purpose": "Yanlış/eksik yoğunlaştırma",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-19",
+      "day": "Çarşamba",
+      "order": 1,
+      "subject": "İktisat",
+      "resource": "Economicus Mikro İktisat – Konu Anlatımlı",
+      "task": "Tüketici Dengesi Analizi — Bölüm 2",
+      "physical_range": "s.47–70",
+      "minutes": 90,
+      "task_type": "Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-19",
+      "day": "Çarşamba",
+      "order": 2,
+      "subject": "Muhasebe",
+      "resource": "Reditus Muhasebe – Konu Anlatımlı",
+      "task": "Muhasebenin Tanımı / Fonksiyonu / Finansal Tablolar",
+      "physical_range": "s.1–16",
+      "minutes": 75,
+      "task_type": "Konu",
+      "purpose": "İlk geçiş / önceki canonical blok",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-19",
+      "day": "Çarşamba",
+      "order": 3,
+      "subject": "Tarih",
+      "resource": "2026 KPSS Tarih Ders Notları",
+      "task": "İlk Türk-İslam Devletleri",
+      "physical_range": "s.23–36",
+      "minutes": 45,
+      "task_type": "Not/Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-19",
+      "day": "Çarşamba",
+      "order": 4,
+      "subject": "Türkçe",
+      "resource": "2026 KPSS Türkçe – Tamamı Çözümlü Soru Bankası",
+      "task": "Dil Bilgisi son + Ses Bilgisi",
+      "physical_range": "s.41–62",
+      "minutes": 60,
+      "task_type": "Soru çözümü",
+      "purpose": "Temel tarama",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-19",
+      "day": "Çarşamba",
+      "order": 5,
+      "subject": "Matematik",
+      "resource": "2026 KPSS Matematik Soru Bankası",
+      "task": "Bölme-Bölünebilme + EBOB/EKOK başlangıç",
+      "physical_range": "s.47–60",
+      "minutes": 60,
+      "task_type": "Soru çözümü",
+      "purpose": "Temel tarama",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-19",
+      "day": "Çarşamba",
+      "order": 6,
+      "subject": "Sistem",
+      "resource": "—",
+      "task": "Gün sonu tekrar + tampon",
+      "physical_range": "—",
+      "minutes": 30,
+      "task_type": "Adaptif blok",
+      "purpose": "Süre sapmasını absorbe et",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-20",
+      "day": "Perşembe",
+      "order": 1,
+      "subject": "Hukuk",
+      "resource": "Libertus Anayasa Hukuku – Konu Anlatımlı",
+      "task": "Anayasal Tarihçe",
+      "physical_range": "s.21–36",
+      "minutes": 75,
+      "task_type": "Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-20",
+      "day": "Perşembe",
+      "order": 2,
+      "subject": "İktisat",
+      "resource": "Economicus Mikro İktisat – Konu Anlatımlı",
+      "task": "Talep-Arz Analizi — Bölüm 1",
+      "physical_range": "s.71–91",
+      "minutes": 90,
+      "task_type": "Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-20",
+      "day": "Perşembe",
+      "order": 3,
+      "subject": "Coğrafya",
+      "resource": "2026 KPSS Genel Kültür Coğrafya Video Ders Notları",
+      "task": "Türkiye’nin Yer Şekilleri — Bölüm 1",
+      "physical_range": "s.30–49",
+      "minutes": 60,
+      "task_type": "Not/Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-20",
+      "day": "Perşembe",
+      "order": 4,
+      "subject": "Matematik",
+      "resource": "2026 KPSS Matematik Soru Bankası",
+      "task": "Rasyonel + Üslü Sayılar",
+      "physical_range": "s.63–81",
+      "minutes": 60,
+      "task_type": "Soru çözümü",
+      "purpose": "Temel tarama",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-20",
+      "day": "Perşembe",
+      "order": 5,
+      "subject": "Türkçe",
+      "resource": "20 Günde Zemin Hazırla – Paragraf Anlam Bilgisi Soru Bankası",
+      "task": "Sözcükte ve Söz Öbeklerinde Anlam — Bölüm 1",
+      "physical_range": "s.7–24",
+      "minutes": 45,
+      "task_type": "Soru çözümü",
+      "purpose": "Paragraf altyapısı",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-20",
+      "day": "Perşembe",
+      "order": 6,
+      "subject": "Sistem",
+      "resource": "—",
+      "task": "Gün sonu tekrar + tampon",
+      "physical_range": "—",
+      "minutes": 30,
+      "task_type": "Adaptif blok",
+      "purpose": "Yanlış / yarım görev",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-21",
+      "day": "Cuma",
+      "order": 1,
+      "subject": "İktisat",
+      "resource": "Economicus Mikro İktisat – Konu Anlatımlı",
+      "task": "Talep-Arz Analizi — Bölüm 2",
+      "physical_range": "s.92–112",
+      "minutes": 75,
+      "task_type": "Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-21",
+      "day": "Cuma",
+      "order": 2,
+      "subject": "Maliye",
+      "resource": "Optimus Maliye – Konu Anlatımlı",
+      "task": "Maliye Teorisi — Bölüm 2",
+      "physical_range": "s.26–60",
+      "minutes": 90,
+      "task_type": "Konu/Test",
+      "purpose": "İlk blok bitiriş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-21",
+      "day": "Cuma",
+      "order": 3,
+      "subject": "Tarih",
+      "resource": "2026 KPSS Tarih Ders Notları",
+      "task": "Anadolu Selçuklu + Osmanlı Kültür/Medeniyet giriş",
+      "physical_range": "s.37–56",
+      "minutes": 60,
+      "task_type": "Not/Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-21",
+      "day": "Cuma",
+      "order": 4,
+      "subject": "Coğrafya",
+      "resource": "2026 KPSS Genel Kültür Coğrafya Soru Bankası – Tamamı Çözümlü",
+      "task": "Türkiye’nin Coğrafi Konumu — soru bloğu 1",
+      "physical_range": "s.5–23",
+      "minutes": 60,
+      "task_type": "Soru çözümü",
+      "purpose": "Pekiştirme",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-21",
+      "day": "Cuma",
+      "order": 5,
+      "subject": "Türkçe",
+      "resource": "2026 KPSS Türkçe – Tamamı Çözümlü Soru Bankası",
+      "task": "Yazım Kuralları + Noktalama",
+      "physical_range": "s.63–78",
+      "minutes": 45,
+      "task_type": "Soru çözümü",
+      "purpose": "Temel tarama",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-21",
+      "day": "Cuma",
+      "order": 6,
+      "subject": "Sistem",
+      "resource": "—",
+      "task": "Gün sonu tekrar + tampon",
+      "physical_range": "—",
+      "minutes": 30,
+      "task_type": "Adaptif blok",
+      "purpose": "Süre sapmasını absorbe et",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-22",
+      "day": "Cumartesi",
+      "order": 1,
+      "subject": "Muhasebe",
+      "resource": "Reditus Muhasebe – Konu Anlatımlı",
+      "task": "Tekdüzen Muhasebe Sistemi / Temel Finansal Tablolar",
+      "physical_range": "s.17–33",
+      "minutes": 75,
+      "task_type": "Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-22",
+      "day": "Cumartesi",
+      "order": 2,
+      "subject": "İktisat",
+      "resource": "Economicus Mikro İktisat – Konu Anlatımlı",
+      "task": "Esneklik",
+      "physical_range": "s.113–144",
+      "minutes": 90,
+      "task_type": "Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-22",
+      "day": "Cumartesi",
+      "order": 3,
+      "subject": "Matematik",
+      "resource": "2026 KPSS Matematik Soru Bankası",
+      "task": "Köklü Sayılar + Basit Eşitsizlikler",
+      "physical_range": "s.82–102",
+      "minutes": 60,
+      "task_type": "Soru çözümü",
+      "purpose": "Temel tarama",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-22",
+      "day": "Cumartesi",
+      "order": 4,
+      "subject": "Coğrafya",
+      "resource": "2026 KPSS Genel Kültür Coğrafya Video Ders Notları",
+      "task": "Yer Şekilleri bitiriş + İklim giriş",
+      "physical_range": "s.50–74",
+      "minutes": 60,
+      "task_type": "Not/Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-22",
+      "day": "Cumartesi",
+      "order": 5,
+      "subject": "Tarih",
+      "resource": "2026 KPSS Tarih Soru Bankası – Tamamı Çözümlü",
+      "task": "İslamiyet Öncesi Türk Tarihi — Siyasi",
+      "physical_range": "s.7–21",
+      "minutes": 45,
+      "task_type": "Soru çözümü",
+      "purpose": "Pekiştirme",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-22",
+      "day": "Cumartesi",
+      "order": 6,
+      "subject": "Sistem",
+      "resource": "—",
+      "task": "Gün sonu tekrar + tampon",
+      "physical_range": "—",
+      "minutes": 30,
+      "task_type": "Adaptif blok",
+      "purpose": "Yanlış / eksik tamamlama",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-23",
+      "day": "Pazar",
+      "order": 1,
+      "subject": "İktisat",
+      "resource": "Economicus İktisat Soru Bankası Cilt 1 – Mikro / Uluslararası / Büyüme-Kalkınma / Türkiye Ekonomisi / Doktrinler",
+      "task": "Mikro soru bankası — ilk tarama",
+      "physical_range": "s.3–26",
+      "minutes": 90,
+      "task_type": "Soru çözümü",
+      "purpose": "Haftalık pekiştirme",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-23",
+      "day": "Pazar",
+      "order": 2,
+      "subject": "Hukuk",
+      "resource": "Libertus Anayasa Hukuku – Konu Anlatımlı",
+      "task": "1982 Anayasası",
+      "physical_range": "s.37–54",
+      "minutes": 75,
+      "task_type": "Konu",
+      "purpose": "İlk geçiş",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-23",
+      "day": "Pazar",
+      "order": 3,
+      "subject": "Matematik",
+      "resource": "2026 KPSS Genel Yetenek Matematik Soru Bankası – Tamamı Çözümlü",
+      "task": "İşlem Yeteneği + Temel Kavramlar + Tek/Çift başlangıç",
+      "physical_range": "s.7–30",
+      "minutes": 60,
+      "task_type": "Soru çözümü",
+      "purpose": "İkinci kaynak pekiştirme",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-23",
+      "day": "Pazar",
+      "order": 4,
+      "subject": "Türkçe",
+      "resource": "20 Günde Zemin Hazırla – Paragraf Anlam Bilgisi Soru Bankası",
+      "task": "Cümlede Anlam — Bölüm 1",
+      "physical_range": "s.49–67",
+      "minutes": 45,
+      "task_type": "Soru çözümü",
+      "purpose": "Paragraf altyapısı",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-23",
+      "day": "Pazar",
+      "order": 5,
+      "subject": "Coğrafya",
+      "resource": "2026 KPSS Genel Kültür Coğrafya Soru Bankası – Tamamı Çözümlü",
+      "task": "Türkiye’nin Coğrafi Konumu — soru bloğu 2",
+      "physical_range": "s.24–38",
+      "minutes": 45,
+      "task_type": "Soru çözümü",
+      "purpose": "Konum konusunu kapat",
+      "status": "Planlandı"
+    },
+    {
+      "date": "2026-08-23",
+      "day": "Pazar",
+      "order": 6,
+      "subject": "Sistem",
+      "resource": "—",
+      "task": "Haftalık kalibrasyon + yanlış analizi",
+      "physical_range": "—",
+      "minutes": 45,
+      "task_type": "Haftalık review",
+      "purpose": "Gerçek süreleri ve sapmayı ölç",
+      "status": "Planlandı"
+    }
+  ],
+  "capacity_ramp": [
+    {
+      "week": "W1",
+      "range": "17–23 Ağustos 2026",
+      "daily_minutes": 360,
+      "hours": 6.0,
+      "weekly_minutes": 2520,
+      "gate": "Başlangıç kalibrasyonu",
+      "notes": "Gerçek çalışma sürelerini ölç. Artış otomatik değildir."
+    },
+    {
+      "week": "W2",
+      "range": "24–30 Ağustos 2026",
+      "daily_minutes": 420,
+      "hours": 7.0,
+      "weekly_minutes": 2940,
+      "gate": "W1 tamamlama ≥ %80 VE gerçek/planlanan süre oranı yaklaşık 0,75–1,25",
+      "notes": "Koşul sağlanmazsa 360 dk/gün korunur."
+    },
+    {
+      "week": "W3",
+      "range": "31 Ağustos–6 Eylül 2026",
+      "daily_minutes": 450,
+      "hours": 7.5,
+      "weekly_minutes": 3150,
+      "gate": "W2 sürdürülebilirlik korunursa",
+      "notes": "Aşırı backlog veya tekrar borcu varsa artış yapılmaz."
+    },
+    {
+      "week": "W4+",
+      "range": "7 Eylül 2026 → okul başlangıcı",
+      "daily_minutes": 480,
+      "hours": 8.0,
+      "weekly_minutes": 3360,
+      "gate": "W3 stabil + okul/uyku/kişisel yükümlülüklerle çakışma yok",
+      "notes": "Tavan 8 saat. Okul başlayınca takvimden yeniden hesaplanır."
+    }
+  ],
+  "monthly_roadmap": [
+    {
+      "period": "17 Ağustos–31 Ekim 2026",
+      "phase": "Temel + İlk Tur",
+      "focus": "Ana kaynaklarda ilk geçiş; konu iskeletini kur; aynı hafta küçük pekiştirme testleri.",
+      "checkpoint": "Gerçek konu/soru çözme hızı kalibre edilir."
+    },
+    {
+      "period": "Kasım–Aralık 2026",
+      "phase": "İlk Tur Bitiriş + Pekiştirme",
+      "focus": "Eksik ana kaynakları bitir; ikinci soru bankalarını konu bazlı devreye al; karışık testlere başla.",
+      "checkpoint": "Zayıf konular veriyle görünür."
+    },
+    {
+      "period": "Ocak–Mart 2027",
+      "phase": "Zayıflık Odaklı 2. Tur",
+      "focus": "Mastery düşük konulara hedefli tekrar; branş denemeleri ve süre takibi.",
+      "checkpoint": "Yanlış kümeleri azalır; branş netleri yükselir."
+    },
+    {
+      "period": "Nisan–Mayıs 2027",
+      "phase": "Deneme Yoğunlaştırma",
+      "focus": "P48/alan denemeleri, karışık soru blokları, süre baskısı, yanlış analizi.",
+      "checkpoint": "Süre yönetimi sınav koşullarına yaklaşır."
+    },
+    {
+      "period": "Haziran–Temmuz 2027",
+      "phase": "Tam Deneme Döngüsü",
+      "focus": "Tam deneme → yanlış analizi → hedefli tekrar → yeniden deneme.",
+      "checkpoint": "Net oynaklığı düşer; kritik konu sayısı azalır."
+    },
+    {
+      "period": "Ağustos–6 Eylül 2027",
+      "phase": "Final Konsolidasyon",
+      "focus": "Yanlış defteri, kısa tekrarlar, deneme taper, uyku/saat düzeni.",
+      "checkpoint": "6 Eylül 2027 sistem-configured hedef; resmî ÖSYM tarihi olarak kullanılmaz."
+    }
+  ],
+  "rules": [
+    {
+      "name": "Fiziksel görev zorunluluğu",
+      "rule": "Her çalışma görevi Kaynak → Konu → s.X–Y / Test X–Y → dakika biçiminde olmalı."
+    },
+    {
+      "name": "Uydurma yok",
+      "rule": "Fotoğrafta görünmeyen sayfa/test numarası üretilmez."
+    },
+    {
+      "name": "Kanıt seviyesi",
+      "rule": "Doğrudan okunan aralık = verified/high; komşu bölüm başlangıcından türetilen bitiş = inferred/medium; sonu görünmüyorsa unknown/low."
+    },
+    {
+      "name": "Rule-first",
+      "rule": "Kalan gün, priority, tekrar tarihi, backlog, plan sapması ve kapasite hesapları LLM'e bırakılmaz."
+    },
+    {
+      "name": "AI sınırı",
+      "rule": "AI; fotoğraf/parsing, alt konu tahmini ve doğal dil için kullanılır. Plan kararını deterministic engine verir."
+    },
+    {
+      "name": "Kapasite artışı",
+      "rule": "6→7→7,5→8 saat artışı yalnız tamamlanma ve gerçek/planlanan süre gate'leri sağlanırsa yapılır."
+    },
+    {
+      "name": "Adaptif tampon",
+      "rule": "Günlük pencerenin 15–45 dakikası yanlış, tekrar, yarım görev ve süre sapması için adaptif blok olarak tutulur."
+    },
+    {
+      "name": "Gerçek süre öğrenmesi",
+      "rule": "İlk 1–2 haftanın gerçek oturum süreleri sonraki task-minute tahminlerini günceller."
+    },
+    {
+      "name": "Kaynak rolü",
+      "rule": "Primary kaynak baştan sona planlanabilir; reinforcement kaynak yalnız ilgili konu/eksik için devreye girer."
+    },
+    {
+      "name": "Okul başlangıcı",
+      "rule": "Okul takvimi aktive olduğunda sabit 8 saat hedefi iptal edilir; kullanılabilir pencere takvimden yeniden hesaplanır."
+    },
+    {
+      "name": "Yakın plan detaylı",
+      "rule": "İlk 1–2 hafta fiziksel sayfa düzeyinde; ileri aylar milestone düzeyinde tutulur ve haftalık yeniden planlanır."
+    },
+    {
+      "name": "Büyük strateji değişikliği",
+      "rule": "Aylık hedef, yeni kaynak ve master-plan değişikliği kullanıcı onayı ister."
+    }
+  ]
+}

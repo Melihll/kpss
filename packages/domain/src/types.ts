@@ -219,7 +219,7 @@ export type TaskStatus =
   | "rescheduled"
   | "missed"
   | "cancelled";
-export type TaskSourceReason = "curriculum_progress" | "resource_progress" | "carryover" | "manual" | "revision_due" | "dynamic_replan";
+export type TaskSourceReason = "curriculum_progress" | "resource_progress" | "carryover" | "manual" | "revision_due" | "dynamic_replan" | "baseline_import";
 export type TaskResourceUnitStatus = "pending" | "completed" | "skipped";
 
 export interface WeeklyPlan {

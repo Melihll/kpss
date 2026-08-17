@@ -39,12 +39,20 @@ describe("getNextBestTask", () => {
     expect(result.reason).toBe("fits_available_window");
   });
 
-  it("uses deterministic priority, remaining time, creation and id tie-breaks", () => {
+  it("uses explicit execution order instead of UUID or creation order for equal planned tasks", () => {
     const result = getNextBestTask([
-      task({ id: "b", priorityScore: 70, estimatedMinutes: 30, plannedDate: "2026-08-09" }),
-      task({ id: "a", priorityScore: 70, estimatedMinutes: 30, plannedDate: "2026-08-09" }),
+      task({ id: "a", priorityScore: 70, estimatedMinutes: 30, executionOrder: 2, createdAt: "2026-08-01T00:00:00Z", plannedDate: "2026-08-09" }),
+      task({ id: "z", priorityScore: 70, estimatedMinutes: 90, executionOrder: 1, createdAt: "2026-08-02T00:00:00Z", plannedDate: "2026-08-09" }),
     ], { today: "2026-08-08" });
-    expect(result.recommendedTask.id).toBe("a");
+    expect(result.recommendedTask.id).toBe("z");
+  });
+
+  it("preserves input order when no pedagogical execution order exists", () => {
+    const result = getNextBestTask([
+      task({ id: "z", priorityScore: 70, estimatedMinutes: 30 }),
+      task({ id: "a", priorityScore: 70, estimatedMinutes: 30 }),
+    ], { today: "2026-08-08" });
+    expect(result.recommendedTask.id).toBe("z");
   });
 
   it("combines session progress and pending resource units without double-counting remaining work", () => {

@@ -50,6 +50,8 @@ export interface PlanningResourceSection {
   curriculumNodeId: string | null;
   name: string;
   sortOrder: number;
+  planningRole: "curriculum" | "mixed_review" | "review_only" | "reference_only";
+  isActive: boolean;
 }
 
 export interface PlanningResourceUnit {
@@ -60,6 +62,7 @@ export interface PlanningResourceUnit {
   unitType: ResourceUnitType;
   sortOrder: number;
   estimatedMinutes: number | null;
+  isActive: boolean;
 }
 
 export interface PlanningResourceUnitProgress {
@@ -133,6 +136,7 @@ export interface RecommendationTask {
   estimatedMinutes: number;
   completedMinutes: number;
   pendingUnitMinutes?: number | null;
+  executionOrder?: number | null;
   createdAt: string;
   isRevision?: boolean;
   revisionUrgency?: "upcoming" | "due" | "overdue" | "critical_overdue" | null;

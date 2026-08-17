@@ -16,10 +16,15 @@ export function readLocalSupabaseStatus() {
     status.PUBLISHABLE_KEY ??
     status.anon_key ??
     status.publishable_key;
+  const serviceRoleKey =
+    status.SERVICE_ROLE_KEY ??
+    status.SECRET_KEY ??
+    status.service_role_key ??
+    status.secret_key;
 
   if (!url || !anonKey) {
     throw new Error("Supabase status did not return API_URL and an anon/publishable key.");
   }
 
-  return { url, anonKey };
+  return { url, anonKey, serviceRoleKey };
 }

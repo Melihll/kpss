@@ -1,0 +1,494 @@
+{
+  "plan_version": "esra-foundation-w1-v2-canonical-sliced",
+  "plan_name": "Esra KPSS P48 — Gün 1 / Temel Kurulum Haftası",
+  "target_score_type": "KPSSP48",
+  "target_exam_year": 2027,
+  "plan_start": "2026-08-17",
+  "plan_end": "2026-08-23",
+  "capacity_model": {
+    "weekday_minutes": 240,
+    "weekend_minutes": 300,
+    "weekly_minutes": 1800,
+    "note": "Mevcut P48 başlangıç kapasitesiyle uyumlu; ilk hafta amaç tempo değil sürdürülebilir temel ve gerçek süre kalibrasyonu."
+  },
+  "learning_model": {
+    "new_topic": "video/konu anlatımı -> kısa kendi notu -> küçük fiziksel soru dilimi -> yanlış/geri çağırma",
+    "math_week1": "Öğrenme ağırlıklı; soru oranı hafta içinde kademeli artar.",
+    "turkish_week1": "Dil bilgisi temeli + küçük soru dilimleri; paragraf hafta sonunda beceri rutini olarak başlar.",
+    "progress_policy": "Bir görev yalnız kendisine bağlı execution_slice'ı tamamlar; canonical section'ın geri kalanı tamamlanmış sayılmaz.",
+    "slice_basis": "execution_slice_from_verified_canonical_range"
+  },
+  "video_guidance": {
+    "Matematik": "Güven Göllüoğlu / Hoca Kafası. Konu anlaşılmazsa alternatif: Mehmet Bilge Yıldız / İlyas Güneş / Şenol Hoca.",
+    "Türkçe": "Öznur Saat Yıldırım / Hoca Kafası. Paragraf için gerekirse Rüştü Hoca.",
+    "Tarih": "Ramazan Yetgin / Benim Hocam.",
+    "Coğrafya": "Engin Eraydın / Yargı Plus."
+  },
+  "days": [
+    {
+      "date": "2026-08-17",
+      "day": "Pazartesi",
+      "capacity_minutes": 240,
+      "tasks": [
+        {
+          "order": 1,
+          "subject": "Matematik",
+          "topic": "Temel Kavramlar I",
+          "minutes": 90,
+          "resource": "2026 KPSS Matematik Soru Bankası",
+          "canonical_section": "Temel Kavramlar",
+          "canonical_range": "s.1–46",
+          "execution_slice": "s.1–8",
+          "page_start": 1,
+          "page_end": 8,
+          "instruction": "60 dk Temel Kavramlar video anlatımı + 10 dk kendi notun + 20 dk s.1–8 uygulama. Hız değil kavram doğruluğu."
+        },
+        {
+          "order": 2,
+          "subject": "İktisat",
+          "topic": "İktisada Giriş",
+          "minutes": 70,
+          "resource": "Economicus Mikro İktisat – Konu Anlatımlı",
+          "canonical_section": "İktisada Giriş",
+          "canonical_range": "s.3–22",
+          "execution_slice": "s.3–22",
+          "page_start": 3,
+          "page_end": 22,
+          "instruction": "50 dk konu okuma + 15 dk kendi notun + 5 dk kapalı kitap geri çağırma."
+        },
+        {
+          "order": 3,
+          "subject": "Türkçe",
+          "topic": "Dil Bilgisi I",
+          "minutes": 50,
+          "resource": "2026 KPSS Türkçe – Tamamı Çözümlü Soru Bankası",
+          "canonical_section": "Dil Bilgisi",
+          "canonical_range": "s.7–56",
+          "execution_slice": "s.7–12",
+          "page_start": 7,
+          "page_end": 12,
+          "instruction": "30 dk Öznur Saat Yıldırım konu anlatımı + 10 dk kendi notun + 10 dk s.7–12 soru."
+        },
+        {
+          "order": 4,
+          "subject": "Tarih",
+          "topic": "İslamiyet Öncesi Türk Tarihine Giriş",
+          "minutes": 30,
+          "resource": "2026 KPSS Tarih Ders Notları",
+          "canonical_section": "İslamiyet Öncesi Türk Tarihi",
+          "canonical_range": "s.5–22",
+          "execution_slice": "s.5–22",
+          "page_start": 5,
+          "page_end": 22,
+          "instruction": "20 dk Ramazan Yetgin video + 10 dk ders notuna paralel kısa kendi notun."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-18",
+      "day": "Salı",
+      "capacity_minutes": 240,
+      "tasks": [
+        {
+          "order": 1,
+          "subject": "Matematik",
+          "topic": "Temel Kavramlar II",
+          "minutes": 90,
+          "resource": "2026 KPSS Matematik Soru Bankası",
+          "canonical_section": "Temel Kavramlar",
+          "canonical_range": "s.1–46",
+          "execution_slice": "s.9–16",
+          "page_start": 9,
+          "page_end": 16,
+          "instruction": "50 dk video + 10 dk not + 30 dk s.9–16 soru. Dünkü yanlışları önce 5 dk hatırla."
+        },
+        {
+          "order": 2,
+          "subject": "Hukuk",
+          "topic": "Anayasa Teorisi",
+          "minutes": 70,
+          "resource": "Libertus Anayasa Hukuku – Konu Anlatımlı",
+          "canonical_section": "Anayasa Teorisi",
+          "canonical_range": "s.1–20",
+          "execution_slice": "s.1–20",
+          "page_start": 1,
+          "page_end": 20,
+          "instruction": "50 dk s.1–20 + 15 dk kendi notun + 5 dk kavramları kapalı kitap say."
+        },
+        {
+          "order": 3,
+          "subject": "Türkçe",
+          "topic": "Dil Bilgisi II",
+          "minutes": 50,
+          "resource": "2026 KPSS Türkçe – Tamamı Çözümlü Soru Bankası",
+          "canonical_section": "Dil Bilgisi",
+          "canonical_range": "s.7–56",
+          "execution_slice": "s.13–18",
+          "page_start": 13,
+          "page_end": 18,
+          "instruction": "30 dk video + 10 dk not + 10 dk s.13–18 soru."
+        },
+        {
+          "order": 4,
+          "subject": "Coğrafya",
+          "topic": "Türkiye'nin Coğrafi Konumu I",
+          "minutes": 30,
+          "resource": "2026 KPSS Genel Kültür Coğrafya Video Ders Notları",
+          "canonical_section": "Türkiye’nin Coğrafi Konumu",
+          "canonical_range": "s.8–29",
+          "execution_slice": "s.8–18",
+          "page_start": 8,
+          "page_end": 18,
+          "instruction": "20 dk Engin Eraydın video + 10 dk haritalı not; not kitabında s.8–18 paralel takip."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-19",
+      "day": "Çarşamba",
+      "capacity_minutes": 240,
+      "tasks": [
+        {
+          "order": 1,
+          "subject": "Matematik",
+          "topic": "Temel Kavramlar III",
+          "minutes": 75,
+          "resource": "2026 KPSS Matematik Soru Bankası",
+          "canonical_section": "Temel Kavramlar",
+          "canonical_range": "s.1–46",
+          "execution_slice": "s.18–26",
+          "page_start": 18,
+          "page_end": 26,
+          "instruction": "35 dk video + 10 dk not + 30 dk s.18–26 soru."
+        },
+        {
+          "order": 2,
+          "subject": "Maliye",
+          "topic": "Maliye Teorisi I",
+          "minutes": 75,
+          "resource": "Optimus Maliye – Konu Anlatımlı",
+          "canonical_section": "Maliye Teorisi",
+          "canonical_range": "s.3–60",
+          "execution_slice": "s.3–25",
+          "page_start": 3,
+          "page_end": 25,
+          "instruction": "55 dk s.3–25 + 15 dk kendi notun + 5 dk recall."
+        },
+        {
+          "order": 3,
+          "subject": "İktisat",
+          "topic": "Tüketici Dengesi Analizi I",
+          "minutes": 60,
+          "resource": "Economicus Mikro İktisat – Konu Anlatımlı",
+          "canonical_section": "Tüketici Dengesi Analizi",
+          "canonical_range": "s.23–70",
+          "execution_slice": "s.23–46",
+          "page_start": 23,
+          "page_end": 46,
+          "instruction": "45 dk s.23–46 + 10 dk not + 5 dk geri çağırma."
+        },
+        {
+          "order": 4,
+          "subject": "Tarih",
+          "topic": "İlk Türk-İslam Devletleri I",
+          "minutes": 30,
+          "resource": "2026 KPSS Tarih Ders Notları",
+          "canonical_section": "İlk Türk-İslam Devletleri",
+          "canonical_range": "s.23–36",
+          "execution_slice": "s.23–36",
+          "page_start": 23,
+          "page_end": 36,
+          "instruction": "20 dk Ramazan Yetgin video + 10 dk kendi notun; s.23–36 paralel takip."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-20",
+      "day": "Perşembe",
+      "capacity_minutes": 240,
+      "tasks": [
+        {
+          "order": 1,
+          "subject": "Matematik",
+          "topic": "Temel Kavramlar IV",
+          "minutes": 75,
+          "resource": "2026 KPSS Matematik Soru Bankası",
+          "canonical_section": "Temel Kavramlar",
+          "canonical_range": "s.1–46",
+          "execution_slice": "s.27–35",
+          "page_start": 27,
+          "page_end": 35,
+          "instruction": "35 dk video/tekrar + 10 dk not + 30 dk s.27–35 soru."
+        },
+        {
+          "order": 2,
+          "subject": "Muhasebe",
+          "topic": "Muhasebenin Tanımı / Fonksiyonu / Finansal Tablolar",
+          "minutes": 75,
+          "resource": "Reditus Muhasebe – Konu Anlatımlı",
+          "canonical_section": "Muhasebenin Tanımı / Fonksiyonu / Finansal Tablolar",
+          "canonical_range": "s.1–16",
+          "execution_slice": "s.1–16",
+          "page_start": 1,
+          "page_end": 16,
+          "instruction": "55 dk s.1–16 + 15 dk kendi notun + 5 dk recall."
+        },
+        {
+          "order": 3,
+          "subject": "Türkçe",
+          "topic": "Dil Bilgisi III",
+          "minutes": 50,
+          "resource": "2026 KPSS Türkçe – Tamamı Çözümlü Soru Bankası",
+          "canonical_section": "Dil Bilgisi",
+          "canonical_range": "s.7–56",
+          "execution_slice": "s.19–26",
+          "page_start": 19,
+          "page_end": 26,
+          "instruction": "25 dk video + 10 dk not + 15 dk s.19–26 soru."
+        },
+        {
+          "order": 4,
+          "subject": "Coğrafya",
+          "topic": "Türkiye'nin Coğrafi Konumu II",
+          "minutes": 40,
+          "resource": "2026 KPSS Genel Kültür Coğrafya Video Ders Notları",
+          "canonical_section": "Türkiye’nin Coğrafi Konumu",
+          "canonical_range": "s.8–29",
+          "execution_slice": "s.19–29",
+          "page_start": 19,
+          "page_end": 29,
+          "instruction": "25 dk video + 10 dk harita/not + 5 dk kapalı harita recall; s.19–29 paralel takip."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-21",
+      "day": "Cuma",
+      "capacity_minutes": 240,
+      "tasks": [
+        {
+          "order": 1,
+          "subject": "Matematik",
+          "topic": "Temel Kavramlar V",
+          "minutes": 75,
+          "resource": "2026 KPSS Matematik Soru Bankası",
+          "canonical_section": "Temel Kavramlar",
+          "canonical_range": "s.1–46",
+          "execution_slice": "s.36–43",
+          "page_start": 36,
+          "page_end": 43,
+          "instruction": "30 dk video/özet + 10 dk kendi notun + 35 dk s.36–43 soru. Temel Kavramlar ilk tur kapanışı."
+        },
+        {
+          "order": 2,
+          "subject": "İktisat",
+          "topic": "Tüketici Dengesi Analizi II",
+          "minutes": 60,
+          "resource": "Economicus Mikro İktisat – Konu Anlatımlı",
+          "canonical_section": "Tüketici Dengesi Analizi",
+          "canonical_range": "s.23–70",
+          "execution_slice": "s.47–70",
+          "page_start": 47,
+          "page_end": 70,
+          "instruction": "45 dk s.47–70 + 10 dk not + 5 dk recall."
+        },
+        {
+          "order": 3,
+          "subject": "Hukuk",
+          "topic": "Anayasal Tarihçe",
+          "minutes": 60,
+          "resource": "Libertus Anayasa Hukuku – Konu Anlatımlı",
+          "canonical_section": "Anayasal Tarihçe",
+          "canonical_range": "s.21–36",
+          "execution_slice": "s.21–36",
+          "page_start": 21,
+          "page_end": 36,
+          "instruction": "45 dk s.21–36 + 10 dk not + 5 dk recall."
+        },
+        {
+          "order": 4,
+          "subject": "Türkçe",
+          "topic": "Dil Bilgisi IV",
+          "minutes": 45,
+          "resource": "2026 KPSS Türkçe – Tamamı Çözümlü Soru Bankası",
+          "canonical_section": "Dil Bilgisi",
+          "canonical_range": "s.7–56",
+          "execution_slice": "s.27–37",
+          "page_start": 27,
+          "page_end": 37,
+          "instruction": "20 dk konu tekrar/video + 5 dk not + 20 dk s.27–37 soru."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-22",
+      "day": "Cumartesi",
+      "capacity_minutes": 300,
+      "tasks": [
+        {
+          "order": 1,
+          "subject": "Matematik",
+          "topic": "Bölme-Bölünebilme",
+          "minutes": 75,
+          "resource": "2026 KPSS Matematik Soru Bankası",
+          "canonical_section": "Bölme-Bölünebilme",
+          "canonical_range": "s.47–53",
+          "execution_slice": "s.47–53",
+          "page_start": 47,
+          "page_end": 53,
+          "instruction": "35 dk video + 10 dk not + 30 dk s.47–53 soru."
+        },
+        {
+          "order": 2,
+          "subject": "Maliye",
+          "topic": "Maliye Teorisi II",
+          "minutes": 75,
+          "resource": "Optimus Maliye – Konu Anlatımlı",
+          "canonical_section": "Maliye Teorisi",
+          "canonical_range": "s.3–60",
+          "execution_slice": "s.26–60",
+          "page_start": 26,
+          "page_end": 60,
+          "instruction": "55 dk s.26–60 + 15 dk not + 5 dk recall."
+        },
+        {
+          "order": 3,
+          "subject": "Muhasebe",
+          "topic": "Tekdüzen Muhasebe Sistemi / Temel Finansal Tablolar",
+          "minutes": 70,
+          "resource": "Reditus Muhasebe – Konu Anlatımlı",
+          "canonical_section": "Tekdüzen Muhasebe Sistemi / Temel Finansal Tablolar",
+          "canonical_range": "s.17–33",
+          "execution_slice": "s.17–33",
+          "page_start": 17,
+          "page_end": 33,
+          "instruction": "50 dk s.17–33 + 15 dk not + 5 dk recall."
+        },
+        {
+          "order": 4,
+          "subject": "Tarih",
+          "topic": "Anadolu Selçuklu + Osmanlı Kültür/Medeniyet giriş",
+          "minutes": 40,
+          "resource": "2026 KPSS Tarih Ders Notları",
+          "canonical_section": "Anadolu Selçuklu + Osmanlı Kültür/Medeniyet giriş",
+          "canonical_range": "s.37–56",
+          "execution_slice": "s.37–56",
+          "page_start": 37,
+          "page_end": 56,
+          "instruction": "25 dk video + 10 dk not + 5 dk geri çağırma; s.37–56 paralel takip."
+        },
+        {
+          "order": 5,
+          "subject": "Coğrafya",
+          "topic": "Türkiye'nin Yer Şekillerine Giriş",
+          "minutes": 40,
+          "resource": "2026 KPSS Genel Kültür Coğrafya Video Ders Notları",
+          "canonical_section": "Türkiye’nin Yer Şekilleri",
+          "canonical_range": "s.30–67",
+          "execution_slice": "s.30–49",
+          "page_start": 30,
+          "page_end": 49,
+          "instruction": "25 dk Engin Eraydın video + 10 dk harita/not + 5 dk recall; s.30–49 paralel takip."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-23",
+      "day": "Pazar",
+      "capacity_minutes": 300,
+      "tasks": [
+        {
+          "order": 1,
+          "subject": "Matematik",
+          "topic": "EBOB-EKOK + Temel Haftalık Pekiştirme",
+          "minutes": 70,
+          "resource": "2026 KPSS Matematik Soru Bankası",
+          "canonical_section": "EBOB-EKOK",
+          "canonical_range": "s.54–62",
+          "execution_slice": "s.54–62",
+          "page_start": 54,
+          "page_end": 62,
+          "instruction": "30 dk EBOB-EKOK video + 10 dk not + 30 dk s.54–62 soru. Son 10 dakikada haftanın yanlışlarına dön."
+        },
+        {
+          "order": 2,
+          "subject": "Türkçe",
+          "topic": "Dil Bilgisi bitiriş + Ses Bilgisine giriş",
+          "minutes": 55,
+          "resource": "2026 KPSS Türkçe – Tamamı Çözümlü Soru Bankası",
+          "canonical_section": "Dil Bilgisi + Ses Bilgisi",
+          "canonical_range": "Dil Bilgisi s.7–56; Ses Bilgisi s.57–62",
+          "execution_slice": "s.41–62",
+          "page_start": 41,
+          "page_end": 62,
+          "instruction": "20 dk video/özet + 10 dk not + 25 dk s.41–62 soru. Dil Bilgisi ilk turu kapat, Ses Bilgisine giriş yap."
+        },
+        {
+          "order": 3,
+          "subject": "İktisat",
+          "topic": "Mikro ilk hafta soru pekiştirme",
+          "minutes": 65,
+          "resource": "Economicus İktisat Soru Bankası Cilt 1 – Mikro / Uluslararası / Büyüme-Kalkınma / Türkiye Ekonomisi / Doktrinler",
+          "canonical_section": "Mikro soru bankası — ilk tarama",
+          "canonical_range": "s.3–26",
+          "execution_slice": "s.3–26",
+          "page_start": 3,
+          "page_end": 26,
+          "instruction": "Önce 10 dk kendi notlarından recall, sonra 55 dk s.3–26 soru/çözüm. Doğru-yanlış-boş kaydet."
+        },
+        {
+          "order": 4,
+          "subject": "Tarih",
+          "topic": "İslamiyet Öncesi Türk Tarihi — soru pekiştirme",
+          "minutes": 45,
+          "resource": "2026 KPSS Tarih Soru Bankası – Tamamı Çözümlü",
+          "canonical_section": "İslamiyet Öncesi Türk Tarihi — Siyasi",
+          "canonical_range": "s.7–21",
+          "execution_slice": "s.7–21",
+          "page_start": 7,
+          "page_end": 21,
+          "instruction": "10 dk notlardan recall + 35 dk s.7–21 soru. Yanlışları nottaki ilgili başlığa bağla."
+        },
+        {
+          "order": 5,
+          "subject": "Coğrafya",
+          "topic": "Türkiye'nin Coğrafi Konumu — soru pekiştirme",
+          "minutes": 50,
+          "resource": "2026 KPSS Genel Kültür Coğrafya Soru Bankası – Tamamı Çözümlü",
+          "canonical_section": "Türkiye’nin Coğrafi Konumu",
+          "canonical_range": "s.5–38",
+          "execution_slice": "s.5–23",
+          "page_start": 5,
+          "page_end": 23,
+          "instruction": "10 dk harita recall + 40 dk s.5–23 soru. Yanlışları haritada işaretle."
+        },
+        {
+          "order": 6,
+          "kind": "reserve",
+          "minutes": 15,
+          "instruction": "Hafta sonu kalibrasyon rezervi. Sahte subject/task olarak DB'ye yazılmayacak; yarım kalan görev veya kısa yanlış analizi için tutulacak."
+        }
+      ]
+    }
+  ],
+  "week2_rules": [
+    {
+      "condition": "aynı konuda doğruluk < %60 veya temel kavram açıklanamıyor",
+      "action": "öğrenme ağırlığını koru; ikinci anlatıcı gerekebilir; soru dilimini büyütme"
+    },
+    {
+      "condition": "%60–75",
+      "action": "yaklaşık 50/50 öğrenme-tekrar ve soru"
+    },
+    {
+      "condition": "iki ayrı oturumda > %75",
+      "action": "video süresini azalt; soru oranını yaklaşık %70'e çıkar"
+    },
+    {
+      "condition": "> %85 ve karışık soruda stabil",
+      "action": "yeni konu + spaced review; soru oranı %80+ olabilir"
+    }
+  ],
+  "academic_minutes": 1785,
+  "reserve_minutes": 15
+}

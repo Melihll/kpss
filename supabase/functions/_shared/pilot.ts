@@ -9,6 +9,7 @@ import {
 } from "./planning.bundle.js";
 import { loadAdaptiveBase, syllabusProjection } from "./adaptive.ts";
 import { recommendationWindow } from "./recommendation-window.ts";
+import { baselineExecutionOrder, hydrateTaskResource } from "./task-context.ts";
 
 type RecommendationTask = {
   id: string;
@@ -124,7 +125,7 @@ export async function loadDailyCoachContext(
   };
 
   const tasksResult = await client.from("tasks")
-    .select("id,title,task_type,status,importance,priority_score,planned_date,estimated_minutes,created_at,revision_schedule_id,task_progress(completed_minutes),task_resource_units(status,resource_units(unit_type,estimated_minutes))")
+    .select("id,title,task_type,status,importance,priority_score,planned_date,estimated_minutes,created_at,revision_schedule_id,source_reason,dedupe_key,resource_id,resource_section_id,resources(name,resource_type),resource_sections(resources(name,resource_type)),task_progress(completed_minutes),task_resource_units(status,resource_units(resource_id,unit_type,estimated_minutes,resources(name,resource_type)))")
     .eq("user_id", userId).eq("weekly_plan_id", planResult.data.id);
   if (tasksResult.error) throw tasksResult.error;
   const adaptive = await loadAdaptiveBase(client, userId, profile, planResult.data);
@@ -140,6 +141,7 @@ export async function loadDailyCoachContext(
   const studiedMinutes = sum(sessionsResult.data, "duration_minutes");
   const adaptiveMap = new Map(adaptive.adaptiveTasks.map((item: any) => [item.id, item]));
   const enriched = (tasksResult.data ?? []).map((task: any) => {
+    const hydratedTask = hydrateTaskResource(task);
     const pendingUnits = (task.task_resource_units ?? []).filter((link: any) => link.status === "pending");
     const pendingUnitMinutes = pendingUnits.length
       ? pendingUnits.reduce((total: number, link: any) => {
@@ -149,7 +151,7 @@ export async function loadDailyCoachContext(
       : null;
     const completedMinutes = Number(task.task_progress?.[0]?.completed_minutes ?? 0);
     return {
-      raw: task,
+      raw: hydratedTask,
       pendingUnitCount: pendingUnits.length,
       mapped: {
         id: task.id,
@@ -160,6 +162,7 @@ export async function loadDailyCoachContext(
         estimatedMinutes: task.estimated_minutes,
         completedMinutes,
         pendingUnitMinutes,
+        executionOrder: baselineExecutionOrder(task),
         createdAt: task.created_at,
         isRevision: Boolean(task.revision_schedule_id),
         revisionUrgency: adaptive.allAdaptiveRevisions.find((row: any) => row.id === task.revision_schedule_id)?.urgency ?? null,
@@ -198,7 +201,9 @@ export async function loadDailyCoachContext(
   });
   const remainingCapacityMinutes = projection.remainingCapacityMinutes;
   const availableNowMinutes = options.respectCurrentTime
-    ? Math.min(remainingCapacityMinutes, remainingClockMinutes(adaptive.availability ?? [], date))
+    ? adaptive.dailyCapacityOverrides?.has(date)
+      ? remainingCapacityMinutes
+      : Math.min(remainingCapacityMinutes, remainingClockMinutes(adaptive.availability ?? [], date))
     : remainingCapacityMinutes;
   let recommendation: null | {
     taskId: string;
@@ -273,7 +278,7 @@ export async function loadDailyCoachContext(
     remainingCapacityMinutes,
     availableNowMinutes,
     tasks: focusTasks,
-    allTasks: tasksResult.data ?? [],
+    allTasks: enriched.map((item) => item.raw),
     completedTaskIds: projection.completedTaskIds,
     deferredTaskIds: projection.deferredTaskIds,
     deferredTaskCount: projection.deferredTaskIds.length,

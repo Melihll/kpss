@@ -58,9 +58,11 @@ export function getNextBestTask(
       if (leftFits !== rightFits) return leftFits ? -1 : 1;
     }
     return right.priorityScore - left.priorityScore
+      || (left.executionOrder != null && right.executionOrder != null
+        ? left.executionOrder - right.executionOrder
+        : 0)
       || remainingTaskMinutes(left) - remainingTaskMinutes(right)
-      || left.createdAt.localeCompare(right.createdAt)
-      || left.id.localeCompare(right.id);
+      || 0;
   });
   const recommendedTask = sorted[0]!;
   const remainingMinutes = remainingTaskMinutes(recommendedTask);

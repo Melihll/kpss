@@ -12,8 +12,8 @@ import {
   weeklyStartPresentation,
 } from "../_shared/telegram-coach.ts";
 import { cardDelivery, deliverTelegram, textDelivery } from "../_shared/telegram-transport.ts";
-import { recalculateCurrentPlan } from "../_shared/adaptive.ts";
 import { ensureP48WeekPlanForService } from "../_shared/p48-week.ts";
+import { prepareDailyPlanNotification } from "../_shared/scheduler-plan.ts";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -48,13 +48,12 @@ Deno.serve(async (request) => {
       let result: Record<string, unknown> = { actionType: action.action_type, notification: "skipped_not_linked" };
 
       if (action.action_type === "daily_plan") {
-        const weekStart = action.payload.weekStartDate ?? (() => { const value=new Date(`${action.payload.localDate}T12:00:00Z`); const day=value.getUTCDay()||7; value.setUTCDate(value.getUTCDate()-day+1); return value.toISOString().slice(0,10); })();
-        await ensureP48WeekPlanForService(admin, action.user_id, profile.data, action.payload.localDate);
-        const activePlan = await admin.from("weekly_plans").select("*").eq("user_id",action.user_id).eq("exam_profile_id",action.exam_profile_id).eq("week_start_date",weekStart).eq("status","active").maybeSingle();
-        if (activePlan.error) throw activePlan.error;
-        if (activePlan.data) await recalculateCurrentPlan(admin,action.user_id,profile.data,activePlan.data,"study_deviation",true);
-        const summary = await buildDailyPlanSummary(admin, action.user_id, profile.data, action.payload.localDate);
-        result = { ...result, summary };
+        const prepared = await prepareDailyPlanNotification({
+          ensurePlan: () => ensureP48WeekPlanForService(admin, action.user_id, profile.data, action.payload.localDate),
+          buildSummary: () => buildDailyPlanSummary(admin, action.user_id, profile.data, action.payload.localDate),
+        });
+        const summary = prepared.summary;
+        result = { ...result, summary, replan: prepared.replan };
         if (identity.data?.external_chat_id) {
           const range = localDayRange(action.payload.localDate);
           const manualView = await admin.from("recommendation_events").select("id", { count: "exact", head: true })
