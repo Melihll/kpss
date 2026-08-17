@@ -14,6 +14,7 @@ import { recalculateTopicMastery, revisionWithUrgency } from "../_shared/mastery
 import { minimumDayPlan, recalculateCurrentPlan, syllabusProjection } from "../_shared/adaptive.ts";
 import { generateWeeklyReport, loadDailyCoachContext, pilotMetrics, recordRecommendationEvent } from "../_shared/pilot.ts";
 import { aggregateCompletedStudySessions } from "../_shared/completed-study.ts";
+import { loadP48DailyCapacityOverrides, planningCapacityForDate } from "../_shared/capacity-overrides.ts";
 
 type WeeklyPlanningContext = {
   examProfileId: string;
@@ -23,8 +24,8 @@ type WeeklyPlanningContext = {
   topicProgress: Array<{ curriculumNodeId: string; state: "not_started" | "learning" | "practicing" | "remediation" | "learned" | "maintenance" }>;
   weeklyAvailability: Array<{ weekday: number; start_time: string; end_time: string; is_active?: boolean }>;
   resources: Array<{ id: string; subjectId: string; name: string; role: "primary" | "reinforcement" | "revision" | "advanced" | "mock"; difficulty: "unknown" | "easy" | "normal" | "hard"; status: "active" | "paused" | "completed" | "abandoned" }>;
-  resourceSections: Array<{ id: string; resourceId: string; curriculumNodeId: string | null; name: string; sortOrder: number }>;
-  resourceUnits: Array<{ id: string; resourceId: string; sectionId: string | null; name: string; unitType: "test" | "video" | "chapter" | "reading" | "mock" | "other"; sortOrder: number; estimatedMinutes: number | null }>;
+  resourceSections: Array<{ id: string; resourceId: string; curriculumNodeId: string | null; name: string; sortOrder: number; planningRole: "curriculum" | "mixed_review" | "review_only" | "reference_only"; isActive: boolean }>;
+  resourceUnits: Array<{ id: string; resourceId: string; sectionId: string | null; name: string; unitType: "test" | "video" | "chapter" | "reading" | "mock" | "other"; sortOrder: number; estimatedMinutes: number | null; isActive: boolean }>;
   resourceUnitProgress: Array<{ resourceUnitId: string; status: "not_started" | "in_progress" | "completed" | "skipped" }>;
   existingCarryoverTasks: Array<{
     id: string; subjectId: string; curriculumNodeId: string | null; resourceId: string | null;
@@ -220,11 +221,12 @@ async function buildContext(
     resourceSections: (sectionsResult.data ?? []).map((section) => ({
       id: section.id, resourceId: section.resource_id, curriculumNodeId: section.curriculum_node_id,
       name: section.name, sortOrder: section.sort_order,
+      planningRole: section.planning_role ?? "curriculum", isActive: section.is_active ?? true,
     })),
     resourceUnits: (unitsResult.data ?? []).map((unit) => ({
       id: unit.id, resourceId: unit.resource_id, sectionId: unit.resource_section_id,
       name: unit.name, unitType: unit.unit_type, sortOrder: unit.sort_order,
-      estimatedMinutes: unit.estimated_minutes,
+      estimatedMinutes: unit.estimated_minutes, isActive: unit.is_active ?? true,
     })),
     resourceUnitProgress: (unitProgressResult.data ?? []).map((progress) => ({
       resourceUnitId: progress.resource_unit_id, status: progress.status,
@@ -441,7 +443,7 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
   const existing = await currentPlan(client, profile.id, weekStart);
   if (existing && !force) return { ...(await planWithTasks(client, existing)), created: false };
 
-  const [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult] = await Promise.all([
+  const [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult, dailyOverrides] = await Promise.all([
     client.from("weekly_availability").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id).eq("is_active", true),
     client.from("calendar_periods").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id),
     client.from("schedule_exceptions").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id)
@@ -452,6 +454,7 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
     client.from("study_sessions")
       .select("resource_id,duration_minutes,started_at")
       .eq("user_id", userId).eq("exam_profile_id", profile.id).eq("status", "completed"),
+    loadP48DailyCapacityOverrides(client, userId, profile.id, weekStart, addDays(weekStart, 6)),
   ]);
   for (const result of [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult]) if (result.error) throw result.error;
 
@@ -460,7 +463,7 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
   const dayCapacities: Record<string, number> = {};
   for (let index = 0; index < 7; index += 1) {
     const date = addDays(weekStart, index);
-    const effectiveCapacity = calculateEffectiveDayCapacity({
+    const capacityContext = {
       date,
       weeklyAvailability: p48Windows(availabilityResult.data ?? []),
       calendarPeriods: p48Periods(periodsResult.data ?? []).map((period) => ({
@@ -468,9 +471,17 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
         endDate: period.endDate,
         capacityMultiplier: period.capacityMultiplier,
       })),
+    };
+    const baseCapacity = calculateEffectiveDayCapacity({
+      ...capacityContext,
+      scheduleExceptions: [],
+    });
+    const effectiveCapacity = calculateEffectiveDayCapacity({
+      ...capacityContext,
       scheduleExceptions: p48Exceptions(exceptionsResult.data ?? []),
     });
-    dayCapacities[date] = date < today ? 0 : Math.max(0, effectiveCapacity - (actualByDate.get(date) ?? 0));
+    const planningCapacity = planningCapacityForDate(date, effectiveCapacity, dailyOverrides, baseCapacity);
+    dayCapacities[date] = date < today ? 0 : Math.max(0, planningCapacity - (actualByDate.get(date) ?? 0));
   }
 
   const resources = (targetResult.data ?? []).map((row: any) => ({
@@ -587,13 +598,14 @@ Deno.serve(async (request) => {
     if (request.method === "POST" && route === "/weekly-plan/manual") {
       const body=await request.json();
       const blocks=Array.isArray(body.blocks)?body.blocks:[];
-      const [subjectsResult,resourcesResult,availabilityResult,periodsResult,exceptionsResult,sessionsResult]=await Promise.all([
+      const [subjectsResult,resourcesResult,availabilityResult,periodsResult,exceptionsResult,sessionsResult,dailyOverrides]=await Promise.all([
         client.from("user_subjects").select("subject_id, subjects(name)").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","active"),
         client.from("resources").select("id,subject_id,name,resource_type").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","active"),
         client.from("weekly_availability").select("weekday,start_time,end_time,is_active").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("is_active",true),
         client.from("calendar_periods").select("*").eq("user_id",userId).eq("exam_profile_id",profile.id),
         client.from("schedule_exceptions").select("*").eq("user_id",userId).eq("exam_profile_id",profile.id).gte("exception_date",weekStart).lte("exception_date",addDays(weekStart,6)),
         client.from("study_sessions").select("duration_minutes,started_at").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","completed").gte("started_at",`${weekStart}T00:00:00+03:00`).lt("started_at",`${addDays(weekStart,7)}T00:00:00+03:00`),
+        loadP48DailyCapacityOverrides(client,userId,profile.id,weekStart,addDays(weekStart,6)),
       ]);
       for(const result of [subjectsResult,resourcesResult,availabilityResult,periodsResult,exceptionsResult,sessionsResult]) if(result.error) throw result.error;
       const subjectNames=new Map((subjectsResult.data??[]).map((row:any)=>[row.subject_id,row.subjects?.name??"Ders"]));
@@ -601,7 +613,7 @@ Deno.serve(async (request) => {
       const availability=(availabilityResult.data??[]).map((row:any)=>({weekday:row.weekday,start_time:row.start_time,end_time:row.end_time,is_active:row.is_active}));
       const {actualByDate}=aggregateCompletedStudySessions(sessionsResult.data??[]);
       const dayCapacities:Record<string,number>={};
-      for(let index=0;index<7;index++){const date=addDays(weekStart,index);const effective=calculateEffectiveDayCapacity({date,weeklyAvailability:availability,calendarPeriods:p48Periods(periodsResult.data??[]),scheduleExceptions:p48Exceptions(exceptionsResult.data??[])});dayCapacities[date]=date<today?0:Math.max(0,effective-(actualByDate.get(date)??0));}
+      for(let index=0;index<7;index++){const date=addDays(weekStart,index);const capacityContext={date,weeklyAvailability:availability,calendarPeriods:p48Periods(periodsResult.data??[])};const baseCapacity=calculateEffectiveDayCapacity({...capacityContext,scheduleExceptions:[]});const effective=calculateEffectiveDayCapacity({...capacityContext,scheduleExceptions:p48Exceptions(exceptionsResult.data??[])});const planningCapacity=planningCapacityForDate(date,effective,dailyOverrides,baseCapacity);dayCapacities[date]=date<today?0:Math.max(0,planningCapacity-(actualByDate.get(date)??0));}
       const availableMinutes=Object.values(dayCapacities).reduce((sum,minutes)=>sum+minutes,0);
       const normalized=blocks.map((block:any)=>{
         const subjectName=subjectNames.get(block.subjectId);

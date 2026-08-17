@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { recalculateTopicMastery, revisionWithUrgency } from "../_shared/mastery.ts";
-import { loadAdaptiveBase, minimumDayPlan, recalculateCurrentPlan } from "../_shared/adaptive.ts";
+import { applyScheduleExceptionWithCompensation, loadAdaptiveBase, minimumDayPlan, recalculateCurrentPlan } from "../_shared/adaptive.ts";
 import { loadDailyCoachContext, recordRecommendationEvent } from "../_shared/pilot.ts";
 import { DEFAULT_RESOURCE_UNIT_MINUTES, remainingTaskMinutes } from "../_shared/planning.bundle.js";
 import { ensureP48WeekPlanForService } from "../_shared/p48-week.ts";
@@ -441,16 +441,16 @@ Deno.serve(async (req) => {
           replanned: { idempotent: true, noChange: true, dayCapacities: base.dayCapacities, decision: { changedTaskCount: 0 } },
         };
       }
-      const inserted = await admin.from("schedule_exceptions").insert({
+      const exception = {
         user_id: userId,
         exam_profile_id: profile.data.id,
         exception_date: day,
         exception_type: "custom",
         minutes_delta: target - normal,
         note,
-      });
-      if (inserted.error) throw inserted.error;
-      const replanned = await recalculateCurrentPlan(admin, userId, profile.data, plan.data, "capacity_change", true);
+      };
+      const replanned = await applyScheduleExceptionWithCompensation(admin, exception,
+        () => recalculateCurrentPlan(admin, userId, profile.data, plan.data, "capacity_change", true));
       return { normal, updated: Number(replanned.dayCapacities[day] ?? target), replanned };
     };
 
@@ -1209,17 +1209,16 @@ Deno.serve(async (req) => {
         const less = state.state === "special_less_minutes";
         const completedMinutes = Number(state.payload.completedMinutes ?? 0);
         const targetTotal = less ? totalCapacityForRemainingAvailability(completedMinutes, value) : normal + value;
-        const inserted = await admin.from("schedule_exceptions").insert({
+        const exception = {
           user_id: userId,
           exam_profile_id: state.payload.profileId,
           exception_date: day,
           exception_type: less ? "custom" : "extra_available",
           minutes_delta: targetTotal - normal,
           note: "Telegram özel durum",
-        });
-        if (inserted.error) throw inserted.error;
+        };
         const profile=await admin.from("exam_profiles").select("*").eq("id",state.payload.profileId).eq("user_id",userId).single();const plan=await admin.from("weekly_plans").select("*").eq("id",state.payload.planId).eq("user_id",userId).single();
-        const replanned=await recalculateCurrentPlan(admin,userId,profile.data,plan.data,"capacity_change",true);await clearState(admin,userId,chatId);
+        const replanned=await applyScheduleExceptionWithCompensation(admin,exception,()=>recalculateCurrentPlan(admin,userId,profile.data,plan.data,"capacity_change",true));await clearState(admin,userId,chatId);
         const updated=replanned.dayCapacities[day]??0;
         const summary=formatReplanSummary(replanned);
         const message = less

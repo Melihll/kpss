@@ -125,8 +125,12 @@ function activeTopicForSubject(context, subjectId) {
   const progressByNode = new Map(context.topicProgress.map((progress) => [progress.curriculumNodeId, progress.state]));
   return context.curriculum.filter((node) => node.subjectId === subjectId && node.nodeType === "topic" && node.isActive).map((node) => ({ node, state: progressByNode.get(node.id) ?? "not_started" })).filter(({ state }) => state !== "learned" && state !== "maintenance").sort((left, right) => STATE_ORDER[left.state] - STATE_ORDER[right.state] || left.node.sortOrder - right.node.sortOrder || left.node.id.localeCompare(right.node.id))[0];
 }
-function bestMappedResource(context, topic) {
-  return context.resourceSections.filter((section) => section.curriculumNodeId === topic.id).map((section) => ({ section, resource: context.resources.find((resource) => resource.id === section.resourceId) })).filter((item) => Boolean(item.resource && item.resource.status === "active")).sort((left, right) => roleRank(left.resource.role) - roleRank(right.resource.role) || left.section.sortOrder - right.section.sortOrder || left.resource.id.localeCompare(right.resource.id)).map(({ section, resource }) => ({ resource, sectionId: section.id }))[0] ?? null;
+function bestMappedResource(context, topic, completedUnitIds) {
+  return context.resourceSections.filter((section) => section.curriculumNodeId === topic.id && section.planningRole === "curriculum" && section.isActive).map((section) => ({
+    section,
+    resource: context.resources.find((resource) => resource.id === section.resourceId),
+    units: context.resourceUnits.filter((unit) => unit.sectionId === section.id && unit.isActive && !completedUnitIds.has(unit.id)).sort((left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id))
+  })).filter((item) => Boolean(item.resource && item.resource.status === "active" && item.units.length)).sort((left, right) => roleRank(left.resource.role) - roleRank(right.resource.role) || left.section.sortOrder - right.section.sortOrder || left.resource.id.localeCompare(right.resource.id)).map(({ section, resource, units }) => ({ resource, sectionId: section.id, units }))[0] ?? null;
 }
 function subjectCandidates(context) {
   const completedUnitIds = new Set(
@@ -157,9 +161,9 @@ function subjectCandidates(context) {
         candidateOrder: 0
       });
     }
-    const mapped = bestMappedResource(context, node);
+    const mapped = bestMappedResource(context, node, completedUnitIds);
     if (mapped) {
-      const units = context.resourceUnits.filter((unit) => unit.sectionId === mapped.sectionId && !completedUnitIds.has(unit.id)).sort((left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id)).slice(0, MAX_RESOURCE_UNITS_PER_TASK);
+      const units = mapped.units.slice(0, MAX_RESOURCE_UNITS_PER_TASK);
       if (units.length) {
         const unitIds = units.map((unit) => unit.id);
         candidates.push({
@@ -317,7 +321,7 @@ function getNextBestTask(tasks, options) {
       const rightFits = remainingTaskMinutes(right) <= available;
       if (leftFits !== rightFits) return leftFits ? -1 : 1;
     }
-    return right.priorityScore - left.priorityScore || remainingTaskMinutes(left) - remainingTaskMinutes(right) || left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id);
+    return right.priorityScore - left.priorityScore || (left.executionOrder != null && right.executionOrder != null ? left.executionOrder - right.executionOrder : 0) || remainingTaskMinutes(left) - remainingTaskMinutes(right) || 0;
   });
   const recommendedTask = sorted[0];
   const remainingMinutes = remainingTaskMinutes(recommendedTask);
@@ -746,6 +750,27 @@ function replanWeeklyPlanV1(context) {
   const selectedRevisions = context.trigger === "study_deviation" ? [] : [...context.revisions].sort((left, right) => urgencyRank[left.urgency] - urgencyRank[right.urgency] || masteryRank[left.masteryLevel] - masteryRank[right.masteryLevel] || left.id.localeCompare(right.id));
   let revisionMinutes = 0;
   const creates = [];
+  const placementTasks = activeTasks.filter((task) => !["in_progress", "partially_completed"].includes(task.status));
+  let pendingPlacementTasks = placementTasks;
+  if (context.trigger === "capacity_change") {
+    const pending = [];
+    for (const task of [...placementTasks].sort((left, right) => (left.plannedDate ?? context.weekEnd).localeCompare(right.plannedDate ?? context.weekEnd) || taskRank(left) - taskRank(right) || right.priorityScore - left.priorityScore || left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id))) {
+      const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
+      if (remaining === 0) {
+        keep.push(task.id);
+        continue;
+      }
+      const current = task.plannedDate;
+      if (current && current >= context.currentDate && current in dayRemaining && used + remaining <= planBudget && (dayRemaining[current] ?? 0) >= remaining) {
+        keep.push(task.id);
+        used += remaining;
+        dayRemaining[current] = (dayRemaining[current] ?? 0) - remaining;
+      } else {
+        pending.push(task);
+      }
+    }
+    pendingPlacementTasks = pending;
+  }
   for (const revision of selectedRevisions) {
     if (revisionMinutes + revision.estimatedMinutes > revisionBudget || used + revision.estimatedMinutes > planBudget) continue;
     const earliest = revision.scheduledFor < context.currentDate ? context.currentDate : revision.scheduledFor;
@@ -773,11 +798,10 @@ function replanWeeklyPlanV1(context) {
       dedupeKey: `revision|${revision.id}`
     });
   }
-  const placementTasks = activeTasks.filter((task) => !["in_progress", "partially_completed"].includes(task.status));
   if (!allowPullForward) {
-    placementTasks.sort((left, right) => (left.plannedDate ?? context.currentDate).localeCompare(right.plannedDate ?? context.currentDate) || taskRank(left) - taskRank(right) || right.priorityScore - left.priorityScore || left.id.localeCompare(right.id));
+    pendingPlacementTasks.sort((left, right) => (left.plannedDate ?? context.currentDate).localeCompare(right.plannedDate ?? context.currentDate) || taskRank(left) - taskRank(right) || right.priorityScore - left.priorityScore || left.id.localeCompare(right.id));
   }
-  for (const task of placementTasks) {
+  for (const task of pendingPlacementTasks) {
     const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
     if (remaining === 0) {
       keep.push(task.id);

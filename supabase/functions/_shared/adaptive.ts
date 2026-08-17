@@ -2,6 +2,7 @@ import {
   buildMinimumDayPlan,buildSyllabusProjection,calculateEffectiveDayCapacity,evaluateBacklog,
   getRevisionUrgency,replanWeeklyPlanV1,addRevisionCalendarDays,calculateWeeklyAvailableMinutes,
 } from "./planning.bundle.js";
+import { loadP48DailyCapacityOverrides, planningCapacityForDate } from "./capacity-overrides.ts";
 
 type Client=any;
 export const calendarToday=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Istanbul"}).format(new Date());
@@ -11,7 +12,7 @@ const periods=(rows:any[])=>rows.map(row=>({startDate:row.start_date,endDate:row
 const exceptions=(rows:any[])=>rows.map(row=>({date:row.exception_date,type:row.exception_type,startTime:row.start_time,endTime:row.end_time,minutesDelta:row.minutes_delta}));
 
 export async function loadAdaptiveBase(client:Client,userId:string,profile:any,plan:any){
- const [availability,calendar,exceptionRows,tasks,progress,revisions,reschedules,sessions]=await Promise.all([
+ const [availability,calendar,exceptionRows,tasks,progress,revisions,reschedules,sessions,dailyOverrides]=await Promise.all([
   client.from("weekly_availability").select("*").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("is_active",true),
   client.from("calendar_periods").select("*").eq("user_id",userId).eq("exam_profile_id",profile.id),
   client.from("schedule_exceptions").select("*").eq("user_id",userId).eq("exam_profile_id",profile.id).gte("exception_date",plan.week_start_date).lte("exception_date",plan.week_end_date),
@@ -20,20 +21,36 @@ export async function loadAdaptiveBase(client:Client,userId:string,profile:any,p
   client.from("revision_schedules").select("*,curriculum_nodes(name,subject_id,subjects(name))").eq("user_id",userId).eq("exam_profile_id",profile.id).in("status",["scheduled","due"]),
   client.from("task_reschedule_events").select("task_id").eq("user_id",userId),
   client.from("study_sessions").select("duration_minutes,started_at,ended_at").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","completed").gte("ended_at",`${plan.week_start_date}T00:00:00Z`),
+  loadP48DailyCapacityOverrides(client,userId,profile.id,plan.week_start_date,plan.week_end_date),
  ]);for(const result of[availability,calendar,exceptionRows,tasks,progress,revisions,reschedules,sessions])if(result.error)throw result.error;
- const dayCapacities:Record<string,number>={};for(let index=0;index<7;index++){const date=addDays(plan.week_start_date,index);dayCapacities[date]=calculateEffectiveDayCapacity({date,weeklyAvailability:windows(availability.data??[]),calendarPeriods:periods(calendar.data??[]),scheduleExceptions:exceptions(exceptionRows.data??[])});}
+ const dayCapacities:Record<string,number>={};for(let index=0;index<7;index++){const date=addDays(plan.week_start_date,index);const capacityContext={date,weeklyAvailability:windows(availability.data??[]),calendarPeriods:periods(calendar.data??[])};const calculatedBase=calculateEffectiveDayCapacity({...capacityContext,scheduleExceptions:[]});const calculated=calculateEffectiveDayCapacity({...capacityContext,scheduleExceptions:exceptions(exceptionRows.data??[])});dayCapacities[date]=planningCapacityForDate(date,calculated,dailyOverrides,calculatedBase);}
  const progressMap=new Map<string,any>((progress.data??[]).map((row:any)=>[row.curriculum_node_id,row]));const postpone=new Map<string,number>();for(const row of reschedules.data??[])postpone.set(row.task_id,(postpone.get(row.task_id)??0)+1);
  const adaptiveTasks=(tasks.data??[]).map((row:any)=>({id:row.id,subjectId:row.subject_id,curriculumNodeId:row.curriculum_node_id,title:row.title,plannedDate:row.planned_date,estimatedMinutes:row.estimated_minutes,completedMinutes:row.task_progress?.[0]?.completed_minutes??0,importance:row.importance,priorityScore:row.priority_score,status:row.status,createdAt:row.created_at,postponementCount:postpone.get(row.id)??0,topicState:progressMap.get(row.curriculum_node_id)?.state??null,masteryLevel:progressMap.get(row.curriculum_node_id)?.mastery_level??null,sourceReason:row.source_reason,revisionScheduleId:row.revision_schedule_id}));
  const linked=new Set((tasks.data??[]).map((row:any)=>row.revision_schedule_id).filter(Boolean));const today=calendarToday();const allAdaptiveRevisions=(revisions.data??[]).map((row:any)=>({id:row.id,subjectId:row.curriculum_nodes.subject_id,curriculumNodeId:row.curriculum_node_id,title:`${row.curriculum_nodes.subjects?.name??"Ders"}: ${row.curriculum_nodes.name} tekrarı`,scheduledFor:row.scheduled_for,estimatedMinutes:row.estimated_minutes,revisionType:row.revision_type,urgency:getRevisionUrgency(row.scheduled_for,today),masteryLevel:row.source_mastery_level}));const adaptiveRevisions=allAdaptiveRevisions.filter((row:any)=>!linked.has(row.id));
  const actualMinutesByDate:Record<string,number>={};for(const row of sessions.data??[]){const stamp=row.started_at??row.ended_at;if(!stamp)continue;const date=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Istanbul"}).format(new Date(stamp));actualMinutesByDate[date]=(actualMinutesByDate[date]??0)+(row.duration_minutes??0);}
  const plannedConsumedMinutesByDate:Record<string,number>={};for(const row of tasks.data??[]){if(!row.planned_date)continue;const completed=Number(row.task_progress?.[0]?.completed_minutes??0);const consumed=row.status==="completed"?Number(row.estimated_minutes??0):Math.min(Number(row.estimated_minutes??0),completed);plannedConsumedMinutesByDate[row.planned_date]=(plannedConsumedMinutesByDate[row.planned_date]??0)+consumed;}
- return{availability:availability.data??[],calendar:calendar.data??[],exceptions:exceptionRows.data??[],tasks:tasks.data??[],adaptiveTasks,adaptiveRevisions,allAdaptiveRevisions,dayCapacities,actualMinutesByDate,plannedConsumedMinutesByDate,actualMinutes:(sessions.data??[]).reduce((s:number,row:any)=>s+(row.duration_minutes??0),0)};
+ return{availability:availability.data??[],calendar:calendar.data??[],exceptions:exceptionRows.data??[],dailyCapacityOverrides:dailyOverrides,tasks:tasks.data??[],adaptiveTasks,adaptiveRevisions,allAdaptiveRevisions,dayCapacities,actualMinutesByDate,plannedConsumedMinutesByDate,actualMinutes:(sessions.data??[]).reduce((s:number,row:any)=>s+(row.duration_minutes??0),0)};
 }
 
-export async function persistTasksToBacklog(client:Client,userId:string,planId:string,taskIds:string[]){
- if(!taskIds.length)return{applied:false,taskIds:[]};
- const deferred=await client.from("tasks").update({planned_date:null,status:"rescheduled"}).eq("user_id",userId).eq("weekly_plan_id",planId).in("id",taskIds).not("planned_date","is",null).in("status",["planned","ready","rescheduled"]);
- if(deferred.error)throw deferred.error;return{applied:true,taskIds};
+export async function applyScheduleExceptionWithCompensation(
+ client:Client,
+ row:{user_id:string;exam_profile_id:string;exception_date:string;exception_type:string;minutes_delta:number;note:string},
+ replan:()=>Promise<any>,
+){
+ const inserted=await client.from("schedule_exceptions").insert(row).select("id").single();
+ if(inserted.error)throw inserted.error;
+ try{return await replan();}catch(error){
+  const compensated=await client.from("schedule_exceptions").delete().eq("id",inserted.data.id).eq("user_id",row.user_id).eq("exam_profile_id",row.exam_profile_id);
+  if(compensated.error){const failure=new Error("SCHEDULE_EXCEPTION_COMPENSATION_FAILED");(failure as any).cause={replan:error,compensation:compensated.error};throw failure;}
+  throw error;
+ }
+}
+
+export function resolveNextPlanningBudget(input:{planAvailableMinutes:number;planPlanningBudgetMinutes:number|null|undefined;outputAvailableMinutes:number;hasDailyCapacityOverrides:boolean}){
+ const existingBudget=input.planPlanningBudgetMinutes==null?null:Number(input.planPlanningBudgetMinutes);
+ if(input.hasDailyCapacityOverrides)return Math.min(existingBudget??input.outputAvailableMinutes,input.outputAvailableMinutes);
+ const manualFullCapacityBudget=Number(existingBudget??0)>=Number(input.planAvailableMinutes??0);
+ return manualFullCapacityBudget?input.outputAvailableMinutes:Math.min(existingBudget??Math.floor(input.outputAvailableMinutes*.85),Math.floor(input.outputAvailableMinutes*.85));
 }
 
 export async function recalculateCurrentPlan(client:Client,userId:string,profile:any,plan:any,trigger:any,serviceRole=false){
@@ -45,8 +62,7 @@ export async function recalculateCurrentPlan(client:Client,userId:string,profile
  const baselineCapacity=calculateWeeklyAvailableMinutes(windows(base.availability));if(output.availableMinutes<baselineCapacity)risks.push({riskType:"capacity_shortfall",severity:output.availableMinutes<baselineCapacity*.6?"critical":"attention",reasonCode:"EFFECTIVE_CAPACITY_REDUCED",metricValue:output.availableMinutes,message:"Takvim istisnaları haftalık çalışma kapasitesini düşürdü."});
  if(revisionDemand>output.revisionBudgetMinutes)risks.push({riskType:"revision_overload",severity:revisionDemand>output.revisionBudgetMinutes*1.5?"risk":"attention",reasonCode:"REVISION_BUDGET_EXCEEDED",metricValue:revisionDemand,message:"Tekrar talebi haftalık tekrar bütçesini aşıyor."});
  if(output.changedTaskCount===0){const [storedBacklog,storedRisks]=await Promise.all([client.from("backlog_states").select("open_task_count,estimated_remaining_minutes,remaining_capacity_minutes,severity").eq("user_id",userId).eq("weekly_plan_id",plan.id).maybeSingle(),client.from("plan_risks").select("risk_type").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","open")]);if(storedBacklog.error)throw storedBacklog.error;if(storedRisks.error)throw storedRisks.error;const storedTypes=(storedRisks.data??[]).map((row:any)=>row.risk_type).sort().join(","),nextTypes=risks.map(row=>row.riskType).sort().join(",");const snapshotSame=storedBacklog.data&&storedBacklog.data.open_task_count===backlog.openTaskCount&&storedBacklog.data.estimated_remaining_minutes===backlog.estimatedRemainingMinutes&&storedBacklog.data.remaining_capacity_minutes===backlog.remainingCapacityMinutes&&storedBacklog.data.severity===backlog.severity&&storedTypes===nextTypes;if(snapshotSame)return{idempotent:true,noChange:true,decision:output,backlog,risks,dayCapacities:base.dayCapacities};}
- const snapshotKey=`${backlog.openTaskCount}:${backlog.estimatedRemainingMinutes}:${backlog.remainingCapacityMinutes}:${backlog.severity}|${risks.map(row=>row.riskType).sort().join(",")}`;const manualFullCapacityBudget=Number(plan.planning_budget_minutes??0)>=Number(plan.available_minutes??0);const nextPlanningBudget=manualFullCapacityBudget?output.availableMinutes:Math.min(Number(plan.planning_budget_minutes??Math.floor(output.availableMinutes*.85)),Math.floor(output.availableMinutes*.85));const payload={weeklyPlanId:plan.id,...output,dedupeKey:`${output.dedupeKey}|snapshot:${snapshotKey}`,explanation:output.changedTaskCount===0&&risks.length?"Kapasite ve risk durumu güncel koşullara göre yenilendi.":output.explanation,planningBudgetMinutes:nextPlanningBudget,backlog:{...backlog,capacityRatio:Number.isFinite(backlog.capacityRatio)?backlog.capacityRatio:999},risks};
- await persistTasksToBacklog(client,userId,plan.id,output.tasksToBacklog);
+ const snapshotKey=`${backlog.openTaskCount}:${backlog.estimatedRemainingMinutes}:${backlog.remainingCapacityMinutes}:${backlog.severity}|${risks.map(row=>row.riskType).sort().join(",")}`;const nextPlanningBudget=resolveNextPlanningBudget({planAvailableMinutes:Number(plan.available_minutes??0),planPlanningBudgetMinutes:plan.planning_budget_minutes,outputAvailableMinutes:output.availableMinutes,hasDailyCapacityOverrides:(base.dailyCapacityOverrides?.size??0)>0});const payload={weeklyPlanId:plan.id,...output,dedupeKey:`${output.dedupeKey}|snapshot:${snapshotKey}`,explanation:output.changedTaskCount===0&&risks.length?"Kapasite ve risk durumu güncel koşullara göre yenilendi.":output.explanation,planningBudgetMinutes:nextPlanningBudget,backlog:{...backlog,capacityRatio:Number.isFinite(backlog.capacityRatio)?backlog.capacityRatio:999},risks};
  const applied=serviceRole?await client.rpc("telegram_apply_plan_revision",{p_user_id:userId,p_payload:payload}):await client.rpc("apply_plan_revision",{p_payload:payload});if(applied.error)throw applied.error;return{...applied.data,decision:output,backlog,risks,dayCapacities:base.dayCapacities};
 }
 

@@ -56,6 +56,40 @@ export function replanWeeklyPlanV1(context: ReplanContext): ReplanResult {
       || left.id.localeCompare(right.id));
   let revisionMinutes = 0;
   const creates: ReplanResult["tasksToCreate"] = [];
+
+  const placementTasks = activeTasks.filter((task) => !["in_progress", "partially_completed"].includes(task.status));
+  let pendingPlacementTasks = placementTasks;
+
+  // A capacity edit must be a stable repair, not a fresh bin-packing pass. Keep
+  // every still-valid assignment on its current day first; only overflow or
+  // previously unscheduled work is eligible for relocation. This also makes a
+  // pure capacity increase a no-op when the existing plan already fits.
+  if (context.trigger === "capacity_change") {
+    const pending: AdaptiveTask[] = [];
+    for (const task of [...placementTasks].sort((left, right) =>
+      (left.plannedDate ?? context.weekEnd).localeCompare(right.plannedDate ?? context.weekEnd)
+      || taskRank(left) - taskRank(right)
+      || right.priorityScore - left.priorityScore
+      || left.createdAt.localeCompare(right.createdAt)
+      || left.id.localeCompare(right.id))) {
+      const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
+      if (remaining === 0) {
+        keep.push(task.id);
+        continue;
+      }
+      const current = task.plannedDate;
+      if (current && current >= context.currentDate && current in dayRemaining
+        && used + remaining <= planBudget && (dayRemaining[current] ?? 0) >= remaining) {
+        keep.push(task.id);
+        used += remaining;
+        dayRemaining[current] = (dayRemaining[current] ?? 0) - remaining;
+      } else {
+        pending.push(task);
+      }
+    }
+    pendingPlacementTasks = pending;
+  }
+
   for (const revision of selectedRevisions) {
     if (revisionMinutes + revision.estimatedMinutes > revisionBudget || used + revision.estimatedMinutes > planBudget) continue;
     const earliest = revision.scheduledFor < context.currentDate ? context.currentDate : revision.scheduledFor;
@@ -84,14 +118,13 @@ export function replanWeeklyPlanV1(context: ReplanContext): ReplanResult {
     });
   }
 
-  const placementTasks = activeTasks.filter((task) => !["in_progress", "partially_completed"].includes(task.status));
   if (!allowPullForward) {
-    placementTasks.sort((left, right) => (left.plannedDate ?? context.currentDate).localeCompare(right.plannedDate ?? context.currentDate)
+    pendingPlacementTasks.sort((left, right) => (left.plannedDate ?? context.currentDate).localeCompare(right.plannedDate ?? context.currentDate)
       || taskRank(left) - taskRank(right)
       || right.priorityScore - left.priorityScore
       || left.id.localeCompare(right.id));
   }
-  for (const task of placementTasks) {
+  for (const task of pendingPlacementTasks) {
     const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
     if (remaining === 0) {
       keep.push(task.id);

@@ -1,5 +1,6 @@
 import { buildP48WeekBlocks, calculateEffectiveDayCapacity } from "./planning.bundle.js";
 import { aggregateCompletedStudySessions } from "./completed-study.ts";
+import { loadP48DailyCapacityOverrides, planningCapacityForDate } from "./capacity-overrides.ts";
 
 const P48_SUBJECT_TARGETS = [
   { subjectId: "20000000-0000-0000-0000-000000000006", subjectName: "Hukuk", weeklyMinutes: 450, scoreWeight: 20 },
@@ -100,7 +101,7 @@ export async function ensureP48WeekPlanForService(
   const current = await loadPlanWithTasks(client, userId, profile.id, weekStart);
   if (current.plan) return { configured: true, created: false, ...current };
 
-  const [availability, periods, exceptions, targets, sessions] = await Promise.all([
+  const [availability, periods, exceptions, targets, sessions, dailyOverrides] = await Promise.all([
     client.from("weekly_availability").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id).eq("is_active", true),
     client.from("calendar_periods").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id),
     client.from("schedule_exceptions").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id)
@@ -110,6 +111,7 @@ export async function ensureP48WeekPlanForService(
       .eq("user_id", userId).eq("exam_profile_id", profile.id),
     client.from("study_sessions").select("resource_id,duration_minutes,started_at")
       .eq("user_id", userId).eq("exam_profile_id", profile.id).eq("status", "completed"),
+    loadP48DailyCapacityOverrides(client, userId, profile.id, weekStart, addDays(weekStart, 6)),
   ]);
   for (const result of [availability, periods, exceptions, targets, sessions]) if (result.error) throw result.error;
 
@@ -118,13 +120,21 @@ export async function ensureP48WeekPlanForService(
   const dayCapacities: Record<string, number> = {};
   for (let index = 0; index < 7; index += 1) {
     const date = addDays(weekStart, index);
-    const effectiveCapacity = calculateEffectiveDayCapacity({
+    const capacityContext = {
       date,
       weeklyAvailability: p48Windows(availability.data ?? []),
       calendarPeriods: p48Periods(periods.data ?? []),
+    };
+    const baseCapacity = calculateEffectiveDayCapacity({
+      ...capacityContext,
+      scheduleExceptions: [],
+    });
+    const effectiveCapacity = calculateEffectiveDayCapacity({
+      ...capacityContext,
       scheduleExceptions: p48Exceptions(exceptions.data ?? []),
     });
-    dayCapacities[date] = date < referenceDate ? 0 : Math.max(0, effectiveCapacity - (actualByDate.get(date) ?? 0));
+    const planningCapacity = planningCapacityForDate(date, effectiveCapacity, dailyOverrides, baseCapacity);
+    dayCapacities[date] = date < referenceDate ? 0 : Math.max(0, planningCapacity - (actualByDate.get(date) ?? 0));
   }
 
   const resources = (targets.data ?? []).map((row: any) => ({

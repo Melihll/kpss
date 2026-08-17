@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { replanWeeklyPlanV1 } from "./replan";
 import type { AdaptiveRevision, AdaptiveTask, ReplanContext } from "./types";
@@ -42,6 +43,24 @@ const ctx = (tasks: AdaptiveTask[], revisions: AdaptiveRevision[] = [], override
   trigger: "manual_request",
   ...overrides,
 });
+
+function foundationIncidentFixture() {
+  const plan = JSON.parse(readFileSync(new URL("../../../../docs/esra_kpss_p48_foundation_week1_v2_canonical_2026-08-17.json", import.meta.url), "utf8"));
+  const tasks: AdaptiveTask[] = plan.days.flatMap((day: any) => day.tasks
+    .filter((task: any) => task.kind !== "reserve")
+    .map((task: any) => t(`${day.date}-${task.order}`, {
+      title: `${task.subject} · ${task.topic}`,
+      plannedDate: day.date,
+      estimatedMinutes: task.minutes,
+      priorityScore: 60,
+      createdAt: `${day.date}T00:00:00Z`,
+    })));
+  const dailyCapacities = Object.fromEntries(plan.days.map((day: any) => [
+    day.date,
+    day.capacity_minutes - (day.date === plan.plan_end ? plan.reserve_minutes : 0),
+  ]));
+  return { plan, tasks, dailyCapacities };
+}
 
 describe("Priority and Dynamic Replanning V1", () => {
   it("keeps core before optional and preserves overflow as backlog", () => {
@@ -127,6 +146,46 @@ describe("Priority and Dynamic Replanning V1", () => {
     expect(repeated.tasksToBacklog).toEqual([]);
     expect(repeated.tasksToMove).toEqual([]);
     expect(repeated.changedTaskCount).toBe(0);
+  });
+
+  it("keeps the real 1785-minute foundation plan stable after a Monday +60 increase", () => {
+    const { plan, tasks, dailyCapacities } = foundationIncidentFixture();
+    const increased = { ...dailyCapacities, [plan.plan_start]: dailyCapacities[plan.plan_start] + 60 };
+    const result = replanWeeklyPlanV1(ctx(tasks, [], {
+      weekStart: plan.plan_start,
+      weekEnd: plan.plan_end,
+      currentDate: plan.plan_start,
+      planningBudgetMinutes: plan.academic_minutes,
+      dailyCapacities: increased,
+      trigger: "capacity_change",
+    }));
+
+    expect(tasks).toHaveLength(30);
+    expect(tasks.reduce((sum, task) => sum + task.estimatedMinutes, 0)).toBe(1785);
+    expect(result.availableMinutes).toBe(1845);
+    expect(result.afterPlannedMinutes).toBe(1785);
+    expect(result.tasksToMove).toEqual([]);
+    expect(result.tasksToBacklog).toEqual([]);
+    expect(result.tasksToKeep).toHaveLength(30);
+  });
+
+  it("repairs only capacity-invalid work after a decrease and leaves other dates stable", () => {
+    const { plan, tasks, dailyCapacities } = foundationIncidentFixture();
+    const decreased = { ...dailyCapacities, [plan.plan_start]: dailyCapacities[plan.plan_start] - 30 };
+    const result = replanWeeklyPlanV1(ctx(tasks, [], {
+      weekStart: plan.plan_start,
+      weekEnd: plan.plan_end,
+      currentDate: plan.plan_start,
+      planningBudgetMinutes: plan.academic_minutes,
+      dailyCapacities: decreased,
+      trigger: "capacity_change",
+    }));
+
+    expect(result.availableMinutes).toBe(1755);
+    expect(result.tasksToMove).toEqual([]);
+    expect(result.tasksToBacklog).toEqual(["2026-08-17-4"]);
+    expect(result.tasksToKeep).toHaveLength(29);
+    expect(result.tasksToKeep.filter((id) => !id.startsWith(plan.plan_start))).toHaveLength(26);
   });
 
   it("uses actual study time without pulling future work forward after overspending", () => {
