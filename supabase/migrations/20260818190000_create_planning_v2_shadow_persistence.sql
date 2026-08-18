@@ -1,4 +1,4 @@
-﻿begin;
+begin;
 
 -- ============================================================
 -- Planning Engine V2 — Shadow Persistence
