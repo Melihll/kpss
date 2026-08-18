@@ -82,6 +82,96 @@ describe("Planning V2 shadow persistence adapters", () => {
     );
   });
 
+  it("versions snapshot idempotency by planner version", () => {
+    const snapshot =
+      buildFoundationWeekGoldenSnapshotV2();
+
+    const nextPlannerSnapshot = {
+      ...snapshot,
+      meta: {
+        ...snapshot.meta,
+        versions: {
+          ...snapshot.meta.versions,
+          plannerVersion:
+            "planning-v2-local-repair-v2",
+        },
+      },
+    };
+
+    expect(
+      planningV2SnapshotIdempotencyKey(
+        snapshot,
+      ),
+    ).not.toBe(
+      planningV2SnapshotIdempotencyKey(
+        nextPlannerSnapshot,
+      ),
+    );
+
+    expect(
+      planningV2SnapshotIdempotencyKey(
+        nextPlannerSnapshot,
+      ),
+    ).toBe(
+      planningV2SnapshotIdempotencyKey(
+        nextPlannerSnapshot,
+      ),
+    );
+  });
+
+  it("versions proposal and apply identities by planner version", () => {
+    const snapshot =
+      buildFoundationWeekGoldenSnapshotV2();
+
+    const proposal =
+      buildLocalRepairProposalV1({
+        snapshot,
+        repair:
+          repairCurrentPlanLocallyV1(
+            snapshot,
+          ),
+      });
+
+    const nextPlannerProposal = {
+      ...proposal,
+      versions: {
+        ...proposal.versions,
+        plannerVersion:
+          "planning-v2-local-repair-v2",
+      },
+    };
+
+    expect(
+      planningV2ProposalIdempotencyKey(
+        proposal,
+      ),
+    ).not.toBe(
+      planningV2ProposalIdempotencyKey(
+        nextPlannerProposal,
+      ),
+    );
+
+    expect(
+      planningV2ApplyDedupeKey(
+        proposal,
+      ),
+    ).not.toBe(
+      planningV2ApplyDedupeKey(
+        nextPlannerProposal,
+      ),
+    );
+
+    expect(
+      planningV2ProposalIdempotencyKey(
+        nextPlannerProposal,
+      ),
+    ).toBe(
+      planningV2ProposalIdempotencyKey(
+        nextPlannerProposal,
+      ),
+    );
+  });
+
   it("maps learner state without inventing memory values", () => {
     const state =
       deriveLearnerUnitStateV1({

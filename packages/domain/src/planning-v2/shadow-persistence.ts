@@ -158,6 +158,7 @@ export function planningV2SnapshotIdempotencyKey(
     snapshot.examProfileId,
     snapshot.meta.snapshotId,
     snapshot.meta.trigger,
+    snapshot.meta.versions.plannerVersion,
   ].join(":");
 }
 
@@ -169,6 +170,7 @@ export function planningV2ProposalIdempotencyKey(
     proposal.userId,
     proposal.examProfileId,
     proposal.proposalId,
+    proposal.versions.plannerVersion,
   ].join(":");
 }
 
@@ -180,6 +182,7 @@ export function planningV2ApplyDedupeKey(
     proposal.userId,
     proposal.examProfileId,
     proposal.proposalId,
+    proposal.versions.plannerVersion,
   ].join(":");
 }
 

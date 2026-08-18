@@ -1831,7 +1831,8 @@ function planningV2SnapshotIdempotencyKey(snapshot) {
     snapshot.userId,
     snapshot.examProfileId,
     snapshot.meta.snapshotId,
-    snapshot.meta.trigger
+    snapshot.meta.trigger,
+    snapshot.meta.versions.plannerVersion
   ].join(":");
 }
 function planningV2ProposalIdempotencyKey(proposal) {
@@ -1839,7 +1840,8 @@ function planningV2ProposalIdempotencyKey(proposal) {
     "planning-v2-proposal",
     proposal.userId,
     proposal.examProfileId,
-    proposal.proposalId
+    proposal.proposalId,
+    proposal.versions.plannerVersion
   ].join(":");
 }
 function planningV2ApplyDedupeKey(proposal) {
@@ -1847,7 +1849,8 @@ function planningV2ApplyDedupeKey(proposal) {
     "planning-v2-apply",
     proposal.userId,
     proposal.examProfileId,
-    proposal.proposalId
+    proposal.proposalId,
+    proposal.versions.plannerVersion
   ].join(":");
 }
 function toPlanningV2SnapshotRow(snapshot, context = {}, snapshotHash) {

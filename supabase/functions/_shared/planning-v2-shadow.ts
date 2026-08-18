@@ -37,7 +37,7 @@ export interface RunPlanningV2ShadowDecisionInput {
 
 const VERSIONS = Object.freeze({
   plannerVersion:
-    "planning-v2-local-repair-v1",
+    "planning-v2-local-repair-v2",
 
   scoringVersion:
     "candidate-scoring-v1",
