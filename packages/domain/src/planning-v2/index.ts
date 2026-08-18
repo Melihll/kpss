@@ -6,3 +6,4 @@ export * from "./fixtures/foundation-week";
 export * from "./learner-state";
 export * from "./feasibility";
 export * from "./candidate-generator";
+export * from "./candidate-scoring";
