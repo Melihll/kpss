@@ -5,3 +5,4 @@ export * from "./snapshot";
 export * from "./fixtures/foundation-week";
 export * from "./learner-state";
 export * from "./feasibility";
+export * from "./candidate-generator";
