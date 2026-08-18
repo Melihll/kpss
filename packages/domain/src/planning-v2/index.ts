@@ -7,3 +7,7 @@ export * from "./learner-state";
 export * from "./feasibility";
 export * from "./candidate-generator";
 export * from "./candidate-scoring";
+export * from "./local-repair";
+export * from "./proposal-builder";
+export * from "./proposal-validator";
+export * from "./planning-decision";
