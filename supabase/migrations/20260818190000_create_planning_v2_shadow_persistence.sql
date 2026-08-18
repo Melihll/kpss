@@ -194,7 +194,7 @@ create table public.planning_v2_snapshots (
   trigger_type text not null,
   requested_scope text not null,
 
-  current_date date not null,
+  "current_date" date not null,
   week_start_date date not null,
   week_end_date date not null,
 
@@ -291,7 +291,7 @@ create table public.planning_v2_snapshots (
 
   constraint planning_v2_snapshots_current_date_valid
     check (
-      current_date between
+      "current_date" between
         week_start_date
         and week_end_date
     ),
