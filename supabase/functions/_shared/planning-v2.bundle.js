@@ -825,7 +825,7 @@ function repairCurrentPlanLocallyV1(snapshot) {
     });
   }
   const unsupportedViolations = feasibilityBefore.violations.filter(
-    (violation2) => violation2.code !== "DAILY_OVERLOAD" && violation2.code !== "WEEKLY_REMAINING_CAPACITY_EXCEEDED"
+    (violation2) => violation2.code !== "DAILY_OVERLOAD" && violation2.code !== "WEEKLY_REMAINING_CAPACITY_EXCEEDED" && violation2.code !== "PAST_DUE_REMAINING_WORK"
   );
   if (unsupportedViolations.length > 0) {
     return Object.freeze({
@@ -865,6 +865,68 @@ function repairCurrentPlanLocallyV1(snapshot) {
   }
   const moves = [];
   const backlog = [];
+  const pastDueTasks = snapshot.existingTasks.filter(
+    (task) => task.plannedDate !== null && task.plannedDate < snapshot.meta.currentDate && task.remainingMinutes > 0 && !task.isCompleted
+  ).sort((a, b) => {
+    const dateOrder = a.plannedDate.localeCompare(b.plannedDate);
+    if (dateOrder !== 0) return dateOrder;
+    if (a.isPartiallyCompleted !== b.isPartiallyCompleted) {
+      return a.isPartiallyCompleted ? 1 : -1;
+    }
+    if (a.remainingMinutes !== b.remainingMinutes) {
+      return b.remainingMinutes - a.remainingMinutes;
+    }
+    return a.taskId.localeCompare(b.taskId);
+  });
+  let unresolvedPastDueMinutes = 0;
+  for (const task of pastDueTasks) {
+    if (!movableTask(task)) {
+      unresolvedPastDueMinutes += task.remainingMinutes;
+      continue;
+    }
+    const fromDate = task.plannedDate;
+    const destination = availableDestinationDates(
+      snapshot,
+      task,
+      fromDate,
+      dayState
+    )[0] ?? null;
+    if (destination === null) {
+      backlog.push(
+        Object.freeze({
+          taskId: task.taskId,
+          fromDate,
+          remainingMinutes: task.remainingMinutes,
+          reasonCodes: Object.freeze([
+            "LOCAL_PAST_DUE_REPAIR",
+            "NO_FEASIBLE_REMAINING_WEEK_CAPACITY",
+            "BACKLOG_ONLY_AFTER_MOVE_SEARCH"
+          ])
+        })
+      );
+      continue;
+    }
+    destination.scheduledMinutes += task.remainingMinutes;
+    moves.push(
+      Object.freeze({
+        taskId: task.taskId,
+        fromDate,
+        toDate: destination.date,
+        remainingMinutes: task.remainingMinutes,
+        distanceDays: daysBetween(fromDate, destination.date),
+        reasonCodes: Object.freeze([
+          "LOCAL_PAST_DUE_REPAIR",
+          "MOVE_TO_NEAREST_FEASIBLE_FUTURE_DAY"
+        ])
+      })
+    );
+    const destinationBucket = tasksByDate.get(destination.date) ?? [];
+    destinationBucket.push({
+      ...task,
+      plannedDate: destination.date
+    });
+    tasksByDate.set(destination.date, destinationBucket);
+  }
   const orderedDays = [...dayState.values()].sort(
     (a, b) => a.date.localeCompare(b.date)
   );
@@ -965,7 +1027,7 @@ function repairCurrentPlanLocallyV1(snapshot) {
       }
     }
   }
-  const unresolvedOverloadMinutes = [...dayState.values()].reduce(
+  const unresolvedOverloadMinutes = unresolvedPastDueMinutes + [...dayState.values()].reduce(
     (sum2, day) => sum2 + Math.max(
       day.scheduledMinutes - day.capacityMinutes,
       0

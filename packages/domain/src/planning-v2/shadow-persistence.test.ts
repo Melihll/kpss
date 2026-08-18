@@ -210,6 +210,10 @@ describe("Planning V2 shadow persistence adapters", () => {
       buildFoundationWeekGoldenSnapshotV2({
         currentDate:
           "2026-08-18",
+
+        activeTaskIds: [
+          "task-01",
+        ],
       });
 
     const decision =

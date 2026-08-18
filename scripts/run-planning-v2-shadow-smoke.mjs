@@ -688,6 +688,52 @@ class FakeSupabase {
       this.tables.tasks[0].task_progress[0].completed_minutes =
         options.completedMinutes;
     }
+
+    if (options.pastDuePattern) {
+      const template = this.tables.tasks[0];
+      this.tables.tasks = [
+        {
+          ...template,
+          id: "past-partial",
+          title: "Synthetic partial carryover",
+          planned_date: "2026-08-17",
+          estimated_minutes: 90,
+          status: "partially_completed",
+          task_progress: [{ completed_minutes: 62 }],
+        },
+        {
+          ...template,
+          id: "past-75",
+          title: "Synthetic 75 minute carryover",
+          planned_date: "2026-08-17",
+          estimated_minutes: 75,
+          status: "rescheduled",
+          task_progress: [{ completed_minutes: 0 }],
+        },
+        {
+          ...template,
+          id: "past-45",
+          title: "Synthetic 45 minute carryover",
+          planned_date: "2026-08-17",
+          estimated_minutes: 45,
+          status: "rescheduled",
+          task_progress: [{ completed_minutes: 0 }],
+        },
+      ];
+
+      this.tables.tasks.push(
+        ...Array.from({ length: 7 }, (_, index) => ({
+          ...template,
+          id: `completed-filler-${index}`,
+          title: `Synthetic completed filler ${index}`,
+          planned_date: "2026-08-18",
+          estimated_minutes: 1,
+          status: "completed",
+          completed_at: "2026-08-18T09:00:00Z",
+          task_progress: [{ completed_minutes: 1 }],
+        })),
+      );
+    }
   }
 
   from(table) {
@@ -1035,6 +1081,42 @@ try {
   assert.equal(lifecycleTask.isPartiallyCompleted, true);
 
   /*
+   * Synthetic production-shaped missed day: only the three past-due
+   * tasks move, including 28 remaining minutes on the partial task.
+   */
+  const missedDayClient = new FakeSupabase({ pastDuePattern: true });
+  const missedDay = await runPlanningV2ShadowDecision({
+    ...input,
+    client: missedDayClient,
+    trigger: "MISSED_DAY",
+  });
+
+  assert.equal(missedDay.evaluation.currentPlan.feasible, false);
+  assert.ok(
+    missedDay.evaluation.currentPlan.issueCodes.includes(
+      "PAST_DUE_REMAINING_WORK",
+    ),
+  );
+  assert.equal(missedDay.decision, "READY_TO_APPLY");
+  assert.equal(missedDay.changedTaskCount, 3);
+  assert.deepEqual(
+    missedDay.evaluation.v2.movedTaskIds.slice().sort(),
+    ["past-45", "past-75", "past-partial"],
+  );
+  assert.deepEqual(missedDay.evaluation.v2.backlogTaskIds, []);
+  assert.equal(
+    missedDay.evaluation.stability.completedTaskMutationCount,
+    0,
+  );
+  assert.equal(missedDay.evaluation.stability.activeTaskMutationCount, 0);
+  assert.equal(
+    missedDayClient.inserts.filter(
+      (item) => item.table.startsWith("planning_v2_"),
+    ).length,
+    2,
+  );
+
+  /*
    * Fake client intentionally implements no:
    *
    * update()
@@ -1083,7 +1165,7 @@ try {
   );
 
   console.log(
-    "   bridge scenarios:     5",
+    "   bridge scenarios:     6",
   );
 }
 finally {

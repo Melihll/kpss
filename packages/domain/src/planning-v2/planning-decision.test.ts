@@ -174,13 +174,17 @@ describe("Planning Decision Pipeline V2", () => {
     ).toBe("task-05");
   });
 
-  it("blocks unsupported past-due repair instead of globally replanning", () => {
+  it("blocks past-due repair when an active task is immutable", () => {
     const result =
       decidePlanningActionV2({
         snapshot:
           buildFoundationWeekGoldenSnapshotV2({
             currentDate:
               "2026-08-18",
+
+            activeTaskIds: [
+              "task-01",
+            ],
           }),
       });
 
