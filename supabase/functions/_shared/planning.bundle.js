@@ -719,6 +719,22 @@ function taskRank(task) {
   if (task.importance === "important") return 5;
   return 6;
 }
+var remainingTaskMinutes2 = (task) => Math.max(0, task.estimatedMinutes - task.completedMinutes);
+function minimumRepairTasks(tasks, overloadMinutes) {
+  if (overloadMinutes <= 0) return /* @__PURE__ */ new Set();
+  const candidates = [...tasks].sort((left, right) => remainingTaskMinutes2(right) - remainingTaskMinutes2(left) || taskRank(right) - taskRank(left) || left.priorityScore - right.priorityScore || left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id));
+  const selected = /* @__PURE__ */ new Set();
+  let repairedMinutes = 0;
+  for (const task of candidates) {
+    selected.add(task.id);
+    repairedMinutes += remainingTaskMinutes2(task);
+    if (repairedMinutes >= overloadMinutes) break;
+  }
+  return selected;
+}
+function calendarDistance(left, right) {
+  return Math.abs(Date.parse(`${left}T12:00:00Z`) - Date.parse(`${right}T12:00:00Z`)) / 864e5;
+}
 function calculatePriorityV1(input) {
   return Math.max(0, Math.min(100, Math.round(Object.values(input).reduce((sum, value) => sum + value, 0))));
 }
@@ -728,7 +744,7 @@ function replanWeeklyPlanV1(context) {
   const revisionBudget = calculateWeeklyRevisionBudget(planBudget);
   const dayRemaining = Object.fromEntries(Object.entries(context.dailyCapacities).map(([date, minutes]) => [
     date,
-    date < context.currentDate ? 0 : Math.max(0, minutes - (context.actualMinutesByDate?.[date] ?? 0))
+    date < context.currentDate ? 0 : minutes - (context.actualMinutesByDate?.[date] ?? 0)
   ]));
   const dates = Object.keys(dayRemaining).sort();
   const activeTasks = context.tasks.filter((task) => !["completed", "cancelled", "missed"].includes(task.status)).sort((left, right) => taskRank(left) - taskRank(right) || right.priorityScore - left.priorityScore || left.id.localeCompare(right.id));
@@ -741,10 +757,10 @@ function replanWeeklyPlanV1(context) {
   let used = 0;
   for (const task of activeTasks.filter((item) => ["in_progress", "partially_completed"].includes(item.status))) {
     keep.push(task.id);
-    const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
+    const remaining = remainingTaskMinutes2(task);
     used += remaining;
     if (task.plannedDate && task.plannedDate >= context.currentDate && task.plannedDate in dayRemaining) {
-      dayRemaining[task.plannedDate] = Math.max(0, dayRemaining[task.plannedDate] - remaining);
+      dayRemaining[task.plannedDate] = dayRemaining[task.plannedDate] - remaining;
     }
   }
   const selectedRevisions = context.trigger === "study_deviation" ? [] : [...context.revisions].sort((left, right) => urgencyRank[left.urgency] - urgencyRank[right.urgency] || masteryRank[left.masteryLevel] - masteryRank[right.masteryLevel] || left.id.localeCompare(right.id));
@@ -755,7 +771,7 @@ function replanWeeklyPlanV1(context) {
   if (context.trigger === "capacity_change") {
     const pending = [];
     for (const task of [...placementTasks].sort((left, right) => (left.plannedDate ?? context.weekEnd).localeCompare(right.plannedDate ?? context.weekEnd) || taskRank(left) - taskRank(right) || right.priorityScore - left.priorityScore || left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id))) {
-      const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
+      const remaining = remainingTaskMinutes2(task);
       if (remaining === 0) {
         keep.push(task.id);
         continue;
@@ -770,6 +786,44 @@ function replanWeeklyPlanV1(context) {
       }
     }
     pendingPlacementTasks = pending;
+  } else if (context.trigger === "study_deviation") {
+    const pending = [];
+    const tasksByDate = /* @__PURE__ */ new Map();
+    for (const task of placementTasks) {
+      const remaining = remainingTaskMinutes2(task);
+      if (remaining === 0) {
+        keep.push(task.id);
+        continue;
+      }
+      const current = task.plannedDate;
+      if (current && current >= context.currentDate && current in dayRemaining) {
+        const scheduled = tasksByDate.get(current) ?? [];
+        scheduled.push(task);
+        tasksByDate.set(current, scheduled);
+      } else if (current !== null) {
+        pending.push(task);
+      }
+    }
+    const scheduledTasks = [...tasksByDate.values()].flat().concat(pending);
+    const scheduledMinutes = scheduledTasks.reduce((sum, task) => sum + remainingTaskMinutes2(task), 0);
+    const budgetBacklog = minimumRepairTasks(scheduledTasks, used + scheduledMinutes - planBudget);
+    tasksToBacklog.push(...budgetBacklog);
+    for (const date of dates) {
+      const scheduled = (tasksByDate.get(date) ?? []).filter((task) => !budgetBacklog.has(task.id));
+      const scheduledMinutes2 = scheduled.reduce((sum, task) => sum + remainingTaskMinutes2(task), 0);
+      const displaced = minimumRepairTasks(scheduled, scheduledMinutes2 - Math.max(0, dayRemaining[date] ?? 0));
+      for (const task of scheduled) {
+        if (displaced.has(task.id)) {
+          pending.push(task);
+          continue;
+        }
+        const remaining = remainingTaskMinutes2(task);
+        keep.push(task.id);
+        used += remaining;
+        dayRemaining[date] = (dayRemaining[date] ?? 0) - remaining;
+      }
+    }
+    pendingPlacementTasks = pending.filter((task) => !budgetBacklog.has(task.id));
   }
   for (const revision of selectedRevisions) {
     if (revisionMinutes + revision.estimatedMinutes > revisionBudget || used + revision.estimatedMinutes > planBudget) continue;
@@ -802,14 +856,22 @@ function replanWeeklyPlanV1(context) {
     pendingPlacementTasks.sort((left, right) => (left.plannedDate ?? context.currentDate).localeCompare(right.plannedDate ?? context.currentDate) || taskRank(left) - taskRank(right) || right.priorityScore - left.priorityScore || left.id.localeCompare(right.id));
   }
   for (const task of pendingPlacementTasks) {
-    const remaining = Math.max(0, task.estimatedMinutes - task.completedMinutes);
+    const remaining = remainingTaskMinutes2(task);
     if (remaining === 0) {
       keep.push(task.id);
       continue;
     }
     const current = task.plannedDate;
-    const earliest = allowPullForward ? context.currentDate : current && current > context.currentDate ? current : context.currentDate;
-    const chosen = used + remaining <= planBudget ? dates.find((date) => date >= earliest && (dayRemaining[date] ?? 0) >= remaining) : void 0;
+    let chosen;
+    if (used + remaining <= planBudget) {
+      if (context.trigger === "study_deviation") {
+        const origin = current && current >= context.currentDate ? current : context.currentDate;
+        chosen = dates.filter((date) => date >= context.currentDate && date !== current && !(current && current > context.currentDate && date === context.currentDate) && (dayRemaining[date] ?? 0) >= remaining).sort((left, right) => calendarDistance(left, origin) - calendarDistance(right, origin) || left.localeCompare(right))[0];
+      } else {
+        const earliest = allowPullForward ? context.currentDate : current && current > context.currentDate ? current : context.currentDate;
+        chosen = dates.find((date) => date >= earliest && (dayRemaining[date] ?? 0) >= remaining);
+      }
+    }
     if (!chosen) {
       if (current !== null) tasksToBacklog.push(task.id);
       continue;
