@@ -1,0 +1,43 @@
+﻿export const PLANNING_TRIGGERS_V2 = [
+  "STUDY_COMPLETED",
+  "STUDY_DEVIATION",
+  "CAPACITY_INCREASE",
+  "CAPACITY_DECREASE",
+  "MISSED_DAY",
+  "MASTERY_CHANGE",
+  "WEEKLY_REVIEW",
+  "MANUAL_REPLAN",
+] as const;
+
+export type PlanningTriggerV2 = (typeof PLANNING_TRIGGERS_V2)[number];
+
+export const REPLAN_SCOPES_V2 = [
+  "NO_REPLAN",
+  "LOCAL_CAPACITY_REPAIR",
+  "LOCAL_TASK_REPAIR",
+  "LEARNING_PATH_REPAIR",
+  "MISSED_DAY_REPAIR",
+  "WEEKLY_REOPTIMIZATION",
+  "MANUAL_REPLAN",
+] as const;
+
+export type ReplanScopeV2 = (typeof REPLAN_SCOPES_V2)[number];
+
+export const DEFAULT_REPLAN_SCOPE_V2: Readonly<
+  Record<PlanningTriggerV2, ReplanScopeV2>
+> = {
+  STUDY_COMPLETED: "NO_REPLAN",
+  STUDY_DEVIATION: "NO_REPLAN",
+  CAPACITY_INCREASE: "NO_REPLAN",
+  CAPACITY_DECREASE: "LOCAL_CAPACITY_REPAIR",
+  MISSED_DAY: "MISSED_DAY_REPAIR",
+  MASTERY_CHANGE: "NO_REPLAN",
+  WEEKLY_REVIEW: "WEEKLY_REOPTIMIZATION",
+  MANUAL_REPLAN: "MANUAL_REPLAN",
+};
+
+export function defaultReplanScopeV2(
+  trigger: PlanningTriggerV2,
+): ReplanScopeV2 {
+  return DEFAULT_REPLAN_SCOPE_V2[trigger];
+}
