@@ -775,6 +775,10 @@ try {
     0,
   );
 
+  assert.equal(first.evaluation.currentPlan.feasible, true);
+  assert.equal(first.evaluation.v2.changedTaskCount, 0);
+  assert.equal(first.evaluation.stability.changeRatio, 0);
+
   const snapshotInsert =
     client.inserts.find(
       (item) =>
@@ -946,6 +950,12 @@ try {
     first.snapshotHash,
   );
 
+  assert.deepEqual(
+    second.evaluation,
+    first.evaluation,
+    "idempotent second run produced a different evaluation",
+  );
+
   assert.equal(
     client.inserts.length,
     2,
@@ -997,6 +1007,9 @@ try {
     ["READY_TO_APPLY", "BLOCKED"].includes(decreased.decision),
     `capacity decrease was not repaired or blocked: ${decreased.decision}`,
   );
+  assert.equal(decreased.evaluation.currentPlan.feasible, false);
+  assert.equal(decreased.evaluation.currentPlan.planningBudgetMinutes, 1995);
+  assert.equal(decreased.evaluation.v2.decision, decreased.decision);
 
   /*
    * Lifecycle is status-driven: 90/90 with a partial status is not

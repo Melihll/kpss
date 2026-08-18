@@ -1,6 +1,7 @@
 ﻿import {
   buildPlanningSnapshotFromDbBundleV1,
   decidePlanningActionV2,
+  evaluatePlanningV2ShadowDecision,
   toPlanningV2ProposalRow,
   toPlanningV2SnapshotRow,
 } from "./planning-v2.bundle.js";
@@ -728,6 +729,12 @@ export async function runPlanningV2ShadowDecision(
       snapshot,
     });
 
+  const evaluation =
+    evaluatePlanningV2ShadowDecision({
+      snapshot,
+      decision,
+    });
+
   /*
    * ----------------------------------------------------------
    * SHADOW WRITE PHASE
@@ -846,6 +853,8 @@ export async function runPlanningV2ShadowDecision(
 
     applyRecommended:
       decision.applyRecommended,
+
+    evaluation,
 
     proposal:
       decision.proposal,

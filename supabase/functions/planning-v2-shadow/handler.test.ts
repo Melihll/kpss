@@ -65,6 +65,19 @@ function dependencies(options?: {
     changedTaskCount: 0,
     validationValid: true,
     applyRecommended: false,
+    evaluation: {
+      currentPlan: {
+        feasible: true,
+        issueCodes: [],
+      },
+      v2: {
+        movedTaskIds: [],
+        backlogTaskIds: [],
+      },
+      stability: {
+        changeRatio: 0,
+      },
+    },
   }));
 
   return {
@@ -153,6 +166,13 @@ describe("manual Planning V2 shadow Edge handler", () => {
       changedTaskCount: 0,
       validationValid: true,
       applyRecommended: false,
+      evaluation: {
+        currentPlanFeasible: true,
+        issueCodes: [],
+        changeRatio: 0,
+        movedTaskCount: 0,
+        backlogTaskCount: 0,
+      },
     });
     expect(deps.auth.filters).toEqual([
       ["id", PROFILE_ID],

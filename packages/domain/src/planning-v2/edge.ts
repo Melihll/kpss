@@ -7,6 +7,10 @@ export {
 } from "./planning-decision";
 
 export {
+  evaluatePlanningV2ShadowDecision,
+} from "./shadow-evaluation";
+
+export {
   toPlanningV2SnapshotRow,
   toPlanningV2ProposalRow,
 } from "./shadow-persistence";

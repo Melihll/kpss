@@ -389,17 +389,17 @@ function normalizePlanningSnapshotDbBundleV1(input) {
     )
   );
   const totalEstimatedMinutes = tasks.reduce(
-    (sum, task) => sum + task.estimatedMinutes,
+    (sum2, task) => sum2 + task.estimatedMinutes,
     0
   );
   const totalCompletedMinutes = tasks.reduce(
-    (sum, task) => sum + task.completedMinutes,
+    (sum2, task) => sum2 + task.completedMinutes,
     0
   );
   const totalRemainingMinutes = tasks.filter(
     (task) => !task.isCompleted
   ).reduce(
-    (sum, task) => sum + task.remainingMinutes,
+    (sum2, task) => sum2 + task.remainingMinutes,
     0
   );
   return Object.freeze({
@@ -442,11 +442,11 @@ function buildPlanningSnapshotFromDbBundleV1(input) {
     );
   }
   const availableMinutes = normalized.dailyCapacities.reduce(
-    (sum, day) => sum + day.grossCapacityMinutes,
+    (sum2, day) => sum2 + day.grossCapacityMinutes,
     0
   );
   const reserveMinutes = normalized.dailyCapacities.reduce(
-    (sum, day) => sum + day.reserveMinutes,
+    (sum2, day) => sum2 + day.reserveMinutes,
     0
   );
   const rawTaskById = new Map(
@@ -582,7 +582,7 @@ function checkCurrentPlanFeasibilityV2(snapshot) {
       date: null,
       taskIds: taskIds(pastDueTasks),
       excessMinutes: pastDueTasks.reduce(
-        (sum, task) => sum + task.remainingMinutes,
+        (sum2, task) => sum2 + task.remainingMinutes,
         0
       )
     });
@@ -597,7 +597,7 @@ function checkCurrentPlanFeasibilityV2(snapshot) {
       date: null,
       taskIds: taskIds(outsideWeekTasks),
       excessMinutes: outsideWeekTasks.reduce(
-        (sum, task) => sum + task.remainingMinutes,
+        (sum2, task) => sum2 + task.remainingMinutes,
         0
       )
     });
@@ -612,7 +612,7 @@ function checkCurrentPlanFeasibilityV2(snapshot) {
       date: null,
       taskIds: taskIds(missingCapacityTasks),
       excessMinutes: missingCapacityTasks.reduce(
-        (sum, task) => sum + task.remainingMinutes,
+        (sum2, task) => sum2 + task.remainingMinutes,
         0
       )
     });
@@ -625,7 +625,7 @@ function checkCurrentPlanFeasibilityV2(snapshot) {
       (task) => task.plannedDate === day.date
     );
     const scheduledRemainingMinutes = tasks.reduce(
-      (sum, task) => sum + task.remainingMinutes,
+      (sum2, task) => sum2 + task.remainingMinutes,
       0
     );
     const slackMinutes = Math.max(
@@ -658,9 +658,9 @@ function checkCurrentPlanFeasibilityV2(snapshot) {
   const scheduledFutureTaskIds = new Set(
     daily.flatMap((day) => day.taskIds)
   );
-  const totalRemainingWorkMinutes = relevantTasks.filter((task) => scheduledFutureTaskIds.has(task.taskId)).reduce((sum, task) => sum + task.remainingMinutes, 0);
+  const totalRemainingWorkMinutes = relevantTasks.filter((task) => scheduledFutureTaskIds.has(task.taskId)).reduce((sum2, task) => sum2 + task.remainingMinutes, 0);
   const totalRemainingCapacityMinutes = daily.reduce(
-    (sum, day) => sum + day.remainingCapacityMinutes,
+    (sum2, day) => sum2 + day.remainingCapacityMinutes,
     0
   );
   if (totalRemainingWorkMinutes > totalRemainingCapacityMinutes) {
@@ -673,11 +673,11 @@ function checkCurrentPlanFeasibilityV2(snapshot) {
     });
   }
   const totalSlackMinutes = daily.reduce(
-    (sum, day) => sum + day.slackMinutes,
+    (sum2, day) => sum2 + day.slackMinutes,
     0
   );
   const totalOverloadMinutes = daily.reduce(
-    (sum, day) => sum + day.overloadMinutes,
+    (sum2, day) => sum2 + day.overloadMinutes,
     0
   );
   const result = {
@@ -763,7 +763,7 @@ function chooseTasksForOverload(tasks, overloadMinutes) {
       return;
     }
     const remainingPossible = candidates.slice(index).reduce(
-      (sum, task) => sum + task.remainingMinutes,
+      (sum2, task) => sum2 + task.remainingMinutes,
       0
     );
     if (selectedMinutes + remainingPossible < overloadMinutes) {
@@ -966,7 +966,7 @@ function repairCurrentPlanLocallyV1(snapshot) {
     }
   }
   const unresolvedOverloadMinutes = [...dayState.values()].reduce(
-    (sum, day) => sum + Math.max(
+    (sum2, day) => sum2 + Math.max(
       day.scheduledMinutes - day.capacityMinutes,
       0
     ),
@@ -984,11 +984,11 @@ function repairCurrentPlanLocallyV1(snapshot) {
     backlog: Object.freeze(backlog),
     changedTaskCount: changedTaskIds.size,
     movedMinutes: moves.reduce(
-      (sum, move) => sum + move.remainingMinutes,
+      (sum2, move) => sum2 + move.remainingMinutes,
       0
     ),
     backlogMinutes: backlog.reduce(
-      (sum, item) => sum + item.remainingMinutes,
+      (sum2, item) => sum2 + item.remainingMinutes,
       0
     ),
     unresolvedOverloadMinutes,
@@ -1475,13 +1475,13 @@ function validatePlanProposalV1(input) {
     }
   }
   const totalScheduledRemaining = [...scheduledMinutesByDate.values()].reduce(
-    (sum, minutes) => sum + minutes,
+    (sum2, minutes) => sum2 + minutes,
     0
   );
   const totalRemainingCapacity = snapshot.dailyCapacities.filter(
     (day) => day.date >= snapshot.meta.currentDate
   ).reduce(
-    (sum, day) => sum + day.remainingCapacityMinutes,
+    (sum2, day) => sum2 + day.remainingCapacityMinutes,
     0
   );
   if (totalScheduledRemaining > totalRemainingCapacity) {
@@ -1641,6 +1641,115 @@ function decidePlanningActionV2(input) {
   });
 }
 
+// packages/domain/src/planning-v2/shadow-evaluation.ts
+function sortedUnique(values) {
+  return Object.freeze([...new Set(values)].sort((a, b) => a.localeCompare(b)));
+}
+function sum(values) {
+  return values.reduce((total, value) => total + value, 0);
+}
+function evaluatePlanningV2ShadowDecision(input) {
+  const { snapshot, decision } = input;
+  if (decision.snapshotId !== snapshot.meta.snapshotId || decision.proposal.snapshotId !== snapshot.meta.snapshotId) {
+    throw new Error("decision does not belong to evaluation snapshot");
+  }
+  if (decision.decision === "KEEP_PLAN" && decision.proposal.changedTaskCount !== 0) {
+    throw new Error("KEEP_PLAN decision cannot contain task changes");
+  }
+  const scheduledTasks = snapshot.existingTasks.filter(
+    (task) => task.plannedDate !== null
+  );
+  const remainingTasks = snapshot.existingTasks.filter(
+    (task) => !task.isCompleted && task.remainingMinutes > 0
+  );
+  const completedTasks = snapshot.existingTasks.filter(
+    (task) => task.isCompleted
+  );
+  const partialTasks = snapshot.existingTasks.filter(
+    (task) => task.isPartiallyCompleted
+  );
+  const movedTaskIds = sortedUnique(
+    decision.proposal.moves.map((move) => move.taskId)
+  );
+  const backlogTaskIds = sortedUnique(
+    decision.proposal.backlog.map((item) => item.taskId)
+  );
+  const changedExistingTaskIds = /* @__PURE__ */ new Set([
+    ...movedTaskIds,
+    ...backlogTaskIds,
+    ...decision.proposal.cancels.map((cancel) => cancel.taskId)
+  ]);
+  const preservedTaskIds = sortedUnique(
+    scheduledTasks.map((task) => task.taskId).filter((taskId) => !changedExistingTaskIds.has(taskId))
+  );
+  const mutationCount = (tasks) => tasks.filter((task) => changedExistingTaskIds.has(task.taskId)).length;
+  const scheduledTaskCount = scheduledTasks.length;
+  const changedTaskCount = decision.proposal.changedTaskCount;
+  const feasibility = decision.repair.feasibilityBefore;
+  const currentPlan = Object.freeze({
+    feasible: feasibility.feasible,
+    issueCodes: sortedUnique(
+      feasibility.violations.map((violation2) => violation2.code)
+    ),
+    scheduledTaskCount,
+    remainingTaskCount: remainingTasks.length,
+    completedTaskCount: completedTasks.length,
+    partialLifecycleTaskCount: partialTasks.length,
+    remainingMinutes: sum(
+      remainingTasks.map((task) => task.remainingMinutes)
+    ),
+    availableMinutes: snapshot.availableMinutes,
+    planningBudgetMinutes: snapshot.planningBudgetMinutes,
+    reserveMinutes: snapshot.reserveMinutes
+  });
+  const v2 = Object.freeze({
+    decision: decision.decision,
+    requestedScope: decision.proposal.scope,
+    changedTaskCount,
+    applyRecommended: decision.applyRecommended,
+    validationValid: decision.validation.valid,
+    validationIssueCodes: sortedUnique(
+      decision.validation.violations.map((violation2) => violation2.code)
+    ),
+    movedTaskIds,
+    backlogTaskIds,
+    preservedTaskIds,
+    decisionReasonCodes: Object.freeze([...decision.reasonCodes]),
+    proposalReasonCodes: Object.freeze([...decision.proposal.reasonCodes])
+  });
+  const stability = Object.freeze({
+    changeRatio: scheduledTaskCount === 0 ? 0 : changedTaskCount / scheduledTaskCount,
+    completedTaskMutationCount: mutationCount(completedTasks),
+    activeTaskMutationCount: mutationCount(
+      snapshot.existingTasks.filter((task) => task.isActive)
+    ),
+    partialTaskMutationCount: mutationCount(partialTasks)
+  });
+  const capacity = Object.freeze({
+    grossMinutes: sum(
+      snapshot.dailyCapacities.map((day) => day.grossCapacityMinutes)
+    ),
+    reserveMinutes: sum(
+      snapshot.dailyCapacities.map((day) => day.reserveMinutes)
+    ),
+    planningMinutes: sum(
+      snapshot.dailyCapacities.map((day) => day.planningCapacityMinutes)
+    ),
+    remainingMinutes: sum(
+      snapshot.dailyCapacities.map((day) => day.remainingCapacityMinutes)
+    )
+  });
+  return Object.freeze({
+    snapshotId: snapshot.meta.snapshotId,
+    snapshotHash: snapshot.meta.snapshotHash,
+    trigger: snapshot.meta.trigger,
+    currentPlan,
+    v2,
+    stability,
+    capacity
+  });
+}
+
 // packages/domain/src/planning-v2/shadow-persistence.ts
 function assertNonBlank2(name, value) {
   if (!value.trim()) {
@@ -1771,6 +1880,7 @@ function toPlanningV2ProposalRow(input) {
 export {
   buildPlanningSnapshotFromDbBundleV1,
   decidePlanningActionV2,
+  evaluatePlanningV2ShadowDecision,
   toPlanningV2ProposalRow,
   toPlanningV2SnapshotRow
 };

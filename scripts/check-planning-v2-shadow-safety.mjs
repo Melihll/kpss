@@ -133,6 +133,7 @@ for (const expression of forbiddenRuntime) {
 for (const exportName of [
   "buildPlanningSnapshotFromDbBundleV1",
   "decidePlanningActionV2",
+  "evaluatePlanningV2ShadowDecision",
   "toPlanningV2SnapshotRow",
   "toPlanningV2ProposalRow",
 ]) {
@@ -156,4 +157,4 @@ console.log("✅ Planning V2 shadow safety checks passed");
 console.log("tables:            3 additive shadow tables");
 console.log("real mutations:    0 detected");
 console.log("V1 bundle changes: 0");
-console.log("V2 exports:        4 verified");
+console.log("V2 exports:        5 verified");

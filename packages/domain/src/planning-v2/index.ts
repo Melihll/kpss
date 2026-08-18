@@ -11,6 +11,7 @@ export * from "./local-repair";
 export * from "./proposal-builder";
 export * from "./proposal-validator";
 export * from "./planning-decision";
+export * from "./shadow-evaluation";
 export * from "./shadow-persistence";
 export * from "./db-snapshot-contract";
 export * from "./db-snapshot-builder";

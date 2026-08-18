@@ -21,6 +21,19 @@ interface ShadowDecisionResult {
   readonly changedTaskCount: number;
   readonly validationValid: boolean;
   readonly applyRecommended: boolean;
+  readonly evaluation: {
+    readonly currentPlan: {
+      readonly feasible: boolean;
+      readonly issueCodes: readonly string[];
+    };
+    readonly v2: {
+      readonly movedTaskIds: readonly string[];
+      readonly backlogTaskIds: readonly string[];
+    };
+    readonly stability: {
+      readonly changeRatio: number;
+    };
+  };
 }
 
 interface PlanningV2ShadowHandlerDependencies {
@@ -240,6 +253,13 @@ export function createPlanningV2ShadowHandler(
         changedTaskCount: result.changedTaskCount,
         validationValid: result.validationValid,
         applyRecommended: result.applyRecommended,
+        evaluation: {
+          currentPlanFeasible: result.evaluation.currentPlan.feasible,
+          issueCodes: result.evaluation.currentPlan.issueCodes,
+          changeRatio: result.evaluation.stability.changeRatio,
+          movedTaskCount: result.evaluation.v2.movedTaskIds.length,
+          backlogTaskCount: result.evaluation.v2.backlogTaskIds.length,
+        },
       });
     } catch (caught) {
       console.error(
