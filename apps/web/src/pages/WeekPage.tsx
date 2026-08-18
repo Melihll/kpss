@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type Keyboard
 import { Icon } from "../components/Icon";
 import { PlanningPanel } from "../components/PlanningPanel";
 import { useRoadmap } from "../hooks/useRoadmap";
-import { addDays, compactMinutesLabel, dateLabel, DAY_NAMES, isoToday, taskName, WORK_MODE_LABELS } from "../lib/roadmap";
+import { addDays, compactMinutesLabel, dateLabel, DAY_NAMES, isoToday, taskName, taskRemainingMinutes, totalTaskRemainingMinutes, WORK_MODE_LABELS } from "../lib/roadmap";
 
 function weekRangeLabel(start: string, end: string) {
   const startDate = new Date(`${start}T12:00:00Z`);
@@ -49,7 +49,7 @@ export function WeekPage() {
   const actual = tasks.reduce((sum, task) => sum + (task.task_progress?.[0]?.actual_study_minutes ?? 0), 0);
   const target = data?.strategy?.weeklyTargetMinutes ?? plan?.available_minutes ?? 0;
   const progress = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
-  const selectedMinutes = selectedTasks.reduce((sum, task) => sum + task.estimated_minutes, 0);
+  const selectedMinutes = totalTaskRemainingMinutes(selectedTasks);
   const replannedTaskCount = selectedTasks.filter((task) => task.source_reason === "dynamic_replan" || task.status === "rescheduled").length;
   const selectedDayIndex = Math.max(0, dates.indexOf(selectedDate));
 
@@ -108,7 +108,7 @@ export function WeekPage() {
         <div className="week-calendar" role="tablist" aria-label="Haftanın günleri" style={{ "--week-active-index": selectedDayIndex } as CSSProperties}>
           {dates.map((date, index) => {
             const dayTasks = tasks.filter((task) => task.planned_date === date);
-            const dayMinutes = dayTasks.reduce((sum, task) => sum + task.estimated_minutes, 0);
+            const dayMinutes = totalTaskRemainingMinutes(dayTasks);
             const dayCompleted = dayTasks.length > 0 && dayTasks.every((task) => task.status === "completed");
             const isSelected = selectedDate === date;
             return <button
@@ -154,7 +154,7 @@ export function WeekPage() {
             <div className="timeline-task-copy">
               <div className="timeline-task-kicker"><span>{task.subjects?.name ?? "Ders"}</span>{active && <em>{task.status === "in_progress" ? "Şimdi" : "Devam"}</em>}</div>
               <strong title={task.resources?.name ?? taskName(task)}>{task.resources?.name ?? taskName(task)}</strong>
-              <small>{task.work_mode ? WORK_MODE_LABELS[task.work_mode] ?? "Çalışma" : task.description ?? "Çalışma"}<i aria-hidden="true">·</i><b>{task.estimated_minutes} dk</b></small>
+              <small>{task.work_mode ? WORK_MODE_LABELS[task.work_mode] ?? "Çalışma" : task.description ?? "Çalışma"}<i aria-hidden="true">·</i><b>{taskRemainingMinutes(task)} dk</b></small>
               {replanned && replannedTaskCount <= 1 && <span className="task-plan-change"><Icon name="arrow" />Plan güncellendi</span>}
             </div>
           </article>;

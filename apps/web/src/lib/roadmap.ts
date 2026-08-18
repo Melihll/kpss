@@ -1,3 +1,5 @@
+import { remainingTaskMinutes as calculateRemainingTaskMinutes, type RecommendationTask } from "@kpss-coach/domain";
+
 export interface RoadmapTask {
   id: string;
   title: string;
@@ -115,3 +117,18 @@ export const dateLabel = (value: string, options: Intl.DateTimeFormatOptions = {
   ...options,
 }).format(new Date(`${value}T12:00:00Z`));
 export const taskName = (task: Pick<RoadmapTask, "title">) => task.title.split(" · ").at(-1) || task.title;
+
+type TaskDuration = Pick<RoadmapTask, "estimated_minutes" | "task_progress">;
+
+/** Uses the same remaining-time rule as Today without changing task lifecycle state. */
+export function taskRemainingMinutes(task: TaskDuration): number {
+  return calculateRemainingTaskMinutes({
+    estimatedMinutes: task.estimated_minutes,
+    completedMinutes: task.task_progress?.[0]?.completed_minutes ?? 0,
+    pendingUnitMinutes: null,
+  } as RecommendationTask);
+}
+
+export function totalTaskRemainingMinutes(tasks: readonly TaskDuration[]): number {
+  return tasks.reduce((sum, task) => sum + taskRemainingMinutes(task), 0);
+}
