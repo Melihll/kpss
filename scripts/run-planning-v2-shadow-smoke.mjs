@@ -470,7 +470,7 @@ class FakeQuery {
 }
 
 class FakeSupabase {
-  constructor() {
+  constructor(options = {}) {
     this.nextId =
       1;
 
@@ -677,6 +677,17 @@ class FakeSupabase {
       planning_v2_proposals:
         [],
     };
+
+    if (options.capacityMinutes != null) {
+      for (const override of this.tables.p48_daily_capacity_overrides) {
+        override.capacity_minutes = options.capacityMinutes;
+      }
+    }
+
+    if (options.completedMinutes != null) {
+      this.tables.tasks[0].task_progress[0].completed_minutes =
+        options.completedMinutes;
+    }
   }
 
   from(table) {
@@ -942,6 +953,75 @@ try {
   );
 
   /*
+   * Capacity increase grows effective capacity, but the stable
+   * weekly planning budget must not expand or pull work forward.
+   */
+  const increasedClient = new FakeSupabase({
+    capacityMinutes: 360,
+  });
+  const increased = await runPlanningV2ShadowDecision({
+    ...input,
+    client: increasedClient,
+    trigger: "CAPACITY_INCREASE",
+  });
+  const increasedSnapshot = increasedClient.inserts.find(
+    (item) => item.table === "planning_v2_snapshots",
+  ).row;
+
+  assert.equal(increasedSnapshot.available_minutes, 2520);
+  assert.equal(increasedSnapshot.reserve_minutes, 105);
+  assert.equal(increasedSnapshot.planning_budget_minutes, 1995);
+  assert.equal(increased.decision, "KEEP_PLAN");
+  assert.equal(increased.changedTaskCount, 0);
+
+  /*
+   * Capacity decrease remains a valid input even when the stable
+   * budget is above current effective capacity. Never clamp it.
+   */
+  const decreasedClient = new FakeSupabase({
+    capacityMinutes: 30,
+  });
+  const decreased = await runPlanningV2ShadowDecision({
+    ...input,
+    client: decreasedClient,
+    trigger: "CAPACITY_DECREASE",
+  });
+  const decreasedSnapshot = decreasedClient.inserts.find(
+    (item) => item.table === "planning_v2_snapshots",
+  ).row;
+
+  assert.equal(decreasedSnapshot.available_minutes, 210);
+  assert.equal(decreasedSnapshot.reserve_minutes, 105);
+  assert.equal(decreasedSnapshot.planning_budget_minutes, 1995);
+  assert.ok(
+    ["READY_TO_APPLY", "BLOCKED"].includes(decreased.decision),
+    `capacity decrease was not repaired or blocked: ${decreased.decision}`,
+  );
+
+  /*
+   * Lifecycle is status-driven: 90/90 with a partial status is not
+   * silently promoted to completed, even though remaining is zero.
+   */
+  const lifecycleClient = new FakeSupabase({
+    completedMinutes: 90,
+  });
+  await runPlanningV2ShadowDecision({
+    ...input,
+    client: lifecycleClient,
+  });
+  const lifecyclePayload = lifecycleClient.inserts.find(
+    (item) => item.table === "planning_v2_snapshots",
+  ).row.snapshot_payload;
+  const lifecycleTask = lifecyclePayload.existingTasks.find(
+    (item) => item.taskId === "task-1",
+  );
+
+  assert.equal(lifecycleTask.completedMinutes, 90);
+  assert.equal(lifecycleTask.remainingMinutes, 0);
+  assert.equal(lifecycleTask.isCompleted, false);
+  assert.equal(lifecycleTask.isPartiallyCompleted, true);
+
+  /*
    * Fake client intentionally implements no:
    *
    * update()
@@ -987,6 +1067,10 @@ try {
 
   console.log(
     "   real plan mutations: 0",
+  );
+
+  console.log(
+    "   bridge scenarios:     5",
   );
 }
 finally {
