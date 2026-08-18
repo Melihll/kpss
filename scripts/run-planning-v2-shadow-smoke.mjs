@@ -1,0 +1,1000 @@
+﻿import assert from "node:assert/strict";
+import {
+  buildSync,
+} from "esbuild";
+import {
+  pathToFileURL,
+} from "node:url";
+import {
+  rmSync,
+} from "node:fs";
+import path from "node:path";
+
+const root =
+  process.cwd();
+
+const tempBundle =
+  path.join(
+    root,
+    ".planning-v2-shadow-smoke.mjs",
+  );
+
+buildSync({
+  absWorkingDir: root,
+
+  entryPoints: [
+    "supabase/functions/_shared/planning-v2-shadow.ts",
+  ],
+
+  bundle: true,
+  platform: "node",
+  format: "esm",
+  target: "es2022",
+
+  outfile: tempBundle,
+
+  logLevel: "info",
+});
+
+class FakeQuery {
+  constructor(
+    client,
+    table,
+  ) {
+    this.client =
+      client;
+
+    this.table =
+      table;
+
+    this.filters =
+      [];
+
+    this.orderBy =
+      null;
+
+    this.limitCount =
+      null;
+
+    this.singleMode =
+      null;
+
+    this.action =
+      "select";
+
+    this.insertPayload =
+      null;
+  }
+
+  select() {
+    return this;
+  }
+
+  insert(payload) {
+    this.action =
+      "insert";
+
+    this.insertPayload =
+      payload;
+
+    return this;
+  }
+
+  eq(
+    column,
+    value,
+  ) {
+    this.filters.push({
+      type: "eq",
+      column,
+      value,
+    });
+
+    return this;
+  }
+
+  gte(
+    column,
+    value,
+  ) {
+    this.filters.push({
+      type: "gte",
+      column,
+      value,
+    });
+
+    return this;
+  }
+
+  lte(
+    column,
+    value,
+  ) {
+    this.filters.push({
+      type: "lte",
+      column,
+      value,
+    });
+
+    return this;
+  }
+
+  in(
+    column,
+    values,
+  ) {
+    this.filters.push({
+      type: "in",
+      column,
+      value: values,
+    });
+
+    return this;
+  }
+
+  is(
+    column,
+    value,
+  ) {
+    this.filters.push({
+      type: "is",
+      column,
+      value,
+    });
+
+    return this;
+  }
+
+  not(
+    column,
+    operator,
+    value,
+  ) {
+    this.filters.push({
+      type: "not",
+      column,
+      operator,
+      value,
+    });
+
+    return this;
+  }
+
+  order(
+    column,
+    options = {},
+  ) {
+    this.orderBy = {
+      column,
+      ascending:
+        options.ascending !== false,
+    };
+
+    return this;
+  }
+
+  limit(count) {
+    this.limitCount =
+      count;
+
+    return this;
+  }
+
+  maybeSingle() {
+    this.singleMode =
+      "maybe";
+
+    return this;
+  }
+
+  single() {
+    this.singleMode =
+      "single";
+
+    return this;
+  }
+
+  applyFilters(rows) {
+    let output =
+      [...rows];
+
+    for (
+      const filter
+      of this.filters
+    ) {
+      output =
+        output.filter(
+          (row) => {
+            const actual =
+              row[
+                filter.column
+              ];
+
+            if (
+              filter.type ===
+              "eq"
+            ) {
+              return (
+                actual ===
+                filter.value
+              );
+            }
+
+            if (
+              filter.type ===
+              "gte"
+            ) {
+              return (
+                actual >=
+                filter.value
+              );
+            }
+
+            if (
+              filter.type ===
+              "lte"
+            ) {
+              return (
+                actual <=
+                filter.value
+              );
+            }
+
+            if (
+              filter.type ===
+              "in"
+            ) {
+              return (
+                filter.value.includes(
+                  actual,
+                )
+              );
+            }
+
+            if (
+              filter.type ===
+              "is"
+            ) {
+              return (
+                actual ===
+                filter.value
+              );
+            }
+
+            if (
+              filter.type ===
+              "not"
+            ) {
+              if (
+                filter.operator ===
+                "is"
+              ) {
+                return (
+                  actual !==
+                  filter.value
+                );
+              }
+
+              return true;
+            }
+
+            return true;
+          },
+        );
+    }
+
+    if (
+      this.orderBy
+    ) {
+      const {
+        column,
+        ascending,
+      } =
+        this.orderBy;
+
+      output.sort(
+        (a, b) => {
+          const left =
+            a[column];
+
+          const right =
+            b[column];
+
+          if (
+            left === right
+          ) {
+            return 0;
+          }
+
+          const comparison =
+            left < right
+              ? -1
+              : 1;
+
+          return ascending
+            ? comparison
+            : -comparison;
+        },
+      );
+    }
+
+    if (
+      this.limitCount != null
+    ) {
+      output =
+        output.slice(
+          0,
+          this.limitCount,
+        );
+    }
+
+    return output;
+  }
+
+  async execute() {
+    if (
+      this.action ===
+      "insert"
+    ) {
+      const rows =
+        Array.isArray(
+          this.insertPayload,
+        )
+          ? this.insertPayload
+          : [
+              this.insertPayload,
+            ];
+
+      const inserted =
+        rows.map(
+          (row) => {
+            const stored = {
+              ...row,
+
+              id:
+                row.id ??
+                `${this.table}-db-${this.client.nextId++}`,
+            };
+
+            this.client
+              .tables[
+                this.table
+              ]
+              .push(
+                stored,
+              );
+
+            this.client
+              .inserts
+              .push({
+                table:
+                  this.table,
+
+                row:
+                  stored,
+              });
+
+            return stored;
+          },
+        );
+
+      const result =
+        this.singleMode
+          ? inserted[0]
+          : inserted;
+
+      return {
+        data: result,
+        error: null,
+      };
+    }
+
+    const source =
+      this.client
+        .tables[
+          this.table
+        ] ??
+      [];
+
+    const rows =
+      this.applyFilters(
+        source,
+      );
+
+    if (
+      this.singleMode ===
+      "single"
+    ) {
+      if (
+        rows.length !== 1
+      ) {
+        return {
+          data: null,
+
+          error: {
+            message:
+              `single expected 1 row for ${this.table}, got ${rows.length}`,
+          },
+        };
+      }
+
+      return {
+        data: rows[0],
+        error: null,
+      };
+    }
+
+    if (
+      this.singleMode ===
+      "maybe"
+    ) {
+      if (
+        rows.length > 1
+      ) {
+        return {
+          data: null,
+
+          error: {
+            message:
+              `maybeSingle expected <=1 row for ${this.table}, got ${rows.length}`,
+          },
+        };
+      }
+
+      return {
+        data:
+          rows[0] ??
+          null,
+
+        error: null,
+      };
+    }
+
+    return {
+      data: rows,
+      error: null,
+    };
+  }
+
+  then(
+    resolve,
+    reject,
+  ) {
+    return this
+      .execute()
+      .then(
+        resolve,
+        reject,
+      );
+  }
+}
+
+class FakeSupabase {
+  constructor() {
+    this.nextId =
+      1;
+
+    this.inserts =
+      [];
+
+    const dates =
+      [
+        "2026-08-17",
+        "2026-08-18",
+        "2026-08-19",
+        "2026-08-20",
+        "2026-08-21",
+        "2026-08-22",
+        "2026-08-23",
+      ];
+
+    this.tables = {
+      exam_profiles: [
+        {
+          id:
+            "profile-1",
+
+          user_id:
+            "user-1",
+
+          status:
+            "active",
+
+          exam_edition_id:
+            "edition-1",
+        },
+      ],
+
+      weekly_plans: [
+        {
+          id:
+            "plan-1",
+
+          user_id:
+            "user-1",
+
+          exam_profile_id:
+            "profile-1",
+
+          week_start_date:
+            "2026-08-17",
+
+          week_end_date:
+            "2026-08-23",
+
+          available_minutes:
+            2100,
+
+          planning_budget_minutes:
+            1995,
+
+          planned_minutes:
+            90,
+
+          status:
+            "active",
+
+          generation_version:
+            3,
+        },
+      ],
+
+      weekly_availability:
+        [],
+
+      calendar_periods:
+        [],
+
+      schedule_exceptions:
+        [],
+
+      tasks: [
+        {
+          id:
+            "task-1",
+
+          user_id:
+            "user-1",
+
+          exam_profile_id:
+            "profile-1",
+
+          weekly_plan_id:
+            "plan-1",
+
+          subject_id:
+            "subject-1",
+
+          curriculum_node_id:
+            "unit-1",
+
+          resource_id:
+            "resource-1",
+
+          resource_section_id:
+            null,
+
+          task_type:
+            "solve_resource_units",
+
+          title:
+            "Matematik I",
+
+          planned_date:
+            "2026-08-18",
+
+          estimated_minutes:
+            90,
+
+          priority_score:
+            60,
+
+          importance:
+            "important",
+
+          status:
+            "partially_completed",
+
+          completed_at:
+            null,
+
+          created_at:
+            "2026-08-17T10:00:00Z",
+
+          source_reason:
+            "baseline_import",
+
+          revision_schedule_id:
+            null,
+
+          task_progress: [
+            {
+              completed_minutes:
+                43,
+            },
+          ],
+        },
+      ],
+
+      topic_progress: [
+        {
+          curriculum_node_id:
+            "unit-1",
+
+          state:
+            "practicing",
+
+          mastery_level:
+            "unknown",
+        },
+      ],
+
+      revision_schedules:
+        [],
+
+      task_reschedule_events:
+        [],
+
+      study_sessions:
+        [],
+
+      p48_daily_capacity_overrides:
+        dates.map(
+          (date) => ({
+            user_id:
+              "user-1",
+
+            exam_profile_id:
+              "profile-1",
+
+            capacity_date:
+              date,
+
+            capacity_minutes:
+              300,
+
+            reserve_minutes:
+              15,
+          }),
+        ),
+
+      learner_unit_states_v2:
+        [],
+
+      exam_editions: [
+        {
+          id:
+            "edition-1",
+
+          exam_date:
+            "2027-09-06",
+        },
+      ],
+
+      planning_v2_snapshots:
+        [],
+
+      planning_v2_proposals:
+        [],
+    };
+  }
+
+  from(table) {
+    if (
+      !(table in this.tables)
+    ) {
+      throw new Error(
+        `Unexpected table: ${table}`,
+      );
+    }
+
+    return new FakeQuery(
+      this,
+      table,
+    );
+  }
+}
+
+try {
+  const moduleUrl =
+    `${pathToFileURL(
+      tempBundle,
+    ).href}?t=${Date.now()}`;
+
+  const {
+    runPlanningV2ShadowDecision,
+  } =
+    await import(
+      moduleUrl
+    );
+
+  const client =
+    new FakeSupabase();
+
+  const input = {
+    client,
+
+    userId:
+      "user-1",
+
+    examProfileId:
+      "profile-1",
+
+    currentDate:
+      "2026-08-18",
+
+    trigger:
+      "STUDY_DEVIATION",
+
+    generatedAt:
+      "2026-08-18T20:55:00+03:00",
+  };
+
+  const first =
+    await runPlanningV2ShadowDecision(
+      input,
+    );
+
+  assert.equal(
+    first.shadow,
+    true,
+  );
+
+  assert.equal(
+    first.userId,
+    "user-1",
+  );
+
+  assert.equal(
+    first.weeklyPlanId,
+    "plan-1",
+  );
+
+  /*
+   * Feasible partial progress must not cause
+   * unnecessary plan mutation.
+   */
+  assert.equal(
+    first.decision,
+    "KEEP_PLAN",
+  );
+
+  assert.equal(
+    first.changedTaskCount,
+    0,
+  );
+
+  const snapshotInsert =
+    client.inserts.find(
+      (item) =>
+        item.table ===
+        "planning_v2_snapshots",
+    );
+
+  const proposalInsert =
+    client.inserts.find(
+      (item) =>
+        item.table ===
+        "planning_v2_proposals",
+    );
+
+  assert.ok(
+    snapshotInsert,
+    "planning_v2_snapshots insert missing",
+  );
+
+  assert.ok(
+    proposalInsert,
+    "planning_v2_proposals insert missing",
+  );
+
+  assert.equal(
+    client.inserts.length,
+    2,
+    "only two shadow writes should occur",
+  );
+
+  assert.deepEqual(
+    client.inserts.map(
+      (item) =>
+        item.table,
+    ),
+    [
+      "planning_v2_snapshots",
+      "planning_v2_proposals",
+    ],
+  );
+
+  /*
+   * Weekly capacity semantics:
+   *
+   * gross:
+   *   7 * 300 = 2100
+   *
+   * reserve:
+   *   7 * 15 = 105
+   *
+   * planning:
+   *   7 * 285 = 1995
+   */
+  assert.equal(
+    snapshotInsert.row
+      .available_minutes,
+    2100,
+  );
+
+  assert.equal(
+    snapshotInsert.row
+      .reserve_minutes,
+    105,
+  );
+
+  assert.equal(
+    snapshotInsert.row
+      .planning_budget_minutes,
+    1995,
+  );
+
+  const payload =
+    snapshotInsert.row
+      .snapshot_payload;
+
+  assert.ok(
+    payload,
+    "snapshot payload missing",
+  );
+
+  const aug18 =
+    payload
+      .dailyCapacities
+      .find(
+        (day) =>
+          day.date ===
+          "2026-08-18",
+      );
+
+  assert.ok(
+    aug18,
+    "Aug 18 capacity missing",
+  );
+
+  assert.equal(
+    aug18
+      .grossCapacityMinutes,
+    300,
+  );
+
+  assert.equal(
+    aug18
+      .reserveMinutes,
+    15,
+  );
+
+  assert.equal(
+    aug18
+      .planningCapacityMinutes,
+    285,
+  );
+
+  /*
+   * Lifecycle invariant:
+   * 43 / 90 remains partial and has 47 remaining.
+   */
+  const task =
+    payload
+      .existingTasks
+      .find(
+        (item) =>
+          item.taskId ===
+          "task-1",
+      );
+
+  assert.ok(
+    task,
+    "task missing from snapshot",
+  );
+
+  assert.equal(
+    task.completedMinutes,
+    43,
+  );
+
+  assert.equal(
+    task.remainingMinutes,
+    47,
+  );
+
+  assert.equal(
+    task.isCompleted,
+    false,
+  );
+
+  assert.equal(
+    task.isPartiallyCompleted,
+    true,
+  );
+
+  /*
+   * Run exactly the same source state again.
+   *
+   * Snapshot + proposal persistence must be
+   * idempotent, so write count stays 2.
+   */
+  const second =
+    await runPlanningV2ShadowDecision(
+      input,
+    );
+
+  assert.equal(
+    second.snapshotId,
+    first.snapshotId,
+  );
+
+  assert.equal(
+    second.snapshotHash,
+    first.snapshotHash,
+  );
+
+  assert.equal(
+    client.inserts.length,
+    2,
+    "idempotent second run created duplicate shadow rows",
+  );
+
+  /*
+   * Fake client intentionally implements no:
+   *
+   * update()
+   * delete()
+   * rpc()
+   *
+   * Therefore any real plan mutation attempt
+   * would already have crashed this smoke test.
+   */
+  console.log(
+    "\n✅ Planning V2 shadow smoke passed",
+  );
+
+  console.log(
+    "   decision:           ",
+    first.decision,
+  );
+
+  console.log(
+    "   changed tasks:       ",
+    first.changedTaskCount,
+  );
+
+  console.log(
+    "   gross capacity:      ",
+    snapshotInsert.row.available_minutes,
+  );
+
+  console.log(
+    "   reserve:             ",
+    snapshotInsert.row.reserve_minutes,
+  );
+
+  console.log(
+    "   planning budget:     ",
+    snapshotInsert.row.planning_budget_minutes,
+  );
+
+  console.log(
+    "   writes:              ",
+    client.inserts.length,
+  );
+
+  console.log(
+    "   real plan mutations: 0",
+  );
+}
+finally {
+  rmSync(
+    tempBundle,
+    {
+      force: true,
+    },
+  );
+}
+
