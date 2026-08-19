@@ -1,0 +1,401 @@
+import { AI_COACH_MESSAGE_MAX_LENGTH } from "../ai-coach-interpret/handler.ts";
+
+type Client = any;
+
+interface AiGatewayLike {
+  interpretStudyMessage(input: StudyMessageInput): Promise<unknown>;
+}
+
+interface StudyMessageInput {
+  readonly message: string;
+  readonly currentDate: string;
+  readonly locale: "tr-TR";
+}
+
+interface AiInterpretationLike {
+  readonly evidence: readonly unknown[];
+}
+
+interface AiMappingLike {
+  readonly action: string;
+  readonly planningTriggerCandidate: string | null;
+  readonly [key: string]: unknown;
+}
+
+type ExecutionResult =
+  | {
+      readonly status: "VALID";
+      readonly interpretation: AiInterpretationLike;
+      readonly mapping: AiMappingLike;
+    }
+  | {
+      readonly status: "NEEDS_CLARIFICATION";
+      readonly clarificationQuestion: string;
+      readonly interpretation: unknown;
+      readonly mapping: null;
+    }
+  | {
+      readonly status: "INVALID";
+      readonly issues: readonly unknown[];
+      readonly interpretation: null;
+      readonly mapping: null;
+    }
+  | {
+      readonly status: "GATEWAY_ERROR";
+      readonly error: unknown;
+      readonly interpretation: null;
+      readonly mapping: null;
+    };
+
+type CapacityTrigger = "CAPACITY_INCREASE" | "CAPACITY_DECREASE";
+
+interface ShadowDecisionResult {
+  readonly snapshotId: string;
+  readonly snapshotHash: string;
+  readonly decision: string;
+  readonly changedTaskCount: number;
+  readonly validationValid: boolean;
+  readonly applyRecommended: boolean;
+  readonly evaluation: {
+    readonly currentPlan: {
+      readonly feasible: boolean;
+      readonly issueCodes: readonly string[];
+      readonly availableMinutes: number;
+      readonly planningBudgetMinutes: number;
+      readonly reserveMinutes: number;
+    };
+    readonly v2: {
+      readonly movedTaskIds: readonly string[];
+      readonly backlogTaskIds: readonly string[];
+    };
+    readonly stability: {
+      readonly changeRatio: number;
+    };
+    readonly capacity: {
+      readonly grossMinutes: number;
+      readonly reserveMinutes: number;
+      readonly planningMinutes: number;
+      readonly remainingMinutes: number;
+    };
+  };
+}
+
+interface AiCoachPlanPreviewDependencies {
+  readonly createUserClient: (authorization: string) => Client;
+  readonly createShadowClient: () => Client;
+  readonly createGateway: () => AiGatewayLike;
+  readonly executeAiStudyMessage: (request: {
+    readonly gateway: AiGatewayLike;
+    readonly input: StudyMessageInput;
+  }) => Promise<ExecutionResult>;
+  readonly runShadowDecision: (input: {
+    readonly client: Client;
+    readonly userId: string;
+    readonly examProfileId: string;
+    readonly currentDate: string;
+    readonly trigger: CapacityTrigger;
+    readonly hypotheticalCapacityEvent: {
+      readonly effectiveDate: string;
+      readonly deltaMinutes: number;
+    };
+  }) => Promise<ShadowDecisionResult>;
+  readonly currentDate?: () => string;
+}
+
+type CapacityAdapterResult =
+  | { readonly kind: "NO_PREVIEW" }
+  | { readonly kind: "INVALID_CANDIDATE" }
+  | {
+      readonly kind: "PREVIEW";
+      readonly trigger: CapacityTrigger;
+      readonly event: {
+        readonly effectiveDate: string;
+        readonly deltaMinutes: number;
+      };
+    };
+
+const corsHeaders = Object.freeze({
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+});
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function errorResponse(code: string, message: string, status: number): Response {
+  return json({ error: { code, message } }, status);
+}
+
+function providerFailureResponse(): Response {
+  return json({
+    status: "GATEWAY_ERROR",
+    error: {
+      code: "AI_GATEWAY_FAILED",
+      message: "AI interpretation is temporarily unavailable.",
+    },
+    interpretation: null,
+    mapping: null,
+    shadowPreview: null,
+  }, 503);
+}
+
+function istanbulDate(): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Istanbul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function isUuid(value: unknown): value is string {
+  return typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function ownsProfile(
+  client: Client,
+  userId: string,
+  examProfileId: string,
+): Promise<boolean> {
+  const result = await client
+    .from("exam_profiles")
+    .select("id")
+    .eq("id", examProfileId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (result.error) throw new Error("EXAM_PROFILE_OWNERSHIP_LOOKUP_FAILED");
+  return Boolean(result.data);
+}
+
+function capacityAdapter(result: Extract<ExecutionResult, { status: "VALID" }>): CapacityAdapterResult {
+  if (result.mapping.action !== "PLANNING_TRIGGER_CANDIDATE") {
+    return { kind: "NO_PREVIEW" };
+  }
+
+  const trigger = result.mapping.planningTriggerCandidate;
+  if (trigger !== "CAPACITY_INCREASE" && trigger !== "CAPACITY_DECREASE") {
+    return { kind: "INVALID_CANDIDATE" };
+  }
+
+  const capacityEvidence = result.interpretation.evidence.filter(
+    (item) => isRecord(item) && item.type === "CAPACITY_CHANGE_REQUEST",
+  );
+  if (capacityEvidence.length !== 1) return { kind: "INVALID_CANDIDATE" };
+
+  const evidence = capacityEvidence[0]!;
+  const direction = evidence.direction;
+  const deltaMinutes = evidence.deltaMinutes;
+  const effectiveDate = evidence.effectiveDate;
+  if (
+    (direction !== "INCREASE" && direction !== "DECREASE") ||
+    typeof deltaMinutes !== "number" ||
+    !Number.isFinite(deltaMinutes) ||
+    !Number.isInteger(deltaMinutes) ||
+    deltaMinutes <= 0 ||
+    typeof effectiveDate !== "string" ||
+    effectiveDate === ""
+  ) {
+    return { kind: "INVALID_CANDIDATE" };
+  }
+
+  const expectedTrigger: CapacityTrigger = direction === "INCREASE"
+    ? "CAPACITY_INCREASE"
+    : "CAPACITY_DECREASE";
+  if (trigger !== expectedTrigger) return { kind: "INVALID_CANDIDATE" };
+
+  return {
+    kind: "PREVIEW",
+    trigger,
+    event: {
+      effectiveDate,
+      deltaMinutes: direction === "INCREASE" ? deltaMinutes : -deltaMinutes,
+    },
+  };
+}
+
+function noPreviewResponse(result: Exclude<ExecutionResult, { status: "GATEWAY_ERROR" }>): Response {
+  if (result.status === "INVALID") {
+    return json({
+      status: result.status,
+      issues: result.issues,
+      interpretation: null,
+      mapping: null,
+      shadowPreview: null,
+    });
+  }
+  if (result.status === "NEEDS_CLARIFICATION") {
+    return json({
+      status: result.status,
+      clarificationQuestion: result.clarificationQuestion,
+      interpretation: result.interpretation,
+      mapping: null,
+      shadowPreview: null,
+    });
+  }
+  return json({
+    status: result.status,
+    interpretation: result.interpretation,
+    mapping: result.mapping,
+    shadowPreview: null,
+  });
+}
+
+function shadowPreview(result: ShadowDecisionResult): Record<string, unknown> {
+  return {
+    previewOnly: true,
+    snapshotId: result.snapshotId,
+    snapshotHash: result.snapshotHash,
+    decision: result.decision,
+    changedTaskCount: result.changedTaskCount,
+    validationValid: result.validationValid,
+    applyRecommended: result.applyRecommended,
+    evaluation: {
+      currentPlanFeasible: result.evaluation.currentPlan.feasible,
+      issueCodes: result.evaluation.currentPlan.issueCodes,
+      availableMinutes: result.evaluation.currentPlan.availableMinutes,
+      planningBudgetMinutes: result.evaluation.currentPlan.planningBudgetMinutes,
+      reserveMinutes: result.evaluation.currentPlan.reserveMinutes,
+      capacity: result.evaluation.capacity,
+      changeRatio: result.evaluation.stability.changeRatio,
+      movedTaskCount: result.evaluation.v2.movedTaskIds.length,
+      backlogTaskCount: result.evaluation.v2.backlogTaskIds.length,
+    },
+  };
+}
+
+export function createAiCoachPlanPreviewHandler(
+  dependencies: AiCoachPlanPreviewDependencies,
+): (request: Request) => Promise<Response> {
+  return async (request: Request): Promise<Response> => {
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
+    if (request.method !== "POST") {
+      return errorResponse("METHOD_NOT_ALLOWED", "POST required", 405);
+    }
+
+    const authorization = request.headers.get("Authorization");
+    if (!authorization || !/^Bearer\s+\S+$/i.test(authorization)) {
+      return errorResponse("UNAUTHORIZED", "Valid Bearer authorization required", 401);
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      const parsed = await request.json();
+      if (!isRecord(parsed)) {
+        return errorResponse("INVALID_REQUEST", "JSON object required", 400);
+      }
+      body = parsed;
+    } catch {
+      return errorResponse("INVALID_JSON", "Valid JSON required", 400);
+    }
+
+    if (Object.keys(body).some((key) => !["examProfileId", "message"].includes(key))) {
+      return errorResponse(
+        "INVALID_REQUEST",
+        "Only examProfileId and message are accepted",
+        400,
+      );
+    }
+    if (!isUuid(body.examProfileId)) {
+      return errorResponse("INVALID_EXAM_PROFILE_ID", "Valid examProfileId required", 400);
+    }
+    if (typeof body.message !== "string" || body.message.trim() === "") {
+      return errorResponse("INVALID_MESSAGE", "Non-blank message required", 400);
+    }
+    if (body.message.length > AI_COACH_MESSAGE_MAX_LENGTH) {
+      return errorResponse("MESSAGE_TOO_LONG", "Message exceeds 2000 characters", 400);
+    }
+
+    let userId: string;
+    try {
+      const userClient = dependencies.createUserClient(authorization);
+      const authResult = await userClient.auth.getUser();
+      const user = authResult.data?.user;
+      if (authResult.error || !user) {
+        return errorResponse("UNAUTHORIZED", "Invalid token", 401);
+      }
+      userId = user.id;
+      if (!(await ownsProfile(userClient, userId, body.examProfileId))) {
+        return errorResponse("FORBIDDEN", "Exam profile not owned by caller", 403);
+      }
+    } catch {
+      return errorResponse("AI_COACH_PLAN_PREVIEW_FAILED", "Request could not be processed", 500);
+    }
+
+    const currentDate = (dependencies.currentDate ?? istanbulDate)();
+    let aiResult: ExecutionResult;
+    try {
+      aiResult = await dependencies.executeAiStudyMessage({
+        gateway: dependencies.createGateway(),
+        input: {
+          message: body.message.trim(),
+          currentDate,
+          locale: "tr-TR",
+        },
+      });
+    } catch {
+      return providerFailureResponse();
+    }
+
+    if (aiResult.status === "GATEWAY_ERROR") return providerFailureResponse();
+    if (aiResult.status !== "VALID") return noPreviewResponse(aiResult);
+
+    const adapted = capacityAdapter(aiResult);
+    if (adapted.kind === "NO_PREVIEW") return noPreviewResponse(aiResult);
+    if (adapted.kind === "INVALID_CANDIDATE") {
+      return json({
+        status: "VALID",
+        interpretation: aiResult.interpretation,
+        mapping: aiResult.mapping,
+        shadowPreview: null,
+        error: {
+          code: "AI_SHADOW_CANDIDATE_INVALID",
+          message: "Validated capacity candidate is inconsistent.",
+        },
+      }, 422);
+    }
+
+    try {
+      const result = await dependencies.runShadowDecision({
+        client: dependencies.createShadowClient(),
+        userId,
+        examProfileId: body.examProfileId,
+        currentDate,
+        trigger: adapted.trigger,
+        hypotheticalCapacityEvent: adapted.event,
+      });
+      return json({
+        status: "VALID",
+        interpretation: aiResult.interpretation,
+        mapping: aiResult.mapping,
+        shadowPreview: shadowPreview(result),
+      });
+    } catch {
+      return json({
+        status: "VALID",
+        interpretation: aiResult.interpretation,
+        mapping: aiResult.mapping,
+        shadowPreview: null,
+        error: {
+          code: "SHADOW_PREVIEW_REJECTED",
+          message: "Capacity preview could not be evaluated.",
+        },
+      }, 422);
+    }
+  };
+}

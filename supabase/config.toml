@@ -71,6 +71,10 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
+[functions.ai-coach-plan-preview]
+enabled = true
+verify_jwt = true
+
 [functions.telegram-webhook]
 enabled = true
 verify_jwt = false
