@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties, type Poi
 import { useRoadmap } from "../hooks/useRoadmap";
 import { callAppApi } from "../lib/app-api";
 import { compactMinutesLabel, taskName, WORK_MODE_LABELS, type RoadmapTask } from "../lib/roadmap";
-import { CoachDrawer } from "./CoachDrawer";
+import { CoachDrawer, type CoachDrawerMode } from "./CoachDrawer";
 import { Icon } from "./Icon";
 
 interface ActiveSession { id: string; task_id: string | null; started_at: string; tasks: { title: string } | null }
@@ -72,6 +72,7 @@ export function StudyTodayPanel() {
   const [error, setError] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [coachOpen, setCoachOpen] = useState(false);
+  const [coachMode, setCoachMode] = useState<CoachDrawerMode>("default");
 
   const load = useCallback(async () => {
     try {
@@ -147,7 +148,7 @@ export function StudyTodayPanel() {
   return <section className="today-page page-frame">
     <header className="page-header today-page-header">
       <div><span className="page-eyebrow">Bugün</span><h1>{formattedDate}</h1></div>
-      <div className="today-header-side"><div className="today-editorial-stats"><div><strong className="settling-number">{roadmap?.strategy ? animatedDays : "—"}</strong><span>gün kaldı</span></div><div><strong className="settling-number">{compactMinutesLabel(animatedPlannedMinutes)}</strong><span>bugün</span></div></div><button className="today-coach-trigger" type="button" onClick={() => setCoachOpen(true)}><Icon name="spark" weight="fill" /><span>Koça Yaz</span></button></div>
+      <div className="today-header-side"><div className="today-editorial-stats"><div><strong className="settling-number">{roadmap?.strategy ? animatedDays : "—"}</strong><span>gün kaldı</span></div><div><strong className="settling-number">{compactMinutesLabel(animatedPlannedMinutes)}</strong><span>bugün</span></div></div><button className="today-capacity-trigger" type="button" onClick={() => { setCoachMode("capacity"); setCoachOpen(true); }}><span>Vaktim Değişti</span></button><button className="today-coach-trigger" type="button" onClick={() => { setCoachMode("default"); setCoachOpen(true); }}><Icon name="spark" weight="fill" /><span>Koça Yaz</span></button></div>
     </header>
 
     {error && <div className="inline-state error" role="alert"><span>Veriler yüklenemedi.</span><button type="button" onClick={() => void load()}>Tekrar Dene</button></div>}
@@ -182,6 +183,6 @@ export function StudyTodayPanel() {
     </section>
 
     <div className="today-summary-line"><span>Bugün çalışılan</span><strong>{compactMinutesLabel(summary.todayStudyMinutes)}</strong></div>
-    <CoachDrawer open={coachOpen} onClose={() => setCoachOpen(false)} />
+    <CoachDrawer open={coachOpen} mode={coachMode} onClose={() => setCoachOpen(false)} />
   </section>;
 }

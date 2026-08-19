@@ -5,9 +5,12 @@ import { presentAiCoachPreview } from "../lib/ai-coach-presenter";
 import { supabase } from "../lib/supabase";
 import { Icon } from "./Icon";
 
+export type CoachDrawerMode = "default" | "capacity";
+
 interface CoachDrawerProps {
   readonly open: boolean;
   readonly onClose: () => void;
+  readonly mode?: CoachDrawerMode;
 }
 
 const QUICK_PROMPTS = [
@@ -15,7 +18,14 @@ const QUICK_PROMPTS = [
   "Yarın 30 dakika daha az vaktim var.",
 ] as const;
 
-export function CoachDrawer({ open, onClose }: CoachDrawerProps) {
+const CAPACITY_QUICK_PROMPTS = [
+  "Bugün 1 saat daha az vaktim var.",
+  "Yarın 60 dakika daha çalışabilirim.",
+  "Yarın toplam 2 saat çalışabilirim.",
+  "Bugün çalışamayacağım.",
+] as const;
+
+export function CoachDrawer({ open, onClose, mode = "default" }: CoachDrawerProps) {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
@@ -25,6 +35,17 @@ export function CoachDrawer({ open, onClose }: CoachDrawerProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const quickPrompts = mode === "capacity" ? CAPACITY_QUICK_PROMPTS : QUICK_PROMPTS;
+
+  useEffect(() => {
+    if (!open) return;
+    setMessage("");
+    setSubmittedMessage(null);
+    setResponse(null);
+    setDetailsOpen(false);
+    setError(null);
+  }, [mode, open]);
 
   useEffect(() => {
     if (!open || profileId) return;
@@ -112,11 +133,14 @@ export function CoachDrawer({ open, onClose }: CoachDrawerProps) {
 
       <div className="coach-drawer-body">
         {!submittedMessage && <section className="coach-intro">
-          <span className="coach-kicker">Programını birlikte düşünelim</span>
-          <h2>Bugün ne değişti?</h2>
-          <p>Vaktindeki değişikliği veya çalışma durumunu yaz. Koç önce anlamlandırır, sonra planına dokunmadan etkisini hesaplar.</p>
+          <span className="coach-kicker">{mode === "capacity" ? "Vaktini plana yansıt" : "Programını birlikte düşünelim"}</span>
+          <h2>{mode === "capacity" ? "Vaktin nasıl değişti?" : "Bugün ne değişti?"}</h2>
+          <p>{mode === "capacity"
+            ? "Daha az ya da daha fazla çalışabileceğin süreyi yaz. Önce etkisini gösteririm; planında değişiklik yapmam."
+            : "Vaktindeki değişikliği veya çalışma durumunu yaz. Koç önce anlamlandırır, sonra planına dokunmadan etkisini hesaplar."
+          }</p>
           <div className="coach-quick-prompts">
-            {QUICK_PROMPTS.map((prompt) => <button type="button" key={prompt} onClick={() => { setMessage(prompt); textareaRef.current?.focus(); }}>{prompt}</button>)}
+            {quickPrompts.map((prompt) => <button type="button" key={prompt} onClick={() => { setMessage(prompt); textareaRef.current?.focus(); }}>{prompt}</button>)}
           </div>
         </section>}
 
@@ -176,7 +200,7 @@ export function CoachDrawer({ open, onClose }: CoachDrawerProps) {
           value={message}
           rows={3}
           maxLength={1200}
-          placeholder="Örn. Yarın 60 dakika daha çalışabilirim."
+          placeholder={mode === "capacity" ? "Örn. Yarın toplam 2 saat çalışabilirim." : "Örn. Yarın 60 dakika daha çalışabilirim."}
           aria-label="Koça mesaj yaz"
           disabled={sending || loadingProfile || !profileId}
           onChange={(event) => setMessage(event.target.value)}
