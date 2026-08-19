@@ -320,3 +320,11 @@ html,body,.product-shell{overflow-x:hidden}.coach-drawer-body{overscroll-behavio
 .today-capacity-trigger{min-height:42px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px;border:1px solid rgba(17,17,19,.14);border-radius:10px;background:rgba(255,255,255,.72);color:#303034;cursor:pointer;font-size:.72rem;font-weight:600;transition:transform 180ms ease,border-color 180ms ease,background 180ms ease,box-shadow 180ms ease}
 .today-capacity-trigger:hover{transform:translateY(-1px);border-color:rgba(17,17,19,.26);background:#fff;box-shadow:0 8px 18px rgba(17,17,19,.07)}
 @media(max-width:430px){.today-capacity-trigger{min-height:42px;padding:0 9px;font-size:.64rem}}
+
+/* P0-05 preview states */
+.coach-result.preview-keep{border-left:3px solid #8b8b8f;box-shadow:0 14px 38px rgba(17,17,19,.04)}
+.coach-result.preview-ready{border-left:4px solid #111113;box-shadow:0 18px 46px rgba(17,17,19,.075)}
+.coach-result.preview-blocked{border-style:dashed;border-left:4px solid #4f4f53;background:repeating-linear-gradient(135deg,rgba(17,17,19,.025) 0 7px,rgba(255,255,255,.84) 7px 14px)}
+.coach-result.preview-keep .coach-result-eyebrow{color:#6f6f73}
+.coach-result.preview-ready .coach-result-eyebrow{display:inline-flex;width:max-content;padding:4px 7px;border-radius:6px;background:#111113;color:#fff}
+.coach-result.preview-blocked .coach-result-eyebrow{display:inline-flex;width:max-content;padding:4px 7px;border:1px dashed #5f5f63;border-radius:6px;color:#38383b}

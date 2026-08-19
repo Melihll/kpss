@@ -94,6 +94,7 @@ describe("presentAiCoachPreview", () => {
   it("turns a ready shadow proposal into user-facing preview copy without apply language", () => {
     const result = presentAiCoachPreview(readyResponse());
 
+    expect(result.previewState).toBe("READY");
     expect(result.title).toContain("düzenleme");
     expect(result.stats).toEqual([
       { label: "Kapasite değişimi", value: "+1 sa" },
@@ -141,6 +142,7 @@ describe("presentAiCoachPreview", () => {
     };
 
     const result = presentAiCoachPreview(response);
+    expect(result.previewState).toBeNull();
     expect(result.title).toBe("Hangi gün daha az vaktin olacak?");
     expect(result.stats).toEqual([]);
   });

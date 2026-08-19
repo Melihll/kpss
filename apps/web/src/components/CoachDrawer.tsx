@@ -148,7 +148,7 @@ export function CoachDrawer({ open, onClose, mode = "default" }: CoachDrawerProp
 
         {sending && <div className="coach-thinking" aria-live="polite"><span><Icon name="spark" /></span><div><strong>Planını kontrol ediyorum</strong><p>Mesajını yorumlayıp Planning V2 önizlemesiyle karşılaştırıyorum.</p></div></div>}
 
-        {presentation && !sending && <article className={`coach-result tone-${presentation.tone}`} aria-live="polite">
+        {presentation && !sending && <article className={`coach-result tone-${presentation.tone}${presentation.previewState ? ` preview-${presentation.previewState.toLowerCase()}` : ""}`} aria-live="polite">
           <span className="coach-result-eyebrow">{presentation.eyebrow}</span>
           <h3>{presentation.title}</h3>
           <p>{presentation.body}</p>

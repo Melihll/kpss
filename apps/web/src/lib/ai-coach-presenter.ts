@@ -5,6 +5,7 @@ import type {
 } from "./ai-coach-api";
 
 export type AiCoachPresentationTone = "neutral" | "positive" | "warning" | "danger";
+export type AiCoachPreviewState = "KEEP" | "READY" | "BLOCKED" | null;
 
 export interface AiCoachPresentationStat {
   readonly label: string;
@@ -24,6 +25,7 @@ export interface AiCoachPresentationChange {
 
 export interface AiCoachPresentation {
   readonly tone: AiCoachPresentationTone;
+  readonly previewState: AiCoachPreviewState;
   readonly eyebrow: string;
   readonly title: string;
   readonly body: string;
@@ -129,10 +131,11 @@ function presentChanges(
 }
 
 function emptyPresentation(
-  input: Omit<AiCoachPresentation, "changes" | "changeDetailsComplete">,
+  input: Omit<AiCoachPresentation, "changes" | "changeDetailsComplete" | "previewState">,
 ): AiCoachPresentation {
   return {
     ...input,
+    previewState: null,
     changes: [],
     changeDetailsComplete: true,
   };
@@ -208,6 +211,7 @@ export function presentAiCoachPreview(response: AiCoachPlanPreviewResponse): AiC
   if (preview.decision === "KEEP_PLAN") {
     return {
       tone: "positive",
+      previewState: "KEEP",
       eyebrow: "Plan kontrol edildi",
       title: "Mevcut planın bu değişikliği zaten karşılıyor.",
       body: explanation ?? "Görevlerini yeniden taşımaya gerek görünmüyor.",
@@ -224,6 +228,7 @@ export function presentAiCoachPreview(response: AiCoachPlanPreviewResponse): AiC
   if (preview.decision === "READY_TO_APPLY") {
     return {
       tone: "positive",
+      previewState: "READY",
       eyebrow: "Plan önerisi hazır",
       title: "Programında küçük bir düzenleme öneriyorum.",
       body: explanation ?? "Yeni çalışma süreni mevcut programınla karşılaştırdım.",
@@ -241,6 +246,7 @@ export function presentAiCoachPreview(response: AiCoachPlanPreviewResponse): AiC
 
   return {
     tone: "warning",
+    previewState: "BLOCKED",
     eyebrow: "Plan kontrol edildi",
     title: "Bu değişikliği şu anda güvenle planlayamıyorum.",
     body: explanation ?? "Mevcut plan koşulları güvenli bir öneri üretmek için yeterli değil.",
