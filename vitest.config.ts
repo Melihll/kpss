@@ -8,6 +8,8 @@ export default defineConfig({
       "apps/**/*.test.ts",
       "tests/**/*.test.ts",
       "supabase/functions/planning-v2-shadow/**/*.test.ts",
+      "supabase/functions/ai-coach-interpret/**/*.test.ts",
+      "supabase/functions/_shared/ai-coach/**/*.test.ts",
     ],
   },
 });
