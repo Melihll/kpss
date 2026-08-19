@@ -22,6 +22,11 @@ type PlanningV2Trigger =
   | "WEEKLY_REVIEW"
   | "MANUAL_REPLAN";
 
+export interface HypotheticalCapacityEventV1 {
+  readonly effectiveDate: string;
+  readonly deltaMinutes: number;
+}
+
 export interface RunPlanningV2ShadowDecisionInput {
   readonly client: Client;
 
@@ -31,6 +36,9 @@ export interface RunPlanningV2ShadowDecisionInput {
   readonly currentDate: string;
 
   readonly trigger: PlanningV2Trigger;
+
+  readonly hypotheticalCapacityEvent?:
+    HypotheticalCapacityEventV1;
 
   readonly generatedAt?: string;
 }
@@ -108,6 +116,94 @@ function weekDates(
         index,
       ),
   );
+}
+
+function isIsoDate(
+  value: unknown,
+): value is string {
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(value)
+  ) {
+    return false;
+  }
+
+  const parsed =
+    new Date(`${value}T00:00:00Z`);
+
+  return (
+    !Number.isNaN(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value
+  );
+}
+
+function normalizeHypotheticalCapacityEvent(
+  input: RunPlanningV2ShadowDecisionInput,
+): Readonly<HypotheticalCapacityEventV1> | null {
+  const event =
+    input.hypotheticalCapacityEvent;
+
+  if (event === undefined) {
+    return null;
+  }
+
+  if (
+    event === null ||
+    typeof event !== "object" ||
+    Array.isArray(event) ||
+    Object.keys(event).some(
+      (key) =>
+        key !== "effectiveDate" &&
+        key !== "deltaMinutes",
+    )
+  ) {
+    throw new Error(
+      "invalid hypothetical capacity event",
+    );
+  }
+
+  if (
+    input.trigger !== "CAPACITY_INCREASE" &&
+    input.trigger !== "CAPACITY_DECREASE"
+  ) {
+    throw new Error(
+      "hypothetical capacity event requires a capacity trigger",
+    );
+  }
+
+  if (!isIsoDate(event.effectiveDate)) {
+    throw new Error(
+      "hypothetical capacity effectiveDate must be a valid YYYY-MM-DD date",
+    );
+  }
+
+  if (
+    !Number.isFinite(event.deltaMinutes) ||
+    !Number.isInteger(event.deltaMinutes) ||
+    event.deltaMinutes === 0
+  ) {
+    throw new Error(
+      "hypothetical capacity deltaMinutes must be a finite non-zero integer",
+    );
+  }
+
+  if (
+    (input.trigger === "CAPACITY_INCREASE" &&
+      event.deltaMinutes < 0) ||
+    (input.trigger === "CAPACITY_DECREASE" &&
+      event.deltaMinutes > 0)
+  ) {
+    throw new Error(
+      "hypothetical capacity delta sign does not match trigger",
+    );
+  }
+
+  return Object.freeze({
+    effectiveDate:
+      event.effectiveDate,
+    deltaMinutes:
+      event.deltaMinutes,
+  });
 }
 
 function sortById<T extends { id?: string }>(
@@ -248,6 +344,11 @@ export async function runPlanningV2ShadowDecision(
   input:
     RunPlanningV2ShadowDecisionInput,
 ) {
+  const hypotheticalCapacityEvent =
+    normalizeHypotheticalCapacityEvent(
+      input,
+    );
+
   /*
    * ----------------------------------------------------------
    * READ PHASE
@@ -329,6 +430,30 @@ export async function runPlanningV2ShadowDecision(
       planResult,
       "active weekly plan",
     );
+
+  if (
+    hypotheticalCapacityEvent &&
+    (
+      hypotheticalCapacityEvent.effectiveDate <
+        plan.week_start_date ||
+      hypotheticalCapacityEvent.effectiveDate >
+        plan.week_end_date
+    )
+  ) {
+    throw new Error(
+      "hypothetical capacity effectiveDate must be inside the active weekly plan",
+    );
+  }
+
+  if (
+    hypotheticalCapacityEvent &&
+    hypotheticalCapacityEvent.effectiveDate <
+      input.currentDate
+  ) {
+    throw new Error(
+      "hypothetical capacity effectiveDate must not be in the past",
+    );
+  }
 
   /*
    * Reuse the existing production read/projection
@@ -535,7 +660,7 @@ export async function runPlanningV2ShadowDecision(
          * grossDayCapacities is the matching effective
          * gross capacity before reserve.
          */
-        const planningCapacity =
+        const basePlanningCapacity =
           Math.max(
             0,
             Number(
@@ -547,24 +672,56 @@ export async function runPlanningV2ShadowDecision(
             ),
           );
 
-        const grossCapacity =
+        const baseGrossCapacity =
           Math.max(
-            planningCapacity,
+            basePlanningCapacity,
             Number(
               adaptive
                 .grossDayCapacities?.[
                   date
                 ] ??
-                planningCapacity,
+                basePlanningCapacity,
             ),
           );
 
-        const effectiveReserve =
+        const baseReserve =
           Math.max(
             0,
-            grossCapacity -
-              planningCapacity,
+            baseGrossCapacity -
+              basePlanningCapacity,
           );
+
+        const grossCapacity =
+          date ===
+              hypotheticalCapacityEvent
+                ?.effectiveDate
+            ? Math.max(
+                0,
+                baseGrossCapacity +
+                  hypotheticalCapacityEvent
+                    .deltaMinutes,
+              )
+            : baseGrossCapacity;
+
+        const planningCapacity =
+          date ===
+              hypotheticalCapacityEvent
+                ?.effectiveDate
+            ? Math.max(
+                0,
+                grossCapacity -
+                  baseReserve,
+              )
+            : basePlanningCapacity;
+
+        /*
+         * Snapshot capacity requires reserve <= gross. When a decrease
+         * consumes all capacity, the representable reserve is the
+         * remainder after preserving the formula's planning result.
+         */
+        const effectiveReserve =
+          grossCapacity -
+          planningCapacity;
 
         return {
           date,
@@ -657,7 +814,7 @@ export async function runPlanningV2ShadowDecision(
   /*
    * Snapshot fingerprint excludes generatedAt.
    *
-   * Same source state + same trigger
+   * Same source state + same trigger + same normalized event
    * => same immutable snapshot identity.
    */
   const fingerprintPayload =
@@ -667,6 +824,8 @@ export async function runPlanningV2ShadowDecision(
 
       trigger:
         input.trigger,
+
+      hypotheticalCapacityEvent,
 
       examDate,
 

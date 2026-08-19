@@ -1009,6 +1009,179 @@ try {
   );
 
   /*
+   * Hypothetical capacity is an in-memory overlay only. It preserves
+   * the target day's existing reserve and leaves every other day alone.
+   */
+  const increaseOverlayClient = new FakeSupabase();
+  const increaseOverlayInput = {
+    ...input,
+    client: increaseOverlayClient,
+    trigger: "CAPACITY_INCREASE",
+    hypotheticalCapacityEvent: {
+      effectiveDate: "2026-08-20",
+      deltaMinutes: 60,
+    },
+  };
+  const increaseOverlay = await runPlanningV2ShadowDecision(
+    increaseOverlayInput,
+  );
+  const increaseOverlayPayload = increaseOverlayClient.inserts.find(
+    (item) => item.table === "planning_v2_snapshots",
+  ).row.snapshot_payload;
+  const increaseTarget = increaseOverlayPayload.dailyCapacities.find(
+    (day) => day.date === "2026-08-20",
+  );
+  const increaseUnrelated = increaseOverlayPayload.dailyCapacities.find(
+    (day) => day.date === "2026-08-19",
+  );
+
+  assert.deepEqual(
+    {
+      gross: increaseTarget.grossCapacityMinutes,
+      planning: increaseTarget.planningCapacityMinutes,
+      reserve: increaseTarget.reserveMinutes,
+    },
+    { gross: 360, planning: 345, reserve: 15 },
+  );
+  assert.deepEqual(
+    {
+      gross: increaseUnrelated.grossCapacityMinutes,
+      planning: increaseUnrelated.planningCapacityMinutes,
+      reserve: increaseUnrelated.reserveMinutes,
+    },
+    { gross: 300, planning: 285, reserve: 15 },
+  );
+  assert.equal(increaseOverlay.evaluation.currentPlan.availableMinutes, 2160);
+
+  const identicalOverlay = await runPlanningV2ShadowDecision(
+    increaseOverlayInput,
+  );
+  assert.equal(identicalOverlay.snapshotId, increaseOverlay.snapshotId);
+  assert.equal(identicalOverlay.snapshotHash, increaseOverlay.snapshotHash);
+  assert.equal(
+    increaseOverlayClient.inserts.length,
+    2,
+    "identical hypothetical event created duplicate shadow rows",
+  );
+
+  const decreaseOverlayClient = new FakeSupabase();
+  await runPlanningV2ShadowDecision({
+    ...input,
+    client: decreaseOverlayClient,
+    trigger: "CAPACITY_DECREASE",
+    hypotheticalCapacityEvent: {
+      effectiveDate: "2026-08-20",
+      deltaMinutes: -90,
+    },
+  });
+  const decreaseTarget = decreaseOverlayClient.inserts.find(
+    (item) => item.table === "planning_v2_snapshots",
+  ).row.snapshot_payload.dailyCapacities.find(
+    (day) => day.date === "2026-08-20",
+  );
+  assert.deepEqual(
+    {
+      gross: decreaseTarget.grossCapacityMinutes,
+      planning: decreaseTarget.planningCapacityMinutes,
+      reserve: decreaseTarget.reserveMinutes,
+    },
+    { gross: 210, planning: 195, reserve: 15 },
+  );
+
+  const floorOverlayClient = new FakeSupabase();
+  await runPlanningV2ShadowDecision({
+    ...input,
+    client: floorOverlayClient,
+    trigger: "CAPACITY_DECREASE",
+    hypotheticalCapacityEvent: {
+      effectiveDate: "2026-08-20",
+      deltaMinutes: -400,
+    },
+  });
+  const floorTarget = floorOverlayClient.inserts.find(
+    (item) => item.table === "planning_v2_snapshots",
+  ).row.snapshot_payload.dailyCapacities.find(
+    (day) => day.date === "2026-08-20",
+  );
+  assert.equal(floorTarget.grossCapacityMinutes, 0);
+  assert.equal(floorTarget.planningCapacityMinutes, 0);
+  assert.ok(floorTarget.reserveMinutes >= 0);
+
+  const plus30Client = new FakeSupabase();
+  const plus30 = await runPlanningV2ShadowDecision({
+    ...increaseOverlayInput,
+    client: plus30Client,
+    hypotheticalCapacityEvent: {
+      effectiveDate: "2026-08-20",
+      deltaMinutes: 30,
+    },
+  });
+  assert.notEqual(plus30.snapshotHash, increaseOverlay.snapshotHash);
+  assert.notEqual(plus30.snapshotId, increaseOverlay.snapshotId);
+
+  const differentDateClient = new FakeSupabase();
+  const differentDate = await runPlanningV2ShadowDecision({
+    ...increaseOverlayInput,
+    client: differentDateClient,
+    hypotheticalCapacityEvent: {
+      effectiveDate: "2026-08-21",
+      deltaMinutes: 60,
+    },
+  });
+  assert.notEqual(differentDate.snapshotHash, increaseOverlay.snapshotHash);
+  assert.notEqual(differentDate.snapshotId, increaseOverlay.snapshotId);
+
+  for (const invalid of [
+    {
+      trigger: "CAPACITY_INCREASE",
+      event: { effectiveDate: "2026-08-20", deltaMinutes: -60 },
+    },
+    {
+      trigger: "CAPACITY_DECREASE",
+      event: { effectiveDate: "2026-08-20", deltaMinutes: 60 },
+    },
+    {
+      trigger: "STUDY_DEVIATION",
+      event: { effectiveDate: "2026-08-20", deltaMinutes: 60 },
+    },
+    {
+      trigger: "CAPACITY_INCREASE",
+      event: { effectiveDate: "2026-08-24", deltaMinutes: 60 },
+    },
+    {
+      trigger: "CAPACITY_INCREASE",
+      event: { effectiveDate: "2026-08-17", deltaMinutes: 60 },
+    },
+    {
+      trigger: "CAPACITY_INCREASE",
+      event: { effectiveDate: "2026-02-30", deltaMinutes: 60 },
+    },
+    {
+      trigger: "CAPACITY_INCREASE",
+      event: { effectiveDate: "2026-08-20", deltaMinutes: 0 },
+    },
+    {
+      trigger: "CAPACITY_INCREASE",
+      event: { effectiveDate: "2026-08-20", deltaMinutes: 1.5 },
+    },
+  ]) {
+    const invalidClient = new FakeSupabase();
+    await assert.rejects(
+      runPlanningV2ShadowDecision({
+        ...input,
+        client: invalidClient,
+        trigger: invalid.trigger,
+        hypotheticalCapacityEvent: invalid.event,
+      }),
+    );
+    assert.equal(
+      invalidClient.inserts.length,
+      0,
+      "invalid hypothetical event reached shadow persistence",
+    );
+  }
+
+  /*
    * Capacity increase grows effective capacity, but the stable
    * weekly planning budget must not expand or pull work forward.
    */
@@ -1165,7 +1338,7 @@ try {
   );
 
   console.log(
-    "   bridge scenarios:     6",
+    "   bridge scenarios:     16",
   );
 }
 finally {
