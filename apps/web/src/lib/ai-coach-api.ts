@@ -44,6 +44,17 @@ export interface AiCoachShadowPreview {
   };
 }
 
+
+export interface AiCoachTargetCapacityResolution {
+  readonly source: "TARGET_MINUTES";
+  readonly effectiveDate: string;
+  readonly targetMinutes: number;
+  readonly currentGrossMinutes: number;
+  readonly deltaMinutes: number;
+  readonly trigger: "CAPACITY_INCREASE" | "CAPACITY_DECREASE" | null;
+  readonly noChange: boolean;
+}
+
 export interface AiCoachPreviewApiError {
   readonly code: string;
   readonly message: string;
@@ -56,6 +67,7 @@ type GatewayExecution = Extract<AiStudyMessageExecutionResultV1, { status: "GATE
 
 export type AiCoachPlanPreviewResponse =
   | (ValidExecution & {
+      readonly capacityResolution?: AiCoachTargetCapacityResolution | null;
       readonly shadowPreview: AiCoachShadowPreview | null;
       readonly error?: AiCoachPreviewApiError;
     })

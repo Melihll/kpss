@@ -109,13 +109,13 @@ describe("presentAiCoachPreview", () => {
         title: "Temel Kavramlar III",
         schedule: "20 Ağustos → 21 Ağustos",
         remaining: "1 sa kaldı",
-        reason: "Günlük kapasite dengesi",
+        reason: "Kapasite dengesi",
       }),
       expect.objectContaining({
         subject: "Maliye",
         schedule: "22 Ağustos → Sonraya",
         remaining: "45 dk kaldı",
-        reason: "Geçmişten kalan çalışma",
+        reason: "Geçmiş görev",
       }),
     ]);
     expect(result.changeDetailsComplete).toBe(true);
@@ -145,9 +145,9 @@ describe("presentAiCoachPreview", () => {
     expect(result.stats).toEqual([]);
   });
 
-  it("keeps target-only capacity messages as understood but not previewed", () => {
+  it("presents a deterministic targetMinutes preview as the new daily capacity", () => {
     const response = readyResponse();
-    const targetOnly: AiCoachPlanPreviewResponse = {
+    const targetPreview: AiCoachPlanPreviewResponse = {
       ...response,
       interpretation: {
         ...response.interpretation,
@@ -168,12 +168,60 @@ describe("presentAiCoachPreview", () => {
         action: "EVIDENCE_ONLY",
         planningTriggerCandidate: null,
       },
+      capacityResolution: {
+        source: "TARGET_MINUTES",
+        effectiveDate: "2026-08-20",
+        targetMinutes: 120,
+        currentGrossMinutes: 240,
+        deltaMinutes: -120,
+        trigger: "CAPACITY_DECREASE",
+        noChange: false,
+      },
+    };
+
+    const result = presentAiCoachPreview(targetPreview);
+    expect(result.stats[0]).toEqual({ label: "Günlük kapasite", value: "2 sa" });
+    expect(result.title).toContain("düzenleme");
+  });
+
+  it("explains when an absolute capacity target already matches the current day", () => {
+    const response = readyResponse();
+    const noChange: AiCoachPlanPreviewResponse = {
+      ...response,
+      interpretation: {
+        ...response.interpretation,
+        evidence: [{
+          type: "CAPACITY_CHANGE_REQUEST",
+          confidence: 0.9,
+          effectiveDate: "2026-08-20",
+          subjectHint: null,
+          curriculumHint: null,
+          reasonCode: "absolute capacity",
+          direction: null,
+          deltaMinutes: null,
+          targetMinutes: 120,
+        }],
+      },
+      mapping: {
+        ...response.mapping,
+        action: "EVIDENCE_ONLY",
+        planningTriggerCandidate: null,
+      },
+      capacityResolution: {
+        source: "TARGET_MINUTES",
+        effectiveDate: "2026-08-20",
+        targetMinutes: 120,
+        currentGrossMinutes: 120,
+        deltaMinutes: 0,
+        trigger: null,
+        noChange: true,
+      },
       shadowPreview: null,
     };
 
-    const result = presentAiCoachPreview(targetOnly);
-    expect(result.title).toContain("2 sa");
+    const result = presentAiCoachPreview(noChange);
+    expect(result.title).toContain("zaten 2 sa");
+    expect(result.stats).toEqual([{ label: "Günlük kapasite", value: "2 sa" }]);
     expect(result.note).toBe("Planın değişmedi.");
-    expect(result.changes).toEqual([]);
   });
 });

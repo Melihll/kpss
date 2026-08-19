@@ -124,12 +124,24 @@ interface AiCoachPlanPreviewDependencies {
       readonly deltaMinutes: number;
     };
   }) => Promise<ShadowDecisionResult>;
+  readonly loadCurrentGrossCapacity: (input: {
+    readonly client: Client;
+    readonly userId: string;
+    readonly examProfileId: string;
+    readonly currentDate: string;
+    readonly effectiveDate: string;
+  }) => Promise<number>;
   readonly currentDate?: () => string;
 }
 
 type CapacityAdapterResult =
   | { readonly kind: "NO_PREVIEW" }
   | { readonly kind: "INVALID_CANDIDATE" }
+  | {
+      readonly kind: "TARGET";
+      readonly effectiveDate: string;
+      readonly targetMinutes: number;
+    }
   | {
       readonly kind: "PREVIEW";
       readonly trigger: CapacityTrigger;
@@ -138,6 +150,16 @@ type CapacityAdapterResult =
         readonly deltaMinutes: number;
       };
     };
+
+interface TargetCapacityResolution {
+  readonly source: "TARGET_MINUTES";
+  readonly effectiveDate: string;
+  readonly targetMinutes: number;
+  readonly currentGrossMinutes: number;
+  readonly deltaMinutes: number;
+  readonly trigger: CapacityTrigger | null;
+  readonly noChange: boolean;
+}
 
 const corsHeaders = Object.freeze({
   "Access-Control-Allow-Origin": "*",
@@ -207,6 +229,46 @@ async function ownsProfile(
 }
 
 function capacityAdapter(result: Extract<ExecutionResult, { status: "VALID" }>): CapacityAdapterResult {
+  const capacityEvidence = result.interpretation.evidence.filter(
+    (item) => isRecord(item) && item.type === "CAPACITY_CHANGE_REQUEST",
+  );
+  if (capacityEvidence.length === 0) return { kind: "NO_PREVIEW" };
+  if (capacityEvidence.length !== 1) return { kind: "INVALID_CANDIDATE" };
+
+  const evidence = capacityEvidence[0]!;
+  const direction = evidence.direction;
+  const deltaMinutes = evidence.deltaMinutes;
+  const targetMinutes = evidence.targetMinutes;
+  const effectiveDate = evidence.effectiveDate;
+
+  if (typeof effectiveDate !== "string" || effectiveDate === "") {
+    return { kind: "INVALID_CANDIDATE" };
+  }
+
+  if (
+    targetMinutes !== null &&
+    targetMinutes !== undefined
+  ) {
+    if (
+      direction !== null && direction !== undefined ||
+      deltaMinutes !== null && deltaMinutes !== undefined ||
+      typeof targetMinutes !== "number" ||
+      !Number.isFinite(targetMinutes) ||
+      !Number.isInteger(targetMinutes) ||
+      targetMinutes < 0 ||
+      result.mapping.action !== "EVIDENCE_ONLY" ||
+      result.mapping.planningTriggerCandidate !== null
+    ) {
+      return { kind: "INVALID_CANDIDATE" };
+    }
+
+    return {
+      kind: "TARGET",
+      effectiveDate,
+      targetMinutes,
+    };
+  }
+
   if (result.mapping.action !== "PLANNING_TRIGGER_CANDIDATE") {
     return { kind: "NO_PREVIEW" };
   }
@@ -216,23 +278,12 @@ function capacityAdapter(result: Extract<ExecutionResult, { status: "VALID" }>):
     return { kind: "INVALID_CANDIDATE" };
   }
 
-  const capacityEvidence = result.interpretation.evidence.filter(
-    (item) => isRecord(item) && item.type === "CAPACITY_CHANGE_REQUEST",
-  );
-  if (capacityEvidence.length !== 1) return { kind: "INVALID_CANDIDATE" };
-
-  const evidence = capacityEvidence[0]!;
-  const direction = evidence.direction;
-  const deltaMinutes = evidence.deltaMinutes;
-  const effectiveDate = evidence.effectiveDate;
   if (
     (direction !== "INCREASE" && direction !== "DECREASE") ||
     typeof deltaMinutes !== "number" ||
     !Number.isFinite(deltaMinutes) ||
     !Number.isInteger(deltaMinutes) ||
-    deltaMinutes <= 0 ||
-    typeof effectiveDate !== "string" ||
-    effectiveDate === ""
+    deltaMinutes <= 0
   ) {
     return { kind: "INVALID_CANDIDATE" };
   }
@@ -483,14 +534,94 @@ export function createAiCoachPlanPreviewHandler(
       }, 422);
     }
 
+    let previewTrigger: CapacityTrigger;
+    let previewEvent: { readonly effectiveDate: string; readonly deltaMinutes: number };
+    let capacityResolution: TargetCapacityResolution | null = null;
+
+    if (adapted.kind === "TARGET") {
+      let currentGrossMinutes: number;
+      try {
+        currentGrossMinutes = await dependencies.loadCurrentGrossCapacity({
+          client: userClient,
+          userId,
+          examProfileId: body.examProfileId,
+          currentDate,
+          effectiveDate: adapted.effectiveDate,
+        });
+      } catch {
+        return json({
+          status: "VALID",
+          interpretation: aiResult.interpretation,
+          mapping: aiResult.mapping,
+          capacityResolution: null,
+          shadowPreview: null,
+          error: {
+            code: "TARGET_CAPACITY_RESOLUTION_FAILED",
+            message: "Current daily capacity could not be resolved safely.",
+          },
+        }, 422);
+      }
+
+      if (!Number.isFinite(currentGrossMinutes) || currentGrossMinutes < 0) {
+        return json({
+          status: "VALID",
+          interpretation: aiResult.interpretation,
+          mapping: aiResult.mapping,
+          capacityResolution: null,
+          shadowPreview: null,
+          error: {
+            code: "TARGET_CAPACITY_RESOLUTION_FAILED",
+            message: "Current daily capacity could not be resolved safely.",
+          },
+        }, 422);
+      }
+
+      const normalizedCurrentGross = Math.round(currentGrossMinutes);
+      const deltaMinutes = adapted.targetMinutes - normalizedCurrentGross;
+      const trigger = deltaMinutes === 0
+        ? null
+        : deltaMinutes > 0
+        ? "CAPACITY_INCREASE"
+        : "CAPACITY_DECREASE";
+
+      capacityResolution = Object.freeze({
+        source: "TARGET_MINUTES",
+        effectiveDate: adapted.effectiveDate,
+        targetMinutes: adapted.targetMinutes,
+        currentGrossMinutes: normalizedCurrentGross,
+        deltaMinutes,
+        trigger,
+        noChange: deltaMinutes === 0,
+      });
+
+      if (deltaMinutes === 0) {
+        return json({
+          status: "VALID",
+          interpretation: aiResult.interpretation,
+          mapping: aiResult.mapping,
+          capacityResolution,
+          shadowPreview: null,
+        });
+      }
+
+      previewTrigger = trigger!;
+      previewEvent = {
+        effectiveDate: adapted.effectiveDate,
+        deltaMinutes,
+      };
+    } else {
+      previewTrigger = adapted.trigger;
+      previewEvent = adapted.event;
+    }
+
     try {
       const result = await dependencies.runShadowDecision({
         client: dependencies.createShadowClient(),
         userId,
         examProfileId: body.examProfileId,
         currentDate,
-        trigger: adapted.trigger,
-        hypotheticalCapacityEvent: adapted.event,
+        trigger: previewTrigger,
+        hypotheticalCapacityEvent: previewEvent,
       });
       let changes: readonly ShadowPreviewChange[] = Object.freeze([]);
       try {
@@ -508,6 +639,7 @@ export function createAiCoachPlanPreviewHandler(
         status: "VALID",
         interpretation: aiResult.interpretation,
         mapping: aiResult.mapping,
+        capacityResolution,
         shadowPreview: shadowPreview(result, changes),
       });
     } catch {
@@ -515,6 +647,7 @@ export function createAiCoachPlanPreviewHandler(
         status: "VALID",
         interpretation: aiResult.interpretation,
         mapping: aiResult.mapping,
+        capacityResolution,
         shadowPreview: null,
         error: {
           code: "SHADOW_PREVIEW_REJECTED",

@@ -139,21 +139,30 @@ export function CoachDrawer({ open, onClose }: CoachDrawerProps) {
               <span>{detailsOpen ? "Değişiklikleri gizle" : "Değişiklikleri gör"}</span>
               <Icon name="arrow" />
             </button>
-            {detailsOpen && <div className="coach-change-list">
-              {presentation.changes.map((change) => <article key={`${change.changeType}:${change.taskId}`} className={`coach-change-item is-${change.changeType.toLowerCase()}`}>
-                <div className="coach-change-heading">
-                  <span>{change.subject}</span>
-                  <strong>{change.title}</strong>
-                  {change.resource && change.resource !== change.title && <small>{change.resource}</small>}
-                </div>
-                <div className="coach-change-meta">
-                  <strong>{change.schedule}</strong>
-                  <span>{change.remaining}</span>
-                </div>
-                <p>{change.reason}</p>
-              </article>)}
-              {!presentation.changeDetailsComplete && <p className="coach-change-partial">Bazı görev detayları şu anda gösterilemiyor; özet hesap değişmedi.</p>}
-            </div>}
+            {detailsOpen && <>
+              <div className="coach-change-summary" aria-label="Değişiklik özeti">
+                <strong>{presentation.changes.length} değişiklik</strong>
+                <span>{presentation.changes.filter((change) => change.changeType === "MOVE").length} taşındı · {presentation.changes.filter((change) => change.changeType === "BACKLOG").length} sonraya kaldı</span>
+              </div>
+              <div className="coach-change-list">
+                {presentation.changes.map((change) => <article key={`${change.changeType}:${change.taskId}`} className={`coach-change-item is-${change.changeType.toLowerCase()}`}>
+                  <div className="coach-change-heading">
+                    <span>{change.subject}</span>
+                    <strong>{change.title}</strong>
+                    {change.resource && change.resource !== change.title && <small>{change.resource}</small>}
+                  </div>
+                  <div className="coach-change-meta">
+                    <strong>{change.schedule}</strong>
+                    <span>{change.remaining}</span>
+                  </div>
+                  <div className="coach-change-footer">
+                    <span className="coach-change-reason">{change.reason}</span>
+                    {change.changeType === "BACKLOG" && <span className="coach-change-state">Sonraya kaldı</span>}
+                  </div>
+                </article>)}
+                {!presentation.changeDetailsComplete && <p className="coach-change-partial">Bazı görev detayları şu anda gösterilemiyor; özet hesap değişmedi.</p>}
+              </div>
+            </>}
           </div>}
           {presentation.note && <div className="coach-preview-note"><Icon name="check" /><span>{presentation.note}</span></div>}
         </article>}

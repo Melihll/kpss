@@ -20,7 +20,10 @@ const handler = withoutComments(
 const index = withoutComments(
   read("supabase/functions/ai-coach-plan-preview/index.ts"),
 );
-const endpoint = `${handler}\n${index}`;
+const targetCapacity = withoutComments(
+  read("supabase/functions/_shared/ai-coach/target-capacity.ts"),
+);
+const endpoint = `${handler}\n${index}\n${targetCapacity}`;
 const config = read("supabase/config.toml");
 
 for (const expression of [
@@ -37,9 +40,17 @@ for (const required of [
   /executeAiStudyMessageV1/,
   /OpenAiGatewayV1/,
   /runPlanningV2ShadowDecision/,
+  /loadCurrentGrossCapacityForDate/,
 ]) {
   requireMatch(index, required, `preview endpoint missing required safe path ${required}`);
 }
+
+
+requireMatch(
+  handler,
+  /loadCurrentGrossCapacity\(\{[\s\S]*?client:\s*userClient[\s\S]*?\}\)/,
+  "targetMinutes capacity lookup must use the caller-scoped client",
+);
 
 requireMatch(
   config,

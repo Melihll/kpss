@@ -52,6 +52,8 @@ function createHarness(options: {
   aiResult?: unknown;
   shadowError?: boolean;
   taskDetailError?: boolean;
+  currentGrossMinutes?: number;
+  targetCapacityError?: boolean;
 } = {}) {
   const ownershipQuery = {
     select: vi.fn(() => ownershipQuery),
@@ -102,6 +104,11 @@ function createHarness(options: {
   const createShadowClient = vi.fn(() => shadowClient);
   const executeAiStudyMessage = vi.fn(async () =>
     options.aiResult ?? capacityResult());
+  const loadCurrentGrossCapacity = options.targetCapacityError
+    ? vi.fn(async () => {
+        throw new Error("capacity lookup internals");
+      })
+    : vi.fn(async () => options.currentGrossMinutes ?? 240);
   const runShadowDecision = options.shadowError
     ? vi.fn(async () => {
         throw new Error("database secret and internal stack");
@@ -152,6 +159,7 @@ function createHarness(options: {
     createShadowClient,
     createGateway,
     executeAiStudyMessage: executeAiStudyMessage as any,
+    loadCurrentGrossCapacity,
     runShadowDecision: runShadowDecision as any,
     currentDate: () => "2026-08-19",
   });
@@ -161,6 +169,7 @@ function createHarness(options: {
     createGateway,
     createShadowClient,
     executeAiStudyMessage,
+    loadCurrentGrossCapacity,
     runShadowDecision,
     shadowClient,
     userClient,
@@ -253,12 +262,89 @@ describe("ai-coach-plan-preview handler", () => {
     expect(harness.runShadowDecision).not.toHaveBeenCalled();
   });
 
-  it("does not invoke shadow for targetMinutes-only capacity evidence", async () => {
+  it("resolves targetMinutes against caller-scoped current gross capacity and previews a decrease", async () => {
     const result = capacityResult("INCREASE", null, 120);
     result.interpretation.evidence[0]!.direction = null as any;
-    const harness = createHarness({ aiResult: result });
+    const harness = createHarness({ aiResult: result, currentGrossMinutes: 240 });
+    const response = await harness.handler(request({
+      examProfileId,
+      message: "Yarın toplam 2 saat çalışabilirim.",
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(harness.loadCurrentGrossCapacity).toHaveBeenCalledWith({
+      client: harness.userClient,
+      userId: "user-1",
+      examProfileId,
+      currentDate: "2026-08-19",
+      effectiveDate: "2026-08-20",
+    });
+    expect(harness.runShadowDecision).toHaveBeenCalledWith(expect.objectContaining({
+      trigger: "CAPACITY_DECREASE",
+      hypotheticalCapacityEvent: {
+        effectiveDate: "2026-08-20",
+        deltaMinutes: -120,
+      },
+    }));
+    expect(body.capacityResolution).toEqual({
+      source: "TARGET_MINUTES",
+      effectiveDate: "2026-08-20",
+      targetMinutes: 120,
+      currentGrossMinutes: 240,
+      deltaMinutes: -120,
+      trigger: "CAPACITY_DECREASE",
+      noChange: false,
+    });
+  });
+
+  it("resolves targetMinutes to a deterministic increase", async () => {
+    const result = capacityResult("INCREASE", null, 300);
+    result.interpretation.evidence[0]!.direction = null as any;
+    const harness = createHarness({ aiResult: result, currentGrossMinutes: 240 });
+
+    await harness.handler(request());
+
+    expect(harness.runShadowDecision).toHaveBeenCalledWith(expect.objectContaining({
+      trigger: "CAPACITY_INCREASE",
+      hypotheticalCapacityEvent: {
+        effectiveDate: "2026-08-20",
+        deltaMinutes: 60,
+      },
+    }));
+  });
+
+  it("returns a no-change resolution without invoking shadow when target already matches current capacity", async () => {
+    const result = capacityResult("INCREASE", null, 120);
+    result.interpretation.evidence[0]!.direction = null as any;
+    const harness = createHarness({ aiResult: result, currentGrossMinutes: 120 });
     const response = await harness.handler(request());
-    expect((await response.json()).shadowPreview).toBeNull();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.capacityResolution).toMatchObject({
+      targetMinutes: 120,
+      currentGrossMinutes: 120,
+      deltaMinutes: 0,
+      trigger: null,
+      noChange: true,
+    });
+    expect(body.shadowPreview).toBeNull();
+    expect(harness.createShadowClient).not.toHaveBeenCalled();
+    expect(harness.runShadowDecision).not.toHaveBeenCalled();
+  });
+
+  it("fails safely when target capacity cannot be resolved", async () => {
+    const result = capacityResult("INCREASE", null, 120);
+    result.interpretation.evidence[0]!.direction = null as any;
+    const harness = createHarness({ aiResult: result, targetCapacityError: true });
+    const response = await harness.handler(request());
+    const bodyText = await response.text();
+
+    expect(response.status).toBe(422);
+    expect(bodyText).toContain("TARGET_CAPACITY_RESOLUTION_FAILED");
+    expect(bodyText).not.toContain("capacity lookup internals");
+    expect(harness.createShadowClient).not.toHaveBeenCalled();
     expect(harness.runShadowDecision).not.toHaveBeenCalled();
   });
 

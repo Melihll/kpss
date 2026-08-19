@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { executeAiStudyMessageV1 } from "../_shared/ai-coach.bundle.js";
 import { OpenAiGatewayV1 } from "../_shared/ai-coach/openai-gateway.ts";
+import { loadCurrentGrossCapacityForDate } from "../_shared/ai-coach/target-capacity.ts";
 import { runPlanningV2ShadowDecision } from "../_shared/planning-v2-shadow.ts";
 import { createAiCoachPlanPreviewHandler } from "./handler.ts";
 
@@ -28,6 +29,7 @@ const handler = createAiCoachPlanPreviewHandler({
     return new OpenAiGatewayV1({ apiKey });
   },
   executeAiStudyMessage: executeAiStudyMessageV1,
+  loadCurrentGrossCapacity: loadCurrentGrossCapacityForDate,
   runShadowDecision: runPlanningV2ShadowDecision,
 });
 

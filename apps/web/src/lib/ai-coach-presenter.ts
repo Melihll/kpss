@@ -70,6 +70,21 @@ function capacityEvidence(evidence: readonly AiEvidenceV1[]) {
   return evidence.find((item) => item.type === "CAPACITY_CHANGE_REQUEST");
 }
 
+function capacityStat(response: Extract<AiCoachPlanPreviewResponse, { status: "VALID" }>, capacity: ReturnType<typeof capacityEvidence>): AiCoachPresentationStat | null {
+  const resolved = response.capacityResolution;
+  if (resolved?.source === "TARGET_MINUTES") {
+    return { label: "Günlük kapasite", value: compactMinutes(resolved.targetMinutes) };
+  }
+
+  const deltaMinutes = capacity?.deltaMinutes ?? null;
+  const direction = capacity?.direction ?? null;
+  if (deltaMinutes == null) return null;
+  return {
+    label: "Kapasite değişimi",
+    value: `${direction === "DECREASE" ? "−" : "+"}${compactMinutes(deltaMinutes)}`,
+  };
+}
+
 function issueExplanation(issueCodes: readonly string[]): string | null {
   if (issueCodes.includes("PAST_DUE_REMAINING_WORK")) {
     return "Geçmişten kalan çalışma olduğu için planın küçük bir düzenlemeye ihtiyaç duyuyor.";
@@ -79,13 +94,13 @@ function issueExplanation(issueCodes: readonly string[]): string | null {
 
 function changeReason(change: AiCoachShadowPreviewChange): string {
   if (change.reasonCodes.includes("LOCAL_PAST_DUE_REPAIR")) {
-    return "Geçmişten kalan çalışma";
+    return "Geçmiş görev";
   }
   if (change.reasonCodes.includes("LOCAL_DAILY_OVERLOAD_REPAIR")) {
-    return "Günlük kapasite dengesi";
+    return "Kapasite dengesi";
   }
   if (change.changeType === "BACKLOG") {
-    return "Bu hafta uygun boşluk kalmadı";
+    return "Bu hafta yer kalmadı";
   }
   return "Plan dengesi";
 }
@@ -161,6 +176,17 @@ export function presentAiCoachPreview(response: AiCoachPlanPreviewResponse): AiC
   const preview = response.shadowPreview;
 
   if (!preview) {
+    if (response.capacityResolution?.noChange) {
+      return emptyPresentation({
+        tone: "positive",
+        eyebrow: "Plan kontrol edildi",
+        title: `Günlük kapasiten zaten ${compactMinutes(response.capacityResolution.targetMinutes)}.`,
+        body: "Bu nedenle görevlerini yeniden düzenlemeye gerek yok.",
+        stats: [{ label: "Günlük kapasite", value: compactMinutes(response.capacityResolution.targetMinutes) }],
+        note: "Planın değişmedi.",
+      });
+    }
+
     const targetText = capacity?.targetMinutes != null
       ? `Toplam ${compactMinutes(capacity.targetMinutes)} çalışma isteğini anladım.`
       : "Mesajını anladım.";
@@ -174,11 +200,7 @@ export function presentAiCoachPreview(response: AiCoachPlanPreviewResponse): AiC
     });
   }
 
-  const deltaMinutes = capacity?.deltaMinutes ?? null;
-  const direction = capacity?.direction ?? null;
-  const capacityLabel = deltaMinutes == null
-    ? null
-    : `${direction === "DECREASE" ? "−" : "+"}${compactMinutes(deltaMinutes)}`;
+  const resolvedCapacityStat = capacityStat(response, capacity);
   const explanation = issueExplanation(preview.evaluation.issueCodes);
   const changes = presentChanges(preview.changes);
   const changeDetailsComplete = preview.changeDetailsComplete ?? changes.length === preview.changedTaskCount;
@@ -190,7 +212,7 @@ export function presentAiCoachPreview(response: AiCoachPlanPreviewResponse): AiC
       title: "Mevcut planın bu değişikliği zaten karşılıyor.",
       body: explanation ?? "Görevlerini yeniden taşımaya gerek görünmüyor.",
       stats: [
-        ...(capacityLabel ? [{ label: "Kapasite değişimi", value: capacityLabel }] : []),
+        ...(resolvedCapacityStat ? [resolvedCapacityStat] : []),
         { label: "Etkilenen görev", value: String(preview.changedTaskCount) },
       ],
       changes,
@@ -206,7 +228,7 @@ export function presentAiCoachPreview(response: AiCoachPlanPreviewResponse): AiC
       title: "Programında küçük bir düzenleme öneriyorum.",
       body: explanation ?? "Yeni çalışma süreni mevcut programınla karşılaştırdım.",
       stats: [
-        ...(capacityLabel ? [{ label: "Kapasite değişimi", value: capacityLabel }] : []),
+        ...(resolvedCapacityStat ? [resolvedCapacityStat] : []),
         { label: "Etkilenen görev", value: String(preview.changedTaskCount) },
         { label: "Taşınan görev", value: String(preview.evaluation.movedTaskCount) },
         { label: "Sonraya kalan", value: String(preview.evaluation.backlogTaskCount) },
@@ -223,7 +245,7 @@ export function presentAiCoachPreview(response: AiCoachPlanPreviewResponse): AiC
     title: "Bu değişikliği şu anda güvenle planlayamıyorum.",
     body: explanation ?? "Mevcut plan koşulları güvenli bir öneri üretmek için yeterli değil.",
     stats: [
-      ...(capacityLabel ? [{ label: "Kapasite değişimi", value: capacityLabel }] : []),
+      ...(resolvedCapacityStat ? [resolvedCapacityStat] : []),
       { label: "Etkilenen görev", value: String(preview.changedTaskCount) },
     ],
     changes,
