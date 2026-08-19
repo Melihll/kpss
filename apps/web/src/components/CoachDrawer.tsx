@@ -1,0 +1,157 @@
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { AppApiError } from "../lib/app-api";
+import { callAiCoachPreview, type AiCoachPlanPreviewResponse } from "../lib/ai-coach-api";
+import { presentAiCoachPreview } from "../lib/ai-coach-presenter";
+import { supabase } from "../lib/supabase";
+import { Icon } from "./Icon";
+
+interface CoachDrawerProps {
+  readonly open: boolean;
+  readonly onClose: () => void;
+}
+
+const QUICK_PROMPTS = [
+  "Yarın 60 dakika daha çalışabilirim.",
+  "Yarın 30 dakika daha az vaktim var.",
+] as const;
+
+export function CoachDrawer({ open, onClose }: CoachDrawerProps) {
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
+  const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
+  const [response, setResponse] = useState<AiCoachPlanPreviewResponse | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (!open || profileId) return;
+    let active = true;
+    setLoadingProfile(true);
+
+    void (async () => {
+      try {
+        const { data, error: profileError } = await supabase
+          .from("exam_profiles")
+          .select("id")
+          .eq("status", "active")
+          .maybeSingle();
+
+        if (!active) return;
+        if (profileError) {
+          console.error("AI_COACH_PROFILE_LOAD_FAILED", profileError);
+          setError("Aktif çalışma profili bulunamadı.");
+          return;
+        }
+
+        setProfileId(data?.id ?? null);
+        if (!data?.id) setError("Aktif çalışma profili bulunamadı.");
+      } catch (caught) {
+        if (!active) return;
+        console.error("AI_COACH_PROFILE_LOAD_FAILED", caught);
+        setError("Aktif çalışma profili bulunamadı.");
+      } finally {
+        if (active) setLoadingProfile(false);
+      }
+    })();
+
+    return () => { active = false; };
+  }, [open, profileId]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.setTimeout(() => textareaRef.current?.focus(), 120);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose, open]);
+
+  const presentation = useMemo(
+    () => response ? presentAiCoachPreview(response) : null,
+    [response],
+  );
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    const normalized = message.trim();
+    if (!profileId || !normalized || sending) return;
+    setSending(true);
+    setError(null);
+    setSubmittedMessage(normalized);
+    try {
+      const result = await callAiCoachPreview(profileId, normalized);
+      setResponse(result);
+      setMessage("");
+    } catch (caught) {
+      console.error("AI_COACH_PREVIEW_FAILED", caught);
+      setResponse(null);
+      setError(caught instanceof AppApiError ? caught.message : "Koç yanıtı alınamadı. Tekrar deneyebilirsin.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return <>
+    <button
+      className={`coach-drawer-backdrop ${open ? "is-open" : ""}`}
+      type="button"
+      aria-label="Koçu kapat"
+      tabIndex={open ? 0 : -1}
+      onClick={onClose}
+    />
+    <aside className={`coach-drawer ${open ? "is-open" : ""}`} role="dialog" aria-modal="true" aria-hidden={!open} aria-labelledby="coach-drawer-title">
+      <header className="coach-drawer-header">
+        <div className="coach-drawer-brand"><span><Icon name="spark" weight="fill" /></span><div><small>AI destekli</small><strong id="coach-drawer-title">KPSS Koçu</strong></div></div>
+        <button className="coach-close" type="button" aria-label="Koçu kapat" onClick={onClose}><Icon name="close" /></button>
+      </header>
+
+      <div className="coach-drawer-body">
+        {!submittedMessage && <section className="coach-intro">
+          <span className="coach-kicker">Programını birlikte düşünelim</span>
+          <h2>Bugün ne değişti?</h2>
+          <p>Vaktindeki değişikliği veya çalışma durumunu yaz. Koç önce anlamlandırır, sonra planına dokunmadan etkisini hesaplar.</p>
+          <div className="coach-quick-prompts">
+            {QUICK_PROMPTS.map((prompt) => <button type="button" key={prompt} onClick={() => { setMessage(prompt); textareaRef.current?.focus(); }}>{prompt}</button>)}
+          </div>
+        </section>}
+
+        {submittedMessage && <div className="coach-user-message"><span>Sen</span><p>{submittedMessage}</p></div>}
+
+        {sending && <div className="coach-thinking" aria-live="polite"><span><Icon name="spark" /></span><div><strong>Planını kontrol ediyorum</strong><p>Mesajını yorumlayıp Planning V2 önizlemesiyle karşılaştırıyorum.</p></div></div>}
+
+        {presentation && !sending && <article className={`coach-result tone-${presentation.tone}`} aria-live="polite">
+          <span className="coach-result-eyebrow">{presentation.eyebrow}</span>
+          <h3>{presentation.title}</h3>
+          <p>{presentation.body}</p>
+          {presentation.stats.length > 0 && <dl>{presentation.stats.map((stat) => <div key={stat.label}><dt>{stat.label}</dt><dd>{stat.value}</dd></div>)}</dl>}
+          {presentation.note && <div className="coach-preview-note"><Icon name="check" /><span>{presentation.note}</span></div>}
+        </article>}
+
+        {error && !sending && <div className="coach-error" role="alert"><Icon name="warning" /><span>{error}</span></div>}
+      </div>
+
+      <form className="coach-composer" onSubmit={(event) => void submit(event)}>
+        <textarea
+          ref={textareaRef}
+          value={message}
+          rows={3}
+          maxLength={1200}
+          placeholder="Örn. Yarın 60 dakika daha çalışabilirim."
+          aria-label="Koça mesaj yaz"
+          disabled={sending || loadingProfile || !profileId}
+          onChange={(event) => setMessage(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              event.currentTarget.form?.requestSubmit();
+            }
+          }}
+        />
+        <div><small>{loadingProfile ? "Profil hazırlanıyor…" : "Enter gönderir · Shift+Enter yeni satır"}</small><button type="submit" disabled={sending || !profileId || !message.trim()} aria-label="Mesajı gönder"><Icon name="arrow" weight="bold" /></button></div>
+      </form>
+    </aside>
+  </>;
+}
