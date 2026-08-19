@@ -4,6 +4,18 @@ import type {
 import { AppApiError } from "./app-api";
 import { supabase } from "./supabase";
 
+export interface AiCoachShadowPreviewChange {
+  readonly changeType: "MOVE" | "BACKLOG";
+  readonly taskId: string;
+  readonly subjectName: string | null;
+  readonly title: string;
+  readonly resourceName: string | null;
+  readonly remainingMinutes: number;
+  readonly fromDate: string | null;
+  readonly toDate: string | null;
+  readonly reasonCodes: readonly string[];
+}
+
 export interface AiCoachShadowPreview {
   readonly previewOnly: true;
   readonly snapshotId: string;
@@ -12,6 +24,8 @@ export interface AiCoachShadowPreview {
   readonly changedTaskCount: number;
   readonly validationValid: boolean;
   readonly applyRecommended: boolean;
+  readonly changes?: readonly AiCoachShadowPreviewChange[];
+  readonly changeDetailsComplete?: boolean;
   readonly evaluation: {
     readonly currentPlanFeasible: boolean;
     readonly issueCodes: readonly string[];

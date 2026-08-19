@@ -51,14 +51,42 @@ function createHarness(options: {
   authError?: boolean;
   aiResult?: unknown;
   shadowError?: boolean;
+  taskDetailError?: boolean;
 } = {}) {
-  const query = {
-    select: vi.fn(() => query),
-    eq: vi.fn(() => query),
+  const ownershipQuery = {
+    select: vi.fn(() => ownershipQuery),
+    eq: vi.fn(() => ownershipQuery),
     maybeSingle: vi.fn(async () => ({
       data: options.owned === false ? null : { id: examProfileId },
       error: null,
     })),
+  };
+  const taskDetailQuery = {
+    select: vi.fn(() => taskDetailQuery),
+    eq: vi.fn(() => taskDetailQuery),
+    in: vi.fn(async () => options.taskDetailError
+      ? { data: null, error: { message: "detail lookup failed" } }
+      : {
+          data: [
+            {
+              id: "task-1",
+              title: "Temel Kavramlar III",
+              estimated_minutes: 75,
+              subjects: { name: "Matematik" },
+              resources: { name: "2026 KPSS Matematik Soru Bankası" },
+              task_progress: [{ completed_minutes: 15 }],
+            },
+            {
+              id: "task-2",
+              title: "Optimus Maliye — Konu Anlatımlı",
+              estimated_minutes: 60,
+              subjects: [{ name: "Maliye" }],
+              resources: [{ name: "Optimus Maliye" }],
+              task_progress: [],
+            },
+          ],
+          error: null,
+        }),
   };
   const userClient = {
     auth: {
@@ -66,7 +94,7 @@ function createHarness(options: {
         ? { data: { user: null }, error: { message: "bad token" } }
         : { data: { user: { id: "user-1" } }, error: null }),
     },
-    from: vi.fn(() => query),
+    from: vi.fn((table: string) => table === "tasks" ? taskDetailQuery : ownershipQuery),
   };
   const gateway = { interpretStudyMessage: vi.fn() };
   const shadowClient = { shadowOnly: true };
@@ -85,6 +113,19 @@ function createHarness(options: {
         changedTaskCount: 2,
         validationValid: true,
         applyRecommended: true,
+        proposal: {
+          moves: [{
+            taskId: "task-1",
+            fromDate: "2026-08-20",
+            toDate: "2026-08-21",
+            reasonCodes: ["LOCAL_DAILY_OVERLOAD_REPAIR"],
+          }],
+          backlog: [{
+            taskId: "task-2",
+            fromDate: "2026-08-22",
+            reasonCodes: ["NO_FEASIBLE_FUTURE_CAPACITY"],
+          }],
+        },
         evaluation: {
           currentPlan: {
             feasible: true,
@@ -94,8 +135,8 @@ function createHarness(options: {
             reserveMinutes: 105,
           },
           v2: {
-            movedTaskIds: ["task-1", "task-2"],
-            backlogTaskIds: [],
+            movedTaskIds: ["task-1"],
+            backlogTaskIds: ["task-2"],
           },
           stability: { changeRatio: 0.2 },
           capacity: {
@@ -122,6 +163,8 @@ function createHarness(options: {
     executeAiStudyMessage,
     runShadowDecision,
     shadowClient,
+    userClient,
+    taskDetailQuery,
   };
 }
 
@@ -305,6 +348,51 @@ describe("ai-coach-plan-preview handler", () => {
     expect(bodyText).not.toContain("internal stack");
   });
 
+  it("enriches proposal changes through the caller-scoped task query", async () => {
+    const harness = createHarness();
+    const response = await harness.handler(request());
+    const body = await response.json();
+
+    expect(harness.userClient.from).toHaveBeenCalledWith("tasks");
+    expect(harness.taskDetailQuery.in).toHaveBeenCalledWith("id", ["task-1", "task-2"]);
+    expect(body.shadowPreview.changes).toEqual([
+      {
+        changeType: "MOVE",
+        taskId: "task-1",
+        subjectName: "Matematik",
+        title: "Temel Kavramlar III",
+        resourceName: "2026 KPSS Matematik Soru Bankası",
+        remainingMinutes: 60,
+        fromDate: "2026-08-20",
+        toDate: "2026-08-21",
+        reasonCodes: ["LOCAL_DAILY_OVERLOAD_REPAIR"],
+      },
+      {
+        changeType: "BACKLOG",
+        taskId: "task-2",
+        subjectName: "Maliye",
+        title: "Optimus Maliye — Konu Anlatımlı",
+        resourceName: "Optimus Maliye",
+        remainingMinutes: 60,
+        fromDate: "2026-08-22",
+        toDate: null,
+        reasonCodes: ["NO_FEASIBLE_FUTURE_CAPACITY"],
+      },
+    ]);
+    expect(body.shadowPreview.changeDetailsComplete).toBe(true);
+  });
+
+  it("keeps the safe preview when task detail enrichment is unavailable", async () => {
+    const harness = createHarness({ taskDetailError: true });
+    const response = await harness.handler(request());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.shadowPreview.changedTaskCount).toBe(2);
+    expect(body.shadowPreview.changes).toEqual([]);
+    expect(body.shadowPreview.changeDetailsComplete).toBe(false);
+  });
+
   it("returns explicit preview-only semantics without claiming an apply", async () => {
     const harness = createHarness();
     const response = await harness.handler(request());
@@ -321,7 +409,8 @@ describe("ai-coach-plan-preview handler", () => {
         evaluation: {
           availableMinutes: 2160,
           capacity: { grossMinutes: 2160, planningMinutes: 2055 },
-          movedTaskCount: 2,
+          movedTaskCount: 1,
+          backlogTaskCount: 1,
         },
       },
     });

@@ -22,6 +22,7 @@ export function CoachDrawer({ open, onClose }: CoachDrawerProps) {
   const [response, setResponse] = useState<AiCoachPlanPreviewResponse | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [sending, setSending] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -79,6 +80,7 @@ export function CoachDrawer({ open, onClose }: CoachDrawerProps) {
     const normalized = message.trim();
     if (!profileId || !normalized || sending) return;
     setSending(true);
+    setDetailsOpen(false);
     setError(null);
     setSubmittedMessage(normalized);
     try {
@@ -127,6 +129,32 @@ export function CoachDrawer({ open, onClose }: CoachDrawerProps) {
           <h3>{presentation.title}</h3>
           <p>{presentation.body}</p>
           {presentation.stats.length > 0 && <dl>{presentation.stats.map((stat) => <div key={stat.label}><dt>{stat.label}</dt><dd>{stat.value}</dd></div>)}</dl>}
+          {presentation.changes.length > 0 && <div className="coach-change-section">
+            <button
+              className="coach-change-toggle"
+              type="button"
+              aria-expanded={detailsOpen}
+              onClick={() => setDetailsOpen((value) => !value)}
+            >
+              <span>{detailsOpen ? "Değişiklikleri gizle" : "Değişiklikleri gör"}</span>
+              <Icon name="arrow" />
+            </button>
+            {detailsOpen && <div className="coach-change-list">
+              {presentation.changes.map((change) => <article key={`${change.changeType}:${change.taskId}`} className={`coach-change-item is-${change.changeType.toLowerCase()}`}>
+                <div className="coach-change-heading">
+                  <span>{change.subject}</span>
+                  <strong>{change.title}</strong>
+                  {change.resource && change.resource !== change.title && <small>{change.resource}</small>}
+                </div>
+                <div className="coach-change-meta">
+                  <strong>{change.schedule}</strong>
+                  <span>{change.remaining}</span>
+                </div>
+                <p>{change.reason}</p>
+              </article>)}
+              {!presentation.changeDetailsComplete && <p className="coach-change-partial">Bazı görev detayları şu anda gösterilemiyor; özet hesap değişmedi.</p>}
+            </div>}
+          </div>}
           {presentation.note && <div className="coach-preview-note"><Icon name="check" /><span>{presentation.note}</span></div>}
         </article>}
 

@@ -56,6 +56,19 @@ interface ShadowDecisionResult {
   readonly changedTaskCount: number;
   readonly validationValid: boolean;
   readonly applyRecommended: boolean;
+  readonly proposal: {
+    readonly moves: readonly {
+      readonly taskId: string;
+      readonly fromDate: string;
+      readonly toDate: string;
+      readonly reasonCodes: readonly string[];
+    }[];
+    readonly backlog: readonly {
+      readonly taskId: string;
+      readonly fromDate: string | null;
+      readonly reasonCodes: readonly string[];
+    }[];
+  };
   readonly evaluation: {
     readonly currentPlan: {
       readonly feasible: boolean;
@@ -78,6 +91,18 @@ interface ShadowDecisionResult {
       readonly remainingMinutes: number;
     };
   };
+}
+
+interface ShadowPreviewChange {
+  readonly changeType: "MOVE" | "BACKLOG";
+  readonly taskId: string;
+  readonly subjectName: string | null;
+  readonly title: string;
+  readonly resourceName: string | null;
+  readonly remainingMinutes: number;
+  readonly fromDate: string | null;
+  readonly toDate: string | null;
+  readonly reasonCodes: readonly string[];
 }
 
 interface AiCoachPlanPreviewDependencies {
@@ -254,7 +279,92 @@ function noPreviewResponse(result: Exclude<ExecutionResult, { status: "GATEWAY_E
   });
 }
 
-function shadowPreview(result: ShadowDecisionResult): Record<string, unknown> {
+function nestedName(value: unknown): string | null {
+  if (Array.isArray(value)) {
+    const first = value[0];
+    return isRecord(first) && typeof first.name === "string" ? first.name : null;
+  }
+  return isRecord(value) && typeof value.name === "string" ? value.name : null;
+}
+
+function completedMinutes(value: unknown): number {
+  const row = Array.isArray(value) ? value[0] : value;
+  if (!isRecord(row)) return 0;
+  const raw = row.completed_minutes;
+  return typeof raw === "number" && Number.isFinite(raw) ? Math.max(0, raw) : 0;
+}
+
+async function loadShadowPreviewChanges(
+  client: Client,
+  userId: string,
+  examProfileId: string,
+  result: ShadowDecisionResult,
+): Promise<readonly ShadowPreviewChange[]> {
+  const proposalChanges = [
+    ...result.proposal.moves.map((move) => ({
+      changeType: "MOVE" as const,
+      taskId: move.taskId,
+      fromDate: move.fromDate,
+      toDate: move.toDate,
+      reasonCodes: move.reasonCodes,
+    })),
+    ...result.proposal.backlog.map((item) => ({
+      changeType: "BACKLOG" as const,
+      taskId: item.taskId,
+      fromDate: item.fromDate,
+      toDate: null,
+      reasonCodes: item.reasonCodes,
+    })),
+  ];
+  if (proposalChanges.length === 0) return Object.freeze([]);
+
+  const taskIds = [...new Set(proposalChanges.map((item) => item.taskId))];
+  const taskResult = await client
+    .from("tasks")
+    .select("id,title,estimated_minutes,subjects(name),resources(name),task_progress(completed_minutes)")
+    .eq("user_id", userId)
+    .eq("exam_profile_id", examProfileId)
+    .in("id", taskIds);
+
+  if (taskResult.error) throw new Error("AI_COACH_TASK_PREVIEW_LOOKUP_FAILED");
+
+  const rows = new Map<string, Record<string, unknown>>();
+  for (const raw of taskResult.data ?? []) {
+    if (isRecord(raw) && typeof raw.id === "string") rows.set(raw.id, raw);
+  }
+
+  const seen = new Set<string>();
+  const changes: ShadowPreviewChange[] = [];
+  for (const item of proposalChanges) {
+    if (seen.has(item.taskId)) continue;
+    seen.add(item.taskId);
+
+    const row = rows.get(item.taskId);
+    if (!row || typeof row.title !== "string") continue;
+    const estimated = typeof row.estimated_minutes === "number" && Number.isFinite(row.estimated_minutes)
+      ? Math.max(0, row.estimated_minutes)
+      : 0;
+
+    changes.push(Object.freeze({
+      changeType: item.changeType,
+      taskId: item.taskId,
+      subjectName: nestedName(row.subjects),
+      title: row.title,
+      resourceName: nestedName(row.resources),
+      remainingMinutes: Math.max(0, estimated - completedMinutes(row.task_progress)),
+      fromDate: item.fromDate,
+      toDate: item.toDate,
+      reasonCodes: Object.freeze([...item.reasonCodes]),
+    }));
+  }
+
+  return Object.freeze(changes);
+}
+
+function shadowPreview(
+  result: ShadowDecisionResult,
+  changes: readonly ShadowPreviewChange[],
+): Record<string, unknown> {
   return {
     previewOnly: true,
     snapshotId: result.snapshotId,
@@ -263,6 +373,8 @@ function shadowPreview(result: ShadowDecisionResult): Record<string, unknown> {
     changedTaskCount: result.changedTaskCount,
     validationValid: result.validationValid,
     applyRecommended: result.applyRecommended,
+    changes,
+    changeDetailsComplete: changes.length === result.changedTaskCount,
     evaluation: {
       currentPlanFeasible: result.evaluation.currentPlan.feasible,
       issueCodes: result.evaluation.currentPlan.issueCodes,
@@ -322,8 +434,9 @@ export function createAiCoachPlanPreviewHandler(
     }
 
     let userId: string;
+    let userClient: Client;
     try {
-      const userClient = dependencies.createUserClient(authorization);
+      userClient = dependencies.createUserClient(authorization);
       const authResult = await userClient.auth.getUser();
       const user = authResult.data?.user;
       if (authResult.error || !user) {
@@ -379,11 +492,23 @@ export function createAiCoachPlanPreviewHandler(
         trigger: adapted.trigger,
         hypotheticalCapacityEvent: adapted.event,
       });
+      let changes: readonly ShadowPreviewChange[] = Object.freeze([]);
+      try {
+        changes = await loadShadowPreviewChanges(
+          userClient,
+          userId,
+          body.examProfileId,
+          result,
+        );
+      } catch {
+        console.error("AI_COACH_PREVIEW_DETAIL_LOOKUP_FAILED");
+      }
+
       return json({
         status: "VALID",
         interpretation: aiResult.interpretation,
         mapping: aiResult.mapping,
-        shadowPreview: shadowPreview(result),
+        shadowPreview: shadowPreview(result, changes),
       });
     } catch {
       return json({

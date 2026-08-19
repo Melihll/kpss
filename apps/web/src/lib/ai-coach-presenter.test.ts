@@ -42,9 +42,34 @@ function readyResponse(): ValidPreviewResponse {
       snapshotId: "snapshot-1",
       snapshotHash: "hash-1",
       decision: "READY_TO_APPLY",
-      changedTaskCount: 6,
+      changedTaskCount: 2,
       validationValid: true,
       applyRecommended: true,
+      changes: [
+        {
+          changeType: "MOVE",
+          taskId: "task-1",
+          subjectName: "Matematik",
+          title: "Temel Kavramlar III",
+          resourceName: "2026 KPSS Matematik Soru Bankası",
+          remainingMinutes: 60,
+          fromDate: "2026-08-20",
+          toDate: "2026-08-21",
+          reasonCodes: ["LOCAL_DAILY_OVERLOAD_REPAIR"],
+        },
+        {
+          changeType: "BACKLOG",
+          taskId: "task-2",
+          subjectName: "Maliye",
+          title: "Optimus Maliye — Konu Anlatımlı",
+          resourceName: "Optimus Maliye",
+          remainingMinutes: 45,
+          fromDate: "2026-08-22",
+          toDate: null,
+          reasonCodes: ["LOCAL_PAST_DUE_REPAIR"],
+        },
+      ],
+      changeDetailsComplete: true,
       evaluation: {
         currentPlanFeasible: false,
         issueCodes: ["PAST_DUE_REMAINING_WORK"],
@@ -58,7 +83,7 @@ function readyResponse(): ValidPreviewResponse {
           remainingMinutes: 2278,
         },
         changeRatio: 0.23,
-        movedTaskCount: 5,
+        movedTaskCount: 1,
         backlogTaskCount: 1,
       },
     },
@@ -72,12 +97,28 @@ describe("presentAiCoachPreview", () => {
     expect(result.title).toContain("düzenleme");
     expect(result.stats).toEqual([
       { label: "Kapasite değişimi", value: "+1 sa" },
-      { label: "Etkilenen görev", value: "6" },
-      { label: "Taşınan görev", value: "5" },
+      { label: "Etkilenen görev", value: "2" },
+      { label: "Taşınan görev", value: "1" },
       { label: "Sonraya kalan", value: "1" },
     ]);
     expect(result.body).toContain("Geçmişten kalan");
     expect(result.note).toContain("henüz hiçbir görev");
+    expect(result.changes).toEqual([
+      expect.objectContaining({
+        subject: "Matematik",
+        title: "Temel Kavramlar III",
+        schedule: "20 Ağustos → 21 Ağustos",
+        remaining: "1 sa kaldı",
+        reason: "Günlük kapasite dengesi",
+      }),
+      expect.objectContaining({
+        subject: "Maliye",
+        schedule: "22 Ağustos → Sonraya",
+        remaining: "45 dk kaldı",
+        reason: "Geçmişten kalan çalışma",
+      }),
+    ]);
+    expect(result.changeDetailsComplete).toBe(true);
   });
 
   it("renders the backend clarification question instead of inventing a plan", () => {
@@ -133,5 +174,6 @@ describe("presentAiCoachPreview", () => {
     const result = presentAiCoachPreview(targetOnly);
     expect(result.title).toContain("2 sa");
     expect(result.note).toBe("Planın değişmedi.");
+    expect(result.changes).toEqual([]);
   });
 });
