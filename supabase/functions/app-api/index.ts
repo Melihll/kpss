@@ -743,8 +743,17 @@ Deno.serve(async (request) => {
     const gapMatch=route.match(/^\/data-gaps\/([0-9a-f-]+)\/confirm-no-study$/);
     if(request.method==="POST"&&gapMatch){const {data,error}=await client.rpc("resolve_data_gap_event",{p_event_id:gapMatch[1],p_result:"confirmed_no_study"});if(error)throw error;return json(data);}
     if (request.method === "GET" && route === "/study-sessions/active") {
-      const { data, error } = await client.from("study_sessions").select("*, tasks(title)").eq("status","active").maybeSingle();
-      if (error) throw error; return json({ session: data });
+      const { data: session, error } = await client.from("study_sessions").select("*, tasks(title)").eq("status","active").maybeSingle();
+      if (error) throw error;
+      if (!session) return json({ session: null, break: null, paused: false });
+      const { data: openBreak, error: breakError } = await client
+        .from("study_session_breaks")
+        .select("id, session_id, started_at, ended_at")
+        .eq("session_id", session.id)
+        .is("ended_at", null)
+        .maybeSingle();
+      if (breakError) throw breakError;
+      return json({ session, break: openBreak, paused: Boolean(openBreak) });
     }
     if (request.method === "GET" && route === "/execution/summary") {
       const weekRange = getZonedWeekRange(today);
@@ -780,12 +789,21 @@ Deno.serve(async (request) => {
       const replan=plan?await recalculateCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
       return json({...data,replan},201);
     }
-    const sessionMatch=route.match(/^\/study-sessions\/([0-9a-f-]+)\/(finish|cancel)$/);
+    const sessionMatch=route.match(/^\/study-sessions\/([0-9a-f-]+)\/(finish|cancel|pause|resume)$/);
     if(request.method==="POST"&&sessionMatch){
-      const rpc=sessionMatch[2]==="finish"?"finish_study_session":"cancel_study_session";const {data,error}=await client.rpc(rpc,{p_session_id:sessionMatch[1]});if(error)throw error;
-      const plan=sessionMatch[2]==="finish"?await currentPlan(client,profile.id,weekStart):null;
+      const action=sessionMatch[2];
+      const rpc=action==="finish"
+        ?"finish_study_session"
+        :action==="cancel"
+          ?"cancel_study_session"
+          :action==="pause"
+            ?"pause_study_session"
+            :"resume_study_session";
+      const {data,error}=await client.rpc(rpc,{p_session_id:sessionMatch[1]});
+      if(error)throw error;
+      const plan=action==="finish"?await currentPlan(client,profile.id,weekStart):null;
       const replan=plan?await recalculateCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
-      return json({...data,replan});
+      return json(action==="finish"?{...data,replan}:data);
     }
     if(request.method==="POST"&&route==="/test-results"){
       const body=await request.json();
