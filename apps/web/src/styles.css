@@ -344,3 +344,16 @@ html,body,.product-shell{overflow-x:hidden}.coach-drawer-body{overscroll-behavio
 .task-order-buttons button:focus-visible{outline:2px solid #111113;outline-offset:1px}
 .task-order-buttons button:disabled{opacity:.28;cursor:not-allowed}
 @media(max-width:520px){.task-drag-handle{display:none}.task-order-cell{min-width:48px;grid-template-columns:1fr}.task-order-buttons{grid-column:1}.editorial-task-list>article[draggable="true"]{cursor:default}}
+
+/* P1-04 Today break controls */
+.focus-now-card.is-paused{background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(241,241,239,.72))}
+.focus-now-card.is-paused .focus-status i{animation:none;opacity:.42}
+.focus-session-actions{display:flex;align-items:center;gap:10px;margin-top:auto;flex-wrap:wrap}
+.focus-session-actions .focus-action{margin-top:0}
+.focus-action.break{border:1px solid rgba(17,17,19,.12);background:rgba(255,255,255,.72);color:var(--text)}
+.focus-action.break:hover:not(:disabled){background:#fff;border-color:rgba(17,17,19,.22)}
+.focus-action.break.resume{background:var(--text);color:var(--surface)}
+.pause-glyph{display:inline-grid;place-items:center;min-width:16px;font-size:.82rem;font-weight:700;letter-spacing:-.08em}
+.focus-break-note{margin:0;color:var(--text-secondary);font-size:.72rem}
+@media(max-width:760px){.focus-session-actions{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}.focus-session-actions .focus-action{width:100%;min-width:0;padding-inline:12px}.focus-break-note{margin-top:-2px}}
+@media(max-width:430px){.focus-session-actions{grid-template-columns:1fr}.focus-session-actions .focus-action{min-height:44px}}

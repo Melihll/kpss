@@ -2,11 +2,19 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties, type Poi
 import { useRoadmap } from "../hooks/useRoadmap";
 import { callAppApi } from "../lib/app-api";
 import { mergeMovableTaskOrder, moveTaskId } from "../lib/today-task-order";
+import { activeStudyElapsedMinutes } from "../lib/study-session-timer";
 import { compactMinutesLabel, taskName, WORK_MODE_LABELS, type RoadmapTask } from "../lib/roadmap";
 import { CoachDrawer, type CoachDrawerMode } from "./CoachDrawer";
 import { Icon } from "./Icon";
 
 interface ActiveSession { id: string; task_id: string | null; started_at: string; tasks: { title: string } | null }
+interface ActiveBreak { id: string; session_id: string; started_at: string; ended_at: string | null }
+interface ActiveSessionResponse {
+  session: ActiveSession | null;
+  break?: ActiveBreak | null;
+  paused?: boolean;
+  closedBreakSeconds?: number;
+}
 interface Recommendation { task: RoadmapTask; reason: string; remainingMinutes: number }
 interface DailyPlanSummary {
   date?: string;
@@ -67,6 +75,9 @@ export function StudyTodayPanel() {
   const { data: roadmap } = useRoadmap({ ensureWeek: true });
   const [tasks, setTasks] = useState<RoadmapTask[]>([]);
   const [active, setActive] = useState<ActiveSession | null>(null);
+  const [activeBreak, setActiveBreak] = useState<ActiveBreak | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [closedBreakSeconds, setClosedBreakSeconds] = useState(0);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [summary, setSummary] = useState<Summary>({ todayStudyMinutes: 0, weekStudyMinutes: 0, dailyPlan: EMPTY_DAILY_PLAN });
   const [loading, setLoading] = useState(true);
@@ -84,7 +95,7 @@ export function StudyTodayPanel() {
     try {
       let [planResult, activeResult, summaryResult] = await Promise.all([
         callAppApi<{ tasks: RoadmapTask[] }>("/weekly-plan/current"),
-        callAppApi<{ session: ActiveSession | null }>("/study-sessions/active"),
+        callAppApi<ActiveSessionResponse>("/study-sessions/active"),
         callAppApi<Summary>("/execution/summary"),
       ]);
       if (summaryResult.dailyPlan?.deferredTaskCount > 0) {
@@ -100,6 +111,9 @@ export function StudyTodayPanel() {
       }
       setTasks((planResult.tasks ?? []).filter((task) => task.status !== "cancelled"));
       setActive(activeResult.session);
+      setActiveBreak(activeResult.break ?? null);
+      setPaused(Boolean(activeResult.paused));
+      setClosedBreakSeconds(Math.max(0, Number(activeResult.closedBreakSeconds ?? 0)));
       setSummary({ ...summaryResult, dailyPlan: summaryResult.dailyPlan ?? EMPTY_DAILY_PLAN });
       if (!activeResult.session) {
         try { setRecommendation(await callAppApi<Recommendation>("/tasks/next")); }
@@ -115,11 +129,17 @@ export function StudyTodayPanel() {
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     if (!active) { setElapsed(0); return; }
-    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - new Date(active.started_at).getTime()) / 60_000)));
+    const tick = () => setElapsed(activeStudyElapsedMinutes({
+      startedAt: active.started_at,
+      nowMs: Date.now(),
+      closedBreakSeconds,
+      openBreakStartedAt: activeBreak?.started_at ?? null,
+    }));
     tick();
+    if (paused) return;
     const timer = window.setInterval(tick, 30_000);
     return () => window.clearInterval(timer);
-  }, [active]);
+  }, [active, activeBreak?.started_at, closedBreakSeconds, paused]);
 
   async function act(action: () => Promise<unknown>) {
     setBusy(true);
@@ -221,13 +241,26 @@ export function StudyTodayPanel() {
 
     {error && <div className="inline-state error" role="alert"><span>Veriler yüklenemedi.</span><button type="button" onClick={() => void load()}>Tekrar Dene</button></div>}
 
-    <article className={`focus-now-card ${active ? "is-running" : ""}`} onPointerMove={moveSpotlight}>
+    <article className={`focus-now-card ${active ? "is-running" : ""} ${paused ? "is-paused" : ""}`} onPointerMove={moveSpotlight}>
       <div className="focus-spotlight" aria-hidden="true" />
       {loading ? <div className="page-skeleton focus-skeleton"><span /><span /><span /></div> : active ? <div className="focus-state" key="active">
-        <div className="focus-status"><i />Çalışıyorsun</div>
+        <div className="focus-status"><i />{paused ? "Moladasın" : "Çalışıyorsun"}</div>
         <div className="focus-main"><span>{active.tasks?.title?.split(" · ")[0] ?? "Çalışma"}</span><h2>{active.tasks?.title ? taskName({ title: active.tasks.title }) : "Aktif çalışma"}</h2></div>
         <div className="active-counters"><div><strong>{elapsed}</strong><span>dk çalışıldı</span></div>{activePlanned > 0 && <div><strong>{Math.max(0, activePlanned - elapsed)}</strong><span>dk kaldı</span></div>}</div>
-        <button className="focus-action finish" type="button" disabled={busy} onClick={() => void act(() => callAppApi(`/study-sessions/${active.id}/finish`, { method: "POST" }))}><Icon name="stop" weight="fill" />Çalışmayı Bitir</button>
+        <div className="focus-session-actions">
+          <button
+            className={`focus-action break ${paused ? "resume" : ""}`}
+            type="button"
+            disabled={busy}
+            aria-label={paused ? "Çalışmaya devam et" : "Mola ver"}
+            onClick={() => void act(() => callAppApi(`/study-sessions/${active.id}/${paused ? "resume" : "pause"}`, { method: "POST" }))}
+          >
+            {paused ? <Icon name="play" weight="fill" /> : <span className="pause-glyph" aria-hidden="true">Ⅱ</span>}
+            {paused ? "Devam Et" : "Mola Ver"}
+          </button>
+          <button className="focus-action finish" type="button" disabled={busy} onClick={() => void act(() => callAppApi(`/study-sessions/${active.id}/finish`, { method: "POST" }))}><Icon name="stop" weight="fill" />Çalışmayı Bitir</button>
+        </div>
+        {paused && <p className="focus-break-note" role="status">Mola süresi çalışma sürene eklenmez.</p>}
       </div> : focusTask ? <div className="focus-state" key="ready">
         <span className="focus-label">Şimdi</span>
         <div className="focus-main"><span>{focusTask.subjects?.name ?? focusTask.title.split(" · ")[0] ?? "Ders"}</span><h2>{taskName(focusTask)}</h2><div className="focus-resource"><p>{focusTask.resources?.name ?? focusTask.description ?? "Kaynak belirtilmedi"}</p></div></div>

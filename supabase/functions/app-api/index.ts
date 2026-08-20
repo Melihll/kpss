@@ -746,14 +746,19 @@ Deno.serve(async (request) => {
       const { data: session, error } = await client.from("study_sessions").select("*, tasks(title)").eq("status","active").maybeSingle();
       if (error) throw error;
       if (!session) return json({ session: null, break: null, paused: false });
-      const { data: openBreak, error: breakError } = await client
+      const { data: breaks, error: breakError } = await client
         .from("study_session_breaks")
         .select("id, session_id, started_at, ended_at")
         .eq("session_id", session.id)
-        .is("ended_at", null)
-        .maybeSingle();
+        .order("started_at", { ascending: true });
       if (breakError) throw breakError;
-      return json({ session, break: openBreak, paused: Boolean(openBreak) });
+      const openBreak = (breaks ?? []).find((row) => row.ended_at === null) ?? null;
+      const closedBreakSeconds = (breaks ?? []).reduce((sum, row) => {
+        if (!row.ended_at) return sum;
+        const seconds = (Date.parse(row.ended_at) - Date.parse(row.started_at)) / 1000;
+        return sum + (Number.isFinite(seconds) ? Math.max(0, seconds) : 0);
+      }, 0);
+      return json({ session, break: openBreak, paused: Boolean(openBreak), closedBreakSeconds });
     }
     if (request.method === "GET" && route === "/execution/summary") {
       const weekRange = getZonedWeekRange(today);
