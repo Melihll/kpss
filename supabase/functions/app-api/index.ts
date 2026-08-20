@@ -486,7 +486,11 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
     asOfDate: today,
     targetExamDate,
     subjects: P48_SUBJECT_TARGETS.map((subject) => ({ ...subject })),
-    resources,
+    resources: resources.map((resource) => ({
+      ...resource,
+      materialRemainingMinutes:
+        materialWorkloads[resource.resourceId]?.totalRemainingMinutes ?? null,
+    })),
     periods,
   });
   const baseMonths = buildP48Months({

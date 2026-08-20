@@ -17,6 +17,11 @@ export interface P48ResourceTarget {
   sequenceOrder: number;
   workMode: P48WorkMode;
   resourceStatus?: string | null;
+  /**
+   * Deterministic remaining workload derived from real material progress.
+   * null/undefined preserves the legacy plannedMinutes - actualMinutes path.
+   */
+  materialRemainingMinutes?: number | null;
 }
 
 export interface P48CalendarPeriod {
@@ -143,14 +148,36 @@ export function forecastP48Resources(input: {
     const queue = input.resources
       .filter((resource) => resource.subjectId === subject.subjectId)
       .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
-      .map((resource) => ({
-        ...resource,
-        remainingMinutes: Math.max(0, resource.plannedMinutes - resource.actualMinutes),
-        progressPercent: resource.plannedMinutes > 0 ? Math.min(100, Math.round((resource.actualMinutes / resource.plannedMinutes) * 100)) : 0,
-        forecastStartDate: null,
-        forecastFinishDate: null,
-        completed: resource.resourceStatus === "completed" || resource.actualMinutes >= resource.plannedMinutes,
-      })) as P48ResourceForecast[];
+      .map((resource) => {
+        const hasMaterialRemaining = Number.isFinite(resource.materialRemainingMinutes)
+          && Number(resource.materialRemainingMinutes) >= 0;
+        const materialRemainingMinutes = hasMaterialRemaining
+          ? Math.max(0, Math.round(Number(resource.materialRemainingMinutes)))
+          : null;
+        const remainingMinutes = materialRemainingMinutes
+          ?? Math.max(0, resource.plannedMinutes - resource.actualMinutes);
+
+        /*
+         * When real material progress exists it is authoritative for finish
+         * projection. Session minutes remain the fallback for resources that
+         * do not yet expose page/video progress.
+         */
+        const completed = resource.resourceStatus === "completed"
+          || (materialRemainingMinutes !== null
+            ? materialRemainingMinutes === 0
+            : resource.actualMinutes >= resource.plannedMinutes);
+
+        return {
+          ...resource,
+          remainingMinutes,
+          progressPercent: resource.plannedMinutes > 0
+            ? Math.min(100, Math.round((resource.actualMinutes / resource.plannedMinutes) * 100))
+            : 0,
+          forecastStartDate: null,
+          forecastFinishDate: null,
+          completed,
+        };
+      }) as P48ResourceForecast[];
 
     let currentIndex = queue.findIndex((resource) => !resource.completed);
     if (currentIndex < 0) currentIndex = queue.length;

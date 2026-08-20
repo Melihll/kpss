@@ -1022,14 +1022,20 @@ function usableWeekRatio(weekStart, asOfDate, targetExamDate, periods) {
 function forecastP48Resources(input) {
   const subjects = [];
   for (const subject of input.subjects) {
-    const queue = input.resources.filter((resource) => resource.subjectId === subject.subjectId).sort((a, b) => a.sequenceOrder - b.sequenceOrder).map((resource) => ({
-      ...resource,
-      remainingMinutes: Math.max(0, resource.plannedMinutes - resource.actualMinutes),
-      progressPercent: resource.plannedMinutes > 0 ? Math.min(100, Math.round(resource.actualMinutes / resource.plannedMinutes * 100)) : 0,
-      forecastStartDate: null,
-      forecastFinishDate: null,
-      completed: resource.resourceStatus === "completed" || resource.actualMinutes >= resource.plannedMinutes
-    }));
+    const queue = input.resources.filter((resource) => resource.subjectId === subject.subjectId).sort((a, b) => a.sequenceOrder - b.sequenceOrder).map((resource) => {
+      const hasMaterialRemaining = Number.isFinite(resource.materialRemainingMinutes) && Number(resource.materialRemainingMinutes) >= 0;
+      const materialRemainingMinutes = hasMaterialRemaining ? Math.max(0, Math.round(Number(resource.materialRemainingMinutes))) : null;
+      const remainingMinutes = materialRemainingMinutes ?? Math.max(0, resource.plannedMinutes - resource.actualMinutes);
+      const completed = resource.resourceStatus === "completed" || (materialRemainingMinutes !== null ? materialRemainingMinutes === 0 : resource.actualMinutes >= resource.plannedMinutes);
+      return {
+        ...resource,
+        remainingMinutes,
+        progressPercent: resource.plannedMinutes > 0 ? Math.min(100, Math.round(resource.actualMinutes / resource.plannedMinutes * 100)) : 0,
+        forecastStartDate: null,
+        forecastFinishDate: null,
+        completed
+      };
+    });
     let currentIndex = queue.findIndex((resource) => !resource.completed);
     if (currentIndex < 0) currentIndex = queue.length;
     let week = p48MondayOf(input.asOfDate);
