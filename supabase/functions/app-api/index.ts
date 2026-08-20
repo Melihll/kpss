@@ -18,6 +18,7 @@ import { loadP48DailyCapacityOverrides, planningCapacityForDate } from "../_shar
 import { applyDailyTaskOrder } from "../_shared/daily-task-order.ts";
 import { buildQuickAddTaskPreview } from "../_shared/quick-add-task-preview.ts";
 import { buildTaskActionPreview, type TaskActionPreviewAction } from "../_shared/task-action-preview.ts";
+import { normalizeResourceProgress, presentResourceProgress } from "../_shared/resource-progress.ts";
 
 type WeeklyPlanningContext = {
   examProfileId: string;
@@ -96,6 +97,8 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   QUICK_ADD_INVALID_DATE: 400,
   QUICK_ADD_INVALID_SUBJECT: 400,
   TASK_ACTION_INVALID_ACTION: 400,
+  RESOURCE_PROGRESS_INVALID_TOTAL_PAGES: 400,
+  RESOURCE_PROGRESS_INVALID_CURRENT_PAGE: 400,
   P48_STRATEGY_NOT_CONFIGURED: 409,
 };
 
@@ -600,6 +603,68 @@ Deno.serve(async (request) => {
     }
     if (request.method === "POST" && route === "/p48/week/generate") {
       return json(await generateP48Week(client, userId, profile, false), 201);
+    }
+    const resourceProgressMatch = route.match(/^\/resources\/([0-9a-f-]+)\/progress$/);
+    if ((request.method === "GET" || request.method === "PUT") && resourceProgressMatch) {
+      const resourceId = resourceProgressMatch[1];
+      const { data: resource, error: resourceError } = await client
+        .from("resources")
+        .select("id,name,resource_type,exam_profile_id")
+        .eq("id", resourceId)
+        .eq("user_id", userId)
+        .eq("exam_profile_id", profile.id)
+        .maybeSingle();
+      if (resourceError) throw resourceError;
+      if (!resource) {
+        return json({ error: { code: "RESOURCE_NOT_FOUND", message: "Resource not found" } }, 404);
+      }
+
+      if (request.method === "GET") {
+        const { data: progress, error: progressError } = await client
+          .from("resource_progress")
+          .select("resource_id,current_page,total_pages,created_at,updated_at")
+          .eq("user_id", userId)
+          .eq("resource_id", resourceId)
+          .maybeSingle();
+        if (progressError) throw progressError;
+
+        return json({
+          resource: {
+            id: resource.id,
+            name: resource.name,
+            resourceType: resource.resource_type,
+          },
+          progress: progress ? presentResourceProgress(progress) : null,
+        });
+      }
+
+      const body = await request.json().catch(() => null);
+      const normalized = normalizeResourceProgress({
+        totalPages: Number(body?.totalPages),
+        currentPage: Number(body?.currentPage),
+      });
+
+      const { data: saved, error: saveError } = await client
+        .from("resource_progress")
+        .upsert({
+          user_id: userId,
+          exam_profile_id: profile.id,
+          resource_id: resourceId,
+          current_page: normalized.currentPage,
+          total_pages: normalized.totalPages,
+        }, { onConflict: "user_id,resource_id" })
+        .select("resource_id,current_page,total_pages,created_at,updated_at")
+        .single();
+      if (saveError) throw saveError;
+
+      return json({
+        resource: {
+          id: resource.id,
+          name: resource.name,
+          resourceType: resource.resource_type,
+        },
+        progress: presentResourceProgress(saved),
+      });
     }
     if (request.method === "GET" && route === "/weekly-plan/options") {
       const [subjectsResult, resourcesResult, availabilityResult] = await Promise.all([
