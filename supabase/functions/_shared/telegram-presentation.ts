@@ -241,7 +241,10 @@ export function formatDailyCoachMessage(summary: any) {
     return Number(summary.studiedMinutes ?? 0) > 0 ? `Bugünün açık görevi kalmadı. ${formatMinutesShort(summary.studiedMinutes)} kaydedildi.` : "Bugün için açık bir çalışma görevi yok.";
   }
   const completedIds = new Set((summary.allTasks ?? []).filter((task: any) => task.status === "completed").map((task: any) => task.id));
-  const lines = tasks.map((task: any) => `${completedIds.has(task.id) ? "✓" : "○"} ${task.title} · ${task.needsResult ? "sonuç bekliyor" : formatMinutesShort(task.minutes)}`);
+  const lines = tasks.flatMap((task: any) => {
+    const baseLine = `${completedIds.has(task.id) ? "✓" : "○"} ${task.title} · ${task.needsResult ? "sonuç bekliyor" : formatMinutesShort(task.minutes)}`;
+    return task.materialSummary ? [baseLine, `  ${task.materialSummary}`] : [baseLine];
+  });
   return [
     `Bugün · ${formatTelegramDate(summary.date, true)}`,
     `${formatMinutesShort(summary.studiedMinutes ?? 0)} tamamlandı · ${formatMinutesShort(summary.remainingCapacityMinutes ?? 0)} kaldı`,

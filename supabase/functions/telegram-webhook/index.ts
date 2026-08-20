@@ -32,6 +32,7 @@ import {
   type ParsedTestResult,
   type TelegramButton,
 } from "../_shared/telegram-coach.ts";
+import { loadTelegramTaskMaterialSummaries } from "../_shared/telegram-material-summary.ts";
 import {
   activeSessionDelivery,
   answerTelegramCallback,
@@ -676,16 +677,39 @@ Deno.serve(async (req) => {
         : dayClosed
         ? [[{ text: TELEGRAM_BUTTON_LABELS.reopenDay, callback_data: "special" }], [{ text: TELEGRAM_BUTTON_LABELS.addStudy, callback_data: "manual_begin" }]]
         : [[{ text: summary.recommendation?.needsResult ? "Sonuç Gir" : TELEGRAM_BUTTON_LABELS.start, callback_data: summary.recommendation?.needsResult ? `result_begin:${summary.recommendation.taskId}` : summary.recommendation ? `task_start:${summary.recommendation.taskId}:${summary.recommendation.recommendedSessionMinutes}` : "now" }], [{ text: TELEGRAM_BUTTON_LABELS.lowTime, callback_data: "special_less" }, { text: TELEGRAM_BUTTON_LABELS.noStudy, callback_data: "today_skip" }]];
-      const message = formatDailyCoachMessage(summary);
+      let summaryWithMaterials = summary;
+      if (!running?.task && summary.plan && (summary.tasks ?? []).length) {
+        try {
+          const materialSummaries = await loadTelegramTaskMaterialSummaries(
+            admin,
+            userId,
+            profile.data.id,
+            (summary.tasks ?? []).map((task: any) => String(task.id)),
+          );
+          summaryWithMaterials = {
+            ...summary,
+            tasks: (summary.tasks ?? []).map((task: any) => ({
+              ...task,
+              materialSummary: materialSummaries[task.id] ?? null,
+            })),
+          };
+        } catch (caught) {
+          console.error(
+            "TELEGRAM_MATERIAL_SUMMARY_FAILED",
+            caught instanceof Error ? caught.message : String(caught),
+          );
+        }
+      }
+      const message = formatDailyCoachMessage(summaryWithMaterials);
       return await finalize({
         ok: true,
-        summary,
+        summary: summaryWithMaterials,
         ...(running ? { activeSession: running } : {}),
         outbound: !summary.plan
           ? respond(message, [[{ text: "Tekrar dene", callback_data: "today" }]])
           : running?.task
           ? await activeSessionOutbound(running)
-          : respondCard(dailyCoachCard(summary), message, buttons),
+          : respondCard(dailyCoachCard(summaryWithMaterials), message, buttons),
       });
     }
 
