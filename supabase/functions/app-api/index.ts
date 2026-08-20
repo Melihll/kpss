@@ -19,6 +19,7 @@ import { applyDailyTaskOrder } from "../_shared/daily-task-order.ts";
 import { buildQuickAddTaskPreview } from "../_shared/quick-add-task-preview.ts";
 import { buildTaskActionPreview, type TaskActionPreviewAction } from "../_shared/task-action-preview.ts";
 import { normalizeResourceProgress, presentResourceProgress } from "../_shared/resource-progress.ts";
+import { normalizeTopicResourceLinkInput } from "../_shared/topic-resource-link.ts";
 
 type WeeklyPlanningContext = {
   examProfileId: string;
@@ -99,6 +100,11 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   TASK_ACTION_INVALID_ACTION: 400,
   RESOURCE_PROGRESS_INVALID_TOTAL_PAGES: 400,
   RESOURCE_PROGRESS_INVALID_CURRENT_PAGE: 400,
+  TOPIC_RESOURCE_LINK_INVALID_RESOURCE: 400,
+  TOPIC_RESOURCE_LINK_INVALID_PLAYLIST: 400,
+  TOPIC_RESOURCE_LINK_RESOURCE_NOT_FOUND: 404,
+  TOPIC_RESOURCE_LINK_TOPIC_NOT_FOUND: 404,
+  TOPIC_RESOURCE_LINK_SUBJECT_MISMATCH: 400,
   P48_STRATEGY_NOT_CONFIGURED: 409,
 };
 
@@ -603,6 +609,89 @@ Deno.serve(async (request) => {
     }
     if (request.method === "POST" && route === "/p48/week/generate") {
       return json(await generateP48Week(client, userId, profile, false), 201);
+    }
+    const topicMaterialLinksMatch = route.match(/^\/topics\/([0-9a-f-]+)\/material-links$/);
+    if ((request.method === "GET" || request.method === "PUT") && topicMaterialLinksMatch) {
+      const curriculumNodeId = topicMaterialLinksMatch[1];
+
+      const { data: topic, error: topicError } = await client
+        .from("curriculum_nodes")
+        .select("id,subject_id,name,is_active")
+        .eq("id", curriculumNodeId)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (topicError) throw topicError;
+      if (!topic) throw new Error("TOPIC_RESOURCE_LINK_TOPIC_NOT_FOUND");
+
+      if (request.method === "GET") {
+        const { data: links, error: linksError } = await client
+          .from("topic_resource_links")
+          .select("id,curriculum_node_id,resource_id,youtube_playlist_id,is_primary,created_at,updated_at,resources(id,name,resource_type,subject_id),youtube_playlists(id,source_url,youtube_playlist_id,title,total_duration_seconds,video_count,last_synced_at)")
+          .eq("user_id", userId)
+          .eq("exam_profile_id", profile.id)
+          .eq("curriculum_node_id", curriculumNodeId)
+          .order("is_primary", { ascending: false })
+          .order("created_at", { ascending: true });
+        if (linksError) throw linksError;
+
+        return json({
+          topic: { id: topic.id, name: topic.name, subjectId: topic.subject_id },
+          links: links ?? [],
+        });
+      }
+
+      const body = await request.json().catch(() => null);
+      const input = normalizeTopicResourceLinkInput(body);
+
+      const { data: resource, error: resourceError } = await client
+        .from("resources")
+        .select("id,name,subject_id,resource_type")
+        .eq("id", input.resourceId)
+        .eq("user_id", userId)
+        .eq("exam_profile_id", profile.id)
+        .maybeSingle();
+      if (resourceError) throw resourceError;
+      if (!resource) throw new Error("TOPIC_RESOURCE_LINK_RESOURCE_NOT_FOUND");
+      if (resource.subject_id !== topic.subject_id) {
+        throw new Error("TOPIC_RESOURCE_LINK_SUBJECT_MISMATCH");
+      }
+
+      let playlistRow: any = null;
+      if (input.playlist) {
+        const { data: playlist, error: playlistError } = await client
+          .from("youtube_playlists")
+          .upsert({
+            user_id: userId,
+            exam_profile_id: profile.id,
+            source_url: input.playlist.sourceUrl,
+            youtube_playlist_id: input.playlist.youtubePlaylistId,
+          }, { onConflict: "user_id,exam_profile_id,youtube_playlist_id" })
+          .select("id,source_url,youtube_playlist_id,title,total_duration_seconds,video_count,last_synced_at")
+          .single();
+        if (playlistError) throw playlistError;
+        playlistRow = playlist;
+      }
+
+      const { data: saved, error: saveError } = await client
+        .from("topic_resource_links")
+        .upsert({
+          user_id: userId,
+          exam_profile_id: profile.id,
+          curriculum_node_id: curriculumNodeId,
+          resource_id: resource.id,
+          youtube_playlist_id: playlistRow?.id ?? null,
+          is_primary: input.isPrimary,
+        }, { onConflict: "user_id,exam_profile_id,curriculum_node_id,resource_id" })
+        .select("id,curriculum_node_id,resource_id,youtube_playlist_id,is_primary,created_at,updated_at")
+        .single();
+      if (saveError) throw saveError;
+
+      return json({
+        topic: { id: topic.id, name: topic.name, subjectId: topic.subject_id },
+        resource: { id: resource.id, name: resource.name, resourceType: resource.resource_type },
+        playlist: playlistRow,
+        link: saved,
+      });
     }
     const resourceProgressMatch = route.match(/^\/resources\/([0-9a-f-]+)\/progress$/);
     if ((request.method === "GET" || request.method === "PUT") && resourceProgressMatch) {
