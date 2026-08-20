@@ -8,7 +8,6 @@ import {
   classifyTelegramText,
   completionActionButtons,
   completionCard,
-  dailyCoachCard,
   foldedTelegramText,
   formatActiveSessionMessage,
   formatStartedSessionMessage,
@@ -20,7 +19,6 @@ import {
   greetingMessage,
   mainMenuButtons,
   manualTaskChoiceButtons,
-  nowCoachCard,
   parseAvailableMinutes,
   parseManualStudyText,
   parseTestResultText,
@@ -709,7 +707,7 @@ Deno.serve(async (req) => {
           ? respond(message, [[{ text: "Tekrar dene", callback_data: "today" }]])
           : running?.task
           ? await activeSessionOutbound(running)
-          : respondCard(dailyCoachCard(summaryWithMaterials), message, buttons),
+          : respond(message, buttons),
       });
     }
 
@@ -751,7 +749,7 @@ Deno.serve(async (req) => {
       return await finalize({
         ok: true,
         recommendation,
-        outbound: respondCard(nowCoachCard(recommendation, day), formatNowCoachMessage(recommendation), [[actionButton], [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]),
+        outbound: respond(formatNowCoachMessage(recommendation), [[actionButton], [{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }]]),
       });
     }
 

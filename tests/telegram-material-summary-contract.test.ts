@@ -15,11 +15,11 @@ describe("P1-15 Telegram material summary contract", () => {
     "utf8",
   );
 
-  it("enriches /bugun before rendering the existing daily message/card", () => {
+  it("enriches /bugun before rendering the existing daily plain-text message", () => {
     expect(webhook).toContain("loadTelegramTaskMaterialSummaries");
     expect(webhook).toContain("summaryWithMaterials");
     expect(webhook).toContain("formatDailyCoachMessage(summaryWithMaterials)");
-    expect(webhook).toContain("dailyCoachCard(summaryWithMaterials)");
+    expect(webhook).toContain("respond(message, buttons)");
     expect(webhook).toContain("TELEGRAM_MATERIAL_SUMMARY_FAILED");
   });
 
