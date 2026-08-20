@@ -49,6 +49,20 @@ export type AiEvidenceV1 =
   | CapacityChangeRequestEvidenceV1
   | NonCapacityAiEvidenceV1;
 
+export type AiMaterialCoachingFocusV1 =
+  | "PAGE"
+  | "VIDEO"
+  | "MIXED"
+  | "COMPLETE";
+
+export interface AiMaterialCoachingContextV1 {
+  readonly resourceName: string;
+  readonly remainingPages: number | null;
+  readonly remainingVideoMinutes: number | null;
+  readonly totalRemainingMinutes: number;
+  readonly focus: AiMaterialCoachingFocusV1;
+}
+
 export interface AiInterpretationV1 {
   readonly intent: AiCoachIntentV1;
   readonly confidence: number;
@@ -59,6 +73,7 @@ export interface AiInterpretationV1 {
   readonly curriculumHint: string | null;
   readonly reasonCode: string | null;
   readonly evidence: readonly AiEvidenceV1[];
+  readonly materialCoachingSummary?: string | null;
 }
 
 export interface StudyMessageInputV1 {
@@ -67,6 +82,7 @@ export interface StudyMessageInputV1 {
   readonly locale?: string;
   readonly knownSubjects?: readonly string[];
   readonly knownCurriculumLabels?: readonly string[];
+  readonly materialContext?: readonly AiMaterialCoachingContextV1[];
 }
 
 export interface AiGatewayV1 {

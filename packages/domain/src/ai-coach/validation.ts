@@ -21,6 +21,7 @@ const INTERPRETATION_KEYS = new Set([
   "curriculumHint",
   "reasonCode",
   "evidence",
+  "materialCoachingSummary",
 ]);
 
 const EVIDENCE_BASE_KEYS = [
@@ -268,6 +269,14 @@ export function validateAiInterpretationV1(
     issue(issues, "$.evidence", "CAPACITY_EVIDENCE_REQUIRED", "Capacity intent requires one capacity request.");
   }
 
+  const materialCoachingSummary = raw.materialCoachingSummary === undefined
+    ? undefined
+    : optionalText(
+        raw.materialCoachingSummary,
+        "$.materialCoachingSummary",
+        issues,
+      );
+
   const normalized: AiInterpretationV1 = Object.freeze({
     intent: (intent as AiCoachIntentV1),
     confidence: confidence(raw.confidence, "$.confidence", issues),
@@ -278,6 +287,7 @@ export function validateAiInterpretationV1(
     curriculumHint: optionalText(raw.curriculumHint, "$.curriculumHint", issues),
     reasonCode: optionalText(raw.reasonCode, "$.reasonCode", issues),
     evidence: Object.freeze(evidence),
+    ...(materialCoachingSummary !== undefined ? { materialCoachingSummary } : {}),
   });
 
   if (issues.length > 0) {

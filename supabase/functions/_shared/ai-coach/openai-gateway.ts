@@ -17,6 +17,13 @@ export interface OpenAiStudyMessageInputV1 {
   readonly locale?: string;
   readonly knownSubjects?: readonly string[];
   readonly knownCurriculumLabels?: readonly string[];
+  readonly materialContext?: readonly {
+    readonly resourceName: string;
+    readonly remainingPages: number | null;
+    readonly remainingVideoMinutes: number | null;
+    readonly totalRemainingMinutes: number;
+    readonly focus: "PAGE" | "VIDEO" | "MIXED" | "COMPLETE";
+  }[];
 }
 
 export interface OpenAiGatewayV1Options {
@@ -78,6 +85,7 @@ export const AI_COACH_INTERPRETATION_JSON_SCHEMA_V1 = Object.freeze({
     "curriculumHint",
     "reasonCode",
     "evidence",
+    "materialCoachingSummary",
   ],
   properties: {
     intent: {
@@ -101,6 +109,7 @@ export const AI_COACH_INTERPRETATION_JSON_SCHEMA_V1 = Object.freeze({
     subjectHint: nullableString,
     curriculumHint: nullableString,
     reasonCode: nullableString,
+    materialCoachingSummary: nullableString,
     evidence: {
       type: "array",
       maxItems: 8,
@@ -261,6 +270,9 @@ export class OpenAiGatewayV1 {
                 locale: input.locale ?? "tr-TR",
                 knownSubjects: input.knownSubjects ?? [],
                 knownCurriculumLabels: input.knownCurriculumLabels ?? [],
+                ...(input.materialContext?.length
+                  ? { materialContext: input.materialContext }
+                  : {}),
               }),
             }],
           }],

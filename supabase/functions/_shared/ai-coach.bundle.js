@@ -31,7 +31,8 @@ var INTERPRETATION_KEYS = /* @__PURE__ */ new Set([
   "subjectHint",
   "curriculumHint",
   "reasonCode",
-  "evidence"
+  "evidence",
+  "materialCoachingSummary"
 ]);
 var EVIDENCE_BASE_KEYS = [
   "type",
@@ -198,6 +199,11 @@ function validateAiInterpretationV1(raw) {
   if (intent === "CAPACITY_CHANGE" && capacityEvidence.length !== 1) {
     issue(issues, "$.evidence", "CAPACITY_EVIDENCE_REQUIRED", "Capacity intent requires one capacity request.");
   }
+  const materialCoachingSummary = raw.materialCoachingSummary === void 0 ? void 0 : optionalText(
+    raw.materialCoachingSummary,
+    "$.materialCoachingSummary",
+    issues
+  );
   const normalized = Object.freeze({
     intent,
     confidence: confidence(raw.confidence, "$.confidence", issues),
@@ -207,7 +213,8 @@ function validateAiInterpretationV1(raw) {
     subjectHint: optionalText(raw.subjectHint, "$.subjectHint", issues),
     curriculumHint: optionalText(raw.curriculumHint, "$.curriculumHint", issues),
     reasonCode: optionalText(raw.reasonCode, "$.reasonCode", issues),
-    evidence: Object.freeze(evidence)
+    evidence: Object.freeze(evidence),
+    ...materialCoachingSummary !== void 0 ? { materialCoachingSummary } : {}
   });
   if (issues.length > 0) {
     return Object.freeze({
@@ -280,6 +287,12 @@ function buildAiCoachSystemPromptV1() {
     "You interpret study-coaching messages into structured evidence.",
     "Return one JSON object only. Do not include markdown or prose outside JSON.",
     "Never calculate a study plan, capacity, remaining minutes, priority, feasibility, or task dates.",
+    "materialContext, when present, contains deterministic facts already calculated by the application.",
+    "Never derive new material numbers, percentages, dates, workload totals, or comparisons from materialContext.",
+    "Use the supplied focus value as authoritative; do not recompute which material side is heavier.",
+    "Return materialCoachingSummary only when the user asks about materials, resources, progress, what to focus on, or general coaching where material progress is directly relevant; otherwise return null.",
+    "materialCoachingSummary must be one concise Turkish coaching sentence grounded only in relevant supplied materialContext facts.",
+    "Do not invent a resource, page count, video duration, progress percentage, finish date, or study claim in materialCoachingSummary.",
     "Never choose, move, cancel, create, or apply tasks.",
     "Never issue database actions or claim that a plan change was applied.",
     "Do not invent user facts, subjects, curriculum topics, study activity, or test results.",
@@ -294,6 +307,49 @@ function buildAiCoachSystemPromptV1() {
 }
 
 // packages/domain/src/ai-coach/executor.ts
+function materialSummaryIssue(interpretation, context) {
+  const summary = interpretation.materialCoachingSummary?.trim() ?? "";
+  if (!summary) return null;
+  if (!context?.length) {
+    return Object.freeze({
+      path: "$.materialCoachingSummary",
+      code: "MATERIAL_CONTEXT_REQUIRED",
+      message: "Material coaching requires deterministic material context."
+    });
+  }
+  if (summary.includes("%")) {
+    return Object.freeze({
+      path: "$.materialCoachingSummary",
+      code: "UNSUPPORTED_MATERIAL_PERCENT",
+      message: "Material coaching must not invent progress percentages."
+    });
+  }
+  const allowedNumbers = /* @__PURE__ */ new Set();
+  for (const item of context) {
+    for (const value of [
+      item.remainingPages,
+      item.remainingVideoMinutes,
+      item.totalRemainingMinutes
+    ]) {
+      if (typeof value === "number" && Number.isFinite(value)) {
+        allowedNumbers.add(String(Math.max(0, Math.round(value))));
+      }
+    }
+    for (const token of item.resourceName.match(/\d+/g) ?? []) {
+      allowedNumbers.add(String(Number(token)));
+    }
+  }
+  for (const token of summary.match(/\d+/g) ?? []) {
+    if (!allowedNumbers.has(String(Number(token)))) {
+      return Object.freeze({
+        path: "$.materialCoachingSummary",
+        code: "UNSUPPORTED_MATERIAL_NUMBER",
+        message: "Material coaching may only repeat deterministic material numbers."
+      });
+    }
+  }
+  return null;
+}
 async function executeAiStudyMessageV1(request) {
   let untrustedProviderOutput;
   try {
@@ -325,6 +381,18 @@ async function executeAiStudyMessageV1(request) {
       status: "NEEDS_CLARIFICATION",
       clarificationQuestion: validation.value.clarificationQuestion ?? "Please clarify your study request.",
       interpretation: validation.value,
+      mapping: null
+    });
+  }
+  const materialIssue = materialSummaryIssue(
+    validation.value,
+    request.input.materialContext
+  );
+  if (materialIssue) {
+    return Object.freeze({
+      status: "INVALID",
+      issues: Object.freeze([materialIssue]),
+      interpretation: null,
       mapping: null
     });
   }

@@ -177,8 +177,20 @@ export function presentAiCoachPreview(response: AiCoachPlanPreviewResponse): AiC
 
   const capacity = capacityEvidence(response.interpretation.evidence);
   const preview = response.shadowPreview;
+  const materialCoachingSummary = response.interpretation.materialCoachingSummary ?? null;
 
   if (!preview) {
+    if (materialCoachingSummary) {
+      return emptyPresentation({
+        tone: "neutral",
+        eyebrow: "Materyal koçluğu",
+        title: "Materyal ilerlemeni değerlendirdim.",
+        body: materialCoachingSummary,
+        stats: [],
+        note: "Bu açıklama deterministic materyal verilerinden üretildi; planın değişmedi.",
+      });
+    }
+
     if (response.capacityResolution?.noChange) {
       return emptyPresentation({
         tone: "positive",

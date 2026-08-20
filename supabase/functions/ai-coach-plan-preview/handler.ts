@@ -1,3 +1,4 @@
+import { loadAiCoachMaterialContext } from "../_shared/ai-coach/material-context.ts";
 import { AI_COACH_MESSAGE_MAX_LENGTH } from "../ai-coach-interpret/handler.ts";
 
 type Client = any;
@@ -6,10 +7,19 @@ interface AiGatewayLike {
   interpretStudyMessage(input: StudyMessageInput): Promise<unknown>;
 }
 
+interface MaterialCoachingContextInput {
+  readonly resourceName: string;
+  readonly remainingPages: number | null;
+  readonly remainingVideoMinutes: number | null;
+  readonly totalRemainingMinutes: number;
+  readonly focus: "PAGE" | "VIDEO" | "MIXED" | "COMPLETE";
+}
+
 interface StudyMessageInput {
   readonly message: string;
   readonly currentDate: string;
   readonly locale: "tr-TR";
+  readonly materialContext?: readonly MaterialCoachingContextInput[];
 }
 
 interface AiInterpretationLike {
@@ -502,6 +512,18 @@ export function createAiCoachPlanPreviewHandler(
     }
 
     const currentDate = (dependencies.currentDate ?? istanbulDate)();
+
+    let materialContext: readonly MaterialCoachingContextInput[] = [];
+    try {
+      materialContext = await loadAiCoachMaterialContext(
+        userClient,
+        userId,
+        body.examProfileId,
+      );
+    } catch {
+      console.warn("AI_COACH_MATERIAL_CONTEXT_LOOKUP_FAILED");
+    }
+
     let aiResult: ExecutionResult;
     try {
       aiResult = await dependencies.executeAiStudyMessage({
@@ -510,6 +532,7 @@ export function createAiCoachPlanPreviewHandler(
           message: body.message.trim(),
           currentDate,
           locale: "tr-TR",
+          materialContext,
         },
       });
     } catch {

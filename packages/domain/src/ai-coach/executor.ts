@@ -5,6 +5,7 @@ import {
 import type {
   AiGatewayV1,
   AiInterpretationV1,
+  AiMaterialCoachingContextV1,
   AiValidationIssueV1,
   StudyMessageInputV1,
 } from "./types";
@@ -39,6 +40,58 @@ export type AiStudyMessageExecutionResultV1 =
       readonly interpretation: null;
       readonly mapping: null;
     };
+
+function materialSummaryIssue(
+  interpretation: AiInterpretationV1,
+  context: readonly AiMaterialCoachingContextV1[] | undefined,
+): AiValidationIssueV1 | null {
+  const summary = interpretation.materialCoachingSummary?.trim() ?? "";
+  if (!summary) return null;
+
+  if (!context?.length) {
+    return Object.freeze({
+      path: "$.materialCoachingSummary",
+      code: "MATERIAL_CONTEXT_REQUIRED",
+      message: "Material coaching requires deterministic material context.",
+    });
+  }
+
+  if (summary.includes("%")) {
+    return Object.freeze({
+      path: "$.materialCoachingSummary",
+      code: "UNSUPPORTED_MATERIAL_PERCENT",
+      message: "Material coaching must not invent progress percentages.",
+    });
+  }
+
+  const allowedNumbers = new Set<string>();
+  for (const item of context) {
+    for (const value of [
+      item.remainingPages,
+      item.remainingVideoMinutes,
+      item.totalRemainingMinutes,
+    ]) {
+      if (typeof value === "number" && Number.isFinite(value)) {
+        allowedNumbers.add(String(Math.max(0, Math.round(value))));
+      }
+    }
+    for (const token of item.resourceName.match(/\d+/g) ?? []) {
+      allowedNumbers.add(String(Number(token)));
+    }
+  }
+
+  for (const token of summary.match(/\d+/g) ?? []) {
+    if (!allowedNumbers.has(String(Number(token)))) {
+      return Object.freeze({
+        path: "$.materialCoachingSummary",
+        code: "UNSUPPORTED_MATERIAL_NUMBER",
+        message: "Material coaching may only repeat deterministic material numbers.",
+      });
+    }
+  }
+
+  return null;
+}
 
 export interface ExecuteAiStudyMessageInputV1 {
   readonly gateway: AiGatewayV1;
@@ -84,6 +137,19 @@ export async function executeAiStudyMessageV1(
         validation.value.clarificationQuestion ??
         "Please clarify your study request.",
       interpretation: validation.value,
+      mapping: null,
+    });
+  }
+
+  const materialIssue = materialSummaryIssue(
+    validation.value,
+    request.input.materialContext,
+  );
+  if (materialIssue) {
+    return Object.freeze({
+      status: "INVALID",
+      issues: Object.freeze([materialIssue]),
+      interpretation: null,
       mapping: null,
     });
   }
