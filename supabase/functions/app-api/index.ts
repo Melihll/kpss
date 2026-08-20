@@ -20,6 +20,7 @@ import { buildQuickAddTaskPreview } from "../_shared/quick-add-task-preview.ts";
 import { buildTaskActionPreview, type TaskActionPreviewAction } from "../_shared/task-action-preview.ts";
 import { normalizeResourceProgress, presentResourceProgress } from "../_shared/resource-progress.ts";
 import { normalizeTopicResourceLinkInput } from "../_shared/topic-resource-link.ts";
+import { fetchYouTubePlaylistCatalog } from "../_shared/youtube-playlist.ts";
 
 type WeeklyPlanningContext = {
   examProfileId: string;
@@ -105,6 +106,11 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   TOPIC_RESOURCE_LINK_RESOURCE_NOT_FOUND: 404,
   TOPIC_RESOURCE_LINK_TOPIC_NOT_FOUND: 404,
   TOPIC_RESOURCE_LINK_SUBJECT_MISMATCH: 400,
+  YOUTUBE_PLAYLIST_NOT_FOUND: 404,
+  YOUTUBE_PLAYLIST_NOT_LINKED: 409,
+  YOUTUBE_API_KEY_MISSING: 503,
+  YOUTUBE_API_REQUEST_FAILED: 502,
+  YOUTUBE_API_INVALID_RESPONSE: 502,
   P48_STRATEGY_NOT_CONFIGURED: 409,
 };
 
@@ -609,6 +615,64 @@ Deno.serve(async (request) => {
     }
     if (request.method === "POST" && route === "/p48/week/generate") {
       return json(await generateP48Week(client, userId, profile, false), 201);
+    }
+    const youtubePlaylistSyncMatch = route.match(/^\/youtube-playlists\/([0-9a-f-]+)\/sync$/);
+    if (request.method === "POST" && youtubePlaylistSyncMatch) {
+      const playlistId = youtubePlaylistSyncMatch[1];
+
+      const { data: playlist, error: playlistError } = await client
+        .from("youtube_playlists")
+        .select("id,youtube_playlist_id,source_url,title,total_duration_seconds,video_count,last_synced_at")
+        .eq("id", playlistId)
+        .eq("user_id", userId)
+        .eq("exam_profile_id", profile.id)
+        .maybeSingle();
+      if (playlistError) throw playlistError;
+      if (!playlist) throw new Error("YOUTUBE_PLAYLIST_NOT_FOUND");
+
+      const { data: linked, error: linkedError } = await client
+        .from("topic_resource_links")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("exam_profile_id", profile.id)
+        .eq("youtube_playlist_id", playlist.id)
+        .limit(1);
+      if (linkedError) throw linkedError;
+      if (!(linked ?? []).length) throw new Error("YOUTUBE_PLAYLIST_NOT_LINKED");
+
+      const apiKey = Deno.env.get("YOUTUBE_API_KEY")?.trim();
+      if (!apiKey) throw new Error("YOUTUBE_API_KEY_MISSING");
+
+      const catalog = await fetchYouTubePlaylistCatalog({
+        apiKey,
+        youtubePlaylistId: playlist.youtube_playlist_id,
+      });
+
+      const { data: persisted, error: persistError } = await client.rpc(
+        "sync_youtube_playlist_catalog",
+        {
+          p_playlist_id: playlist.id,
+          p_payload: {
+            title: catalog.title,
+            videoCount: catalog.videoCount,
+            totalDurationSeconds: catalog.totalDurationSeconds,
+            videos: catalog.videos,
+          },
+        },
+      );
+      if (persistError) throw persistError;
+
+      return json({
+        playlist: {
+          id: playlist.id,
+          youtubePlaylistId: playlist.youtube_playlist_id,
+          title: catalog.title,
+          videoCount: catalog.videoCount,
+          totalDurationSeconds: catalog.totalDurationSeconds,
+          skippedVideoCount: catalog.skippedVideoCount,
+        },
+        sync: persisted,
+      });
     }
     const topicMaterialLinksMatch = route.match(/^\/topics\/([0-9a-f-]+)\/material-links$/);
     if ((request.method === "GET" || request.method === "PUT") && topicMaterialLinksMatch) {
