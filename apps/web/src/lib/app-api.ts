@@ -58,5 +58,8 @@ export const FRIENDLY_API_ERRORS: Readonly<Record<string, string>> = {
   INVALID_WORK_MODE: "Çalışma türünü kontrol et.",
   MANUAL_PLAN_OVER_CAPACITY: "Bu plan haftalık kapasiteni aşıyor. Birkaç süreyi azalt.",
   P48_STRATEGY_NOT_CONFIGURED: "P48 yol haritası henüz kurulmadı.",
+  RESOURCE_NOT_FOUND: "Kaynak bulunamadı veya bu kaynağa erişiminiz yok.",
+  RESOURCE_PROGRESS_INVALID_TOTAL_PAGES: "Toplam sayfa sayısı 1 veya daha büyük bir tam sayı olmalı.",
+  RESOURCE_PROGRESS_INVALID_CURRENT_PAGE: "Kaldığınız sayfa 0 ile toplam sayfa arasında olmalı.",
   UNAUTHORIZED: "Oturumunuz geçersiz. Yeniden giriş yapın.",
 };

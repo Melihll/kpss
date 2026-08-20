@@ -1,5 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Icon } from "../components/Icon";
+import { ResourceProgressDrawer } from "../components/ResourceProgressDrawer";
+import { callAppApi } from "../lib/app-api";
+import type { ResourcePageProgress, ResourceProgressResponse } from "../lib/resource-progress-ui";
 import { useRoadmap } from "../hooks/useRoadmap";
 import { dateLabel, RESOURCE_TYPE_LABELS, type ResourceForecast } from "../lib/roadmap";
 
@@ -29,6 +32,8 @@ export function ResourcesPage() {
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [changingSubject, setChangingSubject] = useState(false);
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+  const [pageProgressByResource, setPageProgressByResource] = useState<Record<string, ResourcePageProgress>>({});
+  const [editingResource, setEditingResource] = useState<ResourceForecast | null>(null);
   const transitionTimer = useRef<number | null>(null);
   const selectorRef = useRef<HTMLDivElement>(null);
   const subjectButtons = useRef<Array<HTMLButtonElement | null>>([]);
@@ -69,6 +74,34 @@ export function ResourcesPage() {
 
   const subject = subjects.find((item) => item.subjectId === displayedSubjectId) ?? subjects[0];
   const currentIndex = subject?.resources.findIndex((resource) => !resource.completed) ?? -1;
+
+  useEffect(() => {
+    const resources = subject?.resources ?? [];
+    if (!resources.length) return;
+
+    let cancelled = false;
+    void Promise.all(resources.map(async (resource) => {
+      try {
+        const payload = await callAppApi<ResourceProgressResponse>(`/resources/${resource.resourceId}/progress`);
+        return payload.progress;
+      } catch {
+        return null;
+      }
+    })).then((results) => {
+      if (cancelled) return;
+      const next: Record<string, ResourcePageProgress> = {};
+      for (const progress of results) {
+        if (progress) next[progress.resourceId] = progress;
+      }
+      if (Object.keys(next).length) {
+        setPageProgressByResource((current) => ({ ...current, ...next }));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [displayedSubjectId, subjects]);
 
   function selectSubject(nextId: string) {
     if (nextId === subjectId) return;
@@ -129,17 +162,38 @@ export function ResourcesPage() {
 
         {subject?.resources.length ? <div className="resource-pipeline">{subject.resources.map((resource, index) => {
           const state = resourceState(resource, index, currentIndex);
-          const progress = resource.completed ? 100 : resource.progressPercent;
+          const pageProgress = pageProgressByResource[resource.resourceId] ?? null;
+          const progress = pageProgress?.progressPercent ?? (resource.completed ? 100 : resource.progressPercent);
           return <article className={`library-resource-row is-${state}`} style={{ "--resource-row-delay": `${index * 32}ms` } as CSSProperties} key={resource.resourceId}>
             <span className="resource-sequence" aria-hidden="true">{state === "completed" ? <Icon name="check" weight="bold" /> : String(index + 1).padStart(2, "0")}</span>
             <div className="resource-primary"><div className="resource-kicker"><span>{STATE_LABELS[state]}</span><i aria-hidden="true">·</i><small>{RESOURCE_TYPE_LABELS[resource.resourceType ?? ""] ?? "Kaynak"}</small></div><strong>{resource.resourceName}</strong><small>{resource.publisher || "Yayıncı bilgisi yok"}</small></div>
-            <div className={`library-progress ${progress > 0 ? "has-progress" : "zero-progress"}`} aria-label={`İlerleme yüzde ${progress}`}>
+            <div className={`library-progress ${progress > 0 ? "has-progress" : "zero-progress"}`} aria-label={pageProgress ? `Sayfa ilerlemesi yüzde ${progress}` : `İlerleme yüzde ${progress}`}>
               {progress > 0 ? <><div><i style={{ width: `${progress}%` }} /></div><strong>%{progress}</strong></> : <span>Henüz başlanmadı</span>}
+              {pageProgress && <small>{pageProgress.currentPage} / {pageProgress.totalPages} sayfa</small>}
             </div>
-            <div className="library-finish"><span>Tahmini bitiş</span><strong>{resource.completed ? "Tamamlandı" : resource.forecastFinishDate ? finishDateLabel(resource.forecastFinishDate) : "Sınava kadar"}</strong></div>
+            <div className="library-finish">
+              <span>Tahmini bitiş</span>
+              <strong>{resource.completed ? "Tamamlandı" : resource.forecastFinishDate ? finishDateLabel(resource.forecastFinishDate) : "Sınava kadar"}</strong>
+              <button
+                className="resource-page-progress-button"
+                type="button"
+                onClick={() => setEditingResource(resource)}
+              >
+                {pageProgress ? "Sayfayı güncelle" : "Sayfa takibi"}
+              </button>
+            </div>
           </article>;
         })}</div> : <div className="plain-empty">Bu ders için henüz kaynak eklenmedi.</div>}
       </section>
     </> : <div className="plain-empty">Henüz kaynak eklenmedi.</div>}
+    <ResourceProgressDrawer
+      resource={editingResource}
+      progress={editingResource ? pageProgressByResource[editingResource.resourceId] ?? null : null}
+      onClose={() => setEditingResource(null)}
+      onSaved={(progress) => {
+        setPageProgressByResource((current) => ({ ...current, [progress.resourceId]: progress }));
+        setEditingResource(null);
+      }}
+    />
   </section>;
 }
