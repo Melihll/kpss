@@ -21,6 +21,7 @@ import { buildTaskActionPreview, type TaskActionPreviewAction } from "../_shared
 import { normalizeResourceProgress, presentResourceProgress } from "../_shared/resource-progress.ts";
 import { normalizeTopicResourceLinkInput } from "../_shared/topic-resource-link.ts";
 import { fetchYouTubePlaylistCatalog } from "../_shared/youtube-playlist.ts";
+import { normalizeYouTubeVideoProgressInput, presentYouTubeVideoProgress } from "../_shared/youtube-video-progress.ts";
 
 type WeeklyPlanningContext = {
   examProfileId: string;
@@ -111,6 +112,10 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   YOUTUBE_API_KEY_MISSING: 503,
   YOUTUBE_API_REQUEST_FAILED: 502,
   YOUTUBE_API_INVALID_RESPONSE: 502,
+  YOUTUBE_VIDEO_NOT_FOUND: 404,
+  YOUTUBE_VIDEO_DURATION_UNAVAILABLE: 409,
+  YOUTUBE_VIDEO_PROGRESS_INVALID_POSITION: 400,
+  YOUTUBE_VIDEO_PROGRESS_INVALID_WATCHED_SECONDS: 400,
   P48_STRATEGY_NOT_CONFIGURED: 409,
 };
 
@@ -615,6 +620,76 @@ Deno.serve(async (request) => {
     }
     if (request.method === "POST" && route === "/p48/week/generate") {
       return json(await generateP48Week(client, userId, profile, false), 201);
+    }
+    const youtubeVideoProgressMatch = route.match(/^\/youtube-videos\/([0-9a-f-]+)\/progress$/);
+    if ((request.method === "GET" || request.method === "PUT") && youtubeVideoProgressMatch) {
+      const youtubePlaylistVideoId = youtubeVideoProgressMatch[1];
+
+      const { data: video, error: videoError } = await client
+        .from("youtube_playlist_videos")
+        .select("id,youtube_playlist_id,youtube_video_id,title,duration_seconds,position,is_active")
+        .eq("id", youtubePlaylistVideoId)
+        .eq("user_id", userId)
+        .eq("exam_profile_id", profile.id)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (videoError) throw videoError;
+      if (!video) throw new Error("YOUTUBE_VIDEO_NOT_FOUND");
+
+      const durationSeconds = Number(video.duration_seconds ?? 0);
+      if (!Number.isInteger(durationSeconds) || durationSeconds <= 0) {
+        throw new Error("YOUTUBE_VIDEO_DURATION_UNAVAILABLE");
+      }
+
+      if (request.method === "GET") {
+        const { data: progress, error: progressError } = await client
+          .from("youtube_video_progress")
+          .select("youtube_playlist_video_id,last_position_seconds,watched_seconds,completed_at,created_at,updated_at")
+          .eq("user_id", userId)
+          .eq("exam_profile_id", profile.id)
+          .eq("youtube_playlist_video_id", youtubePlaylistVideoId)
+          .maybeSingle();
+        if (progressError) throw progressError;
+
+        return json({
+          video: {
+            id: video.id,
+            youtubePlaylistId: video.youtube_playlist_id,
+            youtubeVideoId: video.youtube_video_id,
+            title: video.title,
+            durationSeconds,
+            position: video.position,
+          },
+          progress: progress
+            ? presentYouTubeVideoProgress(progress, durationSeconds)
+            : null,
+        });
+      }
+
+      const body = await request.json().catch(() => null);
+      const input = normalizeYouTubeVideoProgressInput(body);
+
+      const { data: saved, error: saveError } = await client.rpc(
+        "record_youtube_video_progress",
+        {
+          p_video_id: youtubePlaylistVideoId,
+          p_position_seconds: input.lastPositionSeconds,
+          p_watched_seconds: input.watchedSeconds,
+        },
+      );
+      if (saveError) throw saveError;
+
+      return json({
+        video: {
+          id: video.id,
+          youtubePlaylistId: video.youtube_playlist_id,
+          youtubeVideoId: video.youtube_video_id,
+          title: video.title,
+          durationSeconds,
+          position: video.position,
+        },
+        progress: saved,
+      });
     }
     const youtubePlaylistSyncMatch = route.match(/^\/youtube-playlists\/([0-9a-f-]+)\/sync$/);
     if (request.method === "POST" && youtubePlaylistSyncMatch) {
