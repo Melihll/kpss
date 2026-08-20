@@ -15,6 +15,7 @@ import { minimumDayPlan, recalculateCurrentPlan, syllabusProjection } from "../_
 import { generateWeeklyReport, loadDailyCoachContext, pilotMetrics, recordRecommendationEvent } from "../_shared/pilot.ts";
 import { aggregateCompletedStudySessions } from "../_shared/completed-study.ts";
 import { loadP48DailyCapacityOverrides, planningCapacityForDate } from "../_shared/capacity-overrides.ts";
+import { applyDailyTaskOrder } from "../_shared/daily-task-order.ts";
 
 type WeeklyPlanningContext = {
   examProfileId: string;
@@ -38,7 +39,7 @@ type WeeklyPlanningContext = {
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, OPTIONS",
 };
 
 function json(body: unknown, status = 200) {
@@ -250,7 +251,21 @@ async function planWithTasks(client: SupabaseClient, plan: any) {
     .order("planned_date")
     .order("priority_score", { ascending: false });
   if (error) throw error;
-  return { plan, tasks: tasks ?? [] };
+
+  const plannerOrderedTasks = tasks ?? [];
+  if (plannerOrderedTasks.length === 0) return { plan, tasks: [] };
+
+  const taskIds = plannerOrderedTasks.map((task: any) => task.id);
+  const { data: preferences, error: preferenceError } = await client
+    .from("task_daily_preferences")
+    .select("task_id, planned_date, manual_order")
+    .in("task_id", taskIds);
+  if (preferenceError) throw preferenceError;
+
+  return {
+    plan,
+    tasks: applyDailyTaskOrder(plannerOrderedTasks, preferences ?? []),
+  };
 }
 
 const P48_SUBJECT_TARGETS = [
@@ -652,6 +667,47 @@ Deno.serve(async (request) => {
     if (request.method === "GET" && route === "/tasks") {
       const plan = await currentPlan(client, profile.id, weekStart);
       return json((await planWithTasks(client, plan)).tasks);
+    }
+    if (request.method === "PUT" && route === "/tasks/daily-order") {
+      const body = await request.json().catch(() => null);
+      const date = typeof body?.date === "string" ? body.date : "";
+      const taskIds = Array.isArray(body?.taskIds) ? body.taskIds.filter((id: unknown): id is string => typeof id === "string") : [];
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("INVALID_DAILY_ORDER_DATE");
+      if (taskIds.length === 0 || new Set(taskIds).size !== taskIds.length) throw new Error("INVALID_DAILY_ORDER_TASKS");
+
+      const plan = await currentPlan(client, profile.id, weekStart);
+      if (!plan) throw new Error("WEEKLY_PLAN_NOT_FOUND");
+
+      const { data: dayTasks, error: dayTasksError } = await client
+        .from("tasks")
+        .select("id, planned_date, priority_score")
+        .eq("user_id", userId)
+        .eq("exam_profile_id", profile.id)
+        .eq("weekly_plan_id", plan.id)
+        .eq("planned_date", date)
+        .order("priority_score", { ascending: false });
+      if (dayTasksError) throw dayTasksError;
+
+      const expectedIds = (dayTasks ?? []).map((task: any) => task.id);
+      const expectedSet = new Set(expectedIds);
+      const exactSameSet = expectedIds.length === taskIds.length && taskIds.every((id) => expectedSet.has(id));
+      if (!exactSameSet) throw new Error("DAILY_ORDER_TASK_SET_MISMATCH");
+
+      const rows = taskIds.map((taskId, manualOrder) => ({
+        user_id: userId,
+        task_id: taskId,
+        planned_date: date,
+        manual_order: manualOrder,
+        updated_at: new Date().toISOString(),
+      }));
+
+      const { error: preferenceError } = await client
+        .from("task_daily_preferences")
+        .upsert(rows, { onConflict: "user_id,task_id,planned_date" });
+      if (preferenceError) throw preferenceError;
+
+      return json({ date, taskIds, manualOrderApplied: true });
     }
     if (request.method === "GET" && route === "/tasks/next") {
       const recommendation=await nextTask(client, profile, userId);
