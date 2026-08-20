@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Icon } from "../components/Icon";
-import { ResourceProgressDrawer } from "../components/ResourceProgressDrawer";
-import { VideoPlayerDrawer } from "../components/VideoPlayerDrawer";
+import { ResourceDetailDrawer, type ResourceDetailTab } from "../components/ResourceDetailDrawer";
 import { callAppApi } from "../lib/app-api";
 import type { ResourcePageProgress, ResourceProgressResponse } from "../lib/resource-progress-ui";
 import { useRoadmap } from "../hooks/useRoadmap";
@@ -34,8 +33,8 @@ export function ResourcesPage() {
   const [changingSubject, setChangingSubject] = useState(false);
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
   const [pageProgressByResource, setPageProgressByResource] = useState<Record<string, ResourcePageProgress>>({});
-  const [editingResource, setEditingResource] = useState<ResourceForecast | null>(null);
-  const [videoResource, setVideoResource] = useState<ResourceForecast | null>(null);
+  const [detailResource, setDetailResource] = useState<ResourceForecast | null>(null);
+  const [detailTab, setDetailTab] = useState<ResourceDetailTab>("page");
   const transitionTimer = useRef<number | null>(null);
   const selectorRef = useRef<HTMLDivElement>(null);
   const subjectButtons = useRef<Array<HTMLButtonElement | null>>([]);
@@ -180,14 +179,14 @@ export function ResourcesPage() {
                 <button
                   className="resource-page-progress-button"
                   type="button"
-                  onClick={() => setEditingResource(resource)}
+                  onClick={() => { setDetailTab("page"); setDetailResource(resource); }}
                 >
                   {pageProgress ? "Sayfayı güncelle" : "Sayfa takibi"}
                 </button>
                 <button
                   className="resource-video-button"
                   type="button"
-                  onClick={() => setVideoResource(resource)}
+                  onClick={() => { setDetailTab("video"); setDetailResource(resource); }}
                 >
                   Video izle
                 </button>
@@ -197,18 +196,14 @@ export function ResourcesPage() {
         })}</div> : <div className="plain-empty">Bu ders için henüz kaynak eklenmedi.</div>}
       </section>
     </> : <div className="plain-empty">Henüz kaynak eklenmedi.</div>}
-    <ResourceProgressDrawer
-      resource={editingResource}
-      progress={editingResource ? pageProgressByResource[editingResource.resourceId] ?? null : null}
-      onClose={() => setEditingResource(null)}
-      onSaved={(progress) => {
+    <ResourceDetailDrawer
+      resource={detailResource}
+      pageProgress={detailResource ? pageProgressByResource[detailResource.resourceId] ?? null : null}
+      initialTab={detailTab}
+      onClose={() => setDetailResource(null)}
+      onPageSaved={(progress) => {
         setPageProgressByResource((current) => ({ ...current, [progress.resourceId]: progress }));
-        setEditingResource(null);
       }}
-    />
-    <VideoPlayerDrawer
-      resource={videoResource}
-      onClose={() => setVideoResource(null)}
     />
   </section>;
 }

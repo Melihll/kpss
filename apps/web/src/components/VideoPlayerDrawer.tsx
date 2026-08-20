@@ -18,38 +18,7 @@ import {
   youtubeTimeLabel,
 } from "../lib/youtube-player-progress";
 
-interface VideoItem {
-  readonly id: string;
-  readonly youtubeVideoId: string;
-  readonly title: string;
-  readonly position: number;
-  readonly durationSeconds: number;
-  readonly thumbnailUrl: string | null;
-  readonly channelTitle: string | null;
-  readonly publishedAt: string | null;
-}
-
-interface PlaylistItem {
-  readonly id: string;
-  readonly sourceUrl: string;
-  readonly youtubePlaylistId: string;
-  readonly title: string | null;
-  readonly totalDurationSeconds: number;
-  readonly videoCount: number;
-  readonly lastSyncedAt: string | null;
-  readonly videos: readonly VideoItem[];
-}
-
-interface ResourceVideoLibraryResponse {
-  readonly resource: {
-    readonly id: string;
-    readonly name: string;
-    readonly resourceType: string;
-  };
-  readonly playlists: readonly PlaylistItem[];
-}
-
-interface VideoProgress {
+export interface VideoProgress {
   readonly youtubePlaylistVideoId: string;
   readonly lastPositionSeconds: number;
   readonly watchedSeconds: number;
@@ -60,6 +29,38 @@ interface VideoProgress {
   readonly completedAt: string | null;
   readonly createdAt: string | null;
   readonly updatedAt: string | null;
+}
+
+export interface VideoItem {
+  readonly id: string;
+  readonly youtubeVideoId: string;
+  readonly title: string;
+  readonly position: number;
+  readonly durationSeconds: number;
+  readonly thumbnailUrl: string | null;
+  readonly channelTitle: string | null;
+  readonly publishedAt: string | null;
+  readonly progress: VideoProgress | null;
+}
+
+export interface PlaylistItem {
+  readonly id: string;
+  readonly sourceUrl: string;
+  readonly youtubePlaylistId: string;
+  readonly title: string | null;
+  readonly totalDurationSeconds: number;
+  readonly videoCount: number;
+  readonly lastSyncedAt: string | null;
+  readonly videos: readonly VideoItem[];
+}
+
+export interface ResourceVideoLibraryResponse {
+  readonly resource: {
+    readonly id: string;
+    readonly name: string;
+    readonly resourceType: string;
+  };
+  readonly playlists: readonly PlaylistItem[];
 }
 
 interface VideoProgressResponse {
@@ -370,15 +371,15 @@ function EmbeddedYouTubePlayer({
   return <div className="youtube-player-frame" ref={hostRef} />;
 }
 
-interface VideoPlayerDrawerProps {
-  readonly resource: ResourceForecast | null;
-  readonly onClose: () => void;
+interface VideoPlayerPanelProps {
+  readonly resource: ResourceForecast;
+  readonly onProgressChanged?: (progress: VideoProgress) => void;
 }
 
-export function VideoPlayerDrawer({
+export function VideoPlayerPanel({
   resource,
-  onClose,
-}: VideoPlayerDrawerProps) {
+  onProgressChanged,
+}: VideoPlayerPanelProps) {
   const [library, setLibrary] = useState<ResourceVideoLibraryResponse | null>(null);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [progress, setProgress] = useState<VideoProgress | null>(null);
@@ -391,17 +392,12 @@ export function VideoPlayerDrawer({
   const selectedVideo = videos.find((video) => video.id === selectedVideoId) ?? null;
 
   useEffect(() => {
-    if (!resource) {
-      setLibrary(null);
-      setSelectedVideoId(null);
-      setProgress(null);
-      setError(null);
-      return;
-    }
-
     let cancelled = false;
     setLoadingLibrary(true);
     setError(null);
+    setLibrary(null);
+    setSelectedVideoId(null);
+    setProgress(null);
 
     void callAppApi<ResourceVideoLibraryResponse>(
       `/resources/${resource.resourceId}/youtube-videos`,
@@ -411,6 +407,7 @@ export function VideoPlayerDrawer({
         setLibrary(payload);
         const first = flattenVideos(payload.playlists)[0] ?? null;
         setSelectedVideoId(first?.id ?? null);
+        setProgress(first?.progress ?? null);
       })
       .catch((caught) => {
         if (!cancelled) {
@@ -424,7 +421,7 @@ export function VideoPlayerDrawer({
     return () => {
       cancelled = true;
     };
-  }, [resource]);
+  }, [resource.resourceId]);
 
   useEffect(() => {
     if (!selectedVideo) {
@@ -432,6 +429,7 @@ export function VideoPlayerDrawer({
       return;
     }
 
+    setProgress(selectedVideo.progress ?? null);
     let cancelled = false;
     setLoadingProgress(true);
     setError(null);
@@ -456,6 +454,118 @@ export function VideoPlayerDrawer({
     };
   }, [selectedVideo?.id]);
 
+  const saveProgress = (saved: VideoProgress) => {
+    setProgress(saved);
+    setLibrary((current) => current ? {
+      ...current,
+      playlists: current.playlists.map((playlist) => ({
+        ...playlist,
+        videos: playlist.videos.map((video) => (
+          video.id === saved.youtubePlaylistVideoId
+            ? { ...video, progress: saved }
+            : video
+        )),
+      })),
+    } : current);
+    onProgressChanged?.(saved);
+  };
+
+  return <div className="youtube-player-panel">
+    {loadingLibrary && <div className="youtube-player-state">Videolar yükleniyor…</div>}
+
+    {!loadingLibrary && library && videos.length === 0 && (
+      <div className="youtube-player-empty">
+        <strong>Bu kaynağa bağlı senkronize video yok.</strong>
+        <p>Playlist bağlantısı ve senkronizasyon tamamlandığında videolar burada görünecek.</p>
+      </div>
+    )}
+
+    {selectedVideo && (
+      <>
+        <section className="youtube-player-stage">
+          {loadingProgress
+            ? <div className="youtube-player-state">İlerleme yükleniyor…</div>
+            : <EmbeddedYouTubePlayer
+                key={selectedVideo.id}
+                video={selectedVideo}
+                initialProgress={progress}
+                onSaved={saveProgress}
+                onError={setError}
+                playerRef={playerRef}
+              />}
+        </section>
+
+        <section className="youtube-current-video">
+          <div>
+            <span>Şimdi izleniyor</span>
+            <strong>{selectedVideo.title}</strong>
+            {selectedVideo.channelTitle && <small>{selectedVideo.channelTitle}</small>}
+          </div>
+          <div className="youtube-current-progress">
+            <strong>%{progress?.progressPercent ?? 0}</strong>
+            <span>
+              {youtubeTimeLabel(progress?.watchedSeconds ?? 0)}
+              {" / "}
+              {youtubeTimeLabel(selectedVideo.durationSeconds)}
+            </span>
+          </div>
+        </section>
+      </>
+    )}
+
+    {error && <div className="youtube-player-error" role="alert">{error}</div>}
+
+    {library?.playlists.map((playlist) => (
+      <section className="youtube-playlist-section" key={playlist.id}>
+        <header>
+          <div>
+            <span>Playlist</span>
+            <strong>{playlist.title ?? "YouTube Playlist"}</strong>
+          </div>
+          <small>{playlist.videos.length} video</small>
+        </header>
+
+        <div className="youtube-video-list">
+          {playlist.videos.map((video) => {
+            const active = video.id === selectedVideoId;
+            return <button
+              type="button"
+              className={active ? "is-active" : ""}
+              aria-pressed={active}
+              onClick={() => {
+                setProgress(video.progress ?? null);
+                setSelectedVideoId(video.id);
+              }}
+              key={video.id}
+            >
+              <span className="youtube-video-index">{video.position + 1}</span>
+              <span className="youtube-video-copy">
+                <strong>{video.title}</strong>
+                <small>
+                  {video.channelTitle ?? "YouTube"} · {youtubeTimeLabel(video.durationSeconds)}
+                  {video.progress ? ` · %${video.progress.progressPercent}` : ""}
+                </small>
+              </span>
+              {video.progress?.completed
+                ? <span className="youtube-video-playing">Tamamlandı</span>
+                : active && <span className="youtube-video-playing">İzleniyor</span>}
+            </button>;
+          })}
+        </div>
+      </section>
+    ))}
+  </div>;
+}
+
+interface VideoPlayerDrawerProps {
+  readonly resource: ResourceForecast | null;
+  readonly onClose: () => void;
+}
+
+export function VideoPlayerDrawer({
+  resource,
+  onClose,
+}: VideoPlayerDrawerProps) {
   useEffect(() => {
     if (!resource) return;
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -489,86 +599,7 @@ export function VideoPlayerDrawer({
       </header>
 
       <div className="youtube-player-body">
-        {loadingLibrary && <div className="youtube-player-state">Videolar yükleniyor…</div>}
-
-        {!loadingLibrary && library && videos.length === 0 && (
-          <div className="youtube-player-empty">
-            <strong>Bu kaynağa bağlı senkronize video yok.</strong>
-            <p>Playlist bağlantısı ve senkronizasyon tamamlandığında videolar burada görünecek.</p>
-          </div>
-        )}
-
-        {selectedVideo && (
-          <>
-            <section className="youtube-player-stage">
-              {loadingProgress
-                ? <div className="youtube-player-state">İlerleme yükleniyor…</div>
-                : <EmbeddedYouTubePlayer
-                    key={selectedVideo.id}
-                    video={selectedVideo}
-                    initialProgress={progress}
-                    onSaved={setProgress}
-                    onError={setError}
-                    playerRef={playerRef}
-                  />}
-            </section>
-
-            <section className="youtube-current-video">
-              <div>
-                <span>Şimdi izleniyor</span>
-                <strong>{selectedVideo.title}</strong>
-                {selectedVideo.channelTitle && <small>{selectedVideo.channelTitle}</small>}
-              </div>
-              <div className="youtube-current-progress">
-                <strong>%{progress?.progressPercent ?? 0}</strong>
-                <span>
-                  {youtubeTimeLabel(progress?.watchedSeconds ?? 0)}
-                  {" / "}
-                  {youtubeTimeLabel(selectedVideo.durationSeconds)}
-                </span>
-              </div>
-            </section>
-          </>
-        )}
-
-        {error && <div className="youtube-player-error" role="alert">{error}</div>}
-
-        {library?.playlists.map((playlist) => (
-          <section className="youtube-playlist-section" key={playlist.id}>
-            <header>
-              <div>
-                <span>Playlist</span>
-                <strong>{playlist.title ?? "YouTube Playlist"}</strong>
-              </div>
-              <small>{playlist.videos.length} video</small>
-            </header>
-
-            <div className="youtube-video-list">
-              {playlist.videos.map((video) => {
-                const active = video.id === selectedVideoId;
-                return <button
-                  type="button"
-                  className={active ? "is-active" : ""}
-                  aria-pressed={active}
-                  onClick={() => {
-                    setProgress(null);
-                    setSelectedVideoId(video.id);
-                  }}
-                  key={video.id}
-                >
-                  <span className="youtube-video-index">{video.position + 1}</span>
-                  <span className="youtube-video-copy">
-                    <strong>{video.title}</strong>
-                    <small>
-                      {video.channelTitle ?? "YouTube"} · {youtubeTimeLabel(video.durationSeconds)}
-                    </small>
-                  </span>
-                  {active && <span className="youtube-video-playing">İzleniyor</span>}
-                </button>;
-              })}
-            </div>
-          </section>
-        ))}
+        <VideoPlayerPanel resource={resource} />
       </div>
     </aside>
   </>;

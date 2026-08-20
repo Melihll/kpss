@@ -32,11 +32,12 @@ describe("P1-11B YouTube player UI contract", () => {
     expect(player).toContain("YOUTUBE_PROGRESS_CHECKPOINT_MS");
   });
 
-  it("keeps video player separate from page progress until P1-12", () => {
-    expect(resourcesPage).toContain('import { VideoPlayerDrawer }');
-    expect(resourcesPage).toContain("setVideoResource(resource)");
-    expect(resourcesPage).toContain("<VideoPlayerDrawer");
-    expect(resourcesPage).toContain("<ResourceProgressDrawer");
+  it("is hosted by the unified resource detail drawer from P1-12 onward", () => {
+    expect(resourcesPage).toContain('import { ResourceDetailDrawer');
+    expect(resourcesPage).toContain('setDetailTab("video")');
+    expect(resourcesPage).toContain("<ResourceDetailDrawer");
+    expect(resourcesPage).not.toContain("<VideoPlayerDrawer");
+    expect(resourcesPage).not.toContain("<ResourceProgressDrawer");
   });
 
   it("lists only owned synced active videos for the resource", () => {

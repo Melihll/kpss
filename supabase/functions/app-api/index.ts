@@ -680,6 +680,19 @@ Deno.serve(async (request) => {
 
       const playlistById = new Map((playlistsResult.data ?? []).map((row: any) => [row.id, row]));
       const videos = videosResult.data ?? [];
+      const videoIds = videos.map((video: any) => video.id);
+      const progressResult = videoIds.length
+        ? await client
+            .from("youtube_video_progress")
+            .select("youtube_playlist_video_id,last_position_seconds,watched_seconds,completed_at,created_at,updated_at")
+            .eq("user_id", userId)
+            .eq("exam_profile_id", profile.id)
+            .in("youtube_playlist_video_id", videoIds)
+        : { data: [], error: null };
+      if (progressResult.error) throw progressResult.error;
+      const progressByVideoId = new Map(
+        (progressResult.data ?? []).map((row: any) => [row.youtube_playlist_video_id, row]),
+      );
 
       return json({
         resource: { id: resource.id, name: resource.name, resourceType: resource.resource_type },
@@ -706,6 +719,12 @@ Deno.serve(async (request) => {
                 thumbnailUrl: video.thumbnail_url,
                 channelTitle: video.channel_title,
                 publishedAt: video.published_at,
+                progress: progressByVideoId.has(video.id) && Number(video.duration_seconds) > 0
+                  ? presentYouTubeVideoProgress(
+                      progressByVideoId.get(video.id),
+                      Number(video.duration_seconds),
+                    )
+                  : null,
               })),
           }];
         }),

@@ -663,3 +663,237 @@ html,body,.product-shell{overflow-x:hidden}.coach-drawer-body{overscroll-behavio
     text-align: left;
   }
 }
+/* P1-12 unified resource detail drawer */
+.resource-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 92;
+  border: 0;
+  background: rgba(17, 17, 19, 0.2);
+  backdrop-filter: blur(3px);
+}
+
+.resource-detail-drawer {
+  position: fixed;
+  z-index: 93;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: min(680px, calc(100vw - 24px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(17, 17, 19, 0.12);
+  border-radius: 20px;
+  background: #f8f8f6;
+  box-shadow: -30px 0 90px rgba(17, 17, 19, 0.18);
+}
+
+.resource-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 17px 20px;
+  border-bottom: 1px solid rgba(17, 17, 19, 0.09);
+  background: rgba(248, 248, 246, 0.96);
+  backdrop-filter: blur(18px);
+}
+
+.resource-detail-header > div {
+  min-width: 0;
+}
+
+.resource-detail-header span,
+.resource-detail-header small {
+  display: block;
+  color: #858589;
+}
+
+.resource-detail-header span {
+  font-size: .58rem;
+  font-weight: 650;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.resource-detail-header h2 {
+  overflow: hidden;
+  margin: 4px 0 2px;
+  color: #171719;
+  font-size: 1.03rem;
+  font-weight: 590;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resource-detail-header small {
+  font-size: .62rem;
+}
+
+.resource-detail-header > button {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(17, 17, 19, 0.1);
+  border-radius: 10px;
+  background: #fff;
+  color: #66666a;
+  cursor: pointer;
+  font-size: 1.15rem;
+}
+
+.resource-detail-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(17, 17, 19, 0.08);
+}
+
+.resource-detail-tabs > button {
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid rgba(17, 17, 19, 0.09);
+  border-radius: 12px;
+  background: #f1f1ee;
+  color: #68686c;
+  cursor: pointer;
+  text-align: left;
+}
+
+.resource-detail-tabs > button.is-active {
+  border-color: rgba(17, 17, 19, 0.22);
+  background: #fff;
+  color: #171719;
+  box-shadow: 0 5px 18px rgba(17, 17, 19, 0.055);
+}
+
+.resource-detail-tabs span,
+.resource-detail-tabs strong,
+.resource-detail-tabs small {
+  display: block;
+}
+
+.resource-detail-tabs span {
+  font-size: .58rem;
+  font-weight: 650;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.resource-detail-tabs strong {
+  margin-top: 5px;
+  overflow: hidden;
+  font-size: .82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resource-detail-tabs small {
+  margin-top: 3px;
+  opacity: .68;
+  font-size: .59rem;
+}
+
+.resource-detail-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.resource-detail-page {
+  padding: 22px 20px 28px;
+}
+
+.resource-progress-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.resource-progress-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resource-progress-panel label > span {
+  color: #68686c;
+  font-size: .62rem;
+  font-weight: 600;
+}
+
+.resource-progress-panel input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(17, 17, 19, .13);
+  border-radius: 10px;
+  background: #fff;
+  color: #171719;
+  font: inherit;
+  font-size: .8rem;
+  outline: none;
+}
+
+.resource-progress-panel input:focus {
+  border-color: rgba(17, 17, 19, .42);
+  box-shadow: 0 0 0 3px rgba(17, 17, 19, .055);
+}
+
+.resource-progress-panel footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.resource-progress-panel footer button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #111113;
+  border-radius: 9px;
+  background: #111113;
+  color: #fff;
+  cursor: pointer;
+  font-size: .64rem;
+  font-weight: 620;
+}
+
+.resource-detail-video {
+  min-height: 100%;
+  padding: 18px 20px 30px;
+  background: #111827;
+  color: #f7f7f8;
+}
+
+.resource-detail-video .youtube-player-panel {
+  min-height: 100%;
+}
+
+.resource-detail-video .youtube-video-list > button {
+  color: inherit;
+}
+
+.resource-detail-video .youtube-player-error {
+  color: #fff;
+}
+
+@media (max-width: 760px) {
+  .resource-detail-drawer {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    border-radius: 0;
+  }
+
+  .resource-detail-tabs {
+    padding-inline: 12px;
+  }
+
+  .resource-detail-page,
+  .resource-detail-video {
+    padding-inline: 14px;
+  }
+}
