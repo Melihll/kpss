@@ -281,6 +281,7 @@ export interface TaskProgress {
 }
 
 export type StudySessionType = "task" | "topic" | "resource" | "custom";
+export type StudySessionMode = "book" | "video" | "questions" | "mixed";
 export type StudySessionStatus = "active" | "completed" | "cancelled";
 export type StudyEntrySource = "live" | "retroactive" | "manual" | "telegram" | "web";
 export type TestReviewStatus = "pending" | "reviewed" | "skipped";
@@ -288,7 +289,7 @@ export type TestReviewStatus = "pending" | "reviewed" | "skipped";
 export interface StudySession {
   id: string; user_id: string; exam_profile_id: string; task_id: string | null;
   subject_id: string | null; curriculum_node_id: string | null; resource_id: string | null;
-  resource_unit_id: string | null; session_type: StudySessionType; started_at: string;
+  resource_unit_id: string | null; session_type: StudySessionType; session_mode: StudySessionMode; started_at: string;
   ended_at: string | null; duration_minutes: number | null; status: StudySessionStatus;
   entry_source: StudyEntrySource; note: string | null; created_at: string; updated_at: string;
 }
