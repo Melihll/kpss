@@ -714,6 +714,28 @@ Deno.serve(async (request) => {
 
       return json({ date, taskIds, manualOrderApplied: true });
     }
+    if (request.method === "GET" && route === "/tasks/quick-add/options") {
+      const { data: subjectRows, error: subjectError } = await client
+        .from("user_subjects")
+        .select("subject_id, subjects(name,sort_order)")
+        .eq("user_id", userId)
+        .eq("exam_profile_id", profile.id)
+        .eq("status", "active");
+      if (subjectError) throw subjectError;
+
+      return json({
+        weekStartDate: weekStart,
+        weekEndDate: addDays(weekStart, 6),
+        minDate: today,
+        subjects: (subjectRows ?? [])
+          .map((row: any) => ({
+            id: row.subject_id,
+            name: row.subjects?.name ?? "Ders",
+            sortOrder: row.subjects?.sort_order ?? 0,
+          }))
+          .sort((left: any, right: any) => left.sortOrder - right.sortOrder),
+      });
+    }
     if (request.method === "POST" && route === "/tasks/quick-add/preview") {
       const body = await request.json().catch(() => null);
       const plan = await currentPlan(client, profile.id, weekStart);
