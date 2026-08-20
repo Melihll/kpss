@@ -897,3 +897,84 @@ html,body,.product-shell{overflow-x:hidden}.coach-drawer-body{overscroll-behavio
     padding-inline: 14px;
   }
 }
+/* P1-13 Today material actions */
+.today-material-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.today-material-actions > button {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(17, 17, 19, .1);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .72);
+  color: #3f3f43;
+  cursor: pointer;
+  text-align: left;
+}
+
+.today-material-actions > button:hover:not(:disabled) {
+  border-color: rgba(17, 17, 19, .2);
+  background: #fff;
+  color: #111113;
+}
+
+.today-material-actions > button:disabled {
+  cursor: not-allowed;
+  opacity: .38;
+}
+
+.today-material-actions strong,
+.today-material-actions span {
+  display: block;
+}
+
+.today-material-actions strong {
+  overflow: hidden;
+  font-size: .62rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-material-actions span {
+  margin-top: 3px;
+  color: #858589;
+  font-size: .53rem;
+  line-height: 1.3;
+}
+
+.task-action-menu-popover .task-material-menu-divider {
+  height: 1px;
+  margin: 5px 6px;
+  background: rgba(17, 17, 19, .08);
+}
+
+.task-action-menu-popover .today-material-actions.is-compact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  margin: 0;
+}
+
+.task-action-menu-popover .today-material-actions.is-compact > button {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+}
+
+.task-action-menu-popover .today-material-actions.is-compact > button:hover:not(:disabled) {
+  background: rgba(17, 17, 19, .045);
+}
+
+@media (max-width: 700px) {
+  .today-material-actions {
+    grid-template-columns: 1fr;
+  }
+}

@@ -9,6 +9,12 @@ import { QuickAddTaskDrawer } from "./QuickAddTaskDrawer";
 import { TaskActionPreviewDrawer } from "./TaskActionPreviewDrawer";
 import type { TaskActionPreviewAction } from "../lib/task-action-preview-ui";
 import { Icon } from "./Icon";
+import { ResourceDetailDrawer, type ResourceDetailTab } from "./ResourceDetailDrawer";
+import type { ResourcePageProgress, ResourceProgressResponse } from "../lib/resource-progress-ui";
+import {
+  defaultTaskMaterialTab,
+  taskMaterialResource,
+} from "../lib/today-material-actions";
 
 interface ActiveSession { id: string; task_id: string | null; started_at: string; tasks: { title: string } | null }
 interface ActiveBreak { id: string; session_id: string; started_at: string; ended_at: string | null }
@@ -74,6 +80,50 @@ function useAnimatedNumber(target: number, duration = 360) {
   return value;
 }
 
+interface TaskMaterialActionsProps {
+  readonly task: RoadmapTask;
+  readonly onOpen: (task: RoadmapTask, tab?: ResourceDetailTab) => void;
+  readonly compact?: boolean;
+}
+
+function TaskMaterialActions({
+  task,
+  onOpen,
+  compact = false,
+}: TaskMaterialActionsProps) {
+  const available = Boolean(taskMaterialResource(task));
+  const unavailableTitle = available ? undefined : "Bu göreve bağlı kaynak yok.";
+
+  return <div className={`today-material-actions ${compact ? "is-compact" : ""}`}>
+    <button
+      type="button"
+      disabled={!available}
+      title={unavailableTitle}
+      onClick={() => onOpen(task)}
+    >
+      <strong>Kaynakla çalış</strong>
+      {!compact && <span>Bağlı materyali aç</span>}
+    </button>
+    <button
+      type="button"
+      disabled={!available}
+      title={unavailableTitle}
+      onClick={() => onOpen(task, "video")}
+    >
+      <strong>Video izle</strong>
+      {!compact && <span>Video sekmesine geç</span>}
+    </button>
+    <button
+      type="button"
+      disabled={!available}
+      title={unavailableTitle}
+      onClick={() => onOpen(task, "page")}
+    >
+      <strong>Sayfa gir</strong>
+      {!compact && <span>Sayfa ilerlemesini güncelle</span>}
+    </button>
+  </div>;
+}
 export function StudyTodayPanel() {
   const { data: roadmap } = useRoadmap({ ensureWeek: true });
   const [tasks, setTasks] = useState<RoadmapTask[]>([]);
@@ -99,6 +149,11 @@ export function StudyTodayPanel() {
     task: RoadmapTask;
     action: TaskActionPreviewAction;
   } | null>(null);
+  const [materialRequest, setMaterialRequest] = useState<{
+    resource: NonNullable<ReturnType<typeof taskMaterialResource>>;
+    tab: ResourceDetailTab;
+  } | null>(null);
+  const [materialPageProgress, setMaterialPageProgress] = useState<ResourcePageProgress | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -171,6 +226,9 @@ export function StudyTodayPanel() {
   const dailyTaskIds = useMemo(() => new Set([...dailyMinutes.keys(), ...summary.dailyPlan.completedTaskIds]), [dailyMinutes, summary.dailyPlan.completedTaskIds]);
   const todayTasks = useMemo(() => tasks.filter((task) => dailyTaskIds.has(task.id)), [dailyTaskIds, tasks]);
   const focusTask = recommendation?.task;
+  const activeTask = active?.task_id
+    ? tasks.find((task) => task.id === active.task_id) ?? null
+    : null;
   const baseContinuationTasks = useMemo(
     () => todayTasks.filter((task) => task.id !== focusTask?.id && task.title !== active?.tasks?.title),
     [active?.tasks?.title, focusTask?.id, todayTasks],
@@ -241,6 +299,23 @@ export function StudyTodayPanel() {
     setOpenTaskMenuId(null);
     setTaskActionRequest({ task, action });
   };
+  const openTaskMaterial = (task: RoadmapTask, requestedTab?: ResourceDetailTab) => {
+    const resource = taskMaterialResource(task);
+    if (!resource) return;
+
+    setOpenTaskMenuId(null);
+    setMaterialPageProgress(null);
+    setMaterialRequest({
+      resource,
+      tab: requestedTab ?? defaultTaskMaterialTab(task),
+    });
+
+    void callAppApi<ResourceProgressResponse>(
+      `/resources/${resource.resourceId}/progress`,
+    )
+      .then((payload) => setMaterialPageProgress(payload.progress))
+      .catch(() => setMaterialPageProgress(null));
+  };
   const todayPlanned = summary.dailyPlan.totalCommittedMinutes;
   const activePlanned = active?.task_id ? dailyMinutes.get(active.task_id) ?? 0 : 0;
   const formattedDate = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", weekday: "long", day: "numeric", month: "long" }).format(new Date());
@@ -273,14 +348,14 @@ export function StudyTodayPanel() {
             {paused ? "Devam Et" : "Mola Ver"}
           </button>
           <button className="focus-action finish" type="button" disabled={busy} onClick={() => void act(() => callAppApi(`/study-sessions/${active.id}/finish`, { method: "POST" }))}><Icon name="stop" weight="fill" />Çalışmayı Bitir</button>
-        </div>
+        </div>        {activeTask && <TaskMaterialActions task={activeTask} onOpen={openTaskMaterial} />}
         {paused && <p className="focus-break-note" role="status">Mola süresi çalışma sürene eklenmez.</p>}
       </div> : focusTask ? <div className="focus-state" key="ready">
         <span className="focus-label">Şimdi</span>
         <div className="focus-main"><span>{focusTask.subjects?.name ?? focusTask.title.split(" · ")[0] ?? "Ders"}</span><h2>{taskName(focusTask)}</h2><div className="focus-resource"><p>{focusTask.resources?.name ?? focusTask.description ?? "Kaynak belirtilmedi"}</p></div></div>
         <div className="focus-facts"><span>{focusTask.work_mode ? WORK_MODE_LABELS[focusTask.work_mode] ?? "Çalışma" : "Çalışma"}</span><strong>{recommendation.remainingMinutes} dk</strong></div>
         <p className="focus-reason">{REASON_LABELS[recommendation.reason] ?? REASON_LABELS.default}</p>
-        <button className="focus-action" type="button" disabled={busy} onClick={() => void act(() => callAppApi("/study-sessions/start", { method: "POST", body: { taskId: focusTask.id, entrySource: "web" } }))}><Icon name="play" weight="fill" />Çalışmaya Başla</button>
+        <button className="focus-action" type="button" disabled={busy} onClick={() => void act(() => callAppApi("/study-sessions/start", { method: "POST", body: { taskId: focusTask.id, entrySource: "web" } }))}><Icon name="play" weight="fill" />Çalışmaya Başla</button>        <TaskMaterialActions task={focusTask} onOpen={openTaskMaterial} />
       </div> : <div className="focus-state focus-empty"><span className="focus-label">Şimdi</span><Icon name="check" size={32} /><h2>Sıradaki görev yok.</h2><p>Haftalık plan oluşturulduğunda burada görünecek.</p></div>}
     </article>
 
@@ -345,7 +420,8 @@ export function StudyTodayPanel() {
             </button>
             <button type="button" role="menuitem" onClick={() => previewTaskAction(task, "DURATION_DETAILS")}>
               <strong>Süre detayları</strong><span>Planlanan, tamamlanan ve kalan süre</span>
-            </button>
+            </button>            <div className="task-material-menu-divider" aria-hidden="true" />
+            <TaskMaterialActions task={task} onOpen={openTaskMaterial} compact />
           </div>}
         </div>
       </article>})}</div> : <div className="plain-empty">Bugün için başka görev yok.</div>}
@@ -355,6 +431,16 @@ export function StudyTodayPanel() {
           <TaskActionPreviewDrawer
         request={taskActionRequest}
         onClose={() => setTaskActionRequest(null)}
+      />
+      <ResourceDetailDrawer
+        resource={materialRequest?.resource ?? null}
+        pageProgress={materialPageProgress}
+        initialTab={materialRequest?.tab ?? "page"}
+        onClose={() => {
+          setMaterialRequest(null);
+          setMaterialPageProgress(null);
+        }}
+        onPageSaved={(progress) => setMaterialPageProgress(progress)}
       />
 <QuickAddTaskDrawer open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
     <CoachDrawer open={coachOpen} mode={coachMode} onClose={() => setCoachOpen(false)} />

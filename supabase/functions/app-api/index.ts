@@ -273,13 +273,45 @@ async function planWithTasks(client: SupabaseClient, plan: any) {
   if (!plan) return { plan: null, tasks: [] };
   const { data: tasks, error } = await client
     .from("tasks")
-    .select("*, subjects(name), resources(name, resource_type), task_progress(completed_minutes, actual_study_minutes), task_resource_units(id, resource_unit_id, status, completed_at, resource_units(name, unit_type, estimated_minutes))")
+    .select("*, subjects(name), resources(id,name,resource_type), resource_sections(resource_id,resources(id,name,resource_type)), task_progress(completed_minutes, actual_study_minutes), task_resource_units(id, resource_unit_id, status, completed_at, resource_units(resource_id,name,unit_type,estimated_minutes,resources(id,name,resource_type)))")
     .eq("weekly_plan_id", plan.id)
     .order("planned_date")
     .order("priority_score", { ascending: false });
   if (error) throw error;
 
-  const plannerOrderedTasks = tasks ?? [];
+  const firstRelation = (value: any) => Array.isArray(value) ? value[0] ?? null : value ?? null;
+  const plannerOrderedTasks = (tasks ?? []).map((task: any) => {
+    const directResource = firstRelation(task.resources);
+    const section = firstRelation(task.resource_sections);
+    const sectionResource = firstRelation(section?.resources);
+    let unitResource: any = null;
+    let unitResourceId: string | null = null;
+
+    for (const link of task.task_resource_units ?? []) {
+      const unit = firstRelation(link?.resource_units);
+      if (!unit) continue;
+      if (!unitResourceId && typeof unit.resource_id === "string") unitResourceId = unit.resource_id;
+      if (!unitResource) unitResource = firstRelation(unit.resources);
+      if (unitResourceId && unitResource) break;
+    }
+
+    const materialResourceId =
+      (typeof task.resource_id === "string" && task.resource_id) ||
+      (typeof directResource?.id === "string" && directResource.id) ||
+      (typeof section?.resource_id === "string" && section.resource_id) ||
+      (typeof sectionResource?.id === "string" && sectionResource.id) ||
+      unitResourceId ||
+      (typeof unitResource?.id === "string" && unitResource.id) ||
+      null;
+
+    const materialResource = directResource ?? sectionResource ?? unitResource ?? null;
+
+    return {
+      ...task,
+      material_resource_id: materialResourceId,
+      resources: materialResource ?? task.resources,
+    };
+  });
   if (plannerOrderedTasks.length === 0) return { plan, tasks: [] };
 
   const taskIds = plannerOrderedTasks.map((task: any) => task.id);

@@ -9,8 +9,10 @@ export interface RoadmapTask {
   status: string;
   work_mode: string | null;
   source_reason?: string;
+  resource_id?: string | null;
+  material_resource_id?: string | null;
   subjects?: { name: string } | null;
-  resources?: { name: string; resource_type: string } | null;
+  resources?: { id?: string; name: string; resource_type: string } | null;
   task_progress?: Array<{ completed_minutes: number; actual_study_minutes: number }>;
 }
 
