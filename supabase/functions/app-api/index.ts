@@ -621,6 +621,96 @@ Deno.serve(async (request) => {
     if (request.method === "POST" && route === "/p48/week/generate") {
       return json(await generateP48Week(client, userId, profile, false), 201);
     }
+    const resourceYoutubeVideosMatch = route.match(/^\/resources\/([0-9a-f-]+)\/youtube-videos$/);
+    if (request.method === "GET" && resourceYoutubeVideosMatch) {
+      const resourceId = resourceYoutubeVideosMatch[1];
+
+      const { data: resource, error: resourceError } = await client
+        .from("resources")
+        .select("id,name,resource_type")
+        .eq("id", resourceId)
+        .eq("user_id", userId)
+        .eq("exam_profile_id", profile.id)
+        .maybeSingle();
+      if (resourceError) throw resourceError;
+      if (!resource) {
+        return json({ error: { code: "RESOURCE_NOT_FOUND", message: "Resource not found" } }, 404);
+      }
+
+      const { data: links, error: linksError } = await client
+        .from("topic_resource_links")
+        .select("youtube_playlist_id,created_at")
+        .eq("user_id", userId)
+        .eq("exam_profile_id", profile.id)
+        .eq("resource_id", resourceId)
+        .not("youtube_playlist_id", "is", null)
+        .order("created_at", { ascending: true });
+      if (linksError) throw linksError;
+
+      const playlistIds = [...new Set(
+        (links ?? [])
+          .map((link: any) => link.youtube_playlist_id)
+          .filter((value: unknown): value is string => typeof value === "string" && value.length > 0),
+      )];
+
+      if (!playlistIds.length) {
+        return json({
+          resource: { id: resource.id, name: resource.name, resourceType: resource.resource_type },
+          playlists: [],
+        });
+      }
+
+      const [playlistsResult, videosResult] = await Promise.all([
+        client
+          .from("youtube_playlists")
+          .select("id,source_url,youtube_playlist_id,title,total_duration_seconds,video_count,last_synced_at")
+          .eq("user_id", userId)
+          .eq("exam_profile_id", profile.id)
+          .in("id", playlistIds),
+        client
+          .from("youtube_playlist_videos")
+          .select("id,youtube_playlist_id,youtube_video_id,title,position,duration_seconds,thumbnail_url,channel_title,published_at")
+          .eq("user_id", userId)
+          .eq("exam_profile_id", profile.id)
+          .eq("is_active", true)
+          .in("youtube_playlist_id", playlistIds),
+      ]);
+      if (playlistsResult.error) throw playlistsResult.error;
+      if (videosResult.error) throw videosResult.error;
+
+      const playlistById = new Map((playlistsResult.data ?? []).map((row: any) => [row.id, row]));
+      const videos = videosResult.data ?? [];
+
+      return json({
+        resource: { id: resource.id, name: resource.name, resourceType: resource.resource_type },
+        playlists: playlistIds.flatMap((playlistId) => {
+          const playlist: any = playlistById.get(playlistId);
+          if (!playlist) return [];
+          return [{
+            id: playlist.id,
+            sourceUrl: playlist.source_url,
+            youtubePlaylistId: playlist.youtube_playlist_id,
+            title: playlist.title,
+            totalDurationSeconds: Number(playlist.total_duration_seconds ?? 0),
+            videoCount: Number(playlist.video_count ?? 0),
+            lastSyncedAt: playlist.last_synced_at,
+            videos: videos
+              .filter((video: any) => video.youtube_playlist_id === playlist.id)
+              .sort((left: any, right: any) => Number(left.position) - Number(right.position))
+              .map((video: any) => ({
+                id: video.id,
+                youtubeVideoId: video.youtube_video_id,
+                title: video.title,
+                position: Number(video.position),
+                durationSeconds: Number(video.duration_seconds),
+                thumbnailUrl: video.thumbnail_url,
+                channelTitle: video.channel_title,
+                publishedAt: video.published_at,
+              })),
+          }];
+        }),
+      });
+    }
     const youtubeVideoProgressMatch = route.match(/^\/youtube-videos\/([0-9a-f-]+)\/progress$/);
     if ((request.method === "GET" || request.method === "PUT") && youtubeVideoProgressMatch) {
       const youtubePlaylistVideoId = youtubeVideoProgressMatch[1];

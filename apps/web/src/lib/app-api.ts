@@ -61,5 +61,9 @@ export const FRIENDLY_API_ERRORS: Readonly<Record<string, string>> = {
   RESOURCE_NOT_FOUND: "Kaynak bulunamadı veya bu kaynağa erişiminiz yok.",
   RESOURCE_PROGRESS_INVALID_TOTAL_PAGES: "Toplam sayfa sayısı 1 veya daha büyük bir tam sayı olmalı.",
   RESOURCE_PROGRESS_INVALID_CURRENT_PAGE: "Kaldığınız sayfa 0 ile toplam sayfa arasında olmalı.",
+  YOUTUBE_VIDEO_NOT_FOUND: "Video bulunamadı veya bu videoya erişiminiz yok.",
+  YOUTUBE_VIDEO_DURATION_UNAVAILABLE: "Videonun süresi henüz hazır değil. Playlisti yeniden senkronize edin.",
+  YOUTUBE_VIDEO_PROGRESS_INVALID_POSITION: "Video konumu kaydedilemedi.",
+  YOUTUBE_VIDEO_PROGRESS_INVALID_WATCHED_SECONDS: "İzleme süresi kaydedilemedi.",
   UNAUTHORIZED: "Oturumunuz geçersiz. Yeniden giriş yapın.",
 };
