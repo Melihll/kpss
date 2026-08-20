@@ -978,3 +978,37 @@ html,body,.product-shell{overflow-x:hidden}.coach-drawer-body{overscroll-behavio
     grid-template-columns: 1fr;
   }
 }
+/* P0-07 capacity consistency */
+.settings-capacity-metrics {
+  display: grid;
+  gap: 10px;
+  min-width: min(100%, 520px);
+}
+
+.settings-capacity-metrics > div {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto;
+  gap: 2px 14px;
+  align-items: baseline;
+}
+
+.settings-capacity-metrics span,
+.settings-capacity-metrics small,
+.week-capacity-context {
+  opacity: 0.72;
+}
+
+.settings-capacity-metrics small {
+  grid-column: 1 / -1;
+}
+
+.week-capacity-context {
+  margin-top: 4px;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 700px) {
+  .settings-capacity-metrics > div {
+    grid-template-columns: 1fr;
+  }
+}

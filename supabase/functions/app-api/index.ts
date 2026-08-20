@@ -14,11 +14,12 @@ import { recalculateTopicMastery, revisionWithUrgency } from "../_shared/mastery
 import { minimumDayPlan, recalculateCurrentPlan, syllabusProjection } from "../_shared/adaptive.ts";
 import { generateWeeklyReport, loadDailyCoachContext, pilotMetrics, recordRecommendationEvent } from "../_shared/pilot.ts";
 import { aggregateCompletedStudySessions } from "../_shared/completed-study.ts";
-import { loadP48DailyCapacityOverrides, planningCapacityForDate } from "../_shared/capacity-overrides.ts";
+import { grossCapacityForDate, loadP48DailyCapacityOverrides, planningCapacityForDate } from "../_shared/capacity-overrides.ts";
 import { applyDailyTaskOrder } from "../_shared/daily-task-order.ts";
 import { buildQuickAddTaskPreview } from "../_shared/quick-add-task-preview.ts";
 import { buildTaskActionPreview, type TaskActionPreviewAction } from "../_shared/task-action-preview.ts";
 import { normalizeResourceProgress, presentResourceProgress } from "../_shared/resource-progress.ts";
+import { buildWeeklyCapacitySummary } from "../_shared/capacity-summary.ts";
 import { normalizeTopicResourceLinkInput } from "../_shared/topic-resource-link.ts";
 import { fetchYouTubePlaylistCatalog } from "../_shared/youtube-playlist.ts";
 import { normalizeYouTubeVideoProgressInput, presentYouTubeVideoProgress } from "../_shared/youtube-video-progress.ts";
@@ -372,7 +373,10 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
   if (strategyResult.error) throw strategyResult.error;
   if (!strategyResult.data) return { configured: false };
 
-  const [targetResult, sessionsResult, periodsResult, availabilityResult] = await Promise.all([
+  const roadmapToday = istanbulDate();
+  const roadmapWeekStart = mondayOf(roadmapToday);
+
+  const [targetResult, sessionsResult, periodsResult, availabilityResult, exceptionsResult, dailyOverrides] = await Promise.all([
     client.from("p48_resource_targets")
       .select("planned_minutes,sequence_order,work_mode,resources(id,subject_id,name,status,resource_type,publisher)")
       .eq("user_id", userId)
@@ -394,8 +398,21 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
       .eq("user_id", userId)
       .eq("exam_profile_id", profile.id)
       .eq("is_active", true),
+    client.from("schedule_exceptions")
+      .select("exception_date,exception_type,start_time,end_time,minutes_delta")
+      .eq("user_id", userId)
+      .eq("exam_profile_id", profile.id)
+      .gte("exception_date", roadmapWeekStart)
+      .lte("exception_date", addDays(roadmapWeekStart, 6)),
+    loadP48DailyCapacityOverrides(
+      client,
+      userId,
+      profile.id,
+      roadmapWeekStart,
+      addDays(roadmapWeekStart, 6),
+    ),
   ]);
-  for (const result of [targetResult, sessionsResult, periodsResult, availabilityResult]) if (result.error) throw result.error;
+  for (const result of [targetResult, sessionsResult, periodsResult, availabilityResult, exceptionsResult]) if (result.error) throw result.error;
 
   const actualByResource = new Map<string, number>();
   for (const row of sessionsResult.data ?? []) {
@@ -418,7 +435,42 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
   }));
 
   const periods = p48Periods(periodsResult.data ?? []);
-  const today = istanbulDate();
+  const today = roadmapToday;
+
+  const normalWeeklyMinutes = calculateWeeklyAvailableMinutes(
+    p48Windows(availabilityResult.data ?? []),
+  );
+
+  const grossDayCapacities: Record<string, number> = {};
+  for (let index = 0; index < 7; index += 1) {
+    const date = addDays(roadmapWeekStart, index);
+    const capacityContext = {
+      date,
+      weeklyAvailability: p48Windows(availabilityResult.data ?? []),
+      calendarPeriods: periods.map((period) => ({
+        startDate: period.startDate,
+        endDate: period.endDate,
+        capacityMultiplier: period.capacityMultiplier,
+      })),
+    };
+
+    const baseCapacity = calculateEffectiveDayCapacity({
+      ...capacityContext,
+      scheduleExceptions: [],
+    });
+
+    const effectiveCapacity = calculateEffectiveDayCapacity({
+      ...capacityContext,
+      scheduleExceptions: p48Exceptions(exceptionsResult.data ?? []),
+    });
+
+    grossDayCapacities[date] = grossCapacityForDate(
+      date,
+      effectiveCapacity,
+      dailyOverrides,
+      baseCapacity,
+    );
+  }
   const targetExamDate = strategyResult.data.target_exam_date;
   const subjectForecasts = forecastP48Resources({
     asOfDate: today,
@@ -448,7 +500,20 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
     }
     return { ...month, focusResources: [...new Set(focusResources)].slice(0, 5) };
   });
-  const currentWeek = await planWithTasks(client, await currentPlan(client, profile.id, mondayOf(today)));
+  const currentWeek = await planWithTasks(
+    client,
+    await currentPlan(client, profile.id, mondayOf(today)),
+  );
+
+  const capacity = buildWeeklyCapacitySummary({
+    normalWeeklyMinutes,
+    planningTargetMinutes: Number(strategyResult.data.weekly_target_minutes),
+    effectiveDayCapacities: grossDayCapacities,
+    planningBudgetMinutes:
+      currentWeek.plan?.planning_budget_minutes == null
+        ? null
+        : Number(currentWeek.plan.planning_budget_minutes),
+  });
   const totalPlannedResourceMinutes = resources.reduce((sum, resource) => sum + resource.plannedMinutes, 0);
   const totalActualResourceMinutes = resources.reduce((sum, resource) => sum + Math.min(resource.actualMinutes, resource.plannedMinutes), 0);
   const milestones = [
@@ -492,6 +557,7 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
     periods,
     milestones,
     currentWeek,
+    capacity,
     availability: availabilityResult.data ?? [],
     resourcesSummary: {
       count: resources.length,

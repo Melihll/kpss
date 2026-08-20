@@ -47,7 +47,7 @@ export function WeekPage() {
   const selectedTasks = tasks.filter((task) => task.planned_date === displayedDate);
   const planned = tasks.reduce((sum, task) => sum + task.estimated_minutes, 0);
   const actual = tasks.reduce((sum, task) => sum + (task.task_progress?.[0]?.actual_study_minutes ?? 0), 0);
-  const target = data?.strategy?.weeklyTargetMinutes ?? plan?.available_minutes ?? 0;
+  const target = data?.capacity?.planningTargetMinutes ?? 0;
   const progress = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
   const selectedMinutes = totalTaskRemainingMinutes(selectedTasks);
   const replannedTaskCount = selectedTasks.filter((task) => task.source_reason === "dynamic_replan" || task.status === "rescheduled").length;
@@ -96,7 +96,14 @@ export function WeekPage() {
       <div>
         <span className="page-eyebrow">Haftam</span>
         <h1>{plan ? weekRangeLabel(plan.week_start_date, plan.week_end_date) : "Bu hafta"}</h1>
-        <p>{compactMinutesLabel(planned)} planlandı · {compactMinutesLabel(target)} haftalık hedef</p>
+        <p>{compactMinutesLabel(planned)} planlandı · {compactMinutesLabel(target)} planlama hedefi</p>
+        {data?.capacity && <p className="week-capacity-context">
+          Efektif kapasite {compactMinutesLabel(data.capacity.effectiveWeeklyMinutes)}
+          {" · "}
+          Planlama bütçesi {data.capacity.planningBudgetMinutes == null
+            ? "yok"
+            : compactMinutesLabel(data.capacity.planningBudgetMinutes)}
+        </p>}
       </div>
       <div className="week-progress-editorial"><strong>%{progress}</strong><span>{compactMinutesLabel(actual)} tamamlandı</span></div>
     </header>

@@ -21,6 +21,21 @@ export async function loadP48DailyCapacityOverrides(
   return new Map<string, DailyCapacityOverrideRow>((result.data ?? []).map((row: DailyCapacityOverrideRow) => [row.capacity_date, row]));
 }
 
+export function grossCapacityForDate(
+  date: string,
+  calculatedCapacity: number,
+  overrides: ReadonlyMap<string, DailyCapacityOverrideRow>,
+  calculatedBaseCapacity = calculatedCapacity,
+) {
+  const override = overrides.get(date);
+  return override
+    ? Math.max(
+        0,
+        Number(override.capacity_minutes) +
+          (calculatedCapacity - calculatedBaseCapacity),
+      )
+    : Math.max(0, calculatedCapacity);
+}
 export function planningCapacityForDate(
   date: string,
   calculatedCapacity: number,

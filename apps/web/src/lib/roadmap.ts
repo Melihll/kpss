@@ -73,8 +73,14 @@ export interface RoadmapResponse {
   periods?: Array<{ name: string; periodType: string; startDate: string; endDate: string; capacityMultiplier: number | null }>;
   milestones?: RoadmapMilestone[];
   currentWeek?: {
-    plan: { id: string; week_start_date: string; week_end_date: string; available_minutes: number; planned_minutes: number } | null;
+    plan: { id: string; week_start_date: string; week_end_date: string; available_minutes: number; planning_budget_minutes: number | null; planned_minutes: number } | null;
     tasks: RoadmapTask[];
+  };
+  capacity?: {
+    normalWeeklyMinutes: number;
+    planningTargetMinutes: number;
+    effectiveWeeklyMinutes: number;
+    planningBudgetMinutes: number | null;
   };
   resourcesSummary?: { count: number; totalPlannedMinutes: number; totalActualMinutes: number; progressPercent: number };
 }

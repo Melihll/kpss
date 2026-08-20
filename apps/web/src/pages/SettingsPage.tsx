@@ -1,4 +1,3 @@
-import { calculateWeeklyAvailableMinutes, type WeeklyAvailability } from "@kpss-coach/domain";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
@@ -6,7 +5,6 @@ import { Icon } from "../components/Icon";
 import { useRoadmap } from "../hooks/useRoadmap";
 import { callAppApi } from "../lib/app-api";
 import { compactMinutesLabel, dateLabel } from "../lib/roadmap";
-import { supabase } from "../lib/supabase";
 
 interface TelegramStatus {
   linked: boolean;
@@ -30,7 +28,6 @@ function periodDateRange(start: string, end: string) {
 export function SettingsPage() {
   const { user, profile, signOut } = useAuth();
   const { data: roadmap, loading: roadmapLoading, error: roadmapError, retry: retryRoadmap } = useRoadmap();
-  const [weeklyMinutes, setWeeklyMinutes] = useState<number | null>(null);
   const [telegram, setTelegram] = useState<TelegramStatus | null>(null);
   const [telegramLink, setTelegramLink] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,18 +40,9 @@ export function SettingsPage() {
   const loadSettings = useCallback(async () => {
     setLoading(true);
     try {
-      const [profileResult, telegramResult] = await Promise.all([
-        supabase.from("exam_profiles").select("id").eq("status", "active").maybeSingle(),
-        callAppApi<TelegramStatus>("/messaging/telegram/status"),
-      ]);
-      if (profileResult.error) throw profileResult.error;
-      if (profileResult.data) {
-        const availabilityResult = await supabase.from("weekly_availability").select("*").eq("exam_profile_id", profileResult.data.id).eq("is_active", true);
-        if (availabilityResult.error) throw availabilityResult.error;
-        setWeeklyMinutes(calculateWeeklyAvailableMinutes((availabilityResult.data ?? []) as WeeklyAvailability[]));
-      } else {
-        setWeeklyMinutes(null);
-      }
+      const telegramResult = await callAppApi<TelegramStatus>(
+        "/messaging/telegram/status",
+      );
       setTelegram(telegramResult);
       setError(false);
     } catch (caught) {
@@ -121,11 +109,39 @@ export function SettingsPage() {
       </section>
 
       <section className="settings-section settings-capacity-section">
-        <div className="settings-section-heading"><h2>Haftalık kapasite</h2></div>
-        <div className="settings-section-value"><strong>{weeklyMinutes === null ? "Belirtilmedi" : compactMinutesLabel(weeklyMinutes)}</strong><small>Normal çalışma haftası</small></div>
-        <Link className="settings-edit-link" to="/onboarding" aria-label="Haftalık kapasiteyi düzenle">Düzenle <Icon name="arrow" /></Link>
-      </section>
+        <div className="settings-section-heading">
+          <h2>Haftalık kapasite</h2>
+          <small>Farklı planlama katmanları</small>
+        </div>
 
+        <div className="settings-capacity-metrics">
+          <div>
+            <span>Normal müsaitlik</span>
+            <strong>{roadmap?.capacity ? compactMinutesLabel(roadmap.capacity.normalWeeklyMinutes) : "Belirtilmedi"}</strong>
+            <small>Haftalık müsaitlik takvimin</small>
+          </div>
+
+          <div>
+            <span>Planlama hedefi</span>
+            <strong>{roadmap?.capacity ? compactMinutesLabel(roadmap.capacity.planningTargetMinutes) : "Belirtilmedi"}</strong>
+            <small>P48 strateji hedefi</small>
+          </div>
+
+          <div>
+            <span>Bu haftaki efektif kapasite</span>
+            <strong>{roadmap?.capacity ? compactMinutesLabel(roadmap.capacity.effectiveWeeklyMinutes) : "Belirtilmedi"}</strong>
+            <small>Takvim dönemleri, istisnalar ve günlük ayarlar dahil</small>
+          </div>
+
+          <div>
+            <span>Planlama bütçesi</span>
+            <strong>{roadmap?.capacity?.planningBudgetMinutes == null ? "Aktif plan yok" : compactMinutesLabel(roadmap.capacity.planningBudgetMinutes)}</strong>
+            <small>Planner reserve/bütçe kuralları sonrası</small>
+          </div>
+        </div>
+
+        <Link className="settings-edit-link" to="/onboarding" aria-label="Haftalık müsaitliği düzenle">Düzenle <Icon name="arrow" /></Link>
+      </section>
       <section className="settings-section settings-periods-section">
         <div className="settings-section-heading"><h2>Akademik boşluklar</h2><small>{periods.length ? `${periods.length} dönem` : ""}</small></div>
         <div className="academic-gap-list">{periods.length ? periods.map((period) => <article key={`${period.name}-${period.startDate}`}><strong>{period.name}</strong><span>{periodDateRange(period.startDate, period.endDate)}</span></article>) : <p>Akademik boşluk eklenmemiş.</p>}</div>
