@@ -20,6 +20,7 @@ import { buildQuickAddTaskPreview } from "../_shared/quick-add-task-preview.ts";
 import { buildTaskActionPreview, type TaskActionPreviewAction } from "../_shared/task-action-preview.ts";
 import { normalizeResourceProgress, presentResourceProgress } from "../_shared/resource-progress.ts";
 import { buildWeeklyCapacitySummary } from "../_shared/capacity-summary.ts";
+import { loadMaterialWorkloads } from "../_shared/material-workload.ts";
 import { normalizeTopicResourceLinkInput } from "../_shared/topic-resource-link.ts";
 import { fetchYouTubePlaylistCatalog } from "../_shared/youtube-playlist.ts";
 import { normalizeYouTubeVideoProgressInput, presentYouTubeVideoProgress } from "../_shared/youtube-video-progress.ts";
@@ -434,6 +435,15 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
     resourceType: row.resources.resource_type,
   }));
 
+  const materialWorkloads = await loadMaterialWorkloads(
+    client,
+    userId,
+    profile.id,
+    resources.map((resource) => ({
+      resourceId: resource.resourceId,
+      plannedMinutes: resource.plannedMinutes,
+    })),
+  );
   const periods = p48Periods(periodsResult.data ?? []);
   const today = roadmapToday;
 
@@ -553,6 +563,7 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
     },
     subjects: P48_SUBJECT_TARGETS.map((subject) => ({ ...subject })),
     subjectForecasts,
+    materialWorkloads,
     months,
     periods,
     milestones,
