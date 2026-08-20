@@ -16,6 +16,7 @@ import { generateWeeklyReport, loadDailyCoachContext, pilotMetrics, recordRecomm
 import { aggregateCompletedStudySessions } from "../_shared/completed-study.ts";
 import { loadP48DailyCapacityOverrides, planningCapacityForDate } from "../_shared/capacity-overrides.ts";
 import { applyDailyTaskOrder } from "../_shared/daily-task-order.ts";
+import { buildQuickAddTaskPreview } from "../_shared/quick-add-task-preview.ts";
 
 type WeeklyPlanningContext = {
   examProfileId: string;
@@ -89,6 +90,10 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   INVALID_MANUAL_PLAN_RESOURCE: 400,
   INVALID_WORK_MODE: 400,
   MANUAL_PLAN_OVER_CAPACITY: 409,
+  QUICK_ADD_INVALID_TITLE: 400,
+  QUICK_ADD_INVALID_MINUTES: 400,
+  QUICK_ADD_INVALID_DATE: 400,
+  QUICK_ADD_INVALID_SUBJECT: 400,
   P48_STRATEGY_NOT_CONFIGURED: 409,
 };
 
@@ -708,6 +713,46 @@ Deno.serve(async (request) => {
       if (preferenceError) throw preferenceError;
 
       return json({ date, taskIds, manualOrderApplied: true });
+    }
+    if (request.method === "POST" && route === "/tasks/quick-add/preview") {
+      const body = await request.json().catch(() => null);
+      const plan = await currentPlan(client, profile.id, weekStart);
+      if (!plan) throw new Error("WEEKLY_PLAN_NOT_FOUND");
+
+      const title = typeof body?.title === "string" ? body.title : "";
+      const estimatedMinutes = Number(body?.estimatedMinutes);
+      const plannedDate = typeof body?.plannedDate === "string" ? body.plannedDate : "";
+      const subjectId = typeof body?.subjectId === "string" ? body.subjectId : "";
+
+      const planStart = String(plan.week_start_date ?? weekStart);
+      const planEnd = String(plan.week_end_date ?? addDays(weekStart, 6));
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(plannedDate) || plannedDate < today || plannedDate < planStart || plannedDate > planEnd) {
+        throw new Error("QUICK_ADD_INVALID_DATE");
+      }
+
+      const { data: subjectRow, error: subjectError } = await client
+        .from("user_subjects")
+        .select("subject_id, subjects(name)")
+        .eq("user_id", userId)
+        .eq("exam_profile_id", profile.id)
+        .eq("subject_id", subjectId)
+        .eq("status", "active")
+        .maybeSingle();
+      if (subjectError) throw subjectError;
+      if (!subjectRow) throw new Error("QUICK_ADD_INVALID_SUBJECT");
+
+      const dayContext = await loadDailyCoachContext(client, userId, profile, plannedDate);
+      const preview = buildQuickAddTaskPreview({
+        weeklyPlanId: plan.id,
+        subjectId,
+        subjectName: subjectRow.subjects?.name ?? "Ders",
+        title,
+        plannedDate,
+        estimatedMinutes,
+        remainingCapacityMinutes: Number(dayContext.remainingCapacityMinutes ?? 0),
+      });
+
+      return json(preview);
     }
     if (request.method === "GET" && route === "/tasks/next") {
       const recommendation=await nextTask(client, profile, userId);
