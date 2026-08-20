@@ -17,6 +17,7 @@ import { aggregateCompletedStudySessions } from "../_shared/completed-study.ts";
 import { loadP48DailyCapacityOverrides, planningCapacityForDate } from "../_shared/capacity-overrides.ts";
 import { applyDailyTaskOrder } from "../_shared/daily-task-order.ts";
 import { buildQuickAddTaskPreview } from "../_shared/quick-add-task-preview.ts";
+import { buildTaskActionPreview, type TaskActionPreviewAction } from "../_shared/task-action-preview.ts";
 
 type WeeklyPlanningContext = {
   examProfileId: string;
@@ -94,6 +95,7 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   QUICK_ADD_INVALID_MINUTES: 400,
   QUICK_ADD_INVALID_DATE: 400,
   QUICK_ADD_INVALID_SUBJECT: 400,
+  TASK_ACTION_INVALID_ACTION: 400,
   P48_STRATEGY_NOT_CONFIGURED: 409,
 };
 
@@ -772,6 +774,86 @@ Deno.serve(async (request) => {
         plannedDate,
         estimatedMinutes,
         remainingCapacityMinutes: Number(dayContext.remainingCapacityMinutes ?? 0),
+      });
+
+      return json(preview);
+    }
+    const taskActionPreviewMatch = route.match(/^\/tasks\/([0-9a-f-]+)\/action-preview$/);
+    if (request.method === "POST" && taskActionPreviewMatch) {
+      const body = await request.json().catch(() => null);
+      const action = typeof body?.action === "string" ? body.action : "";
+      if (!["DEFER", "REMOVE_TODAY", "DURATION_DETAILS"].includes(action)) {
+        throw new Error("TASK_ACTION_INVALID_ACTION");
+      }
+
+      const plan = await currentPlan(client, profile.id, weekStart);
+      if (!plan) throw new Error("WEEKLY_PLAN_NOT_FOUND");
+
+      const taskId = taskActionPreviewMatch[1];
+      const [taskResult, activeSessionResult] = await Promise.all([
+        client
+          .from("tasks")
+          .select("id,title,status,planned_date,estimated_minutes,subjects(name),resources(name),task_progress(completed_minutes,actual_study_minutes)")
+          .eq("id", taskId)
+          .eq("user_id", userId)
+          .eq("exam_profile_id", profile.id)
+          .eq("weekly_plan_id", plan.id)
+          .maybeSingle(),
+        client
+          .from("study_sessions")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("exam_profile_id", profile.id)
+          .eq("task_id", taskId)
+          .eq("status", "active")
+          .maybeSingle(),
+      ]);
+      if (taskResult.error) throw taskResult.error;
+      if (activeSessionResult.error) throw activeSessionResult.error;
+      if (!taskResult.data) return json({ error: { code: "TASK_NOT_FOUND", message: "Task not found" } }, 404);
+
+      const task: any = taskResult.data;
+      const progressRow = Array.isArray(task.task_progress) ? task.task_progress[0] : task.task_progress;
+      const estimatedMinutes = Math.max(0, Number(task.estimated_minutes ?? 0));
+      const completedMinutes = Math.min(
+        estimatedMinutes,
+        Math.max(0, Number(progressRow?.completed_minutes ?? 0)),
+      );
+      const remainingMinutes = Math.max(0, estimatedMinutes - completedMinutes);
+      const nestedName = (value: any) => Array.isArray(value) ? value[0]?.name ?? null : value?.name ?? null;
+
+      let targetDate: string | null = null;
+      let targetRemainingCapacityMinutes: number | null = null;
+      if (action === "DEFER" && task.planned_date === today && !activeSessionResult.data && task.status !== "completed") {
+        const weekEnd = String(plan.week_end_date ?? addDays(weekStart, 6));
+        for (let candidateDate = addDays(today, 1); candidateDate <= weekEnd; candidateDate = addDays(candidateDate, 1)) {
+          const dayContext = await loadDailyCoachContext(client, userId, profile, candidateDate);
+          const remainingCapacity = Math.max(0, Number(dayContext.remainingCapacityMinutes ?? 0));
+          if (remainingCapacity >= remainingMinutes) {
+            targetDate = candidateDate;
+            targetRemainingCapacityMinutes = remainingCapacity;
+            break;
+          }
+        }
+      }
+
+      const preview = buildTaskActionPreview({
+        action: action as TaskActionPreviewAction,
+        task: {
+          id: task.id,
+          title: task.title,
+          subjectName: nestedName(task.subjects),
+          resourceName: nestedName(task.resources),
+          plannedDate: task.planned_date,
+          status: task.status,
+          estimatedMinutes,
+          completedMinutes,
+          remainingMinutes,
+          active: Boolean(activeSessionResult.data),
+        },
+        currentDate: today,
+        targetDate,
+        targetRemainingCapacityMinutes,
       });
 
       return json(preview);
