@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type PointerEvent } from "react";
 import { useRoadmap } from "../hooks/useRoadmap";
 import { callAppApi } from "../lib/app-api";
+import { mergeMovableTaskOrder, moveTaskId } from "../lib/today-task-order";
 import { compactMinutesLabel, taskName, WORK_MODE_LABELS, type RoadmapTask } from "../lib/roadmap";
 import { CoachDrawer, type CoachDrawerMode } from "./CoachDrawer";
 import { Icon } from "./Icon";
@@ -8,6 +9,7 @@ import { Icon } from "./Icon";
 interface ActiveSession { id: string; task_id: string | null; started_at: string; tasks: { title: string } | null }
 interface Recommendation { task: RoadmapTask; reason: string; remainingMinutes: number }
 interface DailyPlanSummary {
+  date?: string;
   tasks: Array<{ id: string; minutes: number }>;
   completedTaskIds: string[];
   deferredTaskCount: number;
@@ -73,6 +75,10 @@ export function StudyTodayPanel() {
   const [elapsed, setElapsed] = useState(0);
   const [coachOpen, setCoachOpen] = useState(false);
   const [coachMode, setCoachMode] = useState<CoachDrawerMode>("default");
+  const [manualContinuationOrder, setManualContinuationOrder] = useState<string[]>([]);
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [orderSaving, setOrderSaving] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -132,13 +138,75 @@ export function StudyTodayPanel() {
     event.currentTarget.style.setProperty("--spot-x", `${event.clientX - rect.left}px`);
     event.currentTarget.style.setProperty("--spot-y", `${event.clientY - rect.top}px`);
   }
-
   const dailyMinutes = useMemo(() => new Map(summary.dailyPlan.tasks.map((task) => [task.id, task.minutes])), [summary.dailyPlan.tasks]);
   const dailyTaskIds = useMemo(() => new Set([...dailyMinutes.keys(), ...summary.dailyPlan.completedTaskIds]), [dailyMinutes, summary.dailyPlan.completedTaskIds]);
   const todayTasks = useMemo(() => tasks.filter((task) => dailyTaskIds.has(task.id)), [dailyTaskIds, tasks]);
   const focusTask = recommendation?.task;
-  const continuationTasks = todayTasks.filter((task) => task.id !== focusTask?.id && task.title !== active?.tasks?.title);
+  const baseContinuationTasks = useMemo(
+    () => todayTasks.filter((task) => task.id !== focusTask?.id && task.title !== active?.tasks?.title),
+    [active?.tasks?.title, focusTask?.id, todayTasks],
+  );
+  const continuationTasks = useMemo(() => {
+    const baseIds = baseContinuationTasks.map((task) => task.id);
+    if (manualContinuationOrder.length !== baseIds.length) return baseContinuationTasks;
+    const baseSet = new Set(baseIds);
+    if (!manualContinuationOrder.every((id) => baseSet.has(id))) return baseContinuationTasks;
+    const taskById = new Map(baseContinuationTasks.map((task) => [task.id, task] as const));
+    return manualContinuationOrder.map((id) => taskById.get(id)!).filter(Boolean);
+  }, [baseContinuationTasks, manualContinuationOrder]);
   const pendingTasks = continuationTasks.filter((task) => task.status !== "completed" && (dailyMinutes.get(task.id) ?? 0) > 0);
+  const allDayTasks = useMemo(
+    () => tasks.filter((task) => task.planned_date === summary.dailyPlan.date),
+    [summary.dailyPlan.date, tasks],
+  );
+
+  useEffect(() => {
+    setManualContinuationOrder((current) => {
+      if (current.length === 0) return current;
+      const baseIds = baseContinuationTasks.map((task) => task.id);
+      const baseSet = new Set(baseIds);
+      const stillValid = current.length === baseIds.length && current.every((id) => baseSet.has(id));
+      return stillValid ? current : [];
+    });
+  }, [baseContinuationTasks]);
+
+  const persistContinuationOrder = async (nextIds: string[], previousIds: string[]) => {
+    if (!summary.dailyPlan.date || allDayTasks.length === 0) {
+      setOrderError("Bugünün görev sırası henüz hazır değil.");
+      return;
+    }
+
+    const movableIds = baseContinuationTasks.map((task) => task.id);
+    const fullTaskIds = mergeMovableTaskOrder(
+      allDayTasks.map((task) => task.id),
+      movableIds,
+      nextIds,
+    );
+
+    setManualContinuationOrder(nextIds);
+    setOrderSaving(true);
+    setOrderError(null);
+    try {
+      await callAppApi("/tasks/daily-order", {
+        method: "PUT",
+        body: { date: summary.dailyPlan.date, taskIds: fullTaskIds },
+      });
+    } catch {
+      setManualContinuationOrder(previousIds);
+      setOrderError("Görev sırası kaydedilemedi. Tekrar deneyin.");
+    } finally {
+      setOrderSaving(false);
+      setDraggedTaskId(null);
+    }
+  };
+
+  const moveContinuationTask = (taskId: string, targetIndex: number) => {
+    if (orderSaving) return;
+    const previousIds = continuationTasks.map((task) => task.id);
+    const nextIds = moveTaskId(previousIds, taskId, targetIndex);
+    if (nextIds.every((id, index) => id === previousIds[index])) return;
+    void persistContinuationOrder(nextIds, previousIds);
+  };
   const todayPlanned = summary.dailyPlan.totalCommittedMinutes;
   const activePlanned = active?.task_id ? dailyMinutes.get(active.task_id) ?? 0 : 0;
   const formattedDate = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", weekday: "long", day: "numeric", month: "long" }).format(new Date());
@@ -171,11 +239,42 @@ export function StudyTodayPanel() {
 
     <section className="today-remaining" aria-labelledby="remaining-title">
       <div className="section-bar"><h2 id="remaining-title">Bugünün devamı</h2><span>{pendingTasks.length} görev · {compactMinutesLabel(pendingTasks.reduce((sum, task) => sum + (dailyMinutes.get(task.id) ?? 0), 0))}</span></div>
+        {orderSaving && <div className="task-order-status" aria-live="polite">Sıra kaydediliyor…</div>}
+        {orderError && <div className="task-order-error" role="alert">{orderError}</div>}
       {loading ? <div className="page-skeleton list-skeleton"><span /><span /><span /></div> : continuationTasks.length ? <div className="editorial-task-list">{continuationTasks.map((task, index) => {
         const completed = task.status === "completed";
         const next = !completed && pendingTasks[0]?.id === task.id;
-        return <article className={`${completed ? "is-complete" : ""} ${next ? "is-next" : ""}`} style={{ animationDelay: `${210 + index * 50}ms` } as CSSProperties} key={task.id}>
-        <span className="task-number">{String(index + 1).padStart(2, "0")}</span>
+        return <article
+            className={`${completed ? "is-complete" : ""} ${next ? "is-next" : ""} ${draggedTaskId === task.id ? "is-dragging" : ""}`}
+            style={{ animationDelay: `${210 + index * 50}ms` } as CSSProperties}
+            key={task.id}
+            draggable={!orderSaving}
+            onDragStart={(event) => {
+              setDraggedTaskId(task.id);
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/plain", task.id);
+            }}
+            onDragOver={(event) => {
+              if (orderSaving) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              const sourceId = draggedTaskId ?? event.dataTransfer.getData("text/plain");
+              const targetIndex = continuationTasks.findIndex((item) => item.id === task.id);
+              if (sourceId && targetIndex >= 0) moveContinuationTask(sourceId, targetIndex);
+            }}
+            onDragEnd={() => setDraggedTaskId(null)}
+          >
+        <div className="task-order-cell">
+            <span className="task-drag-handle" aria-hidden="true">⋮⋮</span>
+            <span className="task-number">{String(index + 1).padStart(2, "0")}</span>
+            <div className="task-order-buttons" aria-label={`${taskName(task)} sırasını değiştir`}>
+              <button type="button" disabled={orderSaving || index === 0} aria-label={`${taskName(task)} görevini yukarı taşı`} onClick={() => moveContinuationTask(task.id, index - 1)}>↑</button>
+              <button type="button" disabled={orderSaving || index === continuationTasks.length - 1} aria-label={`${taskName(task)} görevini aşağı taşı`} onClick={() => moveContinuationTask(task.id, index + 1)}>↓</button>
+            </div>
+          </div>
         <div className="task-subject"><span>{task.subjects?.name ?? "Ders"}</span><strong>{task.resources?.name ?? taskName(task)}</strong></div>
         <span className="task-mode">{task.work_mode ? WORK_MODE_LABELS[task.work_mode] ?? "Çalışma" : "Çalışma"}</span>
         <strong className="task-minutes">{completed ? <Icon name="check" weight="bold" /> : <>{dailyMinutes.get(task.id) ?? 0}<small>dk</small></>}</strong>

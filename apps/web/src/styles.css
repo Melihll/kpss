@@ -328,3 +328,19 @@ html,body,.product-shell{overflow-x:hidden}.coach-drawer-body{overscroll-behavio
 .coach-result.preview-keep .coach-result-eyebrow{color:#6f6f73}
 .coach-result.preview-ready .coach-result-eyebrow{display:inline-flex;width:max-content;padding:4px 7px;border-radius:6px;background:#111113;color:#fff}
 .coach-result.preview-blocked .coach-result-eyebrow{display:inline-flex;width:max-content;padding:4px 7px;border:1px dashed #5f5f63;border-radius:6px;color:#38383b}
+
+/* P1-02 Today reorder */
+.task-order-status,.task-order-error{margin:-6px 0 10px;padding:8px 10px;border-radius:9px;font-size:.66rem}
+.task-order-status{background:rgba(17,17,19,.04);color:var(--text-secondary)}
+.task-order-error{border:1px solid rgba(17,17,19,.10);background:#f2f2ef;color:#49494d}
+.editorial-task-list>article[draggable="true"]{cursor:grab}
+.editorial-task-list>article.is-dragging{opacity:.58;transform:scale(.995);cursor:grabbing}
+.task-order-cell{display:grid;grid-template-columns:auto auto;align-items:center;justify-content:start;gap:2px 7px;min-width:54px}
+.task-drag-handle{grid-row:1/3;align-self:center;color:var(--text-tertiary);font-size:.72rem;letter-spacing:-.18em;user-select:none}
+.task-order-cell .task-number{align-self:end}
+.task-order-buttons{display:flex;align-items:center;gap:2px}
+.task-order-buttons button{width:22px;height:20px;display:grid;place-items:center;padding:0;border:1px solid rgba(17,17,19,.09);border-radius:5px;background:rgba(255,255,255,.76);color:#5d5d61;cursor:pointer;font-size:.64rem;line-height:1}
+.task-order-buttons button:hover:not(:disabled){border-color:rgba(17,17,19,.22);background:#fff;color:#111113}
+.task-order-buttons button:focus-visible{outline:2px solid #111113;outline-offset:1px}
+.task-order-buttons button:disabled{opacity:.28;cursor:not-allowed}
+@media(max-width:520px){.task-drag-handle{display:none}.task-order-cell{min-width:48px;grid-template-columns:1fr}.task-order-buttons{grid-column:1}.editorial-task-list>article[draggable="true"]{cursor:default}}

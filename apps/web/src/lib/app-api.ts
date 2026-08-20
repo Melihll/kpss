@@ -9,7 +9,7 @@ export class AppApiError extends Error {
 
 export async function callAppApi<T>(
   path: string,
-  options: { method?: "GET" | "POST" | "PATCH"; body?: unknown } = {},
+  options: { method?: "GET" | "POST" | "PUT" | "PATCH"; body?: unknown } = {},
 ): Promise<T> {
   const { data, error } = await supabase.auth.getSession();
   if (error) throw error;
