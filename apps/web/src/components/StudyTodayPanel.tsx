@@ -6,6 +6,8 @@ import { activeStudyElapsedMinutes } from "../lib/study-session-timer";
 import { compactMinutesLabel, taskName, WORK_MODE_LABELS, type RoadmapTask } from "../lib/roadmap";
 import { CoachDrawer, type CoachDrawerMode } from "./CoachDrawer";
 import { QuickAddTaskDrawer } from "./QuickAddTaskDrawer";
+import { TaskActionPreviewDrawer } from "./TaskActionPreviewDrawer";
+import type { TaskActionPreviewAction } from "../lib/task-action-preview-ui";
 import { Icon } from "./Icon";
 
 interface ActiveSession { id: string; task_id: string | null; started_at: string; tasks: { title: string } | null }
@@ -92,6 +94,11 @@ export function StudyTodayPanel() {
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [orderSaving, setOrderSaving] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [openTaskMenuId, setOpenTaskMenuId] = useState<string | null>(null);
+  const [taskActionRequest, setTaskActionRequest] = useState<{
+    task: RoadmapTask;
+    action: TaskActionPreviewAction;
+  } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -229,6 +236,11 @@ export function StudyTodayPanel() {
     if (nextIds.every((id, index) => id === previousIds[index])) return;
     void persistContinuationOrder(nextIds, previousIds);
   };
+
+  const previewTaskAction = (task: RoadmapTask, action: TaskActionPreviewAction) => {
+    setOpenTaskMenuId(null);
+    setTaskActionRequest({ task, action });
+  };
   const todayPlanned = summary.dailyPlan.totalCommittedMinutes;
   const activePlanned = active?.task_id ? dailyMinutes.get(active.task_id) ?? 0 : 0;
   const formattedDate = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", weekday: "long", day: "numeric", month: "long" }).format(new Date());
@@ -313,11 +325,38 @@ export function StudyTodayPanel() {
         <div className="task-subject"><span>{task.subjects?.name ?? "Ders"}</span><strong>{task.resources?.name ?? taskName(task)}</strong></div>
         <span className="task-mode">{task.work_mode ? WORK_MODE_LABELS[task.work_mode] ?? "Çalışma" : "Çalışma"}</span>
         <strong className="task-minutes">{completed ? <Icon name="check" weight="bold" /> : <>{dailyMinutes.get(task.id) ?? 0}<small>dk</small></>}</strong>
+        <div className="task-action-menu" onPointerDown={(event) => event.stopPropagation()}>
+          <button
+            className="task-action-menu-trigger"
+            type="button"
+            draggable={false}
+            aria-label={`${taskName(task)} görev işlemleri`}
+            aria-expanded={openTaskMenuId === task.id}
+            onClick={() => setOpenTaskMenuId((current) => current === task.id ? null : task.id)}
+          >
+            ⋯
+          </button>
+          {openTaskMenuId === task.id && <div className="task-action-menu-popover" role="menu">
+            <button type="button" role="menuitem" onClick={() => previewTaskAction(task, "DEFER")}>
+              <strong>Ertele</strong><span>İlk uygun güne taşıma önizlemesi</span>
+            </button>
+            <button type="button" role="menuitem" onClick={() => previewTaskAction(task, "REMOVE_TODAY")}>
+              <strong>Bugünden çıkar</strong><span>Backlog değişikliğini önizle</span>
+            </button>
+            <button type="button" role="menuitem" onClick={() => previewTaskAction(task, "DURATION_DETAILS")}>
+              <strong>Süre detayları</strong><span>Planlanan, tamamlanan ve kalan süre</span>
+            </button>
+          </div>}
+        </div>
       </article>})}</div> : <div className="plain-empty">Bugün için başka görev yok.</div>}
     </section>
 
     <div className="today-summary-line"><span>Bugün çalışılan</span><strong>{compactMinutesLabel(summary.todayStudyMinutes)}</strong></div>
-    <QuickAddTaskDrawer open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
+          <TaskActionPreviewDrawer
+        request={taskActionRequest}
+        onClose={() => setTaskActionRequest(null)}
+      />
+<QuickAddTaskDrawer open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
     <CoachDrawer open={coachOpen} mode={coachMode} onClose={() => setCoachOpen(false)} />
   </section>;
 }
