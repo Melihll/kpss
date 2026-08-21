@@ -33,7 +33,8 @@
     "test:ai-coach-safety": "node scripts/check-ai-coach-safety.mjs",
     "test:ai-coach-plan-preview-safety": "node scripts/check-ai-coach-plan-preview-safety.mjs",
     "test:planning-v2-shadow": "node scripts/run-planning-v2-shadow-smoke.mjs",
-    "test:planning-v2-shadow-safety": "node scripts/check-planning-v2-shadow-safety.mjs"
+    "test:planning-v2-shadow-safety": "node scripts/check-planning-v2-shadow-safety.mjs",
+    "provision:youtube-material": "node scripts/provision-youtube-material.mjs"
   },
   "devDependencies": {
     "@kpss-coach/domain": "workspace:*",

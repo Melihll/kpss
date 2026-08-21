@@ -16,8 +16,8 @@ describe("P1-06B Today task action UI safety contract", () => {
     expect(today).toContain('previewTaskAction(task, "DEFER")');
     expect(today).toContain('previewTaskAction(task, "REMOVE_TODAY")');
     expect(today).toContain('previewTaskAction(task, "DURATION_DETAILS")');
-    expect(today).toContain("Ertele");
-    expect(today).toContain("Bugünden çıkar");
+    expect(today).toContain("Ertelemeyi önizle");
+    expect(today).toContain("Çıkarmayı önizle");
     expect(today).toContain("Süre detayları");
   });
 
@@ -29,5 +29,13 @@ describe("P1-06B Today task action UI safety contract", () => {
     expect(drawer).not.toContain("daily-order");
     expect(drawer).not.toContain("weekly-plan/manual");
     expect(drawer).not.toContain("plans/current/recalculate");
+  });
+
+  it("does not silently recalculate the plan while Today loads", () => {
+    const loadStart = today.indexOf("const load = useCallback");
+    const loadEnd = today.indexOf("useEffect(() => { void load();", loadStart);
+    expect(loadStart).toBeGreaterThan(-1);
+    expect(loadEnd).toBeGreaterThan(loadStart);
+    expect(today.slice(loadStart, loadEnd)).not.toContain("plans/current/recalculate");
   });
 });

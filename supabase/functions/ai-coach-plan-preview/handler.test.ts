@@ -154,6 +154,12 @@ function createHarness(options: {
           },
         },
       }));
+  const prepareCapacityConfirmation = vi.fn(async () => ({
+    proposalId: "00000000-0000-4000-8000-000000000001",
+    actionKind: "capacity_change" as const,
+    expiresAt: "2026-08-19T12:20:00.000Z",
+    planGenerationVersion: 3,
+  }));
   const handler = createAiCoachPlanPreviewHandler({
     createUserClient: vi.fn(() => userClient),
     createShadowClient,
@@ -161,6 +167,7 @@ function createHarness(options: {
     executeAiStudyMessage: executeAiStudyMessage as any,
     loadCurrentGrossCapacity,
     runShadowDecision: runShadowDecision as any,
+    prepareCapacityConfirmation,
     currentDate: () => "2026-08-19",
   });
 
@@ -171,6 +178,7 @@ function createHarness(options: {
     executeAiStudyMessage,
     loadCurrentGrossCapacity,
     runShadowDecision,
+    prepareCapacityConfirmation,
     shadowClient,
     userClient,
     taskDetailQuery,
@@ -236,6 +244,7 @@ describe("ai-coach-plan-preview handler", () => {
     expect((await response.json()).shadowPreview).toBeNull();
     expect(harness.runShadowDecision).not.toHaveBeenCalled();
     expect(harness.createShadowClient).not.toHaveBeenCalled();
+    expect(harness.prepareCapacityConfirmation).not.toHaveBeenCalled();
   });
 
   it("does not invoke shadow when clarification is needed", async () => {
@@ -479,7 +488,7 @@ describe("ai-coach-plan-preview handler", () => {
     expect(body.shadowPreview.changeDetailsComplete).toBe(false);
   });
 
-  it("returns explicit preview-only semantics without claiming an apply", async () => {
+  it("returns an explicit server proposal without claiming the preview applied", async () => {
     const harness = createHarness();
     const response = await harness.handler(request());
     const body = await response.json();
@@ -499,8 +508,32 @@ describe("ai-coach-plan-preview handler", () => {
           backlogTaskCount: 1,
         },
       },
+      confirmation: {
+        proposalId: "00000000-0000-4000-8000-000000000001",
+        actionKind: "capacity_change",
+        expiresAt: "2026-08-19T12:20:00.000Z",
+        planGenerationVersion: 3,
+      },
+      confirmationError: null,
     });
+    expect(harness.prepareCapacityConfirmation).toHaveBeenCalledTimes(1);
     expect(body.shadowPreview).not.toHaveProperty("applied");
     expect(JSON.stringify(body)).not.toContain("apply_plan_revision");
+  });
+
+  it("keeps a safe preview non-actionable when proposal preparation fails", async () => {
+    const harness = createHarness();
+    harness.prepareCapacityConfirmation.mockRejectedValueOnce(new Error("internal proposal failure"));
+
+    const response = await harness.handler(request());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.shadowPreview).toMatchObject({ decision: "READY_TO_APPLY", previewOnly: true });
+    expect(body.confirmation).toBeNull();
+    expect(body.confirmationError).toEqual({
+      code: "CONFIRMATION_PROPOSAL_REJECTED",
+      message: "The preview is safe to inspect but cannot be confirmed from this snapshot.",
+    });
   });
 });

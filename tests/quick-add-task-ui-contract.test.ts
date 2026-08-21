@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-describe("P1-05B quick-add UI safety contract", () => {
+describe("R2 quick-add confirmation UI safety contract", () => {
   const drawer = readFileSync(
     new URL("../apps/web/src/components/QuickAddTaskDrawer.tsx", import.meta.url),
     "utf8",
@@ -11,12 +11,15 @@ describe("P1-05B quick-add UI safety contract", () => {
     "utf8",
   );
 
-  it("uses options then preview and exposes no create/apply call", () => {
+  it("requires options, preview, proposal confirmation, then one explicit apply", () => {
     expect(drawer).toContain('"/tasks/quick-add/options"');
     expect(drawer).toContain('"/tasks/quick-add/preview"');
-    expect(drawer).not.toContain('"/tasks/quick-add/apply"');
+    expect(drawer).toContain('"/tasks/quick-add/apply"');
     expect(drawer).not.toContain('"/tasks/quick-add/create"');
     expect(drawer).toContain("Henüz hiçbir görev oluşturulmadı");
+    expect(drawer).toContain("preview?.confirmation?.proposalId");
+    expect(drawer).toContain("Onayla ve Görevi Ekle");
+    expect(drawer).toContain("Görev eklendi");
   });
 
   it("keeps quick-add options route read-only", () => {
@@ -32,5 +35,16 @@ describe("P1-05B quick-add UI safety contract", () => {
     expect(routeBody).not.toContain(".upsert(");
     expect(routeBody).not.toContain(".delete(");
     expect(routeBody).not.toContain(".rpc(");
+  });
+
+  it("keeps preview free of task inserts and confines creation to the guarded RPC", () => {
+    const previewStart = appApi.indexOf('route === "/tasks/quick-add/preview"');
+    const applyStart = appApi.indexOf('route === "/tasks/quick-add/apply"', previewStart);
+    expect(previewStart).toBeGreaterThan(-1);
+    expect(applyStart).toBeGreaterThan(previewStart);
+    const previewRoute = appApi.slice(previewStart, applyStart);
+    expect(previewRoute).not.toContain('from("tasks").insert');
+    expect(previewRoute).toContain('"create_confirmed_action_proposal"');
+    expect(appApi.slice(applyStart)).toContain('"apply_confirmed_action_proposal"');
   });
 });

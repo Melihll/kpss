@@ -9,6 +9,7 @@ import {
   initialQuickAddForm,
   quickAddDateBounds,
   type QuickAddFormValue,
+  type QuickAddApplyResponse,
   type QuickAddOptions,
   type QuickAddPreviewResponse,
 } from "../lib/quick-add-task-ui";
@@ -17,6 +18,7 @@ import { Icon } from "./Icon";
 interface QuickAddTaskDrawerProps {
   readonly open: boolean;
   readonly onClose: () => void;
+  readonly onApplied?: () => void;
 }
 
 const EMPTY_FORM: QuickAddFormValue = {
@@ -29,12 +31,15 @@ const EMPTY_FORM: QuickAddFormValue = {
 export function QuickAddTaskDrawer({
   open,
   onClose,
+  onApplied,
 }: QuickAddTaskDrawerProps) {
   const [options, setOptions] = useState<QuickAddOptions | null>(null);
   const [form, setForm] = useState<QuickAddFormValue>(EMPTY_FORM);
   const [preview, setPreview] = useState<QuickAddPreviewResponse | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [applied, setApplied] = useState<QuickAddApplyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,6 +48,7 @@ export function QuickAddTaskDrawer({
     let cancelled = false;
     setLoadingOptions(true);
     setPreview(null);
+    setApplied(null);
     setError(null);
 
     void callAppApi<QuickAddOptions>("/tasks/quick-add/options")
@@ -88,6 +94,7 @@ export function QuickAddTaskDrawer({
   ) {
     setForm((current) => ({ ...current, [key]: value }));
     setPreview(null);
+    setApplied(null);
     setError(null);
   }
 
@@ -126,6 +133,34 @@ export function QuickAddTaskDrawer({
     }
   }
 
+  async function applyConfirmed() {
+    const proposalId = preview?.confirmation?.proposalId;
+    if (!proposalId || applying) return;
+    setApplying(true);
+    setError(null);
+    try {
+      const result = await callAppApi<QuickAddApplyResponse>(
+        "/tasks/quick-add/apply",
+        { method: "POST", body: { proposalId } },
+      );
+      setApplied(result);
+      window.dispatchEvent(new Event("kpss:execution-changed"));
+      onApplied?.();
+    } catch (caught) {
+      console.error("QUICK_ADD_APPLY_FAILED", caught);
+      if (caught instanceof AppApiError) {
+        setError(
+          FRIENDLY_API_ERRORS[caught.code] ??
+          "Görev eklenemedi. Önizlemeyi yenileyip tekrar deneyin.",
+        );
+      } else {
+        setError("Görev eklenemedi. Önizlemeyi yenileyip tekrar deneyin.");
+      }
+    } finally {
+      setApplying(false);
+    }
+  }
+
   if (!open) return null;
 
   return <>
@@ -159,7 +194,7 @@ export function QuickAddTaskDrawer({
       <div className="quick-add-body">
         <p className="quick-add-intro">
           Haftayı yeniden oluşturmadan tek bir görev adayı hazırla.
-          Bu ekran yalnızca önizleme yapar.
+          Görev ancak önizlemeyi açıkça onayladığında plana eklenir.
         </p>
 
         {loadingOptions ? (
@@ -238,7 +273,7 @@ export function QuickAddTaskDrawer({
           </div>
         )}
 
-        {preview && (
+        {preview && !applied && (
           <section
             className={`quick-add-preview ${preview.status === "READY" ? "is-ready" : "is-blocked"}`}
             aria-live="polite"
@@ -277,6 +312,34 @@ export function QuickAddTaskDrawer({
               <Icon name="check" weight="bold" />
               Önizleme tamamlandı · Henüz hiçbir görev oluşturulmadı
             </div>
+            {preview.status === "READY" && preview.confirmation && (
+              <button
+                className="quick-add-preview-button"
+                type="button"
+                disabled={applying}
+                onClick={() => void applyConfirmed()}
+              >
+                <Icon name="check" weight="bold" />
+                {applying ? "Ekleniyor…" : "Onayla ve Görevi Ekle"}
+              </button>
+            )}
+          </section>
+        )}
+
+        {applied && (
+          <section className="quick-add-preview is-ready" aria-live="polite">
+            <div className="quick-add-preview-state">Görev eklendi</div>
+            <h3>{applied.task.title}</h3>
+            <p>
+              {applied.task.planned_date} · {applied.task.estimated_minutes} dk
+            </p>
+            <div className="quick-add-preview-only">
+              <Icon name="check" weight="bold" />
+              Bugün ve Haftam görünümü yenilendi
+            </div>
+            <button className="quick-add-preview-button" type="button" onClick={onClose}>
+              Tamam
+            </button>
           </section>
         )}
       </div>

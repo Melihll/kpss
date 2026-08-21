@@ -157,22 +157,11 @@ export function StudyTodayPanel() {
 
   const load = useCallback(async () => {
     try {
-      let [planResult, activeResult, summaryResult] = await Promise.all([
+      const [planResult, activeResult, summaryResult] = await Promise.all([
         callAppApi<{ tasks: RoadmapTask[] }>("/weekly-plan/current"),
         callAppApi<ActiveSessionResponse>("/study-sessions/active"),
         callAppApi<Summary>("/execution/summary"),
       ]);
-      if (summaryResult.dailyPlan?.deferredTaskCount > 0) {
-        try {
-          await callAppApi("/plans/current/recalculate", { method: "POST", body: { trigger: "capacity_change" } });
-          [planResult, summaryResult] = await Promise.all([
-            callAppApi<{ tasks: RoadmapTask[] }>("/weekly-plan/current"),
-            callAppApi<Summary>("/execution/summary"),
-          ]);
-        } catch (caught) {
-          console.error("TODAY_CAPACITY_REPAIR_FAILED", caught);
-        }
-      }
       setTasks((planResult.tasks ?? []).filter((task) => task.status !== "cancelled"));
       setActive(activeResult.session);
       setActiveBreak(activeResult.break ?? null);
@@ -413,10 +402,10 @@ export function StudyTodayPanel() {
           </button>
           {openTaskMenuId === task.id && <div className="task-action-menu-popover" role="menu">
             <button type="button" role="menuitem" onClick={() => previewTaskAction(task, "DEFER")}>
-              <strong>Ertele</strong><span>İlk uygun güne taşıma önizlemesi</span>
+              <strong>Ertelemeyi önizle</strong><span>İlk uygun güne taşıma önizlemesi</span>
             </button>
             <button type="button" role="menuitem" onClick={() => previewTaskAction(task, "REMOVE_TODAY")}>
-              <strong>Bugünden çıkar</strong><span>Backlog değişikliğini önizle</span>
+              <strong>Çıkarmayı önizle</strong><span>Backlog değişikliğini önizle</span>
             </button>
             <button type="button" role="menuitem" onClick={() => previewTaskAction(task, "DURATION_DETAILS")}>
               <strong>Süre detayları</strong><span>Planlanan, tamamlanan ve kalan süre</span>
@@ -442,7 +431,7 @@ export function StudyTodayPanel() {
         }}
         onPageSaved={(progress) => setMaterialPageProgress(progress)}
       />
-<QuickAddTaskDrawer open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
-    <CoachDrawer open={coachOpen} mode={coachMode} onClose={() => setCoachOpen(false)} />
+      <QuickAddTaskDrawer open={quickAddOpen} onClose={() => setQuickAddOpen(false)} onApplied={() => void load()} />
+      <CoachDrawer open={coachOpen} mode={coachMode} onClose={() => setCoachOpen(false)} onApplied={() => void load()} />
   </section>;
 }

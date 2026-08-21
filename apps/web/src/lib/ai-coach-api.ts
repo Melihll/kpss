@@ -60,6 +60,22 @@ export interface AiCoachPreviewApiError {
   readonly message: string;
 }
 
+export interface AiCoachConfirmationProposal {
+  readonly proposalId: string;
+  readonly actionKind: "capacity_change";
+  readonly expiresAt: string;
+  readonly planGenerationVersion: number;
+}
+
+export interface AiCoachApplyResponse {
+  readonly proposalId: string;
+  readonly actionKind: "capacity_change";
+  readonly scheduleExceptionCreated: boolean;
+  readonly changes: readonly AiCoachShadowPreviewChange[];
+  readonly idempotent?: boolean;
+  readonly refresh: readonly string[];
+}
+
 type ValidExecution = Extract<AiStudyMessageExecutionResultV1, { status: "VALID" }>;
 type ClarificationExecution = Extract<AiStudyMessageExecutionResultV1, { status: "NEEDS_CLARIFICATION" }>;
 type InvalidExecution = Extract<AiStudyMessageExecutionResultV1, { status: "INVALID" }>;
@@ -69,6 +85,8 @@ export type AiCoachPlanPreviewResponse =
   | (ValidExecution & {
       readonly capacityResolution?: AiCoachTargetCapacityResolution | null;
       readonly shadowPreview: AiCoachShadowPreview | null;
+      readonly confirmation?: AiCoachConfirmationProposal | null;
+      readonly confirmationError?: AiCoachPreviewApiError | null;
       readonly error?: AiCoachPreviewApiError;
     })
   | (ClarificationExecution & { readonly shadowPreview: null })

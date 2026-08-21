@@ -52,8 +52,8 @@ export interface TaskActionPreviewResponse {
 }
 
 export function taskActionLabel(action: TaskActionPreviewAction): string {
-  if (action === "DEFER") return "Ertele";
-  if (action === "REMOVE_TODAY") return "Bugünden çıkar";
+  if (action === "DEFER") return "Ertelemeyi önizle";
+  if (action === "REMOVE_TODAY") return "Çıkarmayı önizle";
   return "Süre detayları";
 }
 

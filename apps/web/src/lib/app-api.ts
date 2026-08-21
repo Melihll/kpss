@@ -65,5 +65,11 @@ export const FRIENDLY_API_ERRORS: Readonly<Record<string, string>> = {
   YOUTUBE_VIDEO_DURATION_UNAVAILABLE: "Videonun süresi henüz hazır değil. Playlisti yeniden senkronize edin.",
   YOUTUBE_VIDEO_PROGRESS_INVALID_POSITION: "Video konumu kaydedilemedi.",
   YOUTUBE_VIDEO_PROGRESS_INVALID_WATCHED_SECONDS: "İzleme süresi kaydedilemedi.",
+  ACTION_PROPOSAL_NOT_FOUND: "Onay önizlemesi bulunamadı. Yeniden önizleyin.",
+  ACTION_PROPOSAL_NOT_PENDING: "Bu onay önizlemesi artık kullanılamaz.",
+  ACTION_PROPOSAL_EXPIRED: "Onay süresi doldu. Yeniden önizleyin.",
+  ACTION_PROPOSAL_STALE: "Plan bu önizlemeden sonra değişti. Yeniden önizleyin.",
+  QUICK_ADD_DUPLICATE_CONFLICT: "Aynı görev farklı bilgilerle zaten mevcut.",
+  ACTION_PROPOSAL_NOT_APPLYABLE: "Bu öneri güvenli biçimde uygulanamıyor. Yeniden önizleyin.",
   UNAUTHORIZED: "Oturumunuz geçersiz. Yeniden giriş yapın.",
 };

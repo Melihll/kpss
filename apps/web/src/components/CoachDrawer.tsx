@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { AppApiError } from "../lib/app-api";
-import { callAiCoachPreview, type AiCoachPlanPreviewResponse } from "../lib/ai-coach-api";
+import { AppApiError, FRIENDLY_API_ERRORS, callAppApi } from "../lib/app-api";
+import { callAiCoachPreview, type AiCoachApplyResponse, type AiCoachPlanPreviewResponse } from "../lib/ai-coach-api";
 import { presentAiCoachPreview } from "../lib/ai-coach-presenter";
 import { supabase } from "../lib/supabase";
 import { Icon } from "./Icon";
@@ -11,6 +11,7 @@ interface CoachDrawerProps {
   readonly open: boolean;
   readonly onClose: () => void;
   readonly mode?: CoachDrawerMode;
+  readonly onApplied?: () => void;
 }
 
 const QUICK_PROMPTS = [
@@ -25,13 +26,15 @@ const CAPACITY_QUICK_PROMPTS = [
   "Bugün çalışamayacağım.",
 ] as const;
 
-export function CoachDrawer({ open, onClose, mode = "default" }: CoachDrawerProps) {
+export function CoachDrawer({ open, onClose, mode = "default", onApplied }: CoachDrawerProps) {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
   const [response, setResponse] = useState<AiCoachPlanPreviewResponse | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [sending, setSending] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [applied, setApplied] = useState<AiCoachApplyResponse | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -43,6 +46,7 @@ export function CoachDrawer({ open, onClose, mode = "default" }: CoachDrawerProp
     setMessage("");
     setSubmittedMessage(null);
     setResponse(null);
+    setApplied(null);
     setDetailsOpen(false);
     setError(null);
   }, [mode, open]);
@@ -114,6 +118,31 @@ export function CoachDrawer({ open, onClose, mode = "default" }: CoachDrawerProp
       setError(caught instanceof AppApiError ? caught.message : "Koç yanıtı alınamadı. Tekrar deneyebilirsin.");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function applyConfirmed() {
+    const proposalId = response?.status === "VALID"
+      ? response.confirmation?.proposalId
+      : undefined;
+    if (!proposalId || applying) return;
+    setApplying(true);
+    setError(null);
+    try {
+      const result = await callAppApi<AiCoachApplyResponse>(
+        "/plans/current/apply-confirmed",
+        { method: "POST", body: { proposalId } },
+      );
+      setApplied(result);
+      window.dispatchEvent(new Event("kpss:execution-changed"));
+      onApplied?.();
+    } catch (caught) {
+      console.error("AI_COACH_APPLY_FAILED", caught);
+      setError(caught instanceof AppApiError
+        ? FRIENDLY_API_ERRORS[caught.code] ?? "Öneri uygulanamadı. Güncel bir önizleme oluşturun."
+        : "Öneri uygulanamadı. Güncel bir önizleme oluşturun.");
+    } finally {
+      setApplying(false);
     }
   }
 
@@ -189,6 +218,25 @@ export function CoachDrawer({ open, onClose, mode = "default" }: CoachDrawerProp
             </>}
           </div>}
           {presentation.note && <div className="coach-preview-note"><Icon name="check" /><span>{presentation.note}</span></div>}
+          {response?.status === "VALID" && response.confirmation && presentation.previewState === "READY" && !applied && <button
+            className="secondary-action"
+            type="button"
+            disabled={applying}
+            onClick={() => void applyConfirmed()}
+          >
+            <Icon name="check" weight="bold" />
+            {applying ? "Uygulanıyor…" : "Onayla ve Plana Uygula"}
+          </button>}
+          {response?.status === "VALID" && response.confirmationError && !response.confirmation && <div className="coach-error" role="alert">
+            <Icon name="warning" /><span>Bu önizleme uygulanamaz; lütfen yeniden önizleyin.</span>
+          </div>}
+        </article>}
+
+        {applied && <article className="coach-result tone-positive" aria-live="polite">
+          <span className="coach-result-eyebrow">Onaylandı</span>
+          <h3>Planın güncellendi</h3>
+          <p>{applied.changes.length} görev değişikliği ve kapasite tercihin tek işlemde uygulandı.</p>
+          <div className="coach-preview-note"><Icon name="check" weight="bold" /><span>Bugün ve Haftam görünümü yenilendi</span></div>
         </article>}
 
         {error && !sending && <div className="coach-error" role="alert"><Icon name="warning" /><span>{error}</span></div>}

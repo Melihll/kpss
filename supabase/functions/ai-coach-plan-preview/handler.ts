@@ -115,6 +115,13 @@ interface ShadowPreviewChange {
   readonly reasonCodes: readonly string[];
 }
 
+export interface ConfirmedCapacityProposal {
+  readonly proposalId: string;
+  readonly actionKind: "capacity_change";
+  readonly expiresAt: string;
+  readonly planGenerationVersion: number;
+}
+
 interface AiCoachPlanPreviewDependencies {
   readonly createUserClient: (authorization: string) => Client;
   readonly createShadowClient: () => Client;
@@ -141,6 +148,19 @@ interface AiCoachPlanPreviewDependencies {
     readonly currentDate: string;
     readonly effectiveDate: string;
   }) => Promise<number>;
+  readonly prepareCapacityConfirmation: (input: {
+    readonly userClient: Client;
+    readonly proposalClient: Client;
+    readonly userId: string;
+    readonly examProfileId: string;
+    readonly currentDate: string;
+    readonly capacityEvent: {
+      readonly effectiveDate: string;
+      readonly deltaMinutes: number;
+    };
+    readonly shadowResult: ShadowDecisionResult;
+    readonly changes: readonly ShadowPreviewChange[];
+  }) => Promise<ConfirmedCapacityProposal>;
   readonly currentDate?: () => string;
 }
 
@@ -638,8 +658,9 @@ export function createAiCoachPlanPreviewHandler(
     }
 
     try {
+      const proposalClient = dependencies.createShadowClient();
       const result = await dependencies.runShadowDecision({
-        client: dependencies.createShadowClient(),
+        client: proposalClient,
         userId,
         examProfileId: body.examProfileId,
         currentDate,
@@ -658,12 +679,41 @@ export function createAiCoachPlanPreviewHandler(
         console.error("AI_COACH_PREVIEW_DETAIL_LOOKUP_FAILED");
       }
 
+      let confirmation: ConfirmedCapacityProposal | null = null;
+      let confirmationError: { readonly code: string; readonly message: string } | null = null;
+      if (
+        result.decision === "READY_TO_APPLY" &&
+        result.validationValid &&
+        result.applyRecommended
+      ) {
+        try {
+          confirmation = await dependencies.prepareCapacityConfirmation({
+            userClient,
+            proposalClient,
+            userId,
+            examProfileId: body.examProfileId,
+            currentDate,
+            capacityEvent: previewEvent,
+            shadowResult: result,
+            changes,
+          });
+        } catch {
+          console.error("AI_COACH_CONFIRMATION_PROPOSAL_FAILED");
+          confirmationError = {
+            code: "CONFIRMATION_PROPOSAL_REJECTED",
+            message: "The preview is safe to inspect but cannot be confirmed from this snapshot.",
+          };
+        }
+      }
+
       return json({
         status: "VALID",
         interpretation: aiResult.interpretation,
         mapping: aiResult.mapping,
         capacityResolution,
         shadowPreview: shadowPreview(result, changes),
+        confirmation,
+        confirmationError,
       });
     } catch {
       return json({

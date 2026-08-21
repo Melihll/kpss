@@ -11,7 +11,14 @@ const windows=(rows:any[])=>rows.map(row=>({weekday:row.weekday,start_time:row.s
 const periods=(rows:any[])=>rows.map(row=>({startDate:row.start_date,endDate:row.end_date,capacityMultiplier:row.capacity_multiplier==null?null:Number(row.capacity_multiplier)}));
 const exceptions=(rows:any[])=>rows.map(row=>({date:row.exception_date,type:row.exception_type,startTime:row.start_time,endTime:row.end_time,minutesDelta:row.minutes_delta}));
 
-export async function loadAdaptiveBase(client:Client,userId:string,profile:any,plan:any){
+interface AdaptivePreviewOptions {
+ readonly hypotheticalCapacityEvent?: {
+  readonly effectiveDate:string;
+  readonly deltaMinutes:number;
+ };
+}
+
+export async function loadAdaptiveBase(client:Client,userId:string,profile:any,plan:any,options:AdaptivePreviewOptions={}){
  const [availability,calendar,exceptionRows,tasks,progress,revisions,reschedules,sessions,dailyOverrides]=await Promise.all([
   client.from("weekly_availability").select("*").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("is_active",true),
   client.from("calendar_periods").select("*").eq("user_id",userId).eq("exam_profile_id",profile.id),
@@ -23,13 +30,23 @@ export async function loadAdaptiveBase(client:Client,userId:string,profile:any,p
   client.from("study_sessions").select("duration_minutes,started_at,ended_at").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","completed").gte("ended_at",`${plan.week_start_date}T00:00:00Z`),
   loadP48DailyCapacityOverrides(client,userId,profile.id,plan.week_start_date,plan.week_end_date),
  ]);for(const result of[availability,calendar,exceptionRows,tasks,progress,revisions,reschedules,sessions])if(result.error)throw result.error;
- const dayCapacities:Record<string,number>={};const grossDayCapacities:Record<string,number>={};for(let index=0;index<7;index++){const date=addDays(plan.week_start_date,index);const capacityContext={date,weeklyAvailability:windows(availability.data??[]),calendarPeriods:periods(calendar.data??[])};const calculatedBase=calculateEffectiveDayCapacity({...capacityContext,scheduleExceptions:[]});const calculated=calculateEffectiveDayCapacity({...capacityContext,scheduleExceptions:exceptions(exceptionRows.data??[])});const override=dailyOverrides.get(date);const delta=calculated-calculatedBase;grossDayCapacities[date]=override?Math.max(0,Number(override.capacity_minutes)+delta):Math.max(0,calculated);dayCapacities[date]=planningCapacityForDate(date,calculated,dailyOverrides,calculatedBase);}
+ const scheduleExceptions=[...(exceptionRows.data??[])];
+ if(options.hypotheticalCapacityEvent){
+  scheduleExceptions.push({
+   exception_date:options.hypotheticalCapacityEvent.effectiveDate,
+   exception_type:options.hypotheticalCapacityEvent.deltaMinutes>0?"extra_available":"custom",
+   start_time:null,end_time:null,
+   minutes_delta:options.hypotheticalCapacityEvent.deltaMinutes,
+   note:"confirmed_action_preview",
+  });
+ }
+ const dayCapacities:Record<string,number>={};const grossDayCapacities:Record<string,number>={};for(let index=0;index<7;index++){const date=addDays(plan.week_start_date,index);const capacityContext={date,weeklyAvailability:windows(availability.data??[]),calendarPeriods:periods(calendar.data??[])};const calculatedBase=calculateEffectiveDayCapacity({...capacityContext,scheduleExceptions:[]});const calculated=calculateEffectiveDayCapacity({...capacityContext,scheduleExceptions:exceptions(scheduleExceptions)});const override=dailyOverrides.get(date);const delta=calculated-calculatedBase;grossDayCapacities[date]=override?Math.max(0,Number(override.capacity_minutes)+delta):Math.max(0,calculated);dayCapacities[date]=planningCapacityForDate(date,calculated,dailyOverrides,calculatedBase);}
  const progressMap=new Map<string,any>((progress.data??[]).map((row:any)=>[row.curriculum_node_id,row]));const postpone=new Map<string,number>();for(const row of reschedules.data??[])postpone.set(row.task_id,(postpone.get(row.task_id)??0)+1);
  const adaptiveTasks=(tasks.data??[]).map((row:any)=>({id:row.id,subjectId:row.subject_id,curriculumNodeId:row.curriculum_node_id,title:row.title,plannedDate:row.planned_date,estimatedMinutes:row.estimated_minutes,completedMinutes:row.task_progress?.[0]?.completed_minutes??0,importance:row.importance,priorityScore:row.priority_score,status:row.status,createdAt:row.created_at,postponementCount:postpone.get(row.id)??0,topicState:progressMap.get(row.curriculum_node_id)?.state??null,masteryLevel:progressMap.get(row.curriculum_node_id)?.mastery_level??null,sourceReason:row.source_reason,revisionScheduleId:row.revision_schedule_id}));
  const linked=new Set((tasks.data??[]).map((row:any)=>row.revision_schedule_id).filter(Boolean));const today=calendarToday();const allAdaptiveRevisions=(revisions.data??[]).map((row:any)=>({id:row.id,subjectId:row.curriculum_nodes.subject_id,curriculumNodeId:row.curriculum_node_id,title:`${row.curriculum_nodes.subjects?.name??"Ders"}: ${row.curriculum_nodes.name} tekrarÄ±`,scheduledFor:row.scheduled_for,estimatedMinutes:row.estimated_minutes,revisionType:row.revision_type,urgency:getRevisionUrgency(row.scheduled_for,today),masteryLevel:row.source_mastery_level}));const adaptiveRevisions=allAdaptiveRevisions.filter((row:any)=>!linked.has(row.id));
  const actualMinutesByDate:Record<string,number>={};for(const row of sessions.data??[]){const stamp=row.started_at??row.ended_at;if(!stamp)continue;const date=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Istanbul"}).format(new Date(stamp));actualMinutesByDate[date]=(actualMinutesByDate[date]??0)+(row.duration_minutes??0);}
  const plannedConsumedMinutesByDate:Record<string,number>={};for(const row of tasks.data??[]){if(!row.planned_date)continue;const completed=Number(row.task_progress?.[0]?.completed_minutes??0);const consumed=row.status==="completed"?Number(row.estimated_minutes??0):Math.min(Number(row.estimated_minutes??0),completed);plannedConsumedMinutesByDate[row.planned_date]=(plannedConsumedMinutesByDate[row.planned_date]??0)+consumed;}
- return{availability:availability.data??[],calendar:calendar.data??[],exceptions:exceptionRows.data??[],dailyCapacityOverrides:dailyOverrides,tasks:tasks.data??[],adaptiveTasks,adaptiveRevisions,allAdaptiveRevisions,dayCapacities,grossDayCapacities,actualMinutesByDate,plannedConsumedMinutesByDate,actualMinutes:(sessions.data??[]).reduce((s:number,row:any)=>s+(row.duration_minutes??0),0)};
+ return{availability:availability.data??[],calendar:calendar.data??[],exceptions:scheduleExceptions,dailyCapacityOverrides:dailyOverrides,tasks:tasks.data??[],adaptiveTasks,adaptiveRevisions,allAdaptiveRevisions,dayCapacities,grossDayCapacities,actualMinutesByDate,plannedConsumedMinutesByDate,actualMinutes:(sessions.data??[]).reduce((s:number,row:any)=>s+(row.duration_minutes??0),0)};
 }
 
 export async function applyScheduleExceptionWithCompensation(
@@ -53,8 +70,8 @@ export function resolveNextPlanningBudget(input:{planAvailableMinutes:number;pla
  return manualFullCapacityBudget?input.outputAvailableMinutes:Math.min(existingBudget??Math.floor(input.outputAvailableMinutes*.85),Math.floor(input.outputAvailableMinutes*.85));
 }
 
-export async function previewCurrentPlan(client:Client,userId:string,profile:any,plan:any,trigger:any){
- const base=await loadAdaptiveBase(client,userId,profile,plan);const today=calendarToday();const remainingCapacity=Object.entries(base.dayCapacities).filter(([date])=>date>=today).reduce((s,[,m])=>s+m,0);
+export async function previewCurrentPlan(client:Client,userId:string,profile:any,plan:any,trigger:any,options:AdaptivePreviewOptions={}){
+ const base=await loadAdaptiveBase(client,userId,profile,plan,options);const today=calendarToday();const remainingCapacity=Object.entries(base.dayCapacities).filter(([date])=>date>=today).reduce((s,[,m])=>s+m,0);
  const backlog=evaluateBacklog(base.adaptiveTasks.map((task:any)=>({importance:task.importance,status:task.status,remainingMinutes:Math.max(0,task.estimatedMinutes-task.completedMinutes)})),remainingCapacity);
  const output=replanWeeklyPlanV1({profileId:profile.id,planId:plan.id,weekStart:plan.week_start_date,weekEnd:plan.week_end_date,currentDate:today,planningBudgetMinutes:plan.planning_budget_minutes??Math.floor(Object.values(base.dayCapacities).reduce((a:number,b:any)=>a+b,0)*.85),dailyCapacities:base.dayCapacities,actualMinutesByDate:base.actualMinutesByDate,plannedConsumedMinutesByDate:base.plannedConsumedMinutesByDate,tasks:base.adaptiveTasks,revisions:base.adaptiveRevisions,trigger});
  const revisionDemand=base.adaptiveRevisions.reduce((s:number,row:any)=>s+row.estimatedMinutes,0);const risks:any[]=[];

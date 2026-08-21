@@ -37,6 +37,27 @@ export interface QuickAddPreviewResponse {
     readonly fits: boolean;
   };
   readonly mutations: readonly [];
+  readonly confirmation?: {
+    readonly proposalId: string;
+    readonly actionKind: "quick_task";
+    readonly expiresAt: string;
+    readonly planGenerationVersion: number;
+  };
+}
+
+export interface QuickAddApplyResponse {
+  readonly proposalId: string;
+  readonly actionKind: "quick_task";
+  readonly created: boolean;
+  readonly idempotent: boolean;
+  readonly weeklyPlanId: string;
+  readonly task: {
+    readonly id: string;
+    readonly title: string;
+    readonly planned_date: string;
+    readonly estimated_minutes: number;
+  };
+  readonly refresh: readonly ("today" | "week")[];
 }
 
 export function quickAddDateBounds(options: QuickAddOptions) {

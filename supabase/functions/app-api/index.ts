@@ -117,6 +117,12 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   YOUTUBE_API_INVALID_RESPONSE: 502,
   YOUTUBE_VIDEO_NOT_FOUND: 404,
   YOUTUBE_VIDEO_DURATION_UNAVAILABLE: 409,
+  ACTION_PROPOSAL_NOT_FOUND: 404,
+  ACTION_PROPOSAL_NOT_PENDING: 409,
+  ACTION_PROPOSAL_EXPIRED: 409,
+  ACTION_PROPOSAL_STALE: 409,
+  QUICK_ADD_DUPLICATE_CONFLICT: 409,
+  ACTION_PROPOSAL_NOT_APPLYABLE: 409,
   YOUTUBE_VIDEO_PROGRESS_INVALID_POSITION: 400,
   YOUTUBE_VIDEO_PROGRESS_INVALID_WATCHED_SECONDS: 400,
   P48_STRATEGY_NOT_CONFIGURED: 409,
@@ -714,6 +720,11 @@ Deno.serve(async (request) => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authorization } }, auth: { persistSession: false } },
     );
+    const serviceClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { persistSession: false } },
+    );
     const { data: authData, error: authError } = await client.auth.getUser();
     if (authError || !authData.user) return json({ error: { code: "UNAUTHORIZED", message: "Invalid token" } }, 401);
     const userId = authData.user.id;
@@ -1292,7 +1303,46 @@ Deno.serve(async (request) => {
         remainingCapacityMinutes: Number(dayContext.remainingCapacityMinutes ?? 0),
       });
 
-      return json(preview);
+      if (preview.status !== "READY") return json(preview);
+
+      const taskDedupeKey = [
+        "quick-task-v1",subjectId,plannedDate,String(estimatedMinutes),
+        title.trim().toLocaleLowerCase("tr-TR"),
+      ].join(":");
+      const proposalResult = await serviceClient.rpc(
+        "create_confirmed_action_proposal",
+        {
+          p_user_id: userId,
+          p_exam_profile_id: profile.id,
+          p_weekly_plan_id: plan.id,
+          p_action_kind: "quick_task",
+          p_plan_generation_version: Number(plan.generation_version),
+          p_mutation_payload: {
+            candidate: preview.candidate,
+            capacity: preview.capacity,
+            taskDedupeKey,
+          },
+          p_display_payload: preview,
+          p_idempotency_key: `quick-task-preview:${crypto.randomUUID()}`,
+        },
+      );
+      if (proposalResult.error) throw proposalResult.error;
+
+      return json({ ...preview, confirmation: proposalResult.data });
+    }
+    if (request.method === "POST" && route === "/tasks/quick-add/apply") {
+      const body = await request.json().catch(() => null);
+      const proposalId = typeof body?.proposalId === "string" ? body.proposalId : "";
+      if (!/^[0-9a-f-]{36}$/i.test(proposalId)) throw new Error("ACTION_PROPOSAL_NOT_FOUND");
+      const applied = await client.rpc("apply_confirmed_action_proposal", {
+        p_proposal_id: proposalId,
+      });
+      if (applied.error) throw applied.error;
+      const plan = await currentPlan(client,profile.id,weekStart);
+      return json({
+        ...applied.data,
+        plan: await planWithTasks(client,plan),
+      });
     }
     const taskActionPreviewMatch = route.match(/^\/tasks\/([0-9a-f-]+)\/action-preview$/);
     if (request.method === "POST" && taskActionPreviewMatch) {
@@ -1381,6 +1431,15 @@ Deno.serve(async (request) => {
     }
     if(request.method==="POST"&&route==="/schedule-exceptions"){
       const body=await request.json();const {data,error}=await client.from("schedule_exceptions").insert({user_id:userId,exam_profile_id:profile.id,exception_date:body.date,exception_type:body.type,start_time:body.startTime??null,end_time:body.endTime??null,minutes_delta:body.minutesDelta??null,note:body.note??null}).select("*").single();if(error)throw error;return json(data,201);
+    }
+    if(request.method==="POST"&&route==="/plans/current/apply-confirmed"){
+      const body=await request.json().catch(()=>null);
+      const proposalId=typeof body?.proposalId==="string"?body.proposalId:"";
+      if(!/^[0-9a-f-]{36}$/i.test(proposalId))throw new Error("ACTION_PROPOSAL_NOT_FOUND");
+      const applied=await client.rpc("apply_confirmed_action_proposal",{p_proposal_id:proposalId});
+      if(applied.error)throw applied.error;
+      const current=await currentPlan(client,profile.id,weekStart);
+      return json({...applied.data,plan:await planWithTasks(client,current)});
     }
     if(request.method==="POST"&&route==="/plans/current/recalculate"){
       const plan=await currentPlan(client,profile.id,weekStart);if(!plan)throw new Error("WEEKLY_PLAN_NOT_FOUND");const body=await request.json().catch(()=>({}));return json(await recalculateCurrentPlan(client,userId,profile,plan,body.trigger??"manual_request"));

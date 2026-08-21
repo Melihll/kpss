@@ -51,8 +51,8 @@ function preview(
 
 describe("task action preview UI presenter", () => {
   it("labels all three task actions", () => {
-    expect(taskActionLabel("DEFER")).toBe("Ertele");
-    expect(taskActionLabel("REMOVE_TODAY")).toBe("Bugünden çıkar");
+    expect(taskActionLabel("DEFER")).toBe("Ertelemeyi önizle");
+    expect(taskActionLabel("REMOVE_TODAY")).toBe("Çıkarmayı önizle");
     expect(taskActionLabel("DURATION_DETAILS")).toBe("Süre detayları");
   });
 
