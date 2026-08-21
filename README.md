@@ -1,16 +1,83 @@
-# KPSS Koçu — Phase 04
+# KPSS Koçu
 
-pnpm/React/Supabase tabanlı KPSS koçluğu çekirdeği. Auth/RLS, sınav-ders-müfredat, kapasite, kaynaklar, deterministik Weekly Planning Engine V0 ve task lifecycle yanında canlı/sonradan çalışma, D/Y/B sonuçları, yanlış inceleme ve Telegram pilot akışını içerir.
+**KPSS hazırlık sürecini planlamak, takip etmek ve öğrencinin çalışma sürecini daha yönetilebilir hale getirmek için geliştirilen adaptif çalışma planlama ve koçluk platformu.**
 
-## Gereksinimler
+KPSS Koçu; öğrencinin hedeflerini, kullanılabilir çalışma süresini ve ders ilerlemesini dikkate alarak daha düzenli ve sürdürülebilir bir çalışma sistemi oluşturmayı amaçlar.
 
-- Node.js 20.19 veya üzeri
-- pnpm 11.16
-- Çalışan Docker Desktop (local Supabase için)
+Proje yalnızca bir görev listesi olmak yerine; **planlama, çalışma takibi, oturumlar, sonuç analizi ve koçluk süreçlerini tek bir sistem altında birleştirmeyi** hedeflemektedir.
 
-Supabase CLI global olarak gerekmez; workspace dev dependency'sidir.
+> **Aktif Geliştirme**
+>
+> KPSS Koçu halen aktif olarak geliştirilmektedir. Mimari yapı, özellikler ve kullanıcı deneyimi düzenli olarak iyileştirilmektedir.
 
-## Kurulum ve local geliştirme
+---
+
+## Mevcut Özellikler
+
+* **Kullanıcı kimlik doğrulama**
+* **PostgreSQL Row Level Security (RLS)**
+* **Sınav, ders ve müfredat yönetimi**
+* **Haftalık çalışma planlama**
+* **Deterministik planlama motoru**
+* **Çalışma görevlerinin yaşam döngüsü**
+* **Çalışma oturumu takibi**
+* **Doğru, yanlış ve boş sonuç takibi**
+* **Yanlış cevap inceleme akışları**
+* **Yapay zeka destekli koçluk özellikleri**
+* **Telegram entegrasyonu**
+* **Birim ve entegrasyon testleri**
+
+---
+
+## Teknoloji Yığını
+
+### Frontend
+
+* React
+* TypeScript
+
+### Backend ve Veri Katmanı
+
+* Supabase
+* PostgreSQL
+* Supabase Auth
+* Edge Functions
+
+### Geliştirme ve Test
+
+* pnpm workspace
+* Vitest
+* Integration tests
+* Database migrations
+* RLS tabanlı yetkilendirme
+
+---
+
+## Proje Yapısı
+
+```text
+kpss/
+├── apps/
+│   └── web/              # Web uygulaması
+├── packages/
+│   └── domain/           # Ortak domain mantığı
+├── supabase/             # Veritabanı migration'ları ve Edge Function'lar
+├── tests/                # Entegrasyon testleri
+├── scripts/              # Geliştirme ve doğrulama scriptleri
+└── docs/                 # Proje dokümantasyonu
+```
+
+---
+
+## Yerel Geliştirme Ortamı
+
+### Gereksinimler
+
+* Node.js 20.19+
+* pnpm 11.16+
+* Docker Desktop
+
+### Kurulum
 
 ```bash
 pnpm install
@@ -19,61 +86,69 @@ pnpm supabase:reset
 pnpm dev
 ```
 
-`pnpm supabase:start`, local API URL ve anon key değerlerini git tarafından yok sayılan `apps/web/.env.local` dosyasına yazar. Uygulama `http://127.0.0.1:5173` adresinde açılır. Manuel environment kurulumu gerekirse `.env.example` dosyasını temel alın; frontend'e service-role key eklemeyin.
+Web uygulaması varsayılan olarak aşağıdaki adreste çalışır:
 
-Local servisleri durdurmak için:
-
-```bash
-pnpm supabase:stop
+```text
+http://127.0.0.1:5173
 ```
 
-## Doğrulama
+---
+
+## Test ve Doğrulama
 
 ```bash
-pnpm edge:bundle
 pnpm typecheck
 pnpm test
 pnpm build
-pnpm supabase:reset
 pnpm test:integration
-pnpm supabase:status
 ```
 
-Entegrasyon testleri çalışan local Supabase ve uygulanmış migration gerektirir; Auth, RLS, catalog/domain, planning/task ve execution/result regresyonlarını gerçek local API üzerinden doğrular.
+Entegrasyon testleri yerel Supabase ortamında çalışır ve temel akışları doğrulamayı amaçlar.
 
-## Edge Functions
+Bu kapsamda özellikle:
 
-Planning bundle ile `app-api` ve `telegram-webhook` function'larını ayrı terminalde başlatın:
+* Kimlik doğrulama
+* Yetkilendirme
+* Çalışma planlama
+* Görev yönetimi
+* Kullanıcıya ait veri izolasyonu
+* Temel çalışma akışları
 
-```bash
-pnpm supabase:functions:serve
-```
+test edilmektedir.
 
-Normal kullanıcı JWT'siyle app API smoke testi:
+---
 
-```bash
-pnpm test:edge
-```
+## Yol Haritası
 
-Telegram local deterministic smoke testi için function server'ı şu environment ile çalıştırın:
+Projenin ilerleyen aşamalarında aşağıdaki alanların geliştirilmesi planlanmaktadır:
 
-```bash
-TELEGRAM_WEBHOOK_SECRET=local-test-secret TELEGRAM_TRANSPORT_MODE=mock TELEGRAM_BOT_USERNAME=local_test_bot pnpm supabase:functions:serve
-pnpm test:telegram
-```
+* Daha adaptif çalışma planlama sistemi
+* Yapay zeka destekli koçluk sisteminin geliştirilmesi
+* İlerleme ve performans analizlerinin iyileştirilmesi
+* Kaynak ve içerik önerileri
+* Öğrencinin performansına göre planların yeniden düzenlenmesi
+* Mobil kullanım deneyiminin geliştirilmesi
+* Production ortamına geçiş
+* Monitoring ve hata takibi
 
-## V1 Pilot Local Run
+---
 
-Normal local pilot için `pnpm install`, `pnpm supabase:start` ve `pnpm dev` yeterlidir. Otomasyon/Telegram akışını yerelde çalıştırmak için Edge-only `TELEGRAM_*` ve `SCHEDULER_WORKER_SECRET` değerlerini ayarlayıp `pnpm supabase:functions:serve` komutunu ayrı terminalde çalıştırın. Phase 07 ayrıntıları [V1 pilot closure dokümanında](docs/phase-07-v1-pilot-closure.md) bulunur.
+## Proje Durumu
 
-PowerShell'de environment değerlerini `$env:TELEGRAM_WEBHOOK_SECRET='local-test-secret'` biçiminde ayrı ayrı ayarlayın.
+**Aktif geliştirme aşamasındadır.**
 
-## Gerçek Telegram bot kurulumu
+Mevcut odak yalnızca yeni özellikler eklemek değil; aynı zamanda sistemin **mimarisini, güvenilirliğini, test altyapısını ve kullanıcı deneyimini** geliştirmektir.
 
-1. BotFather üzerinden bot oluşturun.
-2. Edge Function secret olarak `TELEGRAM_BOT_TOKEN` değerini ayarlayın.
-3. Rastgele ve güçlü `TELEGRAM_WEBHOOK_SECRET` değerini ayarlayın.
-4. Bot kullanıcı adını `TELEGRAM_BOT_USERNAME` olarak ayarlayın.
-5. Telegram `setWebhook` çağrısında URL'yi `<SUPABASE_URL>/functions/v1/telegram-webhook`, `secret_token` değerini de aynı webhook secret olarak verin.
+---
 
-Frontend'e service-role, Telegram bot token veya webhook secret eklemeyin. Telegram transport credential yokken dış API çağrısı yapmaz; local mock test gerçek bot gerektirmez. Ayrıntılar [Phase 04 dokümanında](docs/phase-04-execution-results-telegram.md) bulunur.
+## Geliştirici
+
+**Melih Dereli**
+
+Yönetim Bilişim Sistemleri öğrencisi.
+
+Software, veri ve yapay zeka odaklı ürünler geliştiriyorum.
+
+* GitHub: [Melihll](https://github.com/Melihll)
+* LinkedIn: [melihdrl](https://www.linkedin.com/in/melihdrl)
+* Medium: [drlmelih8](https://medium.com/@drlmelih8)
