@@ -249,7 +249,7 @@ describe("Priority and Dynamic Replanning V1", () => {
     expect(result.changedTaskCount).toBe(0);
   });
 
-  it("repairs a real study overload with one local move and leaves unaffected days stable", () => {
+  it("keeps visible Today work stable when a study event creates a local overload", () => {
     const result = replanWeeklyPlanV1(ctx([
       t("done", { plannedDate: "2026-08-03", estimatedMinutes: 70, status: "completed" }),
       t("move-me", { plannedDate: "2026-08-03", estimatedMinutes: 40, importance: "optional", priorityScore: 10 }),
@@ -264,10 +264,10 @@ describe("Priority and Dynamic Replanning V1", () => {
       trigger: "study_deviation",
     }));
 
-    expect(result.tasksToMove).toEqual([{ taskId: "move-me", fromDate: "2026-08-03", toDate: "2026-08-04", reason: "replanning" }]);
+    expect(result.tasksToMove).toEqual([]);
     expect(result.tasksToBacklog).toEqual([]);
-    expect(result.changedTaskCount).toBe(1);
-    expect(result.tasksToKeep).toEqual(expect.arrayContaining(["today-stable", "tomorrow-stable", "later-stable"]));
+    expect(result.changedTaskCount).toBe(0);
+    expect(result.tasksToKeep).toEqual(expect.arrayContaining(["move-me", "today-stable", "tomorrow-stable", "later-stable"]));
     expect(result.tasksToMove.some((move) => move.taskId === "tomorrow-stable" || move.taskId === "later-stable")).toBe(false);
   });
 
@@ -286,6 +286,78 @@ describe("Priority and Dynamic Replanning V1", () => {
     expect(result.tasksToMove).toEqual([]);
     expect(result.afterPlannedMinutes).toBe(80);
     expect(result.changedTaskCount).toBe(1);
+  });
+
+  it("protects the incident-day open task and repairs from future work first", () => {
+    const result = replanWeeklyPlanV1(ctx([
+      t("turkce", {
+        title: "Türkçe · Dil Bilgisi",
+        plannedDate: "2026-08-20",
+        estimatedMinutes: 55,
+        status: "completed",
+        completedMinutes: 55,
+      }),
+      t("anayasa", {
+        title: "Hukuk · Anayasa Teorisi",
+        plannedDate: "2026-08-20",
+        estimatedMinutes: 70,
+        importance: "important",
+        priorityScore: 60,
+      }),
+      t("maliye", {
+        title: "Maliye · Maliye Teorisi I",
+        plannedDate: "2026-08-21",
+        estimatedMinutes: 75,
+        importance: "important",
+        priorityScore: 60,
+      }),
+    ], [], {
+      weekStart: "2026-08-17",
+      weekEnd: "2026-08-23",
+      currentDate: "2026-08-20",
+      planningBudgetMinutes: 70,
+      dailyCapacities: { "2026-08-20": 70, "2026-08-21": 75 },
+      actualMinutesByDate: { "2026-08-20": 58 },
+      plannedConsumedMinutesByDate: { "2026-08-20": 55 },
+      trigger: "study_deviation",
+    }));
+
+    expect(result.tasksToBacklog).toContain("maliye");
+    expect(result.tasksToBacklog).not.toContain("anayasa");
+    expect(result.tasksToKeep).toContain("anayasa");
+    expect(result.tasksToMove.some((move) => move.taskId === "anayasa")).toBe(false);
+  });
+
+  it.each(["study_deviation", "capacity_change"] as const)("never proposes a %s move before currentDate", (trigger) => {
+    const result = replanWeeklyPlanV1(ctx([
+      t("past", { plannedDate: "2026-08-18", estimatedMinutes: 60 }),
+      t("today", { plannedDate: "2026-08-20", estimatedMinutes: 30 }),
+      t("future", { plannedDate: "2026-08-21", estimatedMinutes: 60 }),
+    ], [], {
+      weekStart: "2026-08-17",
+      weekEnd: "2026-08-23",
+      currentDate: "2026-08-20",
+      planningBudgetMinutes: 150,
+      dailyCapacities: { "2026-08-18": 120, "2026-08-20": 60, "2026-08-21": 120 },
+      trigger,
+    }));
+
+    expect(result.tasksToMove.every((move) => move.toDate >= "2026-08-20")).toBe(true);
+  });
+
+  it("protects a Today task even when the current day has no remaining capacity entry", () => {
+    const result = replanWeeklyPlanV1(ctx([
+      t("today", { plannedDate: "2026-08-20", estimatedMinutes: 70, status: "rescheduled" }),
+    ], [], {
+      currentDate: "2026-08-20",
+      planningBudgetMinutes: 0,
+      dailyCapacities: { "2026-08-21": 0 },
+      trigger: "study_deviation",
+    }));
+
+    expect(result.tasksToKeep).toContain("today");
+    expect(result.tasksToBacklog).toEqual([]);
+    expect(result.tasksToMove).toEqual([]);
   });
 
   it("never pulls unrelated future work into today after an early completion", () => {

@@ -16,6 +16,7 @@ import {
   parseAvailableMinutes,
   parseManualStudyText,
   parseTestResultText,
+  formatReplanSummary,
   testResultPresentation,
   TELEGRAM_BUTTON_LABELS,
   totalCapacityForRemainingAvailability,
@@ -162,6 +163,15 @@ describe("Telegram presentation", () => {
 
   it("preserves completed study when applying a remaining-availability answer", () => {
     expect(totalCapacityForRemainingAvailability(97, 25)).toBe(122);
+  });
+
+  it("labels a preview as a proposal instead of claiming the plan changed", () => {
+    const summary = formatReplanSummary({
+      planMutationApplied: false,
+      decision: { tasksToMove: [{ taskId: "future" }], tasksToBacklog: [], tasksToCreate: [] },
+    });
+    expect(summary).toContain("değişiklik önerisi");
+    expect(summary).not.toContain("yeniden planlandı");
   });
 
   it("makes duplicate-looking manual task choices distinguishable or collapses exact duplicates", () => {

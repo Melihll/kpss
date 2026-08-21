@@ -796,6 +796,12 @@ function replanWeeklyPlanV1(context) {
         continue;
       }
       const current = task.plannedDate;
+      if (current === context.currentDate) {
+        keep.push(task.id);
+        used += remaining;
+        if (current in dayRemaining) dayRemaining[current] = (dayRemaining[current] ?? 0) - remaining;
+        continue;
+      }
       if (current && current >= context.currentDate && current in dayRemaining) {
         const scheduled = tasksByDate.get(current) ?? [];
         scheduled.push(task);
@@ -806,10 +812,22 @@ function replanWeeklyPlanV1(context) {
     }
     const scheduledTasks = [...tasksByDate.values()].flat().concat(pending);
     const scheduledMinutes = scheduledTasks.reduce((sum, task) => sum + remainingTaskMinutes2(task), 0);
-    const budgetBacklog = minimumRepairTasks(scheduledTasks, used + scheduledMinutes - planBudget);
+    const budgetBacklog = minimumRepairTasks(
+      scheduledTasks.filter((task) => task.plannedDate !== context.currentDate),
+      used + scheduledMinutes - planBudget
+    );
     tasksToBacklog.push(...budgetBacklog);
     for (const date of dates) {
       const scheduled = (tasksByDate.get(date) ?? []).filter((task) => !budgetBacklog.has(task.id));
+      if (date === context.currentDate) {
+        for (const task of scheduled) {
+          const remaining = remainingTaskMinutes2(task);
+          keep.push(task.id);
+          used += remaining;
+          dayRemaining[date] = (dayRemaining[date] ?? 0) - remaining;
+        }
+        continue;
+      }
       const scheduledMinutes2 = scheduled.reduce((sum, task) => sum + remainingTaskMinutes2(task), 0);
       const displaced = minimumRepairTasks(scheduled, scheduledMinutes2 - Math.max(0, dayRemaining[date] ?? 0));
       for (const task of scheduled) {

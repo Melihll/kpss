@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { recalculateTopicMastery, revisionWithUrgency } from "../_shared/mastery.ts";
-import { applyScheduleExceptionWithCompensation, loadAdaptiveBase, minimumDayPlan, recalculateCurrentPlan } from "../_shared/adaptive.ts";
+import { applyScheduleExceptionWithCompensation, loadAdaptiveBase, minimumDayPlan, previewCurrentPlan, recalculateCurrentPlan } from "../_shared/adaptive.ts";
 import { loadDailyCoachContext, recordRecommendationEvent } from "../_shared/pilot.ts";
 import { DEFAULT_RESOURCE_UNIT_MINUTES, remainingTaskMinutes } from "../_shared/planning.bundle.js";
 import { ensureP48WeekPlanForService } from "../_shared/p48-week.ts";
@@ -80,7 +80,7 @@ async function replanAfterStudy(admin: Admin, userId: string, examProfileId: str
   const plan = await admin.from("weekly_plans").select("*").eq("user_id",userId).eq("exam_profile_id",examProfileId).eq("week_start_date",monday(day)).eq("status","active").maybeSingle();
   if (plan.error) throw plan.error;
   if (!plan.data) return null;
-  return await recalculateCurrentPlan(admin,userId,profile.data,plan.data,"study_deviation",true);
+  return await previewCurrentPlan(admin,userId,profile.data,plan.data,"study_deviation");
 }
 
 const ACTIVE_MESSAGE_KEY = "_activeSessionMessage";
@@ -494,7 +494,17 @@ Deno.serve(async (req) => {
         p_user_id: userId,
         p_payload: { ...payload, durationMinutes },
       });
-      if (session.error) throw session.error;
+      if (session.error) {
+        if (String(session.error.message ?? session.error).includes("SESSION_TIME_OVERLAP")) {
+          await clearState(admin, userId, chatId);
+          return {
+            session: null,
+            replan: null,
+            message: "Bu süre mevcut bir çalışma kaydıyla çakışıyor; tekrar kaydetmedim.",
+          };
+        }
+        throw session.error;
+      }
       const targetDay = String(payload.endedAt ?? day).slice(0, 10);
       const replan = session.data.exam_profile_id ? await replanAfterStudy(admin, userId, session.data.exam_profile_id, targetDay) : null;
       if (payload.dataGapEventId) {

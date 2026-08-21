@@ -368,7 +368,42 @@ export function completionCard(input: { title: string; actualMinutes: number; re
   };
 }
 
-export function formatReplanSummary(replan: any) {
+export function formatReplanSummary(replanned: any) {
+  if (!replanned) return "";
+
+  if (
+    replanned.planMutationApplied === false ||
+    replanned.applied === false
+  ) {
+    const explicitChangedTaskCount = replanned?.decision?.changedTaskCount;
+
+    const inferredChangedTaskCount =
+      (Array.isArray(replanned?.decision?.tasksToMove)
+        ? replanned.decision.tasksToMove.length
+        : 0) +
+      (Array.isArray(replanned?.decision?.tasksToBacklog)
+        ? replanned.decision.tasksToBacklog.length
+        : 0) +
+      (Array.isArray(replanned?.decision?.tasksToCancel)
+        ? replanned.decision.tasksToCancel.length
+        : 0) +
+      (Array.isArray(replanned?.decision?.tasksToCreate)
+        ? replanned.decision.tasksToCreate.length
+        : 0);
+
+    const changedTaskCount =
+      explicitChangedTaskCount == null
+        ? inferredChangedTaskCount
+        : Number(explicitChangedTaskCount);
+
+    return changedTaskCount > 0
+      ? `Planında ${changedTaskCount} değişiklik önerisi oluştu; henüz uygulanmadı.`
+      : "";
+  }
+
+  return formatAppliedReplanSummary(replanned);
+}
+function formatAppliedReplanSummary(replan: any) {
   const decision = replan?.decision;
   const moved = Number(decision?.tasksToMove?.length ?? decision?.changedTaskCount ?? 0);
   const cancelled = Number(decision?.tasksToCancel?.length ?? 0);

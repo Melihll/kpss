@@ -11,7 +11,7 @@ import {
   PlanningDomainError,
 } from "../_shared/planning.bundle.js";
 import { recalculateTopicMastery, revisionWithUrgency } from "../_shared/mastery.ts";
-import { minimumDayPlan, recalculateCurrentPlan, syllabusProjection } from "../_shared/adaptive.ts";
+import { minimumDayPlan, previewCurrentPlan, recalculateCurrentPlan, syllabusProjection } from "../_shared/adaptive.ts";
 import { generateWeeklyReport, loadDailyCoachContext, pilotMetrics, recordRecommendationEvent } from "../_shared/pilot.ts";
 import { aggregateCompletedStudySessions } from "../_shared/completed-study.ts";
 import { grossCapacityForDate, loadP48DailyCapacityOverrides, planningCapacityForDate } from "../_shared/capacity-overrides.ts";
@@ -66,6 +66,7 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   INVALID_TEST_RESULT_TOTAL: 400,
   INVALID_TEST_RESULT_COUNTS: 400,
   INVALID_SESSION_DURATION: 400,
+  SESSION_TIME_OVERLAP: 409,
   RESOURCE_UNIT_NOT_LINKED_TO_TASK: 400,
   RESOURCE_UNIT_NOT_TEST: 400,
   TASK_NOT_FOUND: 404,
@@ -1455,8 +1456,8 @@ Deno.serve(async (request) => {
     if (request.method === "POST" && route === "/study-sessions/retroactive") {
       const body=await request.json(); const {data,error}=await client.rpc("record_retroactive_session",{p_payload:{...body,examProfileId:profile.id,entrySource:body.entrySource??"retroactive"}}); if(error) throw error;
       const plan=await currentPlan(client,profile.id,weekStart);
-      const replan=plan?await recalculateCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
-      return json({...data,replan},201);
+      const replanPreview=plan?await previewCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
+      return json({...data,replanPreview,planMutationApplied:false},201);
     }
     const sessionMatch=route.match(/^\/study-sessions\/([0-9a-f-]+)\/(finish|cancel|pause|resume)$/);
     if(request.method==="POST"&&sessionMatch){
@@ -1471,8 +1472,8 @@ Deno.serve(async (request) => {
       const {data,error}=await client.rpc(rpc,{p_session_id:sessionMatch[1]});
       if(error)throw error;
       const plan=action==="finish"?await currentPlan(client,profile.id,weekStart):null;
-      const replan=plan?await recalculateCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
-      return json(action==="finish"?{...data,replan}:data);
+      const replanPreview=plan?await previewCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
+      return json(action==="finish"?{...data,replanPreview,planMutationApplied:false}:data);
     }
     if(request.method==="POST"&&route==="/test-results"){
       const body=await request.json();
@@ -1533,8 +1534,8 @@ Deno.serve(async (request) => {
       if (error) throw error;
       if (action === "complete") {
         const plan=await currentPlan(client,profile.id,weekStart);
-        const replan=plan?await recalculateCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
-        return json({...data,replan});
+        const replanPreview=plan?await previewCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
+        return json({...data,replanPreview,planMutationApplied:false});
       }
       return json(data);
     }

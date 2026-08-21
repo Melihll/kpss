@@ -127,6 +127,12 @@ export function replanWeeklyPlanV1(context: ReplanContext): ReplanResult {
         continue;
       }
       const current = task.plannedDate;
+      if (current === context.currentDate) {
+        keep.push(task.id);
+        used += remaining;
+        if (current in dayRemaining) dayRemaining[current] = (dayRemaining[current] ?? 0) - remaining;
+        continue;
+      }
       if (current && current >= context.currentDate && current in dayRemaining) {
         const scheduled = tasksByDate.get(current) ?? [];
         scheduled.push(task);
@@ -138,11 +144,25 @@ export function replanWeeklyPlanV1(context: ReplanContext): ReplanResult {
 
     const scheduledTasks = [...tasksByDate.values()].flat().concat(pending);
     const scheduledMinutes = scheduledTasks.reduce((sum, task) => sum + remainingTaskMinutes(task), 0);
-    const budgetBacklog = minimumRepairTasks(scheduledTasks, used + scheduledMinutes - planBudget);
+    // Today's visible tasks express current user intent. Weekly budget repair may
+    // propose removing future/past work, but it must never unschedule Today.
+    const budgetBacklog = minimumRepairTasks(
+      scheduledTasks.filter((task) => task.plannedDate !== context.currentDate),
+      used + scheduledMinutes - planBudget,
+    );
     tasksToBacklog.push(...budgetBacklog);
 
     for (const date of dates) {
       const scheduled = (tasksByDate.get(date) ?? []).filter((task) => !budgetBacklog.has(task.id));
+      if (date === context.currentDate) {
+        for (const task of scheduled) {
+          const remaining = remainingTaskMinutes(task);
+          keep.push(task.id);
+          used += remaining;
+          dayRemaining[date] = (dayRemaining[date] ?? 0) - remaining;
+        }
+        continue;
+      }
       const scheduledMinutes = scheduled.reduce((sum, task) => sum + remainingTaskMinutes(task), 0);
       const displaced = minimumRepairTasks(scheduled, scheduledMinutes - Math.max(0, dayRemaining[date] ?? 0));
       for (const task of scheduled) {
