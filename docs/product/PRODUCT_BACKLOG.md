@@ -33,7 +33,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 
 | ID | Priority | Title | Status |
 | --- | --- | --- | --- |
-| `PLN-001` | `P0` | Esra 7-day Planning Reality Audit | `READY` |
+| `PLN-001` | `P0` | Esra 7-day Planning Reality Audit | `DONE` |
 | `PLN-002` | `P0` | Separate Planned Study / Extra Study / Substitution / Carryover semantics | `TODO` |
 | `PLN-003` | `P1` | Study Block Duration Policy | `TODO` |
 | `PLN-004` | `P1` | Learning Stage Model | `TODO` |
@@ -47,7 +47,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 ## `PLN-001` — Esra 7-day Planning Reality Audit
 
 - Priority: `P0`
-- Status: `READY`
+- Status: `DONE`
 - Problem: Current planning behavior cannot be safely changed until important decisions from Esra's latest seven days can be reconstructed from real evidence. Unknown moves, substitutions, backlogs, or accounting effects make planner changes unsafe.
 - Desired outcome: A factual, reviewable timeline that explains what was planned, what Esra actually did, what changed, which component or action caused each change, and which behavior remains unexplained.
 - Acceptance criteria:
@@ -59,6 +59,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
   - Resource and video usage is identified where recorded.
   - Each important planner decision is connected to evidence or explicitly listed as unexplained.
   - The audit is read-only with respect to Esra's production data; no synthetic activity or repair is introduced.
+- Completion note (2026-08-22): status advanced `READY → IN_PROGRESS → DONE`. The acceptance evidence, hypotheses, production fingerprints, and unknowns are recorded in the [PLN-001 audit](audits/PLN-001_ESRA_7_DAY_PLANNING_AUDIT.md). This item required investigation and documentation, not implementation; production remained read-only and no planner behavior was changed.
 
 ## `PLN-002` — Separate Planned Study / Extra Study / Substitution / Carryover semantics
 
@@ -72,9 +73,12 @@ Priority describes impact, not implementation order. Dependencies and safety gat
   - Substitution requires explicit user confirmation and records what replaced what.
   - Carryover preserves the identity and history of the original planned work.
   - Planned and extra minutes can be reported separately.
+  - A task-linked session performed ahead of its approved date is not silently classified as planned, extra, or substitution; the user's intent or an explicit documented default determines its accounting treatment.
+  - Extra/manual study does not reduce the approved-plan denominator or consume displacement capacity unless the product presents and records the user-approved consequence.
   - Existing records have a documented interpretation or are explicitly classified as ambiguous; history is not rewritten to hide ambiguity.
   - Automated tests cover extra study, confirmed substitution, rejected substitution, carryover, retry, and concurrent mutation boundaries.
   - Planner explanations state whether extra study affected a decision.
+  - Regression fixtures cover the PLN-001 manual Mathematics → Finance backlog and early Turkish → Finance/Law backlog chains.
 
 ## `PLN-003` — Study Block Duration Policy
 
@@ -88,7 +92,8 @@ Priority describes impact, not implementation order. Dependencies and safety gat
   - Duration inputs, defaults, minimums, maximums, and rounding behavior are documented.
   - A chosen duration can be explained using its study type/stage and relevant evidence.
   - Estimated versus actual duration is measurable using the definition in [METRICS.md](METRICS.md).
-  - Real Esra examples and boundary cases cover short availability, long resources, partial work, and continuation.
+  - Real Esra examples and boundary cases cover the three 30-minute new-topic video/notes blocks, short availability, long resources, partial work, and continuation.
+  - Duration calibration rejects or explicitly excludes overlapping session intervals and reports when historical per-task actual time cannot be de-overlapped reliably.
   - Policy changes are versioned or otherwise traceable so past decisions remain explainable.
 
 ## `PLN-004` — Learning Stage Model
@@ -102,8 +107,9 @@ Priority describes impact, not implementation order. Dependencies and safety gat
   - New-topic learning and question solving are represented as different stages.
   - Practice does not imply that required initial learning occurred unless evidence supports it.
   - Review and reinforcement do not replace required initial learning.
-  - Tasks and planner decisions expose the intended learning stage.
+  - Tasks and planner decisions expose the intended learning stage as structured data rather than inferring it only from mixed prose descriptions.
   - Partial, repeated, skipped, and corrected evidence have defined stage behavior.
+  - A task reaching its credited-minute estimate has a documented relationship to task status and required resource-unit evidence.
   - Tests cover valid sequencing, invalid shortcuts, unknown evidence, and stage-specific replanning.
 
 ## `PLN-005` — Resource Role Model
@@ -114,10 +120,11 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 - Desired outcome: Resources participate in planning through explicit roles: Instruction, Primary Practice, Reinforcement, and Revision.
 - Acceptance criteria:
   - Each role has a product definition and planning purpose.
-  - Video courses, main question banks, and second question banks have documented role-assignment rules.
+  - Video courses, main question banks, and second question banks have documented role-assignment rules, including the audited İlyas Güneş instruction video, Yediiklim primary question bank, and Yargı Plus reinforcement question bank.
   - A task identifies its learning stage and resource role when a resource is required.
   - The planner does not use reinforcement material as silent replacement for instruction or primary practice.
-  - Missing, unavailable, duplicate, and multi-role resource cases have deterministic behavior.
+  - Missing targets/mappings, unavailable, duplicate, and multi-role resource cases have deterministic behavior; an unmapped instruction video cannot silently disappear from the learning path.
+  - Target `sequence_order` and pedagogical prerequisites are distinct, documented rules; sequence 1/2 for two question banks does not by itself prove instruction occurred.
   - Planner explanations identify why a resource and role were selected.
   - Tests cover the normal Learn → Practice → Review / Reinforcement resource path and invalid substitutions.
 
@@ -129,11 +136,12 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 - Desired outcome: Daily plans use coherent blocks and minimize unnecessary subject switching while retaining required review and fitting real capacity.
 - Acceptance criteria:
   - Fragmentation and subject-switch count have explicit definitions.
+  - The PLN-001 baseline—25 Mon–Sat blocks, 19 planned switches, and five observed actual switches—is retained as a before-state for simulations.
   - The planner has documented minimum block and split rules by study type/stage.
   - Avoidable 20–30 minute fragments are reduced without concealing capacity shortfalls.
   - Subject continuity is an explicit planning objective, subordinate to prerequisites, safety, and user intent.
   - Necessary short review activities remain possible and explainable.
-  - Before/after simulations report fragment count, switch count, capacity fit, and affected tasks.
+  - Before/after simulations report fragment count, switch count, capacity fit, affected tasks, and whether a different-subject preference caused the sequence.
   - Tests cover tight capacity, mixed learning stages, due reviews, partial tasks, and user-fixed ordering.
 
 ## `PLN-007` — Planner Decision Trace
