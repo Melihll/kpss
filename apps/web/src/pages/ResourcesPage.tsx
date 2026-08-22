@@ -4,7 +4,9 @@ import { ResourceDetailDrawer, type ResourceDetailTab } from "../components/Reso
 import { callAppApi } from "../lib/app-api";
 import type { ResourcePageProgress, ResourceProgressResponse } from "../lib/resource-progress-ui";
 import { useRoadmap } from "../hooks/useRoadmap";
+import { useResourceDiscovery } from "../hooks/useResourceDiscovery";
 import { dateLabel, RESOURCE_TYPE_LABELS, type ResourceForecast } from "../lib/roadmap";
+import { mergeDiscoveredResources } from "../lib/resource-discovery";
 
 type ResourceState = "active" | "priority" | "queued" | "completed" | "waiting";
 
@@ -25,8 +27,15 @@ function resourceState(resource: ResourceForecast, index: number, currentIndex: 
 }
 
 export function ResourcesPage() {
-  const { data, loading, error, retry } = useRoadmap();
-  const subjects = useMemo(() => data?.subjectForecasts ?? [], [data]);
+  const { data, loading: roadmapLoading, error: roadmapError, retry: retryRoadmap } = useRoadmap();
+  const { resources: discoveredResources, loading: discoveryLoading, error: discoveryError, retry: retryDiscovery } = useResourceDiscovery();
+  const subjects = useMemo(
+    () => mergeDiscoveredResources(data?.subjectForecasts ?? [], discoveredResources),
+    [data, discoveredResources],
+  );
+  const loading = roadmapLoading || discoveryLoading;
+  const error = roadmapError || discoveryError;
+  const resourceCount = subjects.reduce((count, subject) => count + subject.resources.length, 0);
   const [subjectId, setSubjectId] = useState("");
   const [displayedSubjectId, setDisplayedSubjectId] = useState("");
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
@@ -135,8 +144,8 @@ export function ResourcesPage() {
   }
 
   return <section className="resources-page page-frame">
-    <header className="page-header compact-header resources-header"><div><span className="page-eyebrow">Kaynaklar</span><h1>Kaynaklarım</h1><p>KPSS P48 çalışma havuzu</p></div><div className="resource-total"><strong>{data?.resourcesSummary?.count ?? "—"}</strong><span>kaynak</span></div></header>
-    {error && <div className="inline-state error" role="alert"><span>Kaynaklar yüklenemedi.</span><button type="button" onClick={() => void retry()}>Tekrar Dene</button></div>}
+    <header className="page-header compact-header resources-header"><div><span className="page-eyebrow">Kaynaklar</span><h1>Kaynaklarım</h1><p>KPSS P48 çalışma havuzu</p></div><div className="resource-total"><strong>{loading ? "—" : resourceCount}</strong><span>kaynak</span></div></header>
+    {error && <div className="inline-state error" role="alert"><span>Kaynaklar yüklenemedi.</span><button type="button" onClick={() => void Promise.all([retryRoadmap(), retryDiscovery()])}>Tekrar Dene</button></div>}
     {loading ? <div className="resource-page-skeleton page-skeleton"><span /><div /><div /></div> : subjects.length ? <>
       <div className="subject-selector" ref={selectorRef} role="tablist" aria-label="Dersler">
         <span className="subject-selection-indicator" style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }} aria-hidden="true" />
