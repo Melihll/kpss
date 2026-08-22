@@ -34,7 +34,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | ID | Priority | Title | Status |
 | --- | --- | --- | --- |
 | `PLN-001` | `P0` | Esra 7-day Planning Reality Audit | `DONE` |
-| `PLN-002` | `P0` | Separate Planned Study / Extra Study / Substitution / Carryover semantics | `TODO` |
+| `PLN-002` | `P0` | Separate Planned Study / Extra Study / Substitution / Carryover semantics | `IN_PROGRESS` |
 | `PLN-003` | `P1` | Study Block Duration Policy | `TODO` |
 | `PLN-004` | `P1` | Learning Stage Model | `TODO` |
 | `PLN-005` | `P1` | Resource Role Model | `TODO` |
@@ -59,12 +59,13 @@ Priority describes impact, not implementation order. Dependencies and safety gat
   - Resource and video usage is identified where recorded.
   - Each important planner decision is connected to evidence or explicitly listed as unexplained.
   - The audit is read-only with respect to Esra's production data; no synthetic activity or repair is introduced.
-- Completion note (2026-08-22): status advanced `READY → IN_PROGRESS → DONE`. The acceptance evidence, hypotheses, production fingerprints, and unknowns are recorded in the [PLN-001 audit](audits/PLN-001_ESRA_7_DAY_PLANNING_AUDIT.md). This item required investigation and documentation, not implementation; production remained read-only and no planner behavior was changed.
+- Completion note (2026-08-22): status advanced `READY → IN_PROGRESS → DONE`. The acceptance evidence, hypotheses, sanitized observation references, and unknowns are recorded in the [PLN-001 audit](audits/PLN-001_ESRA_7_DAY_PLANNING_AUDIT.md). This item required investigation and documentation, not implementation; production remained read-only and no planner behavior was changed.
 
 ## `PLN-002` — Separate Planned Study / Extra Study / Substitution / Carryover semantics
 
 - Priority: `P0`
-- Status: `TODO`
+- Status: `IN_PROGRESS`
+- Current phase: design/specification only. The recommended semantic model, data-model alternatives, invariants, and implementation gates are defined in [PLN-002 — Study Intent Semantics](specs/PLN-002_STUDY_INTENT_SEMANTICS.md). No migration or behavior change has been implemented.
 - Problem: Study outside the plan can be misinterpreted as completion or replacement of planned work, and movement across days can obscure whether work was substituted, carried over, or silently removed.
 - Desired outcome: Planned study, extra study, user-confirmed substitution, and carryover are distinct concepts in product behavior, accounting, explanations, and tests.
 - Acceptance criteria:
