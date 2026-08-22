@@ -492,7 +492,12 @@ Deno.serve(async (req) => {
     const saveManualStudy = async (payload: Record<string, unknown>, durationMinutes: number) => {
       const session = await admin.rpc("telegram_record_retroactive_session", {
         p_user_id: userId,
-        p_payload: { ...payload, durationMinutes },
+        p_payload: {
+          ...payload,
+          durationMinutes,
+          accountingIntent: payload.taskId ? "planned" : "extra",
+          idempotencyKey: `telegram:study:${eventId}`,
+        },
       });
       if (session.error) {
         if (String(session.error.message ?? session.error).includes("SESSION_TIME_OVERLAP")) {
@@ -595,12 +600,12 @@ Deno.serve(async (req) => {
       if (!Number.isFinite(remaining) || remaining < 0) return await finalize({ ok: true, outbound: respond("Süreyi dakika olarak yazabilir misin?") });
       const profile = await admin.from("exam_profiles").select("*").eq("user_id", userId).eq("status", "active").maybeSingle();
       if (profile.error) throw profile.error;
-      const completed = profile.data ? Number((await loadDailyCoachContext(admin, userId, profile.data, day)).studiedMinutes ?? 0) : 0;
+      const completed = profile.data ? Number((await loadDailyCoachContext(admin, userId, profile.data, day)).plannedCreditMinutes ?? 0) : 0;
       const total = totalCapacityForRemainingAvailability(completed, remaining);
       const applied = await applyTotalCapacity(total, "Telegram: sınırlı zaman");
       if (!applied) return await finalize({ ok: true, outbound: respond("Aktif haftalık plan bulunamadı.") });
       await clearState(admin, userId, chatId);
-      const message = `Bugün bundan sonrası için ${formatMinutesShort(remaining)} ayırdın. Tamamlanan ${formatMinutesShort(completed)} korunuyor; toplam çalışma alanı ${formatMinutesShort(applied.updated)} oldu.${formatReplanSummary(applied.replanned) ? `\n${formatReplanSummary(applied.replanned)}` : ""}`;
+      const message = `Bugün bundan sonrası için ${formatMinutesShort(remaining)} ayırdın. Planlı tamamlanan ${formatMinutesShort(completed)} korunuyor; toplam plan alanı ${formatMinutesShort(applied.updated)} oldu.${formatReplanSummary(applied.replanned) ? `\n${formatReplanSummary(applied.replanned)}` : ""}`;
       const buttons = remaining > 0
         ? [[{ text: "Şimdi ne çalışayım?", callback_data: "now" }]]
         : [[{ text: TELEGRAM_BUTTON_LABELS.today, callback_data: "today" }, { text: TELEGRAM_BUTTON_LABELS.addStudy, callback_data: "manual_begin" }]];
@@ -616,7 +621,7 @@ Deno.serve(async (req) => {
       const plan = profile.data ? await admin.from("weekly_plans").select("*").eq("user_id",userId).eq("exam_profile_id",profile.data.id).eq("week_start_date",week).eq("status","active").maybeSingle() : {data:null};
       if(!profile.data||!plan.data)return await finalize({ok:true,outbound:respond("Aktif haftalık plan bulunamadı.")});
       const base=await loadAdaptiveBase(admin,userId,profile.data,plan.data);
-      const completedMinutes = Number((await loadDailyCoachContext(admin, userId, profile.data, day)).studiedMinutes ?? 0);
+      const completedMinutes = Number((await loadDailyCoachContext(admin, userId, profile.data, day)).plannedCreditMinutes ?? 0);
       await setState(admin,userId,chatId,callback==="special_less"?"special_less_minutes":"special_extra_minutes",{profileId:profile.data.id,planId:plan.data.id,normalMinutes:base.dayCapacities[day]??0,completedMinutes});
       return await finalize({ok:true,outbound:respond(callback==="special_less"?"Bugün bundan sonra kaç dakika ayırabilirsin?":"Bugün kaç dakika fazladan çalışabilirsin?")});
     }

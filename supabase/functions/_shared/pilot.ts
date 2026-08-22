@@ -130,15 +130,31 @@ export async function loadDailyCoachContext(
   if (tasksResult.error) throw tasksResult.error;
   const adaptive = await loadAdaptiveBase(client, userId, profile, planResult.data);
   const dayRange = localDayRange(date);
-  const sessionsResult = await client.from("study_sessions")
-    .select("duration_minutes")
-    .eq("user_id", userId)
-    .eq("exam_profile_id", profile.id)
-    .eq("status", "completed")
-    .gte("started_at", dayRange.startUtc)
-    .lt("started_at", dayRange.endUtc);
+  const [sessionsResult,allocationsResult] = await Promise.all([
+    client.from("study_sessions")
+      .select("duration_minutes")
+      .eq("user_id", userId)
+      .eq("exam_profile_id", profile.id)
+      .eq("status", "completed")
+      .gte("started_at", dayRange.startUtc)
+      .lt("started_at", dayRange.endUtc),
+    client.from("study_session_allocations")
+      .select("accounting_intent,actual_minutes,planned_credit_minutes,study_sessions!inner(started_at)")
+      .eq("user_id",userId)
+      .eq("exam_profile_id",profile.id)
+      .is("superseded_at",null)
+      .gte("study_sessions.started_at",dayRange.startUtc)
+      .lt("study_sessions.started_at",dayRange.endUtc),
+  ]);
   if (sessionsResult.error) throw sessionsResult.error;
+  if (allocationsResult.error) throw allocationsResult.error;
   const studiedMinutes = sum(sessionsResult.data, "duration_minutes");
+  const allocationRows=allocationsResult.data??[];
+  const plannedCreditMinutes=sum(allocationRows,"planned_credit_minutes");
+  const plannedActualMinutes=allocationRows.filter((row:any)=>row.accounting_intent==="planned").reduce((total:number,row:any)=>total+Number(row.actual_minutes??0),0);
+  const extraStudyMinutes=allocationRows.filter((row:any)=>row.accounting_intent==="extra").reduce((total:number,row:any)=>total+Number(row.actual_minutes??0),0);
+  const allocatedActualMinutes=sum(allocationRows,"actual_minutes");
+  const unknownStudyMinutes=Math.max(0,studiedMinutes-allocatedActualMinutes)+allocationRows.filter((row:any)=>row.accounting_intent==="unknown").reduce((total:number,row:any)=>total+Number(row.actual_minutes??0),0);
   const adaptiveMap = new Map(adaptive.adaptiveTasks.map((item: any) => [item.id, item]));
   const enriched = (tasksResult.data ?? []).map((task: any) => {
     const hydratedTask = hydrateTaskResource(task);
@@ -188,7 +204,11 @@ export async function loadDailyCoachContext(
   const projection = buildDailyPlanProjection({
     date,
     capacityMinutes: dayCapacity,
-    completedStudyMinutes: studiedMinutes,
+    completedStudyMinutes: plannedCreditMinutes,
+    plannedCreditMinutes,
+    actualStudyMinutes: studiedMinutes,
+    extraStudyMinutes,
+    unknownStudyMinutes,
     tasks: [
       ...rankedToday.map((item) => ({ id: item.mapped.id, plannedDate: item.mapped.plannedDate, status: item.mapped.status, remainingMinutes: item.remainingMinutes })),
       ...mapped.filter((task) => !rankedIds.has(task.id)).map((task) => ({
@@ -275,6 +295,11 @@ export async function loadDailyCoachContext(
     totalCommittedMinutes: projection.totalCommittedMinutes,
     capacityMinutes: dayCapacity,
     studiedMinutes,
+    plannedActualMinutes,
+    plannedCreditMinutes,
+    extraStudyMinutes,
+    unknownStudyMinutes,
+    nominalActualOverageMinutes:projection.nominalActualOverageMinutes,
     remainingCapacityMinutes,
     availableNowMinutes,
     tasks: focusTasks,

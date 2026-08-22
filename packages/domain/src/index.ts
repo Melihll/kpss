@@ -5,6 +5,7 @@ export * from "./progress";
 export * from "./planning/index";
 export * from "./execution";
 export * from "./time-boundaries";
+export * from "./study-intent";
 export * from "./mastery/index";
 export * from "./adaptive/index";
 export * from "./pilot/index";

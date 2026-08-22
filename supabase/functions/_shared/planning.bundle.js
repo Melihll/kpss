@@ -363,8 +363,13 @@ function transitionTopicForLearnTask(current, event) {
 var OPEN_STATUSES = /* @__PURE__ */ new Set(["planned", "ready", "in_progress", "partially_completed", "rescheduled"]);
 function buildDailyPlanProjection(input) {
   const capacityMinutes = Math.max(0, Math.floor(input.capacityMinutes));
-  const completedStudyMinutes = Math.max(0, Math.floor(input.completedStudyMinutes));
-  const remainingCapacityMinutes = Math.max(0, capacityMinutes - completedStudyMinutes);
+  const plannedCreditMinutes = Math.max(0, Math.floor(input.plannedCreditMinutes ?? input.completedStudyMinutes));
+  const completedStudyMinutes = plannedCreditMinutes;
+  const actualStudyMinutes = Math.max(0, Math.floor(input.actualStudyMinutes ?? input.completedStudyMinutes));
+  const extraStudyMinutes = Math.max(0, Math.floor(input.extraStudyMinutes ?? 0));
+  const unknownStudyMinutes = Math.max(0, Math.floor(input.unknownStudyMinutes ?? 0));
+  const totalActualMinutes = actualStudyMinutes;
+  const remainingCapacityMinutes = Math.max(0, capacityMinutes - plannedCreditMinutes);
   const todayTasks = input.tasks.filter((task) => task.plannedDate === input.date);
   const completedTaskIds = todayTasks.filter((task) => task.status === "completed").map((task) => task.id);
   const openTasks = todayTasks.filter((task) => OPEN_STATUSES.has(task.status) && task.remainingMinutes > 0);
@@ -388,6 +393,12 @@ function buildDailyPlanProjection(input) {
     date: input.date,
     capacityMinutes,
     completedStudyMinutes,
+    plannedCreditMinutes,
+    actualStudyMinutes,
+    extraStudyMinutes,
+    unknownStudyMinutes,
+    totalActualMinutes,
+    nominalActualOverageMinutes: Math.max(0, totalActualMinutes - capacityMinutes),
     remainingCapacityMinutes,
     scheduledOpenMinutes,
     totalCommittedMinutes: completedStudyMinutes + scheduledOpenMinutes,
@@ -744,11 +755,11 @@ function replanWeeklyPlanV1(context) {
   const revisionBudget = calculateWeeklyRevisionBudget(planBudget);
   const dayRemaining = Object.fromEntries(Object.entries(context.dailyCapacities).map(([date, minutes]) => [
     date,
-    date < context.currentDate ? 0 : minutes - (context.actualMinutesByDate?.[date] ?? 0)
+    date < context.currentDate ? 0 : minutes - (context.plannedConsumedMinutesByDate?.[date] ?? 0)
   ]));
   const dates = Object.keys(dayRemaining).sort();
   const activeTasks = context.tasks.filter((task) => !["completed", "cancelled", "missed"].includes(task.status)).sort((left, right) => taskRank(left) - taskRank(right) || right.priorityScore - left.priorityScore || left.id.localeCompare(right.id));
-  const currentDeviation = (context.actualMinutesByDate?.[context.currentDate] ?? 0) - (context.plannedConsumedMinutesByDate?.[context.currentDate] ?? 0);
+  const currentDeviation = 0;
   const allowPullForward = currentDeviation <= 0;
   const keep = [];
   const moves = [];

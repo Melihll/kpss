@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabase";
 
 const EXECUTION_CHANGED_EVENT = "kpss:execution-changed";
 
-interface ActiveSession { id: string; started_at: string; tasks: { title: string } | null }
+interface ActiveSession { id: string; started_at: string; accountingIntent?: "planned" | "extra" | null; tasks: { title: string } | null }
 interface RecentResult {
   id: string;
   correct_count: number;
@@ -16,7 +16,20 @@ interface RecentResult {
   subjects: { name: string } | null;
   resource_units: { name: string } | null;
 }
-interface Summary { todayStudyMinutes: number; weekStudyMinutes: number; recentResults: RecentResult[] }
+interface Summary {
+  todayStudyMinutes: number;
+  weekStudyMinutes: number;
+  weekPlannedActualMinutes?: number;
+  weekExtraStudyMinutes?: number;
+  weekPlannedCreditMinutes?: number;
+  recentResults: RecentResult[];
+}
+interface SubstitutionPreview {
+  explanation: string;
+  source: { taskId: string; title: string; remainingMinutes: number; minutesRelieved: number };
+  replacement: { sessionId: string; title: string; actualMinutes: number };
+  confirmation: { proposalId: string };
+}
 interface PlanTask {
   id: string;
   title: string;
@@ -55,6 +68,9 @@ export function ExecutionPanel() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [link, setLink] = useState<string | null>(null);
+  const [retroTaskId, setRetroTaskId] = useState("");
+  const [retroIntent, setRetroIntent] = useState<"" | "extra" | "replace_planned_task">("");
+  const [substitutionPreview, setSubstitutionPreview] = useState<SubstitutionPreview | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -113,17 +129,47 @@ export function ExecutionPanel() {
     event.preventDefault();
     const form = event.currentTarget;
     const fields = new FormData(form);
-    const saved = await act(() => callAppApi("/study-sessions/retroactive", {
-      method: "POST",
-      body: {
-        taskId: String(fields.get("taskId") || "") || null,
-        subjectId: String(fields.get("subjectId") || "") || null,
-        curriculumNodeId: String(fields.get("topicId") || "") || null,
-        durationMinutes: Number(fields.get("duration")),
-        note: String(fields.get("note") || "") || null,
-      },
+    const taskId = String(fields.get("taskId") || "") || null;
+    if (!taskId && !retroIntent) {
+      setError("Çalışmanın ekstra mı, yoksa planlı bir görev yerine mi olduğunu seç.");
+      return;
+    }
+    const durationMinutes=Number(fields.get("duration"));
+    const subjectId=String(fields.get("subjectId")||"")||null;
+    const topicId=String(fields.get("topicId")||"")||null;
+    const note=String(fields.get("note")||"")||null;
+    const recordIdempotencyKey=`retroactive:${crypto.randomUUID()}`;
+    setBusy(true); setError(null); setSubstitutionPreview(null);
+    try {
+      const recorded=await callAppApi<any>("/study-sessions/retroactive",{
+        method:"POST",
+        body:{taskId,subjectId,curriculumNodeId:topicId,durationMinutes,note,
+          accountingIntent:taskId?"planned":"extra",idempotencyKey:recordIdempotencyKey},
+      });
+      if (!taskId && retroIntent==="replace_planned_task") {
+        const sourceTaskId=String(fields.get("sourceTaskId")||"");
+        const subjectName=subjects.find((subject)=>subject.id===subjectId)?.name??"Çalışma";
+        const topicName=topics.find((topic)=>topic.id===topicId)?.name;
+        const preview=await callAppApi<SubstitutionPreview>("/study-intent/substitutions/preview",{
+          method:"POST",
+          body:{sourceTaskId,replacementSessionId:recorded.id,sourceMinutes:durationMinutes,
+            replacementTitle:topicName?`${subjectName}: ${topicName}`:subjectName,
+            idempotencyKey:`substitution-preview:${crypto.randomUUID()}`},
+        });
+        setSubstitutionPreview(preview);
+      }
+      await load(); window.dispatchEvent(new Event(EXECUTION_CHANGED_EVENT));
+      form.reset(); setRetroTaskId(""); setRetroIntent("");
+    } catch(caught) { setError(message(caught)); }
+    finally { setBusy(false); }
+  }
+
+  async function applySubstitution() {
+    if(!substitutionPreview)return;
+    const saved=await act(()=>callAppApi("/plans/current/apply-confirmed",{
+      method:"POST",body:{proposalId:substitutionPreview.confirmation.proposalId},
     }));
-    if (saved) form.reset();
+    if(saved)setSubstitutionPreview(null);
   }
 
   async function recordResult(event: FormEvent<HTMLFormElement>) {
@@ -195,7 +241,7 @@ export function ExecutionPanel() {
 
     {active && <article className="active-session-card">
       <div className="active-session-orb"><span /></div>
-      <div><span className="eyebrow">AKTİF ÇALIŞMA</span><h3>{active.tasks?.title ?? "Çalışma"}</h3><p>{new Date(active.started_at).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })} itibarıyla odaktasın.</p></div>
+      <div><span className="eyebrow">AKTİF ÇALIŞMA · {active.accountingIntent==="planned"?"PLANLI GÖREV":"ÇALIŞMA"}</span><h3>{active.tasks?.title ?? "Çalışma"}</h3><p>{new Date(active.started_at).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })} itibarıyla odaktasın.</p></div>
       <div className="inline-actions active-session-actions">
         <button className="primary-action" disabled={busy} onClick={() => void act(() => callAppApi(`/study-sessions/${active.id}/finish`, { method: "POST" }))}>Çalışmayı Bitir</button>
         <button className="ghost-action" disabled={busy} onClick={() => void act(() => callAppApi(`/study-sessions/${active.id}/cancel`, { method: "POST" }))}>İptal</button>
@@ -206,13 +252,16 @@ export function ExecutionPanel() {
       <details className="soft-details action-details">
         <summary><span><b>＋</b><span><strong>Çalışma Ekle</strong><small>Sonradan çalışma kaydet</small></span></span></summary>
         <form className="form-grid" onSubmit={recordRetroactive}>
-          <label>Görev<select name="taskId"><option value="">Plansız</option>{tasks.map((task) => <option value={task.id} key={task.id}>{task.title}</option>)}</select></label>
-          <label>Ders<select name="subjectId"><option value="">Seçin</option>{subjects.map((subject) => <option value={subject.id} key={subject.id}>{subject.name}</option>)}</select></label>
+          <label>Görev<select name="taskId" value={retroTaskId} onChange={(event)=>{setRetroTaskId(event.target.value);if(event.target.value)setRetroIntent("");}}><option value="">Plansız</option>{tasks.map((task) => <option value={task.id} key={task.id}>{task.title}</option>)}</select></label>
+          <label>Ders<select name="subjectId" required={!retroTaskId}><option value="">Seçin</option>{subjects.map((subject) => <option value={subject.id} key={subject.id}>{subject.name}</option>)}</select></label>
           <label>Konu<select name="topicId"><option value="">Opsiyonel</option>{topics.map((topic) => <option value={topic.id} key={topic.id}>{topic.name}</option>)}</select></label>
           <label>Dakika<input name="duration" type="number" min="1" required /></label>
           <label>Not<input name="note" placeholder="Kısa not (opsiyonel)" /></label>
+          {retroTaskId?<p className="form-hint">Planlı görev · çalışma süresi bu görevin kalan ihtiyacına kredi edilir.</p>:<fieldset className="intent-choice"><legend>Bu çalışma mevcut planına ek mi, yoksa planlı bir görevin yerine mi yapıldı?</legend><label><input type="radio" name="accountingIntent" value="extra" checked={retroIntent==="extra"} onChange={()=>setRetroIntent("extra")} required /> Ekstra çalıştım</label><label><input type="radio" name="accountingIntent" value="replace_planned_task" checked={retroIntent==="replace_planned_task"} onChange={()=>setRetroIntent("replace_planned_task")} required /> Planlı bir görev yerine yaptım</label></fieldset>}
+          {!retroTaskId&&retroIntent==="replace_planned_task"&&<label>Yerine yapılan planlı görev<select name="sourceTaskId" required><option value="">Görev seçin</option>{tasks.map((task)=><option value={task.id} key={task.id}>{task.title}</option>)}</select></label>}
           <button className="primary-action" disabled={busy || !profileId}>Çalışmayı Kaydet</button>
         </form>
+        {substitutionPreview&&<article className="confirmation-card" aria-live="polite"><strong>Yerine çalışma önizlemesi</strong><p>{substitutionPreview.explanation}</p><dl><div><dt>Planlı kaynak</dt><dd>{substitutionPreview.source.title} · {substitutionPreview.source.minutesRelieved} dk</dd></div><div><dt>Yerine yapılan</dt><dd>{substitutionPreview.replacement.title} · {substitutionPreview.replacement.actualMinutes} dk</dd></div></dl><p>Onaylanana kadar çalışma Ekstra olarak kalır ve plan değişmez.</p><div className="inline-actions"><button type="button" className="primary-action" disabled={busy} onClick={()=>void applySubstitution()}>Yerine çalışmayı onayla</button><button type="button" className="ghost-action" disabled={busy} onClick={()=>setSubstitutionPreview(null)}>Ekstra olarak bırak</button></div></article>}
       </details>
 
       <details className="soft-details action-details">

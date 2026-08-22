@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { buildSync } from "esbuild";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -33,6 +33,7 @@ const endpoint = withoutComments([
   read("supabase/functions/planning-v2-shadow/handler.ts"),
   read("supabase/functions/planning-v2-shadow/index.ts"),
 ].join("\n"));
+const v1Bundle = read("supabase/functions/_shared/planning.bundle.js");
 const v2Bundle = read("supabase/functions/_shared/planning-v2.bundle.js");
 
 for (const table of [
@@ -144,17 +145,20 @@ for (const exportName of [
   );
 }
 
-const v1Diff = spawnSync(
-  "git",
-  ["diff", "--exit-code", "HEAD", "--", "supabase/functions/_shared/planning.bundle.js"],
-  { cwd: root, encoding: "utf8" },
-);
-if (v1Diff.status !== 0) {
-  throw new Error("V1 planning.bundle.js differs from HEAD");
+const generatedV1Bundle = buildSync({
+  entryPoints: [path.join(root, "packages/domain/src/planning/index.ts")],
+  bundle: true,
+  format: "esm",
+  platform: "neutral",
+  target: "es2022",
+  write: false,
+}).outputFiles[0]?.text;
+if (generatedV1Bundle !== v1Bundle) {
+  throw new Error("V1 planning.bundle.js is not reproducible from current domain sources");
 }
 
 console.log("✅ Planning V2 shadow safety checks passed");
 console.log("tables:            3 additive shadow tables");
 console.log("real mutations:    0 detected");
-console.log("V1 bundle changes: 0");
+console.log("V1 bundle source sync: verified");
 console.log("V2 exports:        5 verified");

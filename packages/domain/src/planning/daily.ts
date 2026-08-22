@@ -15,6 +15,12 @@ export interface DailyPlanProjection {
   date: string;
   capacityMinutes: number;
   completedStudyMinutes: number;
+  plannedCreditMinutes: number;
+  actualStudyMinutes: number;
+  extraStudyMinutes: number;
+  unknownStudyMinutes: number;
+  totalActualMinutes: number;
+  nominalActualOverageMinutes: number;
   remainingCapacityMinutes: number;
   scheduledOpenMinutes: number;
   totalCommittedMinutes: number;
@@ -34,11 +40,20 @@ export function buildDailyPlanProjection(input: {
   date: string;
   capacityMinutes: number;
   completedStudyMinutes: number;
+  plannedCreditMinutes?: number;
+  actualStudyMinutes?: number;
+  extraStudyMinutes?: number;
+  unknownStudyMinutes?: number;
   tasks: readonly DailyPlanProjectionTask[];
 }): DailyPlanProjection {
   const capacityMinutes = Math.max(0, Math.floor(input.capacityMinutes));
-  const completedStudyMinutes = Math.max(0, Math.floor(input.completedStudyMinutes));
-  const remainingCapacityMinutes = Math.max(0, capacityMinutes - completedStudyMinutes);
+  const plannedCreditMinutes = Math.max(0, Math.floor(input.plannedCreditMinutes ?? input.completedStudyMinutes));
+  const completedStudyMinutes = plannedCreditMinutes;
+  const actualStudyMinutes = Math.max(0, Math.floor(input.actualStudyMinutes ?? input.completedStudyMinutes));
+  const extraStudyMinutes = Math.max(0, Math.floor(input.extraStudyMinutes ?? 0));
+  const unknownStudyMinutes = Math.max(0, Math.floor(input.unknownStudyMinutes ?? 0));
+  const totalActualMinutes = actualStudyMinutes;
+  const remainingCapacityMinutes = Math.max(0, capacityMinutes - plannedCreditMinutes);
   const todayTasks = input.tasks.filter((task) => task.plannedDate === input.date);
   const completedTaskIds = todayTasks.filter((task) => task.status === "completed").map((task) => task.id);
   const openTasks = todayTasks.filter((task) => OPEN_STATUSES.has(task.status) && task.remainingMinutes > 0);
@@ -64,6 +79,12 @@ export function buildDailyPlanProjection(input: {
     date: input.date,
     capacityMinutes,
     completedStudyMinutes,
+    plannedCreditMinutes,
+    actualStudyMinutes,
+    extraStudyMinutes,
+    unknownStudyMinutes,
+    totalActualMinutes,
+    nominalActualOverageMinutes: Math.max(0, totalActualMinutes - capacityMinutes),
     remainingCapacityMinutes,
     scheduledOpenMinutes,
     totalCommittedMinutes: completedStudyMinutes + scheduledOpenMinutes,

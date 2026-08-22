@@ -27,6 +27,7 @@ export function TaskActionPreviewDrawer({
   const [action, setAction] = useState<TaskActionPreviewAction | null>(null);
   const [preview, setPreview] = useState<TaskActionPreviewResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export function TaskActionPreviewDrawer({
       `/tasks/${request.task.id}/action-preview`,
       {
         method: "POST",
-        body: { action },
+        body: { action, idempotencyKey: `carryover-preview:${crypto.randomUUID()}` },
       },
     )
       .then((result) => {
@@ -88,6 +89,23 @@ export function TaskActionPreviewDrawer({
   }, [onClose, request]);
 
   if (!request) return null;
+
+  const applyCarryover=async()=>{
+    const change=preview?.changes[0];
+    if(!preview||preview.action!=="DEFER"||preview.status!=="READY"||change?.changeType!=="MOVE"||!change.toDate)return;
+    setApplying(true);setError(null);
+    try{
+      await callAppApi("/study-intent/carryovers/confirm",{method:"POST",body:{
+        taskId:preview.task.id,fromDate:change.fromDate,toDate:change.toDate,
+        remainingMinutes:change.remainingMinutes,idempotencyKey:`carryover-confirm:${crypto.randomUUID()}`,
+      }});
+      window.dispatchEvent(new Event("kpss:execution-changed"));
+      onClose();
+    }catch(caught){
+      if(caught instanceof AppApiError)setError(FRIENDLY_API_ERRORS[caught.code]??"Devir uygulanamadı; önizlemeyi yenile.");
+      else setError("Devir uygulanamadı; önizlemeyi yenile.");
+    }finally{setApplying(false);}
+  };
 
   return <>
     <button
@@ -209,6 +227,7 @@ export function TaskActionPreviewDrawer({
                 Yalnızca önizleme · Henüz plan veya görev değiştirilmedi
               </span>
             </div>
+            {preview.action==="DEFER"&&preview.status==="READY"&&<div className="inline-actions"><button type="button" className="primary-action" disabled={applying} onClick={()=>void applyCarryover()}>Devri onayla</button><button type="button" className="ghost-action" disabled={applying} onClick={onClose}>Vazgeç</button></div>}
           </section>
         )}
       </div>

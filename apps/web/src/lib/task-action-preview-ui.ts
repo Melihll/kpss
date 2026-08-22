@@ -49,6 +49,8 @@ export interface TaskActionPreviewResponse {
   };
   readonly reasonCodes: readonly string[];
   readonly mutations: readonly [];
+  readonly explicitConfirmationRequired?: boolean;
+  readonly confirmation?: { readonly proposalId: string };
 }
 
 export function taskActionLabel(action: TaskActionPreviewAction): string {

@@ -282,6 +282,8 @@ export interface TaskProgress {
 
 export type StudySessionType = "task" | "topic" | "resource" | "custom";
 export type StudySessionMode = "book" | "video" | "questions" | "mixed";
+export type StudyAccountingIntent = "planned" | "extra" | "unknown";
+export type StudyIntentSource = "inferred_task_start" | "user_selected" | "confirmed_action" | "historical_unknown";
 export type StudySessionStatus = "active" | "completed" | "cancelled";
 export type StudyEntrySource = "live" | "retroactive" | "manual" | "telegram" | "web";
 export type TestReviewStatus = "pending" | "reviewed" | "skipped";
@@ -292,6 +294,16 @@ export interface StudySession {
   resource_unit_id: string | null; session_type: StudySessionType; session_mode: StudySessionMode; started_at: string;
   ended_at: string | null; duration_minutes: number | null; status: StudySessionStatus;
   entry_source: StudyEntrySource; note: string | null; created_at: string; updated_at: string;
+}
+
+export interface StudySessionAllocation {
+  id: string; user_id: string; exam_profile_id: string; session_id: string;
+  accounting_intent: StudyAccountingIntent; target_task_id: string | null;
+  subject_id: string | null; curriculum_node_id: string | null; resource_id: string | null;
+  resource_unit_id: string | null; actual_minutes: number; planned_credit_minutes: number;
+  intent_source: StudyIntentSource; substitution_id: string | null; idempotency_key: string;
+  supersedes_allocation_id: string | null; superseded_at: string | null; reason: string | null;
+  recorded_by: string; recorded_at: string;
 }
 
 export interface TestResult {

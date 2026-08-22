@@ -38,6 +38,24 @@ describe("buildDailyPlanProjection", () => {
     expect(result.totalCommittedMinutes).toBe(180);
   });
 
+  it("does not let voluntary extra study displace approved planned work", () => {
+    const result = buildDailyPlanProjection({
+      date: TODAY,
+      capacityMinutes: 180,
+      completedStudyMinutes: 0,
+      plannedCreditMinutes: 0,
+      actualStudyMinutes: 40,
+      extraStudyMinutes: 40,
+      tasks: [task("turkish"), task("geography"), task("law")],
+    });
+    expect(result.remainingCapacityMinutes).toBe(180);
+    expect(result.scheduledOpenMinutes).toBe(180);
+    expect(result.actualStudyMinutes).toBe(40);
+    expect(result.extraStudyMinutes).toBe(40);
+    expect(result.totalActualMinutes).toBe(40);
+    expect(result.deferredTaskIds).toEqual([]);
+  });
+
   it("returns no open workload at zero capacity", () => {
     const result = buildDailyPlanProjection({ date: TODAY, capacityMinutes: 0, completedStudyMinutes: 0, tasks: [task("open")] });
     expect(result.openItems).toEqual([]);

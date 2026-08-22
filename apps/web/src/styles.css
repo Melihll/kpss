@@ -1012,3 +1012,24 @@ html,body,.product-shell{overflow-x:hidden}.coach-drawer-body{overscroll-behavio
     grid-template-columns: 1fr;
   }
 }
+
+.intent-choice {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.intent-choice legend { padding: 0 5px; color: var(--text); font-size: .72rem; }
+.intent-choice label { flex-direction: row; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.intent-choice input { width: auto; min-height: 0; }
+.form-hint { grid-column: 1 / -1; margin: 0; color: var(--text-secondary); font-size: .7rem; }
+.confirmation-card { grid-column: 1 / -1; margin: 12px 0; padding: 14px; border: 1px solid var(--primary); border-radius: 10px; background: var(--primary-soft); }
+.confirmation-card p { color: var(--text-secondary); font-size: .72rem; }
+.confirmation-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.confirmation-card dt { color: var(--text-secondary); font-size: .62rem; }
+.confirmation-card dd { margin: 2px 0; font-size: .74rem; }

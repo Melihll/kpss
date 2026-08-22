@@ -47,15 +47,18 @@ export function replanWeeklyPlanV1(context: ReplanContext): ReplanResult {
   const availableMinutes = Object.values(context.dailyCapacities).reduce((sum, minutes) => sum + Math.max(0, minutes), 0);
   const planBudget = Math.min(context.planningBudgetMinutes, availableMinutes);
   const revisionBudget = calculateWeeklyRevisionBudget(planBudget);
+  // Capacity for approved work is consumed by credited planned fulfillment,
+  // not by raw elapsed time. Extra study and planned overruns remain factual
+  // actuals but never become implicit permission to displace another task.
   const dayRemaining: Record<string, number> = Object.fromEntries(Object.entries(context.dailyCapacities).map(([date, minutes]) => [
     date,
-    date < context.currentDate ? 0 : minutes - (context.actualMinutesByDate?.[date] ?? 0),
+    date < context.currentDate ? 0 : minutes - (context.plannedConsumedMinutesByDate?.[date] ?? 0),
   ]));
   const dates = Object.keys(dayRemaining).sort();
   const activeTasks = context.tasks
     .filter((task) => !["completed", "cancelled", "missed"].includes(task.status))
     .sort((left, right) => taskRank(left) - taskRank(right) || right.priorityScore - left.priorityScore || left.id.localeCompare(right.id));
-  const currentDeviation = (context.actualMinutesByDate?.[context.currentDate] ?? 0) - (context.plannedConsumedMinutesByDate?.[context.currentDate] ?? 0);
+  const currentDeviation = 0;
   const allowPullForward = currentDeviation <= 0;
   const keep: string[] = [];
   const moves: ReplanResult["tasksToMove"] = [];

@@ -638,6 +638,9 @@ class FakeSupabase {
       study_sessions:
         [],
 
+      study_session_allocations:
+        [],
+
       p48_daily_capacity_overrides:
         dates.map(
           (date) => ({

@@ -41,8 +41,10 @@ const availability = await client.from("weekly_availability").insert(
     user_id: userId,
     exam_profile_id: profileId,
     weekday: index + 1,
-    start_time: "09:00",
-    end_time: "18:00",
+    // Keep the smoke deterministic regardless of the wall-clock hour at which
+    // CI or a local verification run reaches the recommendation endpoint.
+    start_time: "00:00",
+    end_time: "23:59",
   })),
 );
 if (availability.error) throw availability.error;

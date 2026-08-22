@@ -65,7 +65,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 
 - Priority: `P0`
 - Status: `IN_PROGRESS`
-- Current phase: design/specification only. The recommended semantic model, data-model alternatives, invariants, and implementation gates are defined in [PLN-002 — Study Intent Semantics](specs/PLN-002_STUDY_INTENT_SEMANTICS.md). No migration or behavior change has been implemented.
+- Current phase: implementation complete locally; release verification pending. The approved model is defined in [PLN-002 — Study Intent Semantics](specs/PLN-002_STUDY_INTENT_SEMANTICS.md), and implementation evidence is recorded in [PLN-002 Implementation Decision](decisions/PLN-002_IMPLEMENTATION_DECISION.md). No production migration, deployment, or data mutation has occurred.
 - Problem: Study outside the plan can be misinterpreted as completion or replacement of planned work, and movement across days can obscure whether work was substituted, carried over, or silently removed.
 - Desired outcome: Planned study, extra study, user-confirmed substitution, and carryover are distinct concepts in product behavior, accounting, explanations, and tests.
 - Acceptance criteria:
@@ -80,6 +80,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
   - Automated tests cover extra study, confirmed substitution, rejected substitution, carryover, retry, and concurrent mutation boundaries.
   - Planner explanations state whether extra study affected a decision.
   - Regression fixtures cover the PLN-001 manual Mathematics → Finance backlog and early Turkish → Finance/Law backlog chains.
+- Implementation note (2026-08-22): the forward-only schema, domain/planner semantics, authenticated API, minimal ambiguity UI, and audit contracts are implemented and pass local migration replay plus unit, integration/RLS, Edge, Telegram, Coach, P0 safety, typecheck, and production-build gates. Status remains `IN_PROGRESS` because the repository Definition of Done requires a separate release/production verification decision.
 
 ## `PLN-003` — Study Block Duration Policy
 

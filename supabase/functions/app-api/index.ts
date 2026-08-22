@@ -66,6 +66,13 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   INVALID_TEST_RESULT_TOTAL: 400,
   INVALID_TEST_RESULT_COUNTS: 400,
   INVALID_SESSION_DURATION: 400,
+  STUDY_INTENT_REQUIRED: 400,
+  STUDY_INTENT_TARGET_REQUIRED: 400,
+  STUDY_INTENT_IDEMPOTENCY_REQUIRED: 400,
+  STUDY_INTENT_IDEMPOTENCY_CONFLICT: 409,
+  SUBSTITUTION_SOURCE_INVALID: 400,
+  SUBSTITUTION_REPLACEMENT_INVALID: 400,
+  CARRYOVER_SOURCE_STALE: 409,
   SESSION_TIME_OVERLAP: 409,
   RESOURCE_UNIT_NOT_LINKED_TO_TASK: 400,
   RESOURCE_UNIT_NOT_TEST: 400,
@@ -1344,6 +1351,79 @@ Deno.serve(async (request) => {
         plan: await planWithTasks(client,plan),
       });
     }
+    if (request.method === "POST" && route === "/study-intent/substitutions/preview") {
+      const body = await request.json().catch(() => null);
+      const sourceTaskId = typeof body?.sourceTaskId === "string" ? body.sourceTaskId : "";
+      const replacementSessionId = typeof body?.replacementSessionId === "string" ? body.replacementSessionId : "";
+      const sourceMinutes = Math.floor(Number(body?.sourceMinutes));
+      const replacementTitle = typeof body?.replacementTitle === "string" ? body.replacementTitle.trim() : "";
+      const idempotencyKey = typeof body?.idempotencyKey === "string" ? body.idempotencyKey.trim() : "";
+      if (!sourceTaskId || !replacementSessionId || !replacementTitle || !idempotencyKey || sourceMinutes <= 0) {
+        throw new Error("SUBSTITUTION_REPLACEMENT_INVALID");
+      }
+      const plan = await currentPlan(client,profile.id,weekStart);
+      if (!plan) throw new Error("WEEKLY_PLAN_NOT_FOUND");
+      const [sourceResult,sessionResult,allocationResult] = await Promise.all([
+        client.from("tasks")
+          .select("id,title,subject_id,planned_date,estimated_minutes,status,task_progress(completed_minutes)")
+          .eq("id",sourceTaskId).eq("user_id",userId).eq("exam_profile_id",profile.id)
+          .eq("weekly_plan_id",plan.id).maybeSingle(),
+        client.from("study_sessions")
+          .select("id,task_id,subject_id,curriculum_node_id,resource_id,duration_minutes,status")
+          .eq("id",replacementSessionId).eq("user_id",userId).eq("exam_profile_id",profile.id)
+          .eq("status","completed").maybeSingle(),
+        client.from("study_session_allocations")
+          .select("id,accounting_intent,actual_minutes,planned_credit_minutes,superseded_at")
+          .eq("session_id",replacementSessionId).eq("user_id",userId)
+          .eq("accounting_intent","extra").is("superseded_at",null).maybeSingle(),
+      ]);
+      for (const result of [sourceResult,sessionResult,allocationResult]) if (result.error) throw result.error;
+      const source:any=sourceResult.data; const session:any=sessionResult.data; const allocation:any=allocationResult.data;
+      if (!source || !session || !allocation || session.task_id===source.id) throw new Error("SUBSTITUTION_REPLACEMENT_INVALID");
+      if (!["planned","ready","in_progress","partially_completed","rescheduled"].includes(source.status)) throw new Error("SUBSTITUTION_SOURCE_INVALID");
+      const progress=Array.isArray(source.task_progress)?source.task_progress[0]:source.task_progress;
+      const remainingMinutes=Math.max(0,Number(source.estimated_minutes??0)-Number(progress?.completed_minutes??0));
+      if (sourceMinutes>remainingMinutes || sourceMinutes>Number(allocation.actual_minutes??0)) throw new Error("SUBSTITUTION_REPLACEMENT_INVALID");
+      const preview={
+        kind:"STUDY_SUBSTITUTION_PREVIEW",previewOnly:true,explicitConfirmationRequired:true,status:"READY",
+        source:{taskId:source.id,title:source.title,plannedDate:source.planned_date,remainingMinutes,minutesRelieved:sourceMinutes},
+        replacement:{sessionId:session.id,title:replacementTitle,actualMinutes:Number(allocation.actual_minutes),subjectId:session.subject_id},
+        changes:[{changeType:"SUBSTITUTE",taskId:source.id,beforeRemainingMinutes:remainingMinutes,afterRemainingMinutes:remainingMinutes-sourceMinutes}],
+        explanation:`${replacementTitle}, ${source.title} görevinin ${sourceMinutes} dakikası yerine sayılacak. Başka görev değişmeyecek.`,
+      };
+      const proposal=await serviceClient.rpc("create_confirmed_action_proposal",{
+        p_user_id:userId,p_exam_profile_id:profile.id,p_weekly_plan_id:plan.id,
+        p_action_kind:"substitution",p_plan_generation_version:Number(plan.generation_version),
+        p_mutation_payload:{sourceTaskId,replacementSessionId,sourceMinutes,replacementTitle,reason:"user_replacement",initiatedBy:"user"},
+        p_display_payload:preview,p_idempotency_key:idempotencyKey,
+      });
+      if(proposal.error)throw proposal.error;
+      return json({...preview,confirmation:proposal.data});
+    }
+    if (request.method === "POST" && route === "/study-intent/carryovers/confirm") {
+      const body=await request.json().catch(()=>null);
+      const taskId=typeof body?.taskId==="string"?body.taskId:"";
+      const fromDate=typeof body?.fromDate==="string"?body.fromDate:"";
+      const toDate=typeof body?.toDate==="string"?body.toDate:"";
+      const remainingMinutes=Math.floor(Number(body?.remainingMinutes));
+      const idempotencyKey=typeof body?.idempotencyKey==="string"?body.idempotencyKey.trim():"";
+      if(!taskId||!/^\d{4}-\d{2}-\d{2}$/.test(fromDate)||!/^\d{4}-\d{2}-\d{2}$/.test(toDate)||remainingMinutes<=0||!idempotencyKey){
+        throw new Error("CARRYOVER_SOURCE_STALE");
+      }
+      const plan=await currentPlan(client,profile.id,weekStart);
+      if(!plan)throw new Error("WEEKLY_PLAN_NOT_FOUND");
+      const proposal=await serviceClient.rpc("create_confirmed_action_proposal",{
+        p_user_id:userId,p_exam_profile_id:profile.id,p_weekly_plan_id:plan.id,
+        p_action_kind:"carryover",p_plan_generation_version:Number(plan.generation_version),
+        p_mutation_payload:{taskId,fromDate,toDate,remainingMinutes,reason:"user_could_not_finish",initiatedBy:"user"},
+        p_display_payload:{kind:"CARRYOVER_CONFIRMATION",taskId,fromDate,toDate,remainingMinutes},
+        p_idempotency_key:idempotencyKey,
+      });
+      if(proposal.error)throw proposal.error;
+      const applied=await client.rpc("apply_confirmed_action_proposal",{p_proposal_id:proposal.data.proposalId});
+      if(applied.error)throw applied.error;
+      return json({...applied.data,confirmation:proposal.data});
+    }
     const taskActionPreviewMatch = route.match(/^\/tasks\/([0-9a-f-]+)\/action-preview$/);
     if (request.method === "POST" && taskActionPreviewMatch) {
       const body = await request.json().catch(() => null);
@@ -1482,19 +1562,26 @@ Deno.serve(async (request) => {
         const seconds = (Date.parse(row.ended_at) - Date.parse(row.started_at)) / 1000;
         return sum + (Number.isFinite(seconds) ? Math.max(0, seconds) : 0);
       }, 0);
-      return json({ session, break: openBreak, paused: Boolean(openBreak), closedBreakSeconds });
+      return json({ session:{...session,accountingIntent:session.task_id?"planned":null}, break: openBreak, paused: Boolean(openBreak), closedBreakSeconds });
     }
     if (request.method === "GET" && route === "/execution/summary") {
       const weekRange = getZonedWeekRange(today);
-      const [dailyPlan,weekRows,results] = await Promise.all([
+      const [dailyPlan,weekRows,allocationRows,results] = await Promise.all([
         loadDailyCoachContext(client,userId,profile,today),
         client.from("study_sessions").select("duration_minutes").eq("status","completed").gte("ended_at",weekRange.startUtc).lt("ended_at",weekRange.endUtc),
+        client.from("study_session_allocations").select("accounting_intent,actual_minutes,planned_credit_minutes,study_sessions!inner(ended_at)")
+          .eq("exam_profile_id",profile.id).is("superseded_at",null)
+          .gte("study_sessions.ended_at",weekRange.startUtc).lt("study_sessions.ended_at",weekRange.endUtc),
         client.from("test_results").select("*, subjects(name), resource_units(name)").order("completed_at",{ascending:false}).limit(5),
       ]);
-      for(const result of [weekRows,results]) if(result.error) throw result.error;
+      for(const result of [weekRows,allocationRows,results]) if(result.error) throw result.error;
+      const allocations=allocationRows.data??[];
       return json({
         todayStudyMinutes:dailyPlan.studiedMinutes,
         weekStudyMinutes:(weekRows.data??[]).reduce((s,r)=>s+(r.duration_minutes??0),0),
+        weekPlannedActualMinutes:allocations.filter((row:any)=>row.accounting_intent==="planned").reduce((sum:number,row:any)=>sum+Number(row.actual_minutes??0),0),
+        weekExtraStudyMinutes:allocations.filter((row:any)=>row.accounting_intent==="extra").reduce((sum:number,row:any)=>sum+Number(row.actual_minutes??0),0),
+        weekPlannedCreditMinutes:allocations.reduce((sum:number,row:any)=>sum+Number(row.planned_credit_minutes??0),0),
         recentResults:results.data??[],
         dailyPlan:{
           date:dailyPlan.date,
@@ -1513,9 +1600,18 @@ Deno.serve(async (request) => {
       const body=await request.json(); const {data,error}=await client.rpc("start_study_session",{p_task_id:body.taskId,p_entry_source:body.entrySource??"web"}); if(error) throw error; return json(data,201);
     }
     if (request.method === "POST" && route === "/study-sessions/retroactive") {
-      const body=await request.json(); const {data,error}=await client.rpc("record_retroactive_session",{p_payload:{...body,examProfileId:profile.id,entrySource:body.entrySource??"retroactive"}}); if(error) throw error;
+      const body=await request.json();
+      const taskId=typeof body?.taskId==="string"&&body.taskId?body.taskId:null;
+      const accountingIntent=taskId?(body.accountingIntent??"planned"):body.accountingIntent;
+      const idempotencyKey=typeof body?.idempotencyKey==="string"?body.idempotencyKey.trim():"";
+      if(!taskId&&accountingIntent!=="extra")throw new Error("STUDY_INTENT_REQUIRED");
+      if(!idempotencyKey)throw new Error("STUDY_INTENT_IDEMPOTENCY_REQUIRED");
+      const {data,error}=await client.rpc("record_retroactive_session",{p_payload:{...body,taskId,accountingIntent,idempotencyKey,examProfileId:profile.id,entrySource:body.entrySource??"retroactive"}}); if(error) throw error;
       const plan=await currentPlan(client,profile.id,weekStart);
-      const replanPreview=plan?await previewCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
+      const isExtra=data?.allocation?.accounting_intent==="extra";
+      const replanPreview=isExtra
+        ?{applied:false,planMutationApplied:false,noChange:true,extraStudyAffectedDecision:false,explanation:"Ekstra çalışma kaydedildi; mevcut plandaki görevler değiştirilmedi."}
+        :plan?await previewCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
       return json({...data,replanPreview,planMutationApplied:false},201);
     }
     const sessionMatch=route.match(/^\/study-sessions\/([0-9a-f-]+)\/(finish|cancel|pause|resume)$/);
