@@ -1,6 +1,6 @@
 # P48 Planned-Credit Accounting Release
 
-Status: APPROVED_FOR_DEPLOYMENT
+Status: DEPLOYED_OBSERVING
 Date: 2026-08-23
 
 ## Purpose
@@ -108,3 +108,22 @@ PLN-003 duration-policy activation remains separately gated and is not authorize
 
 Release owner: Melih
 Release approver: Melih — explicit production deployment approval granted on 2026-08-23
+
+## Deployment result
+
+- Approved/deployed repository revision: `b27768297f6eab5dd2000cff7611df4df7556f41`.
+- `app-api`: DEPLOYED.
+- `scheduler-worker`: DEPLOYED.
+- `telegram-webhook`: DEPLOYED.
+- Database migration: none.
+
+Post-deployment verification:
+- Unauthenticated `GET /app-api/p48/roadmap` returned HTTP `401`, confirming the deployed function is reachable and auth protection remains active.
+- Final production guardrail snapshot: `today_tasks=6`, `recent_plan_revisions=0`, `recent_reschedules=0`, `recent_study_deviation=0`.
+- PLN-002 authenticated observer: `PLANNED / PASS`.
+- Latest observed planned study: actual `18` minutes, planned credit `14` minutes.
+- No plan revisions, reschedules, substitutions, carryovers, or study-deviation event were observed around that study.
+- Natural Extra Study acceptance remains pending.
+
+Release state after verification: `DEPLOYED_OBSERVING`.
+Do not close this release until the required natural-use observation evidence is complete.
