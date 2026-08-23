@@ -1,6 +1,6 @@
 # P48 Planned-Credit Accounting Release
 
-Status: RELEASE_CANDIDATE
+Status: APPROVED_FOR_DEPLOYMENT
 Date: 2026-08-23
 
 ## Purpose
@@ -107,4 +107,4 @@ PLN-003 duration-policy activation remains separately gated and is not authorize
 ## Approval
 
 Release owner: Melih
-Release approver: pending explicit production deployment approval
+Release approver: Melih — explicit production deployment approval granted on 2026-08-23
