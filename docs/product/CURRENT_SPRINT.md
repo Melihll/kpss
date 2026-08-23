@@ -8,7 +8,7 @@ Sprint status: `IN_PROGRESS`
 
 Sprint objective: Close PLN-002 real-user acceptance safely while implementing and verifying PLN-003 duration-policy foundations without introducing unapproved production behavior.
 
-Sprint 01 closed on 2026-08-22 with `PLN-001` complete. PLN-002 has been released to production and remains `IN_PROGRESS` pending authenticated real-user acceptance evidence. PLN-003 has completed local implementation and verification; its production rollout still requires a separate release decision.
+Sprint 01 closed on 2026-08-22 with `PLN-001` complete. PLN-002 has been released to production; planned-study authenticated real-user acceptance passed on 2026-08-23, and the item remains `IN_PROGRESS` pending extra-study acceptance evidence. PLN-003 has completed local implementation and verification; its production rollout still requires a separate release decision.
 
 ## NOW
 
@@ -16,8 +16,8 @@ Sprint 01 closed on 2026-08-22 with `PLN-001` complete. PLN-002 has been release
 
 - Priority: `P0`
 - Status: `IN_PROGRESS`
-- Phase: production released; authenticated real-user acceptance pending
-- Current state: schema/model, planner semantics, API/UI behavior, auditability, and invariant coverage are released; final natural-use acceptance evidence is still pending
+- Phase: production released; planned-study real-user acceptance PASS; extra-study real-user acceptance pending
+- Current state: schema/model, planner semantics, API/UI behavior, auditability, and invariant coverage are released; planned-study natural-use acceptance passed on 2026-08-23, while extra-study natural-use acceptance remains pending
 
 Current deliverable:
 
@@ -27,7 +27,7 @@ Current deliverable:
 - recommended normalized allocation ledger and typed transitions;
 - migration/backfill, UI, planner, API, audit, and invariant requirements.
 
-The implementation preserves the core [PLN-001](audits/PLN-001_ESRA_7_DAY_PLANNING_AUDIT.md) rule: Extra Study cannot silently modify unrelated planned work. Local evidence is summarized in the [PLN-002 Implementation Decision](decisions/PLN-002_IMPLEMENTATION_DECISION.md). `IN_PROGRESS` remains intentional because final authenticated real-user acceptance has not yet closed.
+The implementation preserves the core [PLN-001](audits/PLN-001_ESRA_7_DAY_PLANNING_AUDIT.md) rule: Extra Study cannot silently modify unrelated planned work. Local evidence is summarized in the [PLN-002 Implementation Decision](decisions/PLN-002_IMPLEMENTATION_DECISION.md). `IN_PROGRESS` remains intentional because planned-study acceptance has passed but extra-study authenticated real-user acceptance has not yet closed.
 
 The full item definition is in [PRODUCT_BACKLOG.md](PRODUCT_BACKLOG.md#pln-002--separate-planned-study--extra-study--substitution--carryover-semantics).
 
@@ -45,7 +45,7 @@ The full item definition is in [PRODUCT_BACKLOG.md](PRODUCT_BACKLOG.md#pln-003--
 
 ## NEXT
 
-1. Close `PLN-002` authenticated real-user acceptance
+1. Close `PLN-002` extra-study authenticated real-user acceptance
 2. Separate `PLN-003` release-readiness decision
 3. `PLN-004` — Learning Stage Model
 
