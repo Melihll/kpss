@@ -379,7 +379,8 @@ function buildDailyPlanProjection(input) {
   let deferredMinutes = 0;
   for (const task of openTasks) {
     const remainingMinutes = Math.max(0, Math.floor(task.remainingMinutes));
-    const scheduledMinutes = Math.min(remainingMinutes, capacityLeft);
+    const mustFitWholeBlock = Boolean(task.blockClass) || task.isRemainder === true;
+    const scheduledMinutes = mustFitWholeBlock ? remainingMinutes <= capacityLeft ? remainingMinutes : 0 : Math.min(remainingMinutes, capacityLeft);
     if (scheduledMinutes > 0) {
       openItems.push({ taskId: task.id, remainingMinutes, scheduledMinutes });
       capacityLeft -= scheduledMinutes;
@@ -1002,6 +1003,64 @@ function interpretWeeklyReport(input) {
   return { status, completionRatio, plannedVsActualRatio, explanation: parts.join(" ") };
 }
 
+// packages/domain/src/planning/duration-policy.ts
+var STUDY_BLOCK_DURATION_POLICY_VERSION = "pln-003-v1";
+var STUDY_BLOCK_DURATION_POLICIES = {
+  new_learning: { minMinutes: 60, preferredMinutes: 75, maxMinutes: 90 },
+  guided_practice: { minMinutes: 45, preferredMinutes: 60, maxMinutes: 75 },
+  primary_practice: { minMinutes: 40, preferredMinutes: 50, maxMinutes: 60 },
+  reinforcement: { minMinutes: 40, preferredMinutes: 50, maxMinutes: 60 },
+  error_review: { minMinutes: 20, preferredMinutes: 30, maxMinutes: 40 },
+  spaced_review: { minMinutes: 15, preferredMinutes: 25, maxMinutes: 30 }
+};
+var AI_CONFIDENCE_THRESHOLD = 0.6;
+function positiveMinutes(value) {
+  if (value == null || !Number.isFinite(value) || value <= 0) return null;
+  return Math.max(1, Math.round(value));
+}
+function roundToFive(minutes) {
+  return Math.max(5, Math.round(minutes / 5) * 5);
+}
+function resolveStudyBlockDuration(input) {
+  const policy = STUDY_BLOCK_DURATION_POLICIES[input.blockClass];
+  const base = {
+    blockClass: input.blockClass,
+    policyVersion: STUDY_BLOCK_DURATION_POLICY_VERSION,
+    minMinutes: policy.minMinutes,
+    preferredMinutes: policy.preferredMinutes,
+    maxMinutes: policy.maxMinutes
+  };
+  const userOverride = positiveMinutes(input.userOverrideMinutes);
+  if (userOverride != null) {
+    return {
+      ...base,
+      minutes: userOverride,
+      source: "user_override",
+      policyDeviation: userOverride < policy.minMinutes || userOverride > policy.maxMinutes
+    };
+  }
+  const remainder = positiveMinutes(input.remainderMinutes);
+  if (remainder != null) {
+    return { ...base, minutes: remainder, source: "remainder", policyDeviation: false };
+  }
+  const aiMinutes = positiveMinutes(input.aiRecommendedMinutes);
+  const aiConfidence = input.aiConfidence;
+  const aiAllowed = aiMinutes != null && (aiConfidence == null || Number.isFinite(aiConfidence) && aiConfidence >= AI_CONFIDENCE_THRESHOLD);
+  if (aiAllowed) {
+    const normalized = Math.min(
+      policy.maxMinutes,
+      Math.max(policy.minMinutes, roundToFive(aiMinutes))
+    );
+    return { ...base, minutes: normalized, source: "ai_normalized", policyDeviation: false };
+  }
+  return {
+    ...base,
+    minutes: policy.preferredMinutes,
+    source: "deterministic_default",
+    policyDeviation: false
+  };
+}
+
 // packages/domain/src/p48/roadmap.ts
 var DAY_MS = 864e5;
 function parseDate3(date) {
@@ -1186,13 +1245,37 @@ function buildP48WeekBlocks(input) {
     while (dayRemaining >= 30 && guard < 30) {
       const candidates = input.subjects.filter((subject2) => (subjectRemaining.get(subject2.subjectId) ?? 0) >= 30).sort((a, b) => (subjectRemaining.get(b.subjectId) ?? 0) - (subjectRemaining.get(a.subjectId) ?? 0));
       if (!candidates.length) break;
-      const subject = candidates.find((candidate) => candidate.subjectId !== previousSubject) ?? candidates[0];
+      const schedulableCandidates = candidates.filter((candidate) => {
+        const candidateWeeklyRemaining = subjectRemaining.get(candidate.subjectId) ?? 0;
+        const candidateQueue = queues.get(candidate.subjectId) ?? [];
+        while (candidateQueue.length && candidateQueue[0].remainingMinutes <= 0) candidateQueue.shift();
+        const candidateResource = candidateQueue[0] ?? null;
+        if (!candidateResource?.blockClass) return true;
+        const candidatePolicy = resolveStudyBlockDuration({
+          blockClass: candidateResource.blockClass
+        });
+        const candidateLimit = Math.min(
+          dayRemaining,
+          candidateWeeklyRemaining,
+          candidateResource.remainingMinutes
+        );
+        return candidateLimit >= candidatePolicy.minMinutes;
+      });
+      if (!schedulableCandidates.length) break;
+      const subject = schedulableCandidates.find((candidate) => candidate.subjectId !== previousSubject) ?? schedulableCandidates[0];
       const weeklyRemaining = subjectRemaining.get(subject.subjectId) ?? 0;
       const queue = queues.get(subject.subjectId) ?? [];
       while (queue.length && queue[0].remainingMinutes <= 0) queue.shift();
       const resource = queue[0] ?? null;
-      const chunk = Math.min(60, dayRemaining, weeklyRemaining, resource ? Math.max(30, roundToThirty(resource.remainingMinutes)) : 60);
-      const minutes = Math.max(30, roundToThirty(chunk));
+      const policyDecision = resource?.blockClass ? resolveStudyBlockDuration({ blockClass: resource.blockClass }) : null;
+      const policyLimit = Math.min(
+        dayRemaining,
+        weeklyRemaining,
+        resource?.remainingMinutes ?? Number.POSITIVE_INFINITY
+      );
+      const policyMinutes = policyDecision ? policyLimit >= policyDecision.minMinutes ? Math.min(policyDecision.minutes, policyLimit) : 0 : null;
+      const chunk = policyDecision ? policyMinutes : Math.min(60, dayRemaining, weeklyRemaining, resource ? Math.max(30, roundToThirty(resource.remainingMinutes)) : 60);
+      const minutes = policyDecision ? chunk : Math.max(30, roundToThirty(chunk));
       const bounded = Math.min(minutes, dayRemaining, weeklyRemaining);
       if (bounded < 30) break;
       result.push({

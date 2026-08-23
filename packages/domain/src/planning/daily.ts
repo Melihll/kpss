@@ -1,8 +1,12 @@
+import type { StudyBlockClass } from "./duration-policy";
+
 export interface DailyPlanProjectionTask {
   id: string;
   plannedDate: string | null;
   status: string;
   remainingMinutes: number;
+  blockClass?: StudyBlockClass | null;
+  isRemainder?: boolean;
 }
 
 export interface DailyPlanProjectionItem {
@@ -64,7 +68,10 @@ export function buildDailyPlanProjection(input: {
 
   for (const task of openTasks) {
     const remainingMinutes = Math.max(0, Math.floor(task.remainingMinutes));
-    const scheduledMinutes = Math.min(remainingMinutes, capacityLeft);
+    const mustFitWholeBlock = Boolean(task.blockClass) || task.isRemainder === true;
+    const scheduledMinutes = mustFitWholeBlock
+      ? (remainingMinutes <= capacityLeft ? remainingMinutes : 0)
+      : Math.min(remainingMinutes, capacityLeft);
     if (scheduledMinutes > 0) {
       openItems.push({ taskId: task.id, remainingMinutes, scheduledMinutes });
       capacityLeft -= scheduledMinutes;

@@ -24,3 +24,31 @@ export function aggregateCompletedStudySessions(
 
   return { actualByDate, actualByResource };
 }
+
+export interface PlannedCreditAllocationRow {
+  planned_credit_minutes?: number | null;
+  study_sessions?:
+    | { started_at?: string | null }
+    | Array<{ started_at?: string | null }>
+    | null;
+}
+
+export function aggregatePlannedCreditByDate(
+  rows: readonly PlannedCreditAllocationRow[],
+  timeZone = "Europe/Istanbul",
+) {
+  const plannedCreditByDate = new Map<string, number>();
+
+  for (const row of rows) {
+    const session = Array.isArray(row.study_sessions)
+      ? row.study_sessions[0]
+      : row.study_sessions;
+    if (!session?.started_at) continue;
+
+    const minutes = Math.max(0, Number(row.planned_credit_minutes ?? 0));
+    const date = new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date(session.started_at));
+    plannedCreditByDate.set(date, (plannedCreditByDate.get(date) ?? 0) + minutes);
+  }
+
+  return plannedCreditByDate;
+}

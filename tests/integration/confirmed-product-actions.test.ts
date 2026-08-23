@@ -9,9 +9,18 @@ if (!url || !anonKey || !serviceRoleKey) throw new Error("Local Supabase env req
 
 const EDITION = "11000000-0000-0000-0000-000000000001";
 const SUBJECT = "20000000-0000-0000-0000-000000000002";
-const WEEK_START = "2026-08-17";
-const WEEK_END = "2026-08-23";
-const TARGET_DATE = "2026-08-22";
+function addUtcDays(date: string, days: number): string {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+const TODAY = new Date().toISOString().slice(0, 10);
+const TARGET_DATE = addUtcDays(TODAY, 1);
+const targetWeekday = new Date(`${TARGET_DATE}T00:00:00Z`).getUTCDay();
+const mondayOffset = targetWeekday === 0 ? -6 : 1 - targetWeekday;
+const WEEK_START = addUtcDays(TARGET_DATE, mondayOffset);
+const WEEK_END = addUtcDays(WEEK_START, 6);
 
 function client(key = anonKey): SupabaseClient {
   return createClient(url!, key!, {

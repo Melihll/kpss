@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-08-22
+Last updated: 2026-08-23
 
 ## Workflow
 
@@ -35,7 +35,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | --- | --- | --- | --- |
 | `PLN-001` | `P0` | Esra 7-day Planning Reality Audit | `DONE` |
 | `PLN-002` | `P0` | Separate Planned Study / Extra Study / Substitution / Carryover semantics | `IN_PROGRESS` |
-| `PLN-003` | `P1` | Study Block Duration Policy | `TODO` |
+| `PLN-003` | `P1` | Study Block Duration Policy | `IN_PROGRESS` |
 | `PLN-004` | `P1` | Learning Stage Model | `TODO` |
 | `PLN-005` | `P1` | Resource Role Model | `TODO` |
 | `PLN-006` | `P1` | Daily Fragmentation Control | `TODO` |
@@ -65,7 +65,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 
 - Priority: `P0`
 - Status: `IN_PROGRESS`
-- Current phase: implementation complete locally; release verification pending. The approved model is defined in [PLN-002 — Study Intent Semantics](specs/PLN-002_STUDY_INTENT_SEMANTICS.md), and implementation evidence is recorded in [PLN-002 Implementation Decision](decisions/PLN-002_IMPLEMENTATION_DECISION.md). No production migration, deployment, or data mutation has occurred.
+- Current phase: production released; authenticated real-user acceptance pending. The approved model is defined in [PLN-002 — Study Intent Semantics](specs/PLN-002_STUDY_INTENT_SEMANTICS.md), and implementation evidence is recorded in [PLN-002 Implementation Decision](decisions/PLN-002_IMPLEMENTATION_DECISION.md).
 - Problem: Study outside the plan can be misinterpreted as completion or replacement of planned work, and movement across days can obscure whether work was substituted, carried over, or silently removed.
 - Desired outcome: Planned study, extra study, user-confirmed substitution, and carryover are distinct concepts in product behavior, accounting, explanations, and tests.
 - Acceptance criteria:
@@ -80,12 +80,12 @@ Priority describes impact, not implementation order. Dependencies and safety gat
   - Automated tests cover extra study, confirmed substitution, rejected substitution, carryover, retry, and concurrent mutation boundaries.
   - Planner explanations state whether extra study affected a decision.
   - Regression fixtures cover the PLN-001 manual Mathematics → Finance backlog and early Turkish → Finance/Law backlog chains.
-- Implementation note (2026-08-22): the forward-only schema, domain/planner semantics, authenticated API, minimal ambiguity UI, and audit contracts are implemented and pass local migration replay plus unit, integration/RLS, Edge, Telegram, Coach, P0 safety, typecheck, and production-build gates. Status remains `IN_PROGRESS` because the repository Definition of Done requires a separate release/production verification decision.
+- Release note (2026-08-22): the forward-only schema, domain/planner semantics, authenticated API, minimal ambiguity UI, and audit contracts were released after local migration replay plus unit, integration/RLS, Edge, Telegram, Coach, P0 safety, typecheck, and production-build gates passed. Status remains `IN_PROGRESS` because final authenticated real-user acceptance evidence is still pending.
 
 ## `PLN-003` — Study Block Duration Policy
 
 - Priority: `P1`
-- Status: `TODO`
+- Status: `IN_PROGRESS`
 - Problem: A uniform duration assumption ignores the cognitive and practical differences between learning, practice, review, reinforcement, video, and spaced review, producing unrealistic blocks or avoidable fragments.
 - Desired outcome: Estimated duration follows an explicit, configurable policy based on study stage and activity type, with sensible bounds and an explanation.
 - Acceptance criteria:
@@ -97,6 +97,10 @@ Priority describes impact, not implementation order. Dependencies and safety gat
   - Real Esra examples and boundary cases cover the three 30-minute new-topic video/notes blocks, short availability, long resources, partial work, and continuation.
   - Duration calibration rejects or explicitly excludes overlapping session intervals and reports when historical per-task actual time cannot be de-overlapped reliably.
   - Policy changes are versioned or otherwise traceable so past decisions remain explainable.
+
+- Implementation note (2026-08-23): `pln-003-v1` is implemented and locally verified. The centralized deterministic policy covers `new_learning`, `guided_practice`, `primary_practice`, `reinforcement`, `error_review`, and `spaced_review`; supports AI recommendations only as normalized advisory input; preserves explicit user overrides and genuine remainders; and prevents policy-tagged blocks from being fabricated below their minimum solely to fill residual capacity.
+- Verification evidence: targeted PLN-003 tests pass, full unit regression passes (`632/632`), integration/RLS passes (`101/101`), TypeScript typecheck passes, `planning.bundle.js` is regenerated from current sources, and planning bundle reproducibility/safety checks pass. `roadmap.test.ts` passes `11/11`, including four PLN-003 duration-aware schedule scenarios, covering preferred new-learning duration, residual capacity below the class minimum, and multiple valid same-subject blocks in one day.
+- Status remains `IN_PROGRESS`: no PLN-003 production rollout or real-user verification has occurred. Current production planning inputs also do not yet provide a canonical `learning_stage` / `blockClass` for normal P48 resources, so the duration policy is not broadly authoritative in production. Distinct backlog semantics such as learning-stage assignment and any separate video/mathematics-concept classification remain unresolved rather than being silently inferred from `work_mode` or resource role.
 
 ## `PLN-004` — Learning Stage Model
 

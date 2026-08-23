@@ -165,3 +165,130 @@ describe("P2-08 material-aware resource finish projection", () => {
     expect(resource.forecastFinishDate).toBe("2026-08-23");
   });
 });
+describe("PLN-003 duration-aware P48 generation", () => {
+  it("uses the preferred new-learning block instead of legacy 60/30 capacity filling", () => {
+    const blocks = buildP48WeekBlocks({
+      weekStart: "2026-08-17",
+      currentDate: "2026-08-17",
+      weeklyTargetMinutes: 90,
+      dayCapacities: { "2026-08-17": 90 },
+      subjects: [
+        { subjectId: "law", subjectName: "Hukuk", weeklyMinutes: 90 },
+      ],
+      resources: [
+        {
+          resourceId: "r1",
+          resourceName: "Hukuk Konu Anlatımı",
+          subjectId: "law",
+          subjectName: "Hukuk",
+          workMode: "book",
+          remainingMinutes: 600,
+          sequenceOrder: 1,
+          blockClass: "new_learning",
+        },
+      ] as any,
+    });
+
+    expect(blocks.map((block) => block.estimatedMinutes)).toEqual([75]);
+    expect(blocks.reduce((sum, block) => sum + block.estimatedMinutes, 0)).toBe(75);
+  });
+  it("does not fabricate a short new-learning block when residual capacity is below the class minimum", () => {
+    const blocks = buildP48WeekBlocks({
+      weekStart: "2026-08-17",
+      currentDate: "2026-08-17",
+      weeklyTargetMinutes: 60,
+      dayCapacities: { "2026-08-17": 32 },
+      subjects: [
+        { subjectId: "law", subjectName: "Hukuk", weeklyMinutes: 60 },
+      ],
+      resources: [
+        {
+          resourceId: "r1",
+          resourceName: "Hukuk Konu Anlatımı",
+          subjectId: "law",
+          subjectName: "Hukuk",
+          workMode: "book",
+          remainingMinutes: 600,
+          sequenceOrder: 1,
+          blockClass: "new_learning",
+        },
+      ],
+    });
+
+    expect(blocks).toEqual([]);
+  });
+
+  it("allows one subject to receive multiple valid blocks in one day instead of treating the block maximum as a daily cap", () => {
+    const blocks = buildP48WeekBlocks({
+      weekStart: "2026-08-17",
+      currentDate: "2026-08-17",
+      weeklyTargetMinutes: 150,
+      dayCapacities: { "2026-08-17": 150 },
+      subjects: [
+        { subjectId: "law", subjectName: "Hukuk", weeklyMinutes: 150 },
+      ],
+      resources: [
+        {
+          resourceId: "r1",
+          resourceName: "Hukuk Konu Anlatımı",
+          subjectId: "law",
+          subjectName: "Hukuk",
+          workMode: "book",
+          remainingMinutes: 600,
+          sequenceOrder: 1,
+          blockClass: "new_learning",
+        },
+      ],
+    });
+
+    expect(blocks.map((block) => block.estimatedMinutes)).toEqual([75, 75]);
+    expect(blocks.reduce((sum, block) => sum + block.estimatedMinutes, 0)).toBe(150);
+    expect(blocks.every((block) => block.estimatedMinutes >= 60 && block.estimatedMinutes <= 90)).toBe(true);
+  });
+  it("skips an unschedulable new-learning candidate and uses another valid block that fits the day", () => {
+    const blocks = buildP48WeekBlocks({
+      weekStart: "2026-08-17",
+      currentDate: "2026-08-17",
+      weeklyTargetMinutes: 120,
+      dayCapacities: { "2026-08-17": 30, "2026-08-18": 60 },
+      subjects: [
+        { subjectId: "law", subjectName: "Hukuk", weeklyMinutes: 90 },
+        { subjectId: "econ", subjectName: "İktisat", weeklyMinutes: 30 },
+      ],
+      resources: [
+        {
+          resourceId: "law-r1",
+          resourceName: "Hukuk Konu Anlatımı",
+          subjectId: "law",
+          subjectName: "Hukuk",
+          workMode: "book",
+          remainingMinutes: 600,
+          sequenceOrder: 1,
+          blockClass: "new_learning",
+        },
+        {
+          resourceId: "econ-r1",
+          resourceName: "İktisat Hata Tekrarı",
+          subjectId: "econ",
+          subjectName: "İktisat",
+          workMode: "review",
+          remainingMinutes: 300,
+          sequenceOrder: 1,
+          blockClass: "error_review",
+        },
+      ],
+    });
+
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0]).toMatchObject({
+      plannedDate: "2026-08-17",
+      subjectId: "econ",
+      estimatedMinutes: 30,
+    });
+    expect(blocks[1]).toMatchObject({
+      plannedDate: "2026-08-18",
+      subjectId: "law",
+      estimatedMinutes: 60,
+    });
+  });
+});

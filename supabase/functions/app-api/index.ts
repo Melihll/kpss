@@ -13,7 +13,7 @@ import {
 import { recalculateTopicMastery, revisionWithUrgency } from "../_shared/mastery.ts";
 import { minimumDayPlan, previewCurrentPlan, recalculateCurrentPlan, syllabusProjection } from "../_shared/adaptive.ts";
 import { generateWeeklyReport, loadDailyCoachContext, pilotMetrics, recordRecommendationEvent } from "../_shared/pilot.ts";
-import { aggregateCompletedStudySessions } from "../_shared/completed-study.ts";
+import { aggregateCompletedStudySessions, aggregatePlannedCreditByDate } from "../_shared/completed-study.ts";
 import { grossCapacityForDate, loadP48DailyCapacityOverrides, planningCapacityForDate } from "../_shared/capacity-overrides.ts";
 import { applyDailyTaskOrder } from "../_shared/daily-task-order.ts";
 import { buildQuickAddTaskPreview } from "../_shared/quick-add-task-preview.ts";
@@ -612,7 +612,7 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
   const existing = await currentPlan(client, profile.id, weekStart);
   if (existing && !force) return { ...(await planWithTasks(client, existing)), created: false };
 
-  const [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult, dailyOverrides] = await Promise.all([
+  const [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult, allocationsResult, dailyOverrides] = await Promise.all([
     client.from("weekly_availability").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id).eq("is_active", true),
     client.from("calendar_periods").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id),
     client.from("schedule_exceptions").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id)
@@ -623,11 +623,15 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
     client.from("study_sessions")
       .select("resource_id,duration_minutes,started_at")
       .eq("user_id", userId).eq("exam_profile_id", profile.id).eq("status", "completed"),
+    client.from("study_session_allocations")
+      .select("planned_credit_minutes,study_sessions!inner(started_at)")
+      .eq("user_id", userId).eq("exam_profile_id", profile.id).is("superseded_at", null),
     loadP48DailyCapacityOverrides(client, userId, profile.id, weekStart, addDays(weekStart, 6)),
   ]);
-  for (const result of [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult]) if (result.error) throw result.error;
+  for (const result of [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult, allocationsResult]) if (result.error) throw result.error;
 
-  const { actualByDate, actualByResource } = aggregateCompletedStudySessions(sessionsResult.data ?? []);
+  const { actualByResource } = aggregateCompletedStudySessions(sessionsResult.data ?? []);
+  const plannedCreditByDate = aggregatePlannedCreditByDate(allocationsResult.data ?? []);
 
   const dayCapacities: Record<string, number> = {};
   for (let index = 0; index < 7; index += 1) {
@@ -650,7 +654,7 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
       scheduleExceptions: p48Exceptions(exceptionsResult.data ?? []),
     });
     const planningCapacity = planningCapacityForDate(date, effectiveCapacity, dailyOverrides, baseCapacity);
-    dayCapacities[date] = date < today ? 0 : Math.max(0, planningCapacity - (actualByDate.get(date) ?? 0));
+    dayCapacities[date] = date < today ? 0 : Math.max(0, planningCapacity - (plannedCreditByDate.get(date) ?? 0));
   }
 
   const resources = (targetResult.data ?? []).map((row: any) => ({

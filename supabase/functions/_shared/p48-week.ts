@@ -1,5 +1,5 @@
 import { buildP48WeekBlocks, calculateEffectiveDayCapacity } from "./planning.bundle.js";
-import { aggregateCompletedStudySessions } from "./completed-study.ts";
+import { aggregateCompletedStudySessions, aggregatePlannedCreditByDate } from "./completed-study.ts";
 import { loadP48DailyCapacityOverrides, planningCapacityForDate } from "./capacity-overrides.ts";
 
 const P48_SUBJECT_TARGETS = [
@@ -101,7 +101,7 @@ export async function ensureP48WeekPlanForService(
   const current = await loadPlanWithTasks(client, userId, profile.id, weekStart);
   if (current.plan) return { configured: true, created: false, ...current };
 
-  const [availability, periods, exceptions, targets, sessions, dailyOverrides] = await Promise.all([
+  const [availability, periods, exceptions, targets, sessions, allocations, dailyOverrides] = await Promise.all([
     client.from("weekly_availability").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id).eq("is_active", true),
     client.from("calendar_periods").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id),
     client.from("schedule_exceptions").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id)
@@ -111,11 +111,15 @@ export async function ensureP48WeekPlanForService(
       .eq("user_id", userId).eq("exam_profile_id", profile.id),
     client.from("study_sessions").select("resource_id,duration_minutes,started_at")
       .eq("user_id", userId).eq("exam_profile_id", profile.id).eq("status", "completed"),
+    client.from("study_session_allocations")
+      .select("planned_credit_minutes,study_sessions!inner(started_at)")
+      .eq("user_id", userId).eq("exam_profile_id", profile.id).is("superseded_at", null),
     loadP48DailyCapacityOverrides(client, userId, profile.id, weekStart, addDays(weekStart, 6)),
   ]);
-  for (const result of [availability, periods, exceptions, targets, sessions]) if (result.error) throw result.error;
+  for (const result of [availability, periods, exceptions, targets, sessions, allocations]) if (result.error) throw result.error;
 
-  const { actualByDate, actualByResource } = aggregateCompletedStudySessions(sessions.data ?? []);
+  const { actualByResource } = aggregateCompletedStudySessions(sessions.data ?? []);
+  const plannedCreditByDate = aggregatePlannedCreditByDate(allocations.data ?? []);
 
   const dayCapacities: Record<string, number> = {};
   for (let index = 0; index < 7; index += 1) {
@@ -134,7 +138,7 @@ export async function ensureP48WeekPlanForService(
       scheduleExceptions: p48Exceptions(exceptions.data ?? []),
     });
     const planningCapacity = planningCapacityForDate(date, effectiveCapacity, dailyOverrides, baseCapacity);
-    dayCapacities[date] = date < referenceDate ? 0 : Math.max(0, planningCapacity - (actualByDate.get(date) ?? 0));
+    dayCapacities[date] = date < referenceDate ? 0 : Math.max(0, planningCapacity - (plannedCreditByDate.get(date) ?? 0));
   }
 
   const resources = (targets.data ?? []).map((row: any) => ({

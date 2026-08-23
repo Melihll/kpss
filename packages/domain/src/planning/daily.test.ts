@@ -85,4 +85,24 @@ describe("buildDailyPlanProjection", () => {
       { date: TODAY, plannedMinutes: 240, capacityMinutes: 180 },
     ]);
   });
+
+  it("does not compress a policy-bound new-learning block just to fill remaining capacity", () => {
+    const result = buildDailyPlanProjection({
+      date: TODAY,
+      capacityMinutes: 32,
+      completedStudyMinutes: 0,
+      tasks: [
+        { ...task("learn", { remainingMinutes: 60 }), blockClass: "new_learning", isRemainder: false },
+        { ...task("remainder", { remainingMinutes: 16 }), blockClass: "new_learning", isRemainder: true },
+      ] as any,
+    });
+
+    expect(result.openItems).toEqual([
+      { taskId: "remainder", remainingMinutes: 16, scheduledMinutes: 16 },
+    ]);
+    expect(result.deferredTaskIds).toContain("learn");
+    expect(result.deferredMinutes).toBe(60);
+    expect(result.remainingCapacityMinutes).toBe(32);
+    expect(result.scheduledOpenMinutes).toBe(16);
+  });
 });

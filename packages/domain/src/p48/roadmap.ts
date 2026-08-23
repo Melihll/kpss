@@ -1,3 +1,5 @@
+import { resolveStudyBlockDuration, type StudyBlockClass } from "../planning/duration-policy";
+
 export type P48WorkMode = "video" | "book" | "notes" | "questions" | "mock" | "review" | "other";
 
 export interface P48SubjectTarget {
@@ -65,6 +67,7 @@ export interface P48WeekResource {
   subjectId: string;
   subjectName: string;
   workMode: P48WorkMode;
+  blockClass?: StudyBlockClass | null;
   remainingMinutes: number;
   sequenceOrder: number;
 }
@@ -333,13 +336,51 @@ export function buildP48WeekBlocks(input: {
         .filter((subject) => (subjectRemaining.get(subject.subjectId) ?? 0) >= 30)
         .sort((a, b) => (subjectRemaining.get(b.subjectId) ?? 0) - (subjectRemaining.get(a.subjectId) ?? 0));
       if (!candidates.length) break;
-      const subject = (candidates.find((candidate) => candidate.subjectId !== previousSubject) ?? candidates[0])!;
+
+      const schedulableCandidates = candidates.filter((candidate) => {
+        const candidateWeeklyRemaining = subjectRemaining.get(candidate.subjectId) ?? 0;
+        const candidateQueue = queues.get(candidate.subjectId) ?? [];
+        while (candidateQueue.length && candidateQueue[0]!.remainingMinutes <= 0) candidateQueue.shift();
+        const candidateResource = candidateQueue[0] ?? null;
+        if (!candidateResource?.blockClass) return true;
+
+        const candidatePolicy = resolveStudyBlockDuration({
+          blockClass: candidateResource.blockClass,
+        });
+        const candidateLimit = Math.min(
+          dayRemaining,
+          candidateWeeklyRemaining,
+          candidateResource.remainingMinutes,
+        );
+        return candidateLimit >= candidatePolicy.minMinutes;
+      });
+
+      if (!schedulableCandidates.length) break;
+      const subject = (
+        schedulableCandidates.find((candidate) => candidate.subjectId !== previousSubject)
+        ?? schedulableCandidates[0]
+      )!;
       const weeklyRemaining = subjectRemaining.get(subject.subjectId) ?? 0;
       const queue = queues.get(subject.subjectId) ?? [];
       while (queue.length && queue[0]!.remainingMinutes <= 0) queue.shift();
       const resource = queue[0] ?? null;
-      const chunk = Math.min(60, dayRemaining, weeklyRemaining, resource ? Math.max(30, roundToThirty(resource.remainingMinutes)) : 60);
-      const minutes = Math.max(30, roundToThirty(chunk));
+      const policyDecision = resource?.blockClass
+        ? resolveStudyBlockDuration({ blockClass: resource.blockClass })
+        : null;
+      const policyLimit = Math.min(
+        dayRemaining,
+        weeklyRemaining,
+        resource?.remainingMinutes ?? Number.POSITIVE_INFINITY,
+      );
+      const policyMinutes = policyDecision
+        ? (policyLimit >= policyDecision.minMinutes
+          ? Math.min(policyDecision.minutes, policyLimit)
+          : 0)
+        : null;
+      const chunk = policyDecision
+        ? policyMinutes!
+        : Math.min(60, dayRemaining, weeklyRemaining, resource ? Math.max(30, roundToThirty(resource.remainingMinutes)) : 60);
+      const minutes = policyDecision ? chunk : Math.max(30, roundToThirty(chunk));
       const bounded = Math.min(minutes, dayRemaining, weeklyRemaining);
       if (bounded < 30) break;
 

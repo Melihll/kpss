@@ -17,6 +17,11 @@ describe("P0-07 capacity consistency contract", () => {
     "utf8",
   );
 
+  const p48Week = readFileSync(
+    new URL("../supabase/functions/_shared/p48-week.ts", import.meta.url),
+    "utf8",
+  );
+
   it("publishes one roadmap capacity contract with four distinct metrics", () => {
     const start = appApi.indexOf("async function loadP48Roadmap");
     const end = appApi.indexOf("async function generateP48Week", start);
@@ -65,5 +70,22 @@ describe("P0-07 capacity consistency contract", () => {
     );
     expect(week).toContain("effectiveWeeklyMinutes");
     expect(week).toContain("planningBudgetMinutes");
+  });
+
+  it("uses planned credit rather than total actual study for P48 planner capacity", () => {
+    const start = appApi.indexOf("async function generateP48Week");
+    const end = appApi.indexOf("async function nextTask", start);
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(end).toBeGreaterThan(start);
+
+    const generateBody = appApi.slice(start, end);
+
+    for (const body of [generateBody, p48Week]) {
+      expect(body).toContain("aggregatePlannedCreditByDate");
+      expect(body).toContain("plannedCreditByDate");
+      expect(body).toContain("actualByResource");
+      expect(body).not.toContain("planningCapacity - (actualByDate.get(date) ?? 0)");
+      expect(body).toContain("planningCapacity - (plannedCreditByDate.get(date) ?? 0)");
+    }
   });
 });
