@@ -43,3 +43,21 @@ The planner rounded a 1,545-minute exact capacity upward to 1,560 minutes and al
 The fix preserves exact capacity as a hard upper bound. Weekly schedulable target is floored to the supported 30-minute granularity, while daily remaining capacity is never rounded upward.
 
 The database over-capacity guard remains unchanged.
+
+## Production recovery verification
+
+Production recovery completed on 2026-08-24.
+
+- Six explicit recovery capacity rows were applied for 2026-08-25 through 2026-08-30.
+- Gross remaining-week capacity: 1,560 minutes.
+- Reserve: 15 minutes.
+- Exact planner capacity: 1,545 minutes.
+- Generated weekly plan: active.
+- Persisted planned workload: 1,530 minutes.
+- Persisted tasks: 27.
+- No task was created retroactively for 2026-08-24.
+- No plan revision was created during recovery.
+- Daily persisted workload stayed within every exact daily capacity boundary.
+- The final 15-minute residual was intentionally left unused rather than rounded upward.
+
+The database `MANUAL_PLAN_OVER_CAPACITY` guard remained unchanged and correctly protected production during the intermediate failed generation.
