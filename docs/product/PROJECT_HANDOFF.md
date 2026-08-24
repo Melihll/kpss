@@ -95,3 +95,16 @@ Continue with `SPEC → TEST → IMPLEMENT → VERIFY`.
 - No automatic individual video-topic mappings were created.
 - Production canonical runtime path remains inactive.
 - No Edge Function, planner, Telegram or application deployment was performed as part of this release.
+
+## 2026-08-24 MAT-001 YouTube mapping production data release
+
+- Explicit human batch approval was given for the 76 deterministic full-video mapping proposals.
+- 76 validated full-video YouTube-to-curriculum mappings were applied to production.
+- All 76 rows use mapping_status `validated` and mapping_provenance `reviewed_mapping`.
+- No segment mappings were created.
+- 15 non-single videos remain held: 10 segment-review videos, 3 ambiguous combined-topic videos, 1 manual-review video and 1 non-instructional intro.
+- The 206 physical structural-unit candidates remain HOLD.
+- Production resource_units remained at 79 rows during this release.
+- No exact partial-page progress rows were fabricated.
+- Canonical material runtime remains inactive.
+- No planner, Edge Function, Telegram or application deployment was performed as part of this release.
