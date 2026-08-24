@@ -19,9 +19,9 @@ One active P48 user entered the 2026-08-24 week with no weekly plan. Web Today, 
 
 ## Fix
 
-The week generator now distinguishes a missing capacity source from a legitimate academic gap.
+Both P48 week-generation paths now distinguish a missing capacity source from a legitimate academic gap: the scheduler/Telegram service path and the authenticated App API path.
 
-A positive weekly strategy target with neither recurring availability nor explicit current-week capacity throws `P48_CAPACITY_SOURCE_MISSING`.
+A positive weekly strategy target with neither recurring availability nor explicit current-week capacity throws `P48_CAPACITY_SOURCE_MISSING`. The App API exposes this through the existing error contract instead of returning a false academic gap.
 
 ## Safety
 

@@ -20,6 +20,7 @@ import { buildQuickAddTaskPreview } from "../_shared/quick-add-task-preview.ts";
 import { buildTaskActionPreview, type TaskActionPreviewAction } from "../_shared/task-action-preview.ts";
 import { normalizeResourceProgress, presentResourceProgress } from "../_shared/resource-progress.ts";
 import { buildWeeklyCapacitySummary } from "../_shared/capacity-summary.ts";
+import { classifyP48CapacitySource } from "../_shared/p48-capacity-source.ts";
 import { loadMaterialWorkloads } from "../_shared/material-workload.ts";
 import { normalizeTopicResourceLinkInput } from "../_shared/topic-resource-link.ts";
 import { fetchYouTubePlaylistCatalog } from "../_shared/youtube-playlist.ts";
@@ -133,6 +134,7 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   YOUTUBE_VIDEO_PROGRESS_INVALID_POSITION: 400,
   YOUTUBE_VIDEO_PROGRESS_INVALID_WATCHED_SECONDS: 400,
   P48_STRATEGY_NOT_CONFIGURED: 409,
+  P48_CAPACITY_SOURCE_MISSING: 409,
 };
 
 function caughtMessage(caught: unknown) {
@@ -629,6 +631,16 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
     loadP48DailyCapacityOverrides(client, userId, profile.id, weekStart, addDays(weekStart, 6)),
   ]);
   for (const result of [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult, allocationsResult]) if (result.error) throw result.error;
+
+  const capacitySourceState = classifyP48CapacitySource({
+    weeklyTargetMinutes: Number(strategyResult.data.weekly_target_minutes),
+    activeAvailabilityCount: (availabilityResult.data ?? []).length,
+    dailyOverrideCount: dailyOverrides.size,
+  });
+
+  if (capacitySourceState === "missing_capacity_source") {
+    throw new Error("P48_CAPACITY_SOURCE_MISSING");
+  }
 
   const { actualByResource } = aggregateCompletedStudySessions(sessionsResult.data ?? []);
   const plannedCreditByDate = aggregatePlannedCreditByDate(allocationsResult.data ?? []);
