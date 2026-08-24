@@ -65,7 +65,11 @@ export interface YoutubeMaterialUnitInput {
   sortOrder: number;
   durationSeconds: number;
   watchedSeconds: number;
+  lastPositionSeconds?: number | null;
   completedAt: string | null;
+  mappingId?: string | null;
+  segmentStartSeconds?: number | null;
+  segmentEndSeconds?: number | null;
   mappingStatus: MaterialMappingStatus;
   mappingProvenance: MaterialMappingProvenance;
   isActive: boolean;
@@ -88,6 +92,10 @@ export interface MaterialUnitView {
   pageEnd: number | null;
   durationSeconds: number | null;
   watchedSeconds: number | null;
+  lastPositionSeconds: number | null;
+  mappingId: string | null;
+  segmentStartSeconds: number | null;
+  segmentEndSeconds: number | null;
   estimatedMinutes: number | null;
   progressState: PlannerMaterialProgressState;
   completedThroughPage?: number | null;
@@ -140,11 +148,17 @@ function hasAuthoritativeMappingProvenance(
 function isPlannerEligible(
   input: MaterialUnitInput,
 ): boolean {
+  const hasExactProgress =
+    input.sourceKind !== "youtube" ||
+    (input.segmentStartSeconds == null &&
+      input.segmentEndSeconds == null);
+
   return (
     input.isActive &&
     input.mappingStatus === "validated" &&
     input.curriculumNodeId !== null &&
-    hasAuthoritativeMappingProvenance(input.mappingProvenance)
+    hasAuthoritativeMappingProvenance(input.mappingProvenance) &&
+    hasExactProgress
   );
 }
 
@@ -152,8 +166,12 @@ export function normalizeMaterialUnit(
   input: MaterialUnitInput,
 ): MaterialUnitView {
   if (input.sourceKind === "youtube") {
+    const mappingSuffix = input.mappingId
+      ? `:mapping:${input.mappingId}`
+      : "";
+
     return {
-      id: `youtube:${input.id}`,
+      id: `youtube:${input.id}${mappingSuffix}`,
       sourceId: input.id,
       sourceKind: "youtube",
       resourceId: input.resourceId,
@@ -165,6 +183,10 @@ export function normalizeMaterialUnit(
       pageEnd: null,
       durationSeconds: input.durationSeconds,
       watchedSeconds: input.watchedSeconds,
+      lastPositionSeconds: input.lastPositionSeconds ?? 0,
+      mappingId: input.mappingId ?? null,
+      segmentStartSeconds: input.segmentStartSeconds ?? null,
+      segmentEndSeconds: input.segmentEndSeconds ?? null,
       estimatedMinutes: null,
       progressState: resolveYoutubeProgress(input),
       completedThroughPage: null,
@@ -189,6 +211,10 @@ export function normalizeMaterialUnit(
     pageEnd: input.pageEnd ?? null,
     durationSeconds: null,
     watchedSeconds: null,
+    lastPositionSeconds: null,
+    mappingId: null,
+    segmentStartSeconds: null,
+    segmentEndSeconds: null,
     estimatedMinutes: input.estimatedMinutes ?? null,
     progressState: input.progressState,
     completedThroughPage: input.completedThroughPage ?? null,

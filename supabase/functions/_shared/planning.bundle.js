@@ -533,12 +533,14 @@ function hasAuthoritativeMappingProvenance(provenance) {
   return provenance !== "ai_candidate";
 }
 function isPlannerEligible(input) {
-  return input.isActive && input.mappingStatus === "validated" && input.curriculumNodeId !== null && hasAuthoritativeMappingProvenance(input.mappingProvenance);
+  const hasExactProgress = input.sourceKind !== "youtube" || input.segmentStartSeconds == null && input.segmentEndSeconds == null;
+  return input.isActive && input.mappingStatus === "validated" && input.curriculumNodeId !== null && hasAuthoritativeMappingProvenance(input.mappingProvenance) && hasExactProgress;
 }
 function normalizeMaterialUnit(input) {
   if (input.sourceKind === "youtube") {
+    const mappingSuffix = input.mappingId ? `:mapping:${input.mappingId}` : "";
     return {
-      id: `youtube:${input.id}`,
+      id: `youtube:${input.id}${mappingSuffix}`,
       sourceId: input.id,
       sourceKind: "youtube",
       resourceId: input.resourceId,
@@ -550,6 +552,10 @@ function normalizeMaterialUnit(input) {
       pageEnd: null,
       durationSeconds: input.durationSeconds,
       watchedSeconds: input.watchedSeconds,
+      lastPositionSeconds: input.lastPositionSeconds ?? 0,
+      mappingId: input.mappingId ?? null,
+      segmentStartSeconds: input.segmentStartSeconds ?? null,
+      segmentEndSeconds: input.segmentEndSeconds ?? null,
       estimatedMinutes: null,
       progressState: resolveYoutubeProgress(input),
       completedThroughPage: null,
@@ -573,6 +579,10 @@ function normalizeMaterialUnit(input) {
     pageEnd: input.pageEnd ?? null,
     durationSeconds: null,
     watchedSeconds: null,
+    lastPositionSeconds: null,
+    mappingId: null,
+    segmentStartSeconds: null,
+    segmentEndSeconds: null,
     estimatedMinutes: input.estimatedMinutes ?? null,
     progressState: input.progressState,
     completedThroughPage: input.completedThroughPage ?? null,
@@ -1557,10 +1567,41 @@ function adaptYoutubeMaterialRow(request) {
     sortOrder: request.video.position,
     durationSeconds: request.video.duration_seconds,
     watchedSeconds: request.progress?.watched_seconds ?? 0,
+    lastPositionSeconds: request.progress?.last_position_seconds ?? 0,
     completedAt: request.progress?.completed_at ?? null,
+    mappingId: request.mapping?.id ?? null,
+    segmentStartSeconds: request.mapping?.segment_start_seconds ?? null,
+    segmentEndSeconds: request.mapping?.segment_end_seconds ?? null,
     mappingStatus,
     mappingProvenance,
     isActive: request.video.is_active && (request.mapping?.is_active ?? true)
+  });
+}
+function adaptYoutubeMaterialRows(request) {
+  const activeMappings = request.mappings.filter(
+    (mapping) => mapping.is_active
+  );
+  if (!activeMappings.length) {
+    return [adaptYoutubeMaterialRow({
+      video: request.video,
+      progress: request.progress,
+      resourceId: request.resourceId,
+      mapping: null
+    })];
+  }
+  const fullVideoMappings = activeMappings.filter(
+    (mapping) => mapping.segment_start_seconds == null && mapping.segment_end_seconds == null
+  );
+  const fullVideoConflict = fullVideoMappings.length > 1;
+  return activeMappings.map((mapping) => {
+    const isFullVideo = mapping.segment_start_seconds == null && mapping.segment_end_seconds == null;
+    const effectiveMapping = fullVideoConflict && isFullVideo ? { ...mapping, mapping_status: "ambiguous" } : mapping;
+    return adaptYoutubeMaterialRow({
+      video: request.video,
+      progress: request.progress,
+      resourceId: request.resourceId,
+      mapping: effectiveMapping
+    });
   });
 }
 export {
@@ -1594,6 +1635,7 @@ export {
   REVISION_TYPE_BY_MASTERY,
   adaptPhysicalMaterialRow,
   adaptYoutubeMaterialRow,
+  adaptYoutubeMaterialRows,
   addCalendarDays,
   addP48Days,
   addRevisionCalendarDays,

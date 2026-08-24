@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   adaptPhysicalMaterialRow,
   adaptYoutubeMaterialRow,
+  adaptYoutubeMaterialRows,
 } from "./material-db-adapter";
 
 describe("MAT-001 production material adapters", () => {
@@ -205,5 +206,113 @@ describe("MAT-001 production material adapters", () => {
     });
 
     expect(unit.plannerEligible).toBe(false);
+  });
+});
+
+describe("MAT-001 M:N-safe YouTube material identity", () => {
+  it("keeps M:N mappings canonically distinct and blocks conflicting full-video authority", () => {
+    const units = adaptYoutubeMaterialRows({
+      video: {
+        id: "video-many",
+        youtube_playlist_id: "playlist-1",
+        title: "Multi-topic video",
+        position: 3,
+        duration_seconds: 1200,
+        is_active: true,
+      },
+      progress: {
+        youtube_playlist_video_id: "video-many",
+        watched_seconds: 300,
+        last_position_seconds: 450,
+        completed_at: null,
+      },
+      resourceId: "course-1",
+      mappings: [
+        {
+          id: "mapping-a",
+          curriculum_node_id: "topic-a",
+          mapping_status: "validated",
+          mapping_provenance: "reviewed_mapping",
+          is_active: true,
+        },
+        {
+          id: "mapping-b",
+          curriculum_node_id: "topic-b",
+          mapping_status: "validated",
+          mapping_provenance: "reviewed_mapping",
+          is_active: true,
+        },
+      ],
+    });
+
+    expect(units.map((unit) => unit.id)).toEqual([
+      "youtube:video-many:mapping:mapping-a",
+      "youtube:video-many:mapping:mapping-b",
+    ]);
+    expect(units.every((unit) => unit.plannerEligible === false)).toBe(true);
+    expect(units.every((unit) => unit.lastPositionSeconds === 450)).toBe(true);
+  });
+
+  it("preserves a validated segment but keeps it outside exact planning until segment progress exists", () => {
+    const [unit] = adaptYoutubeMaterialRows({
+      video: {
+        id: "video-segment",
+        youtube_playlist_id: "playlist-1",
+        title: "Segmented video",
+        position: 4,
+        duration_seconds: 1800,
+        is_active: true,
+      },
+      progress: {
+        youtube_playlist_video_id: "video-segment",
+        watched_seconds: 500,
+        last_position_seconds: 650,
+        completed_at: null,
+      },
+      resourceId: "course-1",
+      mappings: [{
+        id: "mapping-segment",
+        curriculum_node_id: "topic-a",
+        mapping_status: "validated",
+        mapping_provenance: "reviewed_mapping",
+        segment_start_seconds: 300,
+        segment_end_seconds: 900,
+        is_active: true,
+      }],
+    });
+
+    expect(unit).toMatchObject({
+      id: "youtube:video-segment:mapping:mapping-segment",
+      segmentStartSeconds: 300,
+      segmentEndSeconds: 900,
+      watchedSeconds: 500,
+      lastPositionSeconds: 650,
+      plannerEligible: false,
+    });
+  });
+
+  it("keeps one reviewed full-video mapping planner eligible", () => {
+    const [unit] = adaptYoutubeMaterialRows({
+      video: {
+        id: "video-single",
+        youtube_playlist_id: "playlist-1",
+        title: "Single-topic video",
+        position: 5,
+        duration_seconds: 900,
+        is_active: true,
+      },
+      progress: null,
+      resourceId: "course-1",
+      mappings: [{
+        id: "mapping-single",
+        curriculum_node_id: "topic-a",
+        mapping_status: "validated",
+        mapping_provenance: "reviewed_mapping",
+        is_active: true,
+      }],
+    });
+
+    expect(unit!.id).toBe("youtube:video-single:mapping:mapping-single");
+    expect(unit!.plannerEligible).toBe(true);
   });
 });

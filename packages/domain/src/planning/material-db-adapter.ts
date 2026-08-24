@@ -50,9 +50,12 @@ export interface YoutubeVideoProgressRow {
 }
 
 export interface YoutubeVideoTopicMappingProjection {
+  id?: string | null;
   curriculum_node_id: string;
   mapping_status: MaterialMappingStatus;
   mapping_provenance: MaterialMappingProvenance;
+  segment_start_seconds?: number | null;
+  segment_end_seconds?: number | null;
   is_active: boolean;
 }
 
@@ -138,11 +141,64 @@ export function adaptYoutubeMaterialRow(request: {
     sortOrder: request.video.position,
     durationSeconds: request.video.duration_seconds,
     watchedSeconds: request.progress?.watched_seconds ?? 0,
+    lastPositionSeconds:
+      request.progress?.last_position_seconds ?? 0,
     completedAt: request.progress?.completed_at ?? null,
+    mappingId: request.mapping?.id ?? null,
+    segmentStartSeconds:
+      request.mapping?.segment_start_seconds ?? null,
+    segmentEndSeconds:
+      request.mapping?.segment_end_seconds ?? null,
     mappingStatus,
     mappingProvenance,
     isActive:
       request.video.is_active &&
       (request.mapping?.is_active ?? true),
+  });
+}
+
+export function adaptYoutubeMaterialRows(request: {
+  video: YoutubePlaylistVideoRow;
+  progress: YoutubeVideoProgressRow | null;
+  resourceId: string;
+  mappings: YoutubeVideoTopicMappingProjection[];
+}): MaterialUnitView[] {
+  const activeMappings = request.mappings.filter(
+    (mapping) => mapping.is_active,
+  );
+
+  if (!activeMappings.length) {
+    return [adaptYoutubeMaterialRow({
+      video: request.video,
+      progress: request.progress,
+      resourceId: request.resourceId,
+      mapping: null,
+    })];
+  }
+
+  const fullVideoMappings = activeMappings.filter(
+    (mapping) =>
+      mapping.segment_start_seconds == null &&
+      mapping.segment_end_seconds == null,
+  );
+
+  const fullVideoConflict = fullVideoMappings.length > 1;
+
+  return activeMappings.map((mapping) => {
+    const isFullVideo =
+      mapping.segment_start_seconds == null &&
+      mapping.segment_end_seconds == null;
+
+    const effectiveMapping =
+      fullVideoConflict && isFullVideo
+        ? { ...mapping, mapping_status: "ambiguous" as const }
+        : mapping;
+
+    return adaptYoutubeMaterialRow({
+      video: request.video,
+      progress: request.progress,
+      resourceId: request.resourceId,
+      mapping: effectiveMapping,
+    });
   });
 }
