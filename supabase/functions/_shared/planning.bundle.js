@@ -417,6 +417,210 @@ function findDailyCapacityOverloads(blocks, dayCapacities) {
   return [...plannedByDate.entries()].map(([date, plannedMinutes]) => ({ date, plannedMinutes, capacityMinutes: Math.max(0, dayCapacities[date] ?? 0) })).filter((day) => day.plannedMinutes > day.capacityMinutes).sort((left, right) => left.date.localeCompare(right.date));
 }
 
+// packages/domain/src/planning/learning-stage.ts
+var LEARNING_STAGE_POLICY_VERSION = "pln-004-v1";
+function resolveState(input) {
+  if (input.remediationRequired) return "remediation_required";
+  if (input.unknown) return "unknown";
+  if (input.acceptedPriorEvidence) return "satisfied";
+  if (input.requiredUnits > 0 && input.completedRequiredUnits >= input.requiredUnits) {
+    return "satisfied";
+  }
+  if (input.completedRequiredUnits > 0) return "in_progress";
+  return "not_started";
+}
+function evaluateLearningStage(evidence) {
+  const states = {
+    learn: resolveState(evidence.learn),
+    practice: resolveState(evidence.practice),
+    review: resolveState(evidence.review),
+    reinforcement: resolveState(evidence.reinforcement)
+  };
+  const learnSatisfied = states.learn === "satisfied";
+  const practiceSatisfied = states.practice === "satisfied";
+  const practiceBlockedBy = learnSatisfied ? [] : ["learn"];
+  const advancedBlockedBy = [];
+  if (!learnSatisfied) advancedBlockedBy.push("learn");
+  if (!practiceSatisfied) advancedBlockedBy.push("practice");
+  const nonAdvancingReviewAllowed = evidence.allowNonAdvancingReview === true && learnSatisfied && !practiceSatisfied;
+  const reviewAllowed = nonAdvancingReviewAllowed || advancedBlockedBy.length === 0;
+  const reviewBlockedBy = nonAdvancingReviewAllowed ? [] : [...advancedBlockedBy];
+  const reviewReason = nonAdvancingReviewAllowed ? "explicit_non_advancing_review" : advancedBlockedBy.length === 0 ? "learning_path_prerequisites_satisfied" : "learning_path_prerequisites_unsatisfied";
+  return {
+    policyVersion: LEARNING_STAGE_POLICY_VERSION,
+    stages: {
+      learn: {
+        state: states.learn,
+        allowed: true,
+        blockedBy: [],
+        reason: states.learn === "remediation_required" ? "learn_remediation_required" : "learn_available"
+      },
+      practice: {
+        state: states.practice,
+        allowed: practiceBlockedBy.length === 0,
+        blockedBy: practiceBlockedBy,
+        reason: practiceBlockedBy.length === 0 ? "learn_prerequisite_satisfied" : "learn_prerequisite_unsatisfied"
+      },
+      review: {
+        state: states.review,
+        allowed: reviewAllowed,
+        blockedBy: reviewBlockedBy,
+        reason: reviewReason
+      },
+      reinforcement: {
+        state: states.reinforcement,
+        allowed: advancedBlockedBy.length === 0,
+        blockedBy: [...advancedBlockedBy],
+        reason: advancedBlockedBy.length === 0 ? "learning_path_prerequisites_satisfied" : "learning_path_prerequisites_unsatisfied"
+      }
+    }
+  };
+}
+
+// packages/domain/src/planning/learning-stage-evidence.ts
+function isAuthoritativeProvenance(provenance) {
+  return provenance !== "ai_recommendation";
+}
+function summarizeMaterialStageEvidence(request) {
+  const relevantUnits = request.units.filter(
+    (unit) => unit.targetId === request.targetId && unit.stage === request.stage && unit.required
+  );
+  let completedRequiredUnits = 0;
+  let unknown = false;
+  let remediationRequired = false;
+  for (const unit of relevantUnits) {
+    const mappingAccepted = unit.topicMapping === "validated";
+    const provenanceAccepted = isAuthoritativeProvenance(unit.provenance);
+    if (!mappingAccepted || !provenanceAccepted) {
+      unknown = true;
+    }
+    if (unit.progress === "completed" && mappingAccepted && provenanceAccepted) {
+      completedRequiredUnits += 1;
+    }
+    if (unit.forgotten === true && unit.progress === "completed" && mappingAccepted && provenanceAccepted) {
+      remediationRequired = true;
+    }
+  }
+  return {
+    requiredUnits: relevantUnits.length,
+    completedRequiredUnits,
+    unknown,
+    remediationRequired
+  };
+}
+
+// packages/domain/src/planning/material-unit-view.ts
+function normalizePhysicalUnitType(input) {
+  if (input.pageStart != null && input.pageEnd != null) {
+    return input.sourceUnitType === "test" ? "test" : "page_range";
+  }
+  if (input.sourceUnitType === "test") return "test";
+  if (input.sourceUnitType === "chapter") return "chapter";
+  if (input.sourceUnitType === "reading") return "reading";
+  if (input.sourceUnitType === "mock") return "mock";
+  if (input.sourceUnitType === "video") return "video";
+  return "other";
+}
+function resolveYoutubeProgress(input) {
+  if (input.completedAt) return "completed";
+  if (input.durationSeconds > 0 && input.watchedSeconds >= input.durationSeconds) {
+    return "completed";
+  }
+  if (input.watchedSeconds > 0) return "in_progress";
+  return "not_started";
+}
+function hasAuthoritativeMappingProvenance(provenance) {
+  return provenance !== "ai_candidate";
+}
+function isPlannerEligible(input) {
+  return input.isActive && input.mappingStatus === "validated" && input.curriculumNodeId !== null && hasAuthoritativeMappingProvenance(input.mappingProvenance);
+}
+function normalizeMaterialUnit(input) {
+  if (input.sourceKind === "youtube") {
+    return {
+      id: `youtube:${input.id}`,
+      sourceId: input.id,
+      sourceKind: "youtube",
+      resourceId: input.resourceId,
+      curriculumNodeId: input.curriculumNodeId,
+      unitType: "video",
+      title: input.title,
+      sortOrder: input.sortOrder,
+      pageStart: null,
+      pageEnd: null,
+      durationSeconds: input.durationSeconds,
+      watchedSeconds: input.watchedSeconds,
+      estimatedMinutes: null,
+      progressState: resolveYoutubeProgress(input),
+      completedThroughPage: null,
+      completedAt: input.completedAt,
+      mappingStatus: input.mappingStatus,
+      mappingProvenance: input.mappingProvenance,
+      isActive: input.isActive,
+      plannerEligible: isPlannerEligible(input)
+    };
+  }
+  return {
+    id: `physical:${input.id}`,
+    sourceId: input.id,
+    sourceKind: "physical",
+    resourceId: input.resourceId,
+    curriculumNodeId: input.curriculumNodeId,
+    unitType: normalizePhysicalUnitType(input),
+    title: input.title,
+    sortOrder: input.sortOrder,
+    pageStart: input.pageStart ?? null,
+    pageEnd: input.pageEnd ?? null,
+    durationSeconds: null,
+    watchedSeconds: null,
+    estimatedMinutes: input.estimatedMinutes ?? null,
+    progressState: input.progressState,
+    completedThroughPage: input.completedThroughPage ?? null,
+    completedAt: input.completedAt ?? null,
+    mappingStatus: input.mappingStatus,
+    mappingProvenance: input.mappingProvenance,
+    isActive: input.isActive,
+    plannerEligible: isPlannerEligible(input)
+  };
+}
+
+// packages/domain/src/planning/material-remaining-scope.ts
+function isEffectivelyCompleted(unit) {
+  if (unit.progressState === "completed") return true;
+  if (unit.unitType === "page_range" && unit.pageEnd != null && unit.completedThroughPage != null && unit.completedThroughPage >= unit.pageEnd) {
+    return true;
+  }
+  return false;
+}
+function remainingSeconds(unit) {
+  if (unit.sourceKind !== "youtube") return null;
+  if (unit.durationSeconds == null) return null;
+  return Math.max(
+    0,
+    unit.durationSeconds - (unit.watchedSeconds ?? 0)
+  );
+}
+function remainingPageStart(unit) {
+  if (unit.unitType !== "page_range") return null;
+  if (unit.pageStart == null || unit.pageEnd == null) return null;
+  if (unit.completedThroughPage == null) return unit.pageStart;
+  return Math.min(
+    unit.pageEnd,
+    Math.max(unit.pageStart, unit.completedThroughPage + 1)
+  );
+}
+function calculateRemainingMaterialScope(request) {
+  return request.units.filter((unit) => unit.resourceId === request.resourceId).filter((unit) => unit.curriculumNodeId === request.curriculumNodeId).filter((unit) => unit.isActive).filter((unit) => unit.plannerEligible).filter((unit) => unit.progressState !== "skipped").filter((unit) => !isEffectivelyCompleted(unit)).sort((a, b) => {
+    if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+    return a.id.localeCompare(b.id);
+  }).map((unit) => ({
+    ...unit,
+    remainingSeconds: remainingSeconds(unit),
+    remainingPageStart: remainingPageStart(unit),
+    remainingPageEnd: unit.unitType === "page_range" ? unit.pageEnd : null
+  }));
+}
+
 // packages/domain/src/time-boundaries.ts
 var DEFAULT_TIMEZONE = "Europe/Istanbul";
 function parseDate(date) {
@@ -1211,6 +1415,9 @@ function buildP48Months(input) {
 function roundToThirty(minutes) {
   return Math.max(0, Math.round(minutes / 30) * 30);
 }
+function floorToThirty(minutes) {
+  return Math.max(0, Math.floor(minutes / 30) * 30);
+}
 function buildP48WeekBlocks(input) {
   const dates = Array.from({ length: 7 }, (_, index) => addP48Days(input.weekStart, index));
   const activeDates = dates.filter((date) => date >= input.currentDate && (input.dayCapacities[date] ?? 0) > 0);
@@ -1220,7 +1427,7 @@ function buildP48WeekBlocks(input) {
   const subjectRemaining = /* @__PURE__ */ new Map();
   for (const subject of input.subjects) subjectRemaining.set(subject.subjectId, roundToThirty(subject.weeklyMinutes * scale));
   let targetTotal = [...subjectRemaining.values()].reduce((sum, minutes) => sum + minutes, 0);
-  const capacityTarget = roundToThirty(totalCapacity);
+  const capacityTarget = floorToThirty(totalCapacity);
   while (targetTotal > capacityTarget) {
     const candidate = [...subjectRemaining.entries()].sort((a, b) => b[1] - a[1])[0];
     if (!candidate || candidate[1] < 30) break;
@@ -1240,7 +1447,7 @@ function buildP48WeekBlocks(input) {
   const result = [];
   let previousSubject = null;
   for (const date of activeDates) {
-    let dayRemaining = roundToThirty(input.dayCapacities[date] ?? 0);
+    let dayRemaining = Math.max(0, input.dayCapacities[date] ?? 0);
     let guard = 0;
     while (dayRemaining >= 30 && guard < 30) {
       const candidates = input.subjects.filter((subject2) => (subjectRemaining.get(subject2.subjectId) ?? 0) >= 30).sort((a, b) => (subjectRemaining.get(b.subjectId) ?? 0) - (subjectRemaining.get(a.subjectId) ?? 0));
@@ -1298,6 +1505,64 @@ function buildP48WeekBlocks(input) {
   }
   return result;
 }
+
+// packages/domain/src/planning/material-db-adapter.ts
+function normalizeProgressStatus(status) {
+  if (status === "in_progress") return "in_progress";
+  if (status === "completed") return "completed";
+  if (status === "skipped") return "skipped";
+  return "not_started";
+}
+function normalizePhysicalUnitType2(unitType) {
+  if (unitType === "test") return "test";
+  if (unitType === "video") return "video";
+  if (unitType === "chapter") return "chapter";
+  if (unitType === "reading") return "reading";
+  if (unitType === "mock") return "mock";
+  return "other";
+}
+function adaptPhysicalMaterialRow(request) {
+  const sectionMatchesResource = request.section !== null && request.section.resource_id === request.unit.resource_id;
+  const curriculumNodeId = sectionMatchesResource ? request.section?.curriculum_node_id ?? null : null;
+  const mappingStatus = curriculumNodeId !== null ? "validated" : "missing";
+  const sectionActive = request.section?.is_active ?? true;
+  return normalizeMaterialUnit({
+    sourceKind: "physical",
+    id: request.unit.id,
+    resourceId: request.unit.resource_id,
+    curriculumNodeId,
+    sourceUnitType: normalizePhysicalUnitType2(request.unit.unit_type),
+    title: request.unit.name,
+    sortOrder: request.unit.sort_order,
+    pageStart: request.unit.page_start,
+    pageEnd: request.unit.page_end,
+    estimatedMinutes: request.unit.estimated_minutes,
+    progressState: normalizeProgressStatus(request.progress?.status),
+    completedThroughPage: request.progress?.completed_through_page ?? null,
+    completedAt: request.progress?.completed_at ?? null,
+    mappingStatus,
+    mappingProvenance: request.mappingProvenance,
+    isActive: request.unit.is_active && sectionActive
+  });
+}
+function adaptYoutubeMaterialRow(request) {
+  const mappingStatus = request.mapping?.mapping_status ?? "missing";
+  const mappingProvenance = request.mapping?.mapping_provenance ?? "ai_candidate";
+  return normalizeMaterialUnit({
+    sourceKind: "youtube",
+    id: request.video.id,
+    resourceId: request.resourceId,
+    curriculumNodeId: request.mapping?.curriculum_node_id ?? null,
+    title: request.video.title,
+    sortOrder: request.video.position,
+    durationSeconds: request.video.duration_seconds,
+    watchedSeconds: request.progress?.watched_seconds ?? 0,
+    completedAt: request.progress?.completed_at ?? null,
+    mappingStatus,
+    mappingProvenance,
+    isActive: request.video.is_active && (request.mapping?.is_active ?? true)
+  });
+}
 export {
   BACKLOG_THRESHOLDS,
   CRITICAL_OVERDUE_AFTER_DAYS,
@@ -1309,6 +1574,7 @@ export {
   DEVIATION_THRESHOLDS,
   DomainValidationError,
   FIRST_PASS_BUFFER_DAYS,
+  LEARNING_STAGE_POLICY_VERSION,
   MASTERY_LEVEL_ORDER,
   MASTERY_RECENT_RESULT_LIMIT,
   MASTERY_THRESHOLDS,
@@ -1326,6 +1592,8 @@ export {
   REVISION_ESTIMATED_MINUTES,
   REVISION_INTERVAL_DAYS,
   REVISION_TYPE_BY_MASTERY,
+  adaptPhysicalMaterialRow,
+  adaptYoutubeMaterialRow,
   addCalendarDays,
   addP48Days,
   addRevisionCalendarDays,
@@ -1341,11 +1609,13 @@ export {
   calculateEffectiveWeekCapacity,
   calculatePlanDeviation,
   calculatePriorityV1,
+  calculateRemainingMaterialScope,
   calculateWeeklyAvailableMinutes,
   calculateWeeklyRevisionBudget,
   completeRevisionStatus,
   deriveTaskStatus,
   evaluateBacklog,
+  evaluateLearningStage,
   evaluateTopicMastery,
   findDailyCapacityOverloads,
   forecastP48Resources,
@@ -1356,10 +1626,12 @@ export {
   interpretWeeklyReport,
   isInstantInRange,
   isoWeekday,
+  normalizeMaterialUnit,
   p48MondayOf,
   p48PhaseForDate,
   remainingTaskMinutes,
   replanWeeklyPlanV1,
+  summarizeMaterialStageEvidence,
   transitionTopicForLearnTask,
   zonedMidnightToUtc
 };

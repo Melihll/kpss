@@ -54,6 +54,71 @@ describe("P48 long-range roadmap", () => {
     expect(blocks.reduce((sum, block) => sum + block.estimatedMinutes, 0)).toBe(660);
   });
 });
+describe("P48 exact capacity safety", () => {
+  it("never rounds a 15-minute residual above exact capacity", () => {
+    const dayCapacities = {
+      "2026-08-25": 240,
+      "2026-08-26": 240,
+      "2026-08-27": 240,
+      "2026-08-28": 240,
+      "2026-08-29": 300,
+      "2026-08-30": 285,
+    };
+
+    const blocks = buildP48WeekBlocks({
+      weekStart: "2026-08-24",
+      currentDate: "2026-08-24",
+      weeklyTargetMinutes: 1800,
+      dayCapacities,
+      subjects: [
+        { subjectId: "law", subjectName: "Hukuk", weeklyMinutes: 900 },
+        { subjectId: "econ", subjectName: "İktisat", weeklyMinutes: 900 },
+      ],
+      resources: [
+        {
+          resourceId: "law-r1",
+          resourceName: "Hukuk",
+          subjectId: "law",
+          subjectName: "Hukuk",
+          workMode: "book",
+          remainingMinutes: 5000,
+          sequenceOrder: 1,
+        },
+        {
+          resourceId: "econ-r1",
+          resourceName: "İktisat",
+          subjectId: "econ",
+          subjectName: "İktisat",
+          workMode: "book",
+          remainingMinutes: 5000,
+          sequenceOrder: 1,
+        },
+      ],
+    });
+
+    const total = blocks.reduce(
+      (sum, block) => sum + block.estimatedMinutes,
+      0,
+    );
+
+    const byDate = new Map<string, number>();
+    for (const block of blocks) {
+      byDate.set(
+        block.plannedDate,
+        (byDate.get(block.plannedDate) ?? 0) + block.estimatedMinutes,
+      );
+    }
+
+    expect(total).toBeLessThanOrEqual(1545);
+
+    for (const [date, minutes] of byDate) {
+      expect(minutes).toBeLessThanOrEqual(
+        dayCapacities[date as keyof typeof dayCapacities] ?? 0,
+      );
+    }
+  });
+});
+
 describe("P2-08 material-aware resource finish projection", () => {
   const baseInput = {
     asOfDate: "2026-08-17",

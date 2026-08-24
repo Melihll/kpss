@@ -33,3 +33,13 @@ A positive weekly strategy target with neither recurring availability nor explic
 ## Follow-up
 
 The affected user needs an intentional capacity source for 2026-08-24 through 2026-08-30 before the weekly plan is regenerated.
+
+## Secondary production failure
+
+After recovery capacity was restored, week generation reached the persistence boundary but PostgreSQL correctly rejected the generated plan with MANUAL_PLAN_OVER_CAPACITY.
+
+The planner rounded a 1,545-minute exact capacity upward to 1,560 minutes and also rounded a 285-minute daily boundary upward to 300 minutes.
+
+The fix preserves exact capacity as a hard upper bound. Weekly schedulable target is floored to the supported 30-minute granularity, while daily remaining capacity is never rounded upward.
+
+The database over-capacity guard remains unchanged.

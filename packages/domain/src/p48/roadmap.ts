@@ -284,6 +284,10 @@ function roundToThirty(minutes: number) {
   return Math.max(0, Math.round(minutes / 30) * 30);
 }
 
+function floorToThirty(minutes: number) {
+  return Math.max(0, Math.floor(minutes / 30) * 30);
+}
+
 export function buildP48WeekBlocks(input: {
   weekStart: string;
   currentDate: string;
@@ -302,7 +306,7 @@ export function buildP48WeekBlocks(input: {
   for (const subject of input.subjects) subjectRemaining.set(subject.subjectId, roundToThirty(subject.weeklyMinutes * scale));
 
   let targetTotal = [...subjectRemaining.values()].reduce((sum, minutes) => sum + minutes, 0);
-  const capacityTarget = roundToThirty(totalCapacity);
+  const capacityTarget = floorToThirty(totalCapacity);
   while (targetTotal > capacityTarget) {
     const candidate = [...subjectRemaining.entries()].sort((a, b) => b[1] - a[1])[0];
     if (!candidate || candidate[1] < 30) break;
@@ -329,7 +333,7 @@ export function buildP48WeekBlocks(input: {
   const result: P48WeekBlock[] = [];
   let previousSubject: string | null = null;
   for (const date of activeDates) {
-    let dayRemaining = roundToThirty(input.dayCapacities[date] ?? 0);
+    let dayRemaining = Math.max(0, input.dayCapacities[date] ?? 0);
     let guard = 0;
     while (dayRemaining >= 30 && guard < 30) {
       const candidates = input.subjects
