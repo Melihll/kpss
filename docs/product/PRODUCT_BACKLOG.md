@@ -36,7 +36,8 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | `PLN-001` | `P0` | Esra 7-day Planning Reality Audit | `DONE` |
 | `PLN-002` | `P0` | Separate Planned Study / Extra Study / Substitution / Carryover semantics | `IN_PROGRESS` |
 | `PLN-003` | `P1` | Study Block Duration Policy | `IN_PROGRESS` |
-| `PLN-004` | `P1` | Learning Stage Model | `TODO` |
+| `PLN-004` | `P1` | Learning Stage Model | `IN_PROGRESS` |
+| `MAT-001` | `P1` | Canonical Material Content & Progress | `TODO` |
 | `PLN-005` | `P1` | Resource Role Model | `TODO` |
 | `PLN-006` | `P1` | Daily Fragmentation Control | `TODO` |
 | `PLN-007` | `P1` | Planner Decision Trace | `TODO` |
@@ -117,7 +118,29 @@ Priority describes impact, not implementation order. Dependencies and safety gat
   - Partial, repeated, skipped, and corrected evidence have defined stage behavior.
   - A task reaching its credited-minute estimate has a documented relationship to task status and required resource-unit evidence.
   - Tests cover valid sequencing, invalid shortcuts, unknown evidence, and stage-specific replanning.
+- Local verification note (2026-08-24): the deterministic learning-stage evaluator, canonical material-evidence adapter, and material-evidence-to-stage flow are implemented. PLN-004 targeted tests pass `22/22`; full non-integration repository regression passes `654/654` across `95/95` test files; domain typecheck passes. Integration/RLS suites were not rerun in the current shell because local Supabase environment variables were unavailable. No database or production-authoritative behavior is introduced by this checkpoint.
 
+## `MAT-001` — Canonical Material Content & Progress
+
+- Priority: `P1`
+- Status: `TODO`
+- Problem: The planner can reference resources, but it cannot yet rely on a complete subject-agnostic model of the exact material units a learner should execute, such as page ranges, tests, chapters, or individual YouTube videos.
+- Desired outcome: Every supported KPSS resource can expose exact, ordered, progress-aware material units that map to curriculum topics and can be planned consistently across Today and Week views.
+- Acceptance criteria:
+  - The material model is subject-agnostic and supports every KPSS subject and future resources without subject-specific planner branches.
+  - Physical resources use canonical sections and executable units such as page ranges, tests, chapters, readings, mocks, or other explicit units.
+  - YouTube resources expose individual playlist videos with real duration and deterministic topic mappings rather than treating an entire playlist as one topic unit.
+  - A topic may map to multiple videos, and a video may map to multiple topics when evidence requires it.
+  - Physical unit progress and YouTube video progress remain historical execution facts and are not silently rewritten when pedagogical stage state changes.
+  - A user can explicitly import existing progress through flows such as completed units, watched videos, or a verified "completed up to here" boundary.
+  - "Completed before but forgotten" preserves material completion history while allowing PLN-004 to require review or remediation.
+  - Photo/PDF-assisted content intake may propose sections, units, page ranges, tests, and topic mappings, but canonical publication requires deterministic validation and review.
+  - Planner inputs expose a unified material-unit view across physical resources and YouTube without duplicating authoritative progress stores.
+  - Today tasks can identify exact executable scope, and Week plans can expose the exact material destination expected by the end of the week.
+  - Existing `resource_sections`, `resource_units`, `resource_unit_progress`, `youtube_playlist_videos`, and `youtube_video_progress` are reused where their semantics already fit.
+  - Tests cover physical page/test units, video-topic mappings, partial progress, imported progress, forgotten material, missing mappings, multi-topic units, and subject-independent behavior.
+
+- Architecture note: resource role remains owned by PLN-005, learning-stage progression remains owned by PLN-004, and duration normalization remains owned by PLN-003.
 ## `PLN-005` — Resource Role Model
 
 - Priority: `P1`

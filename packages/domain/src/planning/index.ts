@@ -5,6 +5,8 @@ export * from "./engine";
 export * from "./recommendation";
 export * from "./lifecycle";
 export * from "./daily";
+export * from "./learning-stage";
+export * from "./learning-stage-evidence";
 export * from "../time-boundaries";
 export * from "../mastery/index";
 export * from "../adaptive/index";

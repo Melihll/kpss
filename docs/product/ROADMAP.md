@@ -27,7 +27,7 @@ The core product loop depends on trust in the plan. New capabilities amplify ris
 
 ### Scope
 
-M1 comprises `PLN-001` through `PLN-010`:
+M1 comprises `PLN-001` through `PLN-010` plus `MAT-001`:
 
 | Sequence | Capability | Backlog item |
 | --- | --- | --- |
@@ -35,12 +35,13 @@ M1 comprises `PLN-001` through `PLN-010`:
 | 2 | Define study accounting semantics | `PLN-002` |
 | 3 | Define duration by study type and stage | `PLN-003` |
 | 4 | Represent Learn → Practice → Review / Reinforcement | `PLN-004` |
-| 5 | Represent resource roles | `PLN-005` |
-| 6 | Control daily fragmentation and switching | `PLN-006` |
-| 7 | Explain planner decisions | `PLN-007` |
-| 8 | Test real and synthetic scenarios | `PLN-008` |
-| 9 | Compare safely in shadow mode | `PLN-009` |
-| 10 | Roll out under controlled production gates | `PLN-010` |
+| 5 | Represent exact material content and progress | `MAT-001` |
+| 6 | Represent resource roles | `PLN-005` |
+| 7 | Control daily fragmentation and switching | `PLN-006` |
+| 8 | Explain planner decisions | `PLN-007` |
+| 9 | Test real and synthetic scenarios | `PLN-008` |
+| 10 | Compare safely in shadow mode | `PLN-009` |
+| 11 | Roll out under controlled production gates | `PLN-010` |
 
 The authoritative descriptions and acceptance criteria are in [PRODUCT_BACKLOG.md](PRODUCT_BACKLOG.md).
 
@@ -49,7 +50,8 @@ The authoritative descriptions and acceptance criteria are in [PRODUCT_BACKLOG.m
 M1 is complete only when:
 
 - planned study, extra study, substitution, and carryover have distinct, verified semantics;
-- learning stage and resource role participate in planning decisions;
+- learning stage, exact material scope, and resource role participate in planning decisions;
+- Today and Week plans can expose exact topic/resource-unit destinations when canonical material data is available;
 - duration policy is stage-aware and does not assume every subject is 60 minutes;
 - unnecessary fragments and subject switches are controlled;
 - task placements, moves, duration changes, backlog, carryover, and the effect of extra study are explainable;
@@ -71,7 +73,7 @@ M1 is complete only when:
 
 After the audit and foundational semantics:
 
-- model learning stages and resource roles (`PLN-004`, `PLN-005`);
+- model learning stages, exact material content/progress, and resource roles (`PLN-004`, `MAT-001`, `PLN-005`);
 - improve daily plan shape and explanation (`PLN-006`, `PLN-007`);
 - prove behavior through simulation and shadow comparison (`PLN-008`, `PLN-009`);
 - perform a gated rollout (`PLN-010`).
