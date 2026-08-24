@@ -124,6 +124,26 @@ describe("MAT-001 MaterialUnitView normalization", () => {
     expect(unit.plannerEligible).toBe(false);
   });
 
+  it("does not allow a validated AI-only mapping into authoritative planning", () => {
+    const unit = normalizeMaterialUnit({
+      sourceKind: "youtube",
+      id: "ai-video",
+      resourceId: "video-course-1",
+      curriculumNodeId: "topic-1",
+      title: "AI candidate mapping",
+      sortOrder: 20,
+      durationSeconds: 1800,
+      watchedSeconds: 0,
+      completedAt: null,
+      mappingStatus: "validated",
+      mappingProvenance: "ai_candidate",
+      isActive: true,
+    });
+
+    expect(unit.mappingStatus).toBe("validated");
+    expect(unit.mappingProvenance).toBe("ai_candidate");
+    expect(unit.plannerEligible).toBe(false);
+  });
   it("keeps inactive material historically visible but unavailable for new planning", () => {
     const unit = normalizeMaterialUnit({
       sourceKind: "physical",

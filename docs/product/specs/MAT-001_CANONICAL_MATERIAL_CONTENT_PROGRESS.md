@@ -873,3 +873,37 @@ MAT-001 first domain foundation is locally implemented and verified.
 - No database migration, production mutation path, or production-authoritative planner activation is introduced by this foundation.
 
 Next implementation slice: video-to-topic mapping validation, planner readiness, and safe `completed up to here` proposal semantics.
+
+## 34. Production schema and catalog inventory
+
+Read-only linked production inventory completed on 2026-08-24.
+
+Observed catalog state:
+
+- resources: `80`;
+- resource sections: `475`;
+- resources with sections: `33`;
+- sections with curriculum mapping: `463`;
+- resource units: `79`;
+- resources with units: `25`;
+- active physical units: `79`;
+- physical units with page ranges: `78`;
+- physical progress rows: `1`;
+- YouTube playlists: `1`;
+- YouTube playlist videos: `91`;
+- active YouTube videos: `91`;
+- YouTube videos with authoritative duration: `91/91`;
+- YouTube progress rows: `2`;
+- topic-resource links: `14`;
+- playlist-topic links: `14`.
+
+Confirmed persistence gaps:
+
+- `resource_unit_progress` has no `completed_through_page`; exact physical partial-page position cannot currently be persisted.
+- no canonical `youtube_video_topic_links` relation exists;
+- no video-topic segment-boundary persistence exists;
+- playlist-level topic linkage alone is insufficient for exact individual-video topic planning.
+
+Architectural decision:
+
+Existing authoritative physical and YouTube stores will be preserved. MAT-001 will add adapters into `MaterialUnitView`; missing persistence will be introduced only through a later minimal reviewed migration. No duplicate planner-owned progress store will be created.

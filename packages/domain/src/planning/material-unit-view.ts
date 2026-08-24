@@ -11,6 +11,14 @@ export type MaterialMappingStatus =
   | "ambiguous"
   | "missing";
 
+export type MaterialMappingProvenance =
+  | "reviewed_catalog"
+  | "reviewed_mapping"
+  | "trusted_import"
+  | "user_confirmed"
+  | "corrected"
+  | "ai_candidate";
+
 export type MaterialUnitType =
   | "video"
   | "page_range"
@@ -44,7 +52,7 @@ export interface PhysicalMaterialUnitInput {
   completedThroughPage?: number | null;
   completedAt?: string | null;
   mappingStatus: MaterialMappingStatus;
-  mappingProvenance: string;
+  mappingProvenance: MaterialMappingProvenance;
   isActive: boolean;
 }
 
@@ -59,7 +67,7 @@ export interface YoutubeMaterialUnitInput {
   watchedSeconds: number;
   completedAt: string | null;
   mappingStatus: MaterialMappingStatus;
-  mappingProvenance: string;
+  mappingProvenance: MaterialMappingProvenance;
   isActive: boolean;
 }
 
@@ -85,7 +93,7 @@ export interface MaterialUnitView {
   completedThroughPage?: number | null;
   completedAt: string | null;
   mappingStatus: MaterialMappingStatus;
-  mappingProvenance: string;
+  mappingProvenance: MaterialMappingProvenance;
   isActive: boolean;
   plannerEligible: boolean;
 }
@@ -123,13 +131,20 @@ function resolveYoutubeProgress(
   return "not_started";
 }
 
+function hasAuthoritativeMappingProvenance(
+  provenance: MaterialMappingProvenance,
+): boolean {
+  return provenance !== "ai_candidate";
+}
+
 function isPlannerEligible(
   input: MaterialUnitInput,
 ): boolean {
   return (
     input.isActive &&
     input.mappingStatus === "validated" &&
-    input.curriculumNodeId !== null
+    input.curriculumNodeId !== null &&
+    hasAuthoritativeMappingProvenance(input.mappingProvenance)
   );
 }
 

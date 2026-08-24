@@ -19,7 +19,7 @@ describe("MAT-001 remaining material scope", () => {
         progressState: "completed",
         completedThroughPage: 47,
         mappingStatus: "validated",
-        mappingProvenance: "reviewed_catalog",
+        mappingProvenance: "reviewed_catalog" as const,
         isActive: true,
       }),
       normalizeMaterialUnit({
@@ -36,7 +36,7 @@ describe("MAT-001 remaining material scope", () => {
         progressState: "in_progress",
         completedThroughPage: 49,
         mappingStatus: "validated",
-        mappingProvenance: "reviewed_catalog",
+        mappingProvenance: "reviewed_catalog" as const,
         isActive: true,
       }),
       normalizeMaterialUnit({
@@ -50,7 +50,7 @@ describe("MAT-001 remaining material scope", () => {
         estimatedMinutes: 25,
         progressState: "not_started",
         mappingStatus: "validated",
-        mappingProvenance: "reviewed_catalog",
+        mappingProvenance: "reviewed_catalog" as const,
         isActive: true,
       }),
     ];
@@ -117,7 +117,7 @@ describe("MAT-001 remaining material scope", () => {
       estimatedMinutes: 20,
       progressState,
       mappingStatus,
-      mappingProvenance: "reviewed_catalog",
+      mappingProvenance: "reviewed_catalog" as const,
       isActive,
     });
 
@@ -144,7 +144,7 @@ describe("MAT-001 remaining material scope", () => {
       estimatedMinutes: 20,
       progressState: "not_started" as const,
       mappingStatus: "validated" as const,
-      mappingProvenance: "reviewed_catalog",
+      mappingProvenance: "reviewed_catalog" as const,
       isActive: true,
     };
 
@@ -175,7 +175,7 @@ describe("MAT-001 remaining material scope", () => {
       estimatedMinutes: 20,
       progressState: "not_started" as const,
       mappingStatus: "validated" as const,
-      mappingProvenance: "reviewed_catalog",
+      mappingProvenance: "reviewed_catalog" as const,
       isActive: true,
     });
 
@@ -201,7 +201,7 @@ describe("MAT-001 remaining material scope", () => {
         estimatedMinutes: 30,
         progressState: "not_started" as const,
         mappingStatus: "validated" as const,
-        mappingProvenance: "reviewed_catalog",
+        mappingProvenance: "reviewed_catalog" as const,
         isActive: true,
       });
 
