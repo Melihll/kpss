@@ -15,3 +15,4 @@ export * from "../adaptive/index";
 export * from "../capacity";
 export * from "../pilot/index";
 export * from "../p48/index";
+export * from "./material-db-adapter";
