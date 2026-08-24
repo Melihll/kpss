@@ -1,3 +1,4 @@
+import { classifyP48CapacitySource } from "./p48-capacity-source.ts";
 import { buildP48WeekBlocks, calculateEffectiveDayCapacity } from "./planning.bundle.js";
 import { aggregateCompletedStudySessions, aggregatePlannedCreditByDate } from "./completed-study.ts";
 import { loadP48DailyCapacityOverrides, planningCapacityForDate } from "./capacity-overrides.ts";
@@ -117,6 +118,16 @@ export async function ensureP48WeekPlanForService(
     loadP48DailyCapacityOverrides(client, userId, profile.id, weekStart, addDays(weekStart, 6)),
   ]);
   for (const result of [availability, periods, exceptions, targets, sessions, allocations]) if (result.error) throw result.error;
+
+  const capacitySourceState = classifyP48CapacitySource({
+    weeklyTargetMinutes: Number(strategy.data.weekly_target_minutes),
+    activeAvailabilityCount: (availability.data ?? []).length,
+    dailyOverrideCount: dailyOverrides.size,
+  });
+
+  if (capacitySourceState === "missing_capacity_source") {
+    throw new Error("P48_CAPACITY_SOURCE_MISSING");
+  }
 
   const { actualByResource } = aggregateCompletedStudySessions(sessions.data ?? []);
   const plannedCreditByDate = aggregatePlannedCreditByDate(allocations.data ?? []);
