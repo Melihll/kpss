@@ -1,3 +1,4 @@
+import { loadMaterialWorkloadShadow } from "../../supabase/functions/_shared/canonical-material-shadow";
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -249,5 +250,27 @@ describe("MAT-001 persistence and canonical material loader", () => {
       segmentEndSeconds: 700,
       plannerEligible: false,
     });
+  });
+
+  it("compares legacy and canonical material stores without claiming parity on partial coverage", async () => {
+    const shadow = await loadMaterialWorkloadShadow(
+      a,
+      userA.id,
+      profileId,
+      [{
+        resourceId,
+        plannedMinutes: 600,
+      }],
+    );
+
+    expect(shadow).toHaveLength(1);
+
+    const row = shadow[0]!;
+
+    expect(row.legacyRemainingMinutes).toBe(32);
+    expect(row.canonicalKnownRemainingMinutes).toBe(34);
+    expect(row.canonicalCoverage).toBe("partial");
+    expect(row.canonicalBlockedUnitCount).toBeGreaterThan(0);
+    expect(row.deltaMinutes).toBeNull();
   });
 });

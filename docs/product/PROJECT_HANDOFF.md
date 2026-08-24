@@ -71,3 +71,14 @@ Material completion history remains separate from pedagogical state. Previously 
 Specify MAT-001 canonical identities, physical units, YouTube video-topic mappings, unified planner MaterialUnitView, progress/import behavior, photo/PDF intake, Today exact scope, Week exact destination, safety invariants, and acceptance scenarios.
 
 Continue with `SPEC → TEST → IMPLEMENT → VERIFY`.
+
+## 2026-08-24 MAT-001 canonical material shadow checkpoint
+
+- Canonical physical + YouTube DB loader is implemented and verified against local PostgreSQL.
+- Individual YouTube video-topic mappings use mapping-safe canonical identities.
+- Conflicting full-video mappings are not planner-authoritative.
+- Segment mappings remain planner-ineligible until exact segment progress exists.
+- Canonical workload shadow compares legacy and canonical stores read-only.
+- Partial canonical coverage never produces a misleading numeric parity delta.
+- Existing production material workload path remains unchanged.
+- MAT-001 production migration remains undeployed.
