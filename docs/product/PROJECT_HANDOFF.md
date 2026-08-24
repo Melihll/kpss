@@ -82,3 +82,16 @@ Continue with `SPEC → TEST → IMPLEMENT → VERIFY`.
 - Partial canonical coverage never produces a misleading numeric parity delta.
 - Existing production material workload path remains unchanged.
 - MAT-001 production migration remains undeployed.
+
+## 2026-08-24 MAT-001 production schema release
+
+- Migration `20260824123500_mat001_material_progress_and_video_topic_mapping.sql` was applied to production successfully.
+- Remote migration history matches local history.
+- Post-apply dry-run reports the remote database is up to date.
+- `resource_unit_progress.completed_through_page` exists as nullable exact page progress.
+- `youtube_video_topic_links` exists with ownership constraints, mapping status/provenance, optional segment bounds, RLS and validation triggers.
+- Existing production material data was preserved: 91 YouTube videos, 91 active videos and 1 resource-unit progress row remained unchanged.
+- No fabricated partial-page backfill was created.
+- No automatic individual video-topic mappings were created.
+- Production canonical runtime path remains inactive.
+- No Edge Function, planner, Telegram or application deployment was performed as part of this release.
