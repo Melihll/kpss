@@ -1,6 +1,6 @@
 # MAT-001 — Canonical Material Content & Progress
 
-Status: IN_PROGRESS — FOUNDATION_IMPLEMENTED_LOCAL_VERIFIED — SCHEMA/PLANNER_INTEGRATION GATED
+Status: IN_PROGRESS — PERSISTENCE_MIGRATION_LOCAL_CANDIDATE — PRODUCTION UNDEPLOYED
 Last updated: 2026-08-24
 
 ## 1. Purpose
@@ -907,3 +907,36 @@ Confirmed persistence gaps:
 Architectural decision:
 
 Existing authoritative physical and YouTube stores will be preserved. MAT-001 will add adapters into `MaterialUnitView`; missing persistence will be introduced only through a later minimal reviewed migration. No duplicate planner-owned progress store will be created.
+
+## 35. MAT-001 persistence migration candidate
+
+A minimal persistence migration candidate is implemented and locally verified.
+
+The candidate adds:
+
+- `resource_unit_progress.completed_through_page` for exact partial-page progress;
+- canonical individual `youtube_video_topic_links` for video-to-topic mappings;
+- validated mapping status and explicit mapping provenance;
+- optional deterministic video segment boundaries;
+- ownership-preserving foreign keys across user, profile, and YouTube video;
+- authenticated RLS for user-owned mapping rows;
+- video-duration validation for segment bounds.
+
+Safety guarantees:
+
+- existing physical progress rows are not backfilled with fabricated page progress;
+- playlist-level topic links are not promoted automatically to individual video mappings;
+- new mappings default to `ambiguous` and `ai_candidate`;
+- AI-only mappings remain planner-ineligible;
+- inactive mapping rows may preserve historical mapping decisions;
+- exact partial-page state remains separate from learning-stage satisfaction;
+- production schema deployment remains explicitly gated.
+
+Verification:
+
+- MAT-001 persistence contract: PASS;
+- material adapter and canonical material domain gates: PASS;
+- domain typecheck: PASS;
+- full non-integration regression: 106/106 files, 710/710 tests PASS;
+- linked Supabase migration dry-run: PASS;
+- production migration: NOT APPLIED.
