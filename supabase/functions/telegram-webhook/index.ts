@@ -1308,6 +1308,8 @@ Deno.serve(async (req) => {
       : error && typeof error === "object" && "message" in error
       ? String((error as { message?: unknown }).message ?? error)
       : String(error);
+
+    console.error("TELEGRAM_WEBHOOK_UNHANDLED_ERROR", errorMessage);
     if (lifecycleCallbackQueryId && !lifecycleCallbackAnswered) {
       lifecycleCallbackAnswered = true;
       try {
