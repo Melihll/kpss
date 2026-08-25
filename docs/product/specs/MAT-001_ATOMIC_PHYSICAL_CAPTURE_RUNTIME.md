@@ -1,10 +1,10 @@
 # MAT-001 Atomic Physical Capture Runtime
 
-Status: W3_RUNTIME_DEPLOYED — CAPTURE_GATE_OFF — PLANNER_OFF
+Status: W3_EXACT_PROFILE_PILOT_ENABLED — PLANNER_OFF — WAITING_FOR_NATURAL_SESSION
 
 ## 1. Scope
 
-W3 integrates the deployed W2 physical lifecycle behind a server-side capability gate. The verified W3 web and `app-api` code are deployed in production, but capture remains gate-off. W3 does not deploy Telegram, enable a production flag, create production evidence, or activate canonical workload planning.
+W3 integrates the deployed W2 physical lifecycle behind a server-side capability gate. The verified W3 web and `app-api` code are deployed in production, and capture is enabled only for the approved pilot profile `73f9b34c-da73-43d9-a05c-2026409cf290`. W3 does not deploy Telegram, enable evidence-shadow consumption, create synthetic production evidence, or activate canonical workload planning.
 
 The sanctioned local path is:
 
@@ -100,13 +100,13 @@ Local/read-only shadow evaluation may explicitly pass `physicalPaceEvidenceAvail
 
 ## 11. Rollout and rollback
 
-The next rollout gate requires later explicit production approval to configure an exact profile allowlist and observe protected lifecycle counters for that pilot. The W3 app-api and web artifacts are already deployed; they must not be redeployed merely to enable the pilot. Evidence-shadow consumption and canonical planner activation remain separate later decisions. Telegram needs a separately reviewed ownership-preserving RPC wrapper and boundary UX before it can be proposed.
+The exact-profile pilot allowlist is enabled for one approved production profile. The next gate is read-only observation of its next natural eligible protected lifecycle; activity must not be manufactured. Evidence-shadow consumption, canonical planner activation, allowlist widening, and Telegram integration remain separate later decisions. Telegram still needs a reviewed ownership-preserving RPC wrapper and boundary UX before it can be proposed.
 
 Rollback removes the app-api profile from the capture allowlist. New starts immediately use legacy behavior. Existing protected sessions must continue through W2 pause/resume/finish so their ledgers are not mixed. No accepted evidence is deleted or rewritten.
 
 ## 12. W3 production guardrail
 
-The W3 runtime is deployed but dormant: capture, evidence-shadow consumption, and the canonical planner remain OFF. The gate-off release performed no migration, feature configuration, production data mutation, Telegram deployment, or pilot activation. Production postflight checks were read-only.
+The W3 runtime is deployed and capture is ON only for the exact approved pilot profile. Evidence-shadow consumption and the canonical planner remain OFF. Ambiguous, no-unit, nonphysical, other-profile, and Telegram flows remain legacy. The activation performed no migration, code/web/Telegram deployment, backfill, artificial study activity, or production data repair.
 
 ## 13. Verification
 
@@ -127,4 +127,9 @@ The W3 runtime is deployed but dormant: capture, evidence-shadow consumption, an
 - Cloudflare Pages deployment `1fdc476a-c62e-4d7d-be94-24e2e12416c9` remained the W3 production web at commit `8354deff78b06f56411dc969a073c54f68829c69`; production and immutable URLs returned HTTP `200`, identical HTML SHA256 `68eb853309ed7a1fe95419ae392af1bda4229afa626d23b120ba5315a073f11d`, and HTTP `200` for both referenced assets.
 - Production operational counters before/after the release audit were `61` sessions, `248` tasks, `1` test result, and `1` resource-progress row. Units/mappings/partial boundaries remained `79 / 76 / 0`.
 - W2 snapshots, protected breaks, and evidence remained `0 / 0 / 0`; accepted historical pace samples and calibrated physical pages remained `0`.
-- Capture, shadow evidence consumption, canonical workload planning, and Telegram W2 integration remain OFF in production. No natural legacy study action occurred during the observation window, so legacy parity is `NOT_OBSERVED` rather than manufactured.
+- At the gate-off release checkpoint, capture, shadow evidence consumption, canonical workload planning, and Telegram W2 integration were OFF. No natural legacy study action occurred during that checkpoint window, so legacy parity was `NOT_OBSERVED` rather than manufactured.
+- Exact-profile pilot activation completed at `2026-08-25T16:05:45.276Z` for `73f9b34c-da73-43d9-a05c-2026409cf290` only. Pure matcher verification returned ON for the pilot, OFF for both other active profiles, and wildcard false.
+- Immediate post-activation W2 counts remained `0 / 0 / 0`; ordinary counters remained `61` sessions, `248` tasks, `1` test result, and `1` resource-progress row. Other-profile W2 rows remained `0`.
+- Evidence-shadow remained OFF, canonical runtime remained false, physical calibration remained `0`, and accepted samples remained `0`.
+- Supabase configuration propagation advanced `app-api` to v31 while preserving the v30 bundle SHA256 and deployment timestamp; no Edge code was redeployed. Telegram remains legacy.
+- No natural eligible W2 session occurred during the bounded observation window. Status is `WAITING_FOR_NATURAL_SESSION`; no artificial production activity was created.

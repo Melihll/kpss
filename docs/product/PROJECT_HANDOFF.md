@@ -68,7 +68,7 @@ Material completion history remains separate from pedagogical state. Previously 
 
 ## NEXT EXACT STEP
 
-Prepare a separately approved exact-profile pilot capture activation proposal. It must name the exact profile allowlist, leave evidence-shadow consumption and canonical workload planning OFF, keep Telegram legacy, observe the first protected lifecycle, and define immediate gate-disable stop conditions. Do not enable the pilot from this handoff.
+Observe the next natural W2-eligible physical study lifecycle for the enabled exact-profile pilot. Inspect start, pause/resume if naturally used, finish, evidence cardinality, cross-profile isolation, and planner isolation read-only. Do not manufacture activity, enable evidence-shadow consumption or planning, or widen the profile allowlist.
 
 Telegram requires a separately reviewed service-role W2 wrapper plus authoritative page-boundary UX before it can enter an activation proposal. Do not activate canonical workload planning while production physical pace evidence remains insufficient.
 
@@ -180,3 +180,16 @@ Telegram requires a separately reviewed service-role W2 wrapper plus authoritati
 - Workload shadow remained `341` views: `76` exact, `0` calibrated, `0` fallback, `265` unknown, and `76` planner-eligible; physical pages remained `0 / 5,103` calibrated/unknown and exact YouTube remaining workload remained `3,323` minutes.
 - No Telegram deployment or activation, planner activation, database migration, production data mutation, W2 RPC test, evidence backfill, or pilot activation occurred.
 - The next gate is a separately approved exact-profile pilot capture activation; it is not enabled by this release.
+
+## 2026-08-25 W3 exact-profile capture pilot activation
+
+- Status: `W3_EXACT_PROFILE_PILOT_ENABLED — PLANNER_OFF`; observation state: `WAITING_FOR_NATURAL_SESSION`.
+- `PHYSICAL_PACE_CAPTURE_V1_PROFILE_IDS` was set at `2026-08-25T16:05:45.276Z` to the single approved profile `73f9b34c-da73-43d9-a05c-2026409cf290`.
+- The pure production-profile matcher resolves capture ON only for that profile and OFF for both other active production profiles; wildcard capture is not configured.
+- Preflight inventory contained `13` W2-eligible exact physical paths, `2` ambiguous multi-unit paths, `26` no-unit paths, and `0` invalid paths. Ambiguous, no-unit, nonphysical, and Telegram work remains legacy.
+- Activation itself created no rows or ordinary-state mutations: W2 snapshots/protected breaks/evidence remained `0 / 0 / 0`; sessions/tasks/test-results/resource-progress remained `61 / 248 / 1 / 1`.
+- `PHYSICAL_PACE_EVIDENCE_SHADOW_V1` remains missing, canonical planner runtime remains OFF, accepted samples remain `0`, and physical calibrated pages remain `0`.
+- Supabase secret propagation advanced function configuration version counters without changing code bundles or deployment timestamps. `app-api` is active at v31 with the v30 bundle SHA256 `4747c9f5e9343587eec0da34beae149e3a289633ef1c9ca79d28a134827af573` and `verify_jwt = true`; no code was redeployed.
+- Cloudflare Pages remained deployment `1fdc476a-c62e-4d7d-be94-24e2e12416c9` at W3 commit `8354deff78b06f56411dc969a073c54f68829c69`; independent mobile-data verification cleared the local-network-only health blocker. No web deployment occurred.
+- No natural eligible W2 session occurred during the bounded activation observation window. The pilot remains enabled waiting for natural use; no artificial session or evidence was created.
+- No Telegram deployment, migration, backfill, planner activation, evidence-shadow activation, second-profile activation, or rollback occurred.
