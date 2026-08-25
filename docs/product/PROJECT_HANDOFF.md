@@ -68,7 +68,7 @@ Material completion history remains separate from pedagogical state. Previously 
 
 ## NEXT EXACT STEP
 
-Prepare a separate W3 production activation proposal for the already verified app-api/web capture path. That proposal must name the exact profile allowlist, deploy app-api and web, keep Telegram legacy, verify the first protected lifecycle under observation, and retain canonical workload planning OFF. No deployment or feature enablement is authorized by this handoff.
+Prepare a separately approved exact-profile pilot capture activation proposal. It must name the exact profile allowlist, leave evidence-shadow consumption and canonical workload planning OFF, keep Telegram legacy, observe the first protected lifecycle, and define immediate gate-disable stop conditions. Do not enable the pilot from this handoff.
 
 Telegram requires a separately reviewed service-role W2 wrapper plus authoritative page-boundary UX before it can enter an activation proposal. Do not activate canonical workload planning while production physical pace evidence remains insufficient.
 
@@ -168,3 +168,15 @@ Telegram requires a separately reviewed service-role W2 wrapper plus authoritati
 - Existing production counters are `60` sessions, `248` tasks, `1` test result, `1` resource-progress row, `79` units, `76` mappings, and `0` exact partial boundaries. The one additional session since W2 was legitimate activity unrelated to W3; all guarded counts were stable during the read-only audit.
 - Deployed app-api v29 and Telegram v33 remain the August 24 builds; no physical-pace feature secret exists. W3 performed no migration, Edge/web/Telegram deployment, feature enablement, production mutation, or planner cutover.
 - Status: `LOCAL_VERIFIED — PRODUCTION_RUNTIME_OFF — TELEGRAM_UI_BLOCKED`.
+
+## 2026-08-25 W3 gate-off runtime production release
+
+- Status: `W3_RUNTIME_DEPLOYED — CAPTURE_GATE_OFF — PLANNER_OFF`.
+- Verified source commit `8354deff78b06f56411dc969a073c54f68829c69` was deployed only to the production `app-api` Edge Function; it advanced from v29 to v30 at `2026-08-25T14:31:10.230Z` with bundle SHA256 `4747c9f5e9343587eec0da34beae149e3a289633ef1c9ca79d28a134827af573`.
+- The W3 web was already live from Cloudflare Pages deployment `1fdc476a-c62e-4d7d-be94-24e2e12416c9` at the same source commit. The release did not deploy web; the production and immutable W3 URLs remained HTTP 200 with matching HTML and healthy referenced assets.
+- `PHYSICAL_PACE_CAPTURE_V1_PROFILE_IDS` remains missing, so capture is OFF. `PHYSICAL_PACE_EVIDENCE_SHADOW_V1` remains missing, so W2 evidence consumption is OFF. Canonical planner runtime remains OFF.
+- Postflight W2 tables remain `0 / 0 / 0` for snapshots, protected breaks, and pace evidence. Accepted historical physical pace samples remain `0`; physical calibration remains `0` pages.
+- Production safety counters remained `61` sessions, `248` tasks, `1` test result, `1` resource-progress row, `79` resource units, `76` video-topic mappings, and `0` non-null exact partial-page boundaries during the release window.
+- Workload shadow remained `341` views: `76` exact, `0` calibrated, `0` fallback, `265` unknown, and `76` planner-eligible; physical pages remained `0 / 5,103` calibrated/unknown and exact YouTube remaining workload remained `3,323` minutes.
+- No Telegram deployment or activation, planner activation, database migration, production data mutation, W2 RPC test, evidence backfill, or pilot activation occurred.
+- The next gate is a separately approved exact-profile pilot capture activation; it is not enabled by this release.
