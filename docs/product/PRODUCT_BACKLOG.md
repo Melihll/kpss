@@ -141,7 +141,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
   - Tests cover physical page/test units, video-topic mappings, partial progress, imported progress, forgotten material, missing mappings, multi-topic units, and subject-independent behavior.
 
 - Architecture note: resource role remains owned by PLN-005, learning-stage progression remains owned by PLN-004, and duration normalization remains owned by PLN-003.
-- W2 local verification note (2026-08-25): atomic physical pace evidence is implemented as a non-deployed migration/RPC candidate with protected start/material snapshots, protected pause accounting, immutable accepted events, causal session idempotency, exact page-boundary semantics, and capability-gated W1 ingestion. Targeted tests pass `25/25`, full non-integration regression passes `792/792` across `123/123` files, local integration passes `114/114` across `12/12` files, and domain typecheck passes. Production read-only audit still has `0` accepted physical samples; migration and runtime activation require separate explicit approvals.
+- W2 release note (2026-08-25): atomic physical pace evidence migration `20260825130000` is deployed as schema/RPC capability only. Protected start/material snapshots, protected pause accounting, immutable accepted events, causal session idempotency, exact page-boundary semantics, RLS, and four W2 RPCs are present. All W2 tables and historical accepted samples remain at `0`; no backfill occurred; app-api/Telegram/web capture and canonical planning remain inactive. Runtime activation requires a separate design/review and explicit approval.
 ## `PLN-005` — Resource Role Model
 
 - Priority: `P1`

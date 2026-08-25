@@ -146,5 +146,9 @@ Do not activate canonical workload planning while production physical pace evide
 - Verification: targeted `25/25`, non-integration `792/792` across `123/123` files, local integration `114/114` across `12/12` files, domain typecheck PASS, edge planning bundle rebuilt, and local PostgreSQL migration apply/lint PASS.
 - Local fixture readiness: three compatible exact-resource samples produce medium-confidence calibrated workload and planner eligibility; one sample leaves synthetic material low-confidence and blocked.
 - Production read-only audit is unchanged: `341` views (`76` exact, `0` calibrated, `0` fallback, `265` unknown), `3,323` exact YouTube minutes, `0 / 5,103` calibrated/unknown physical pages, and safety counters `79` resource units / `76` mappings / `0` partial boundaries before and after.
-- Migration `20260825130000_atomic_physical_pace_evidence.sql` is **NOT DEPLOYED**; accepted historical physical pace samples remain `0`; production runtime remains OFF; no production row was written.
-- Next release, if approved separately, is schema/RPC only. Applying the W2 migration does not authorize capture-route activation, planner cutover, Edge deployment, backfill, or production data mutation.
+- Migration `20260825130000_atomic_physical_pace_evidence.sql` was deployed on 2026-08-25 under explicit schema/RPC-only approval; SHA256 `82006d04a089595308ff9b434dd4f4c8888c2191fdd0fb9c69f0af210c32a8e6`.
+- Postflight: all expected tables, columns, indexes, RPC signatures, RLS/security statements, and immutable triggers are present; linked lint passes; zero migrations remain pending.
+- All three W2 tables contain `0` rows; accepted historical physical pace samples remain `0`; no backfill or evidence sample was created.
+- Existing counts remained `59` sessions, `248` tasks, `1` test result, `1` resource-progress row, `79` resource units, `76` mappings, and `0` non-null exact partial-page boundaries.
+- Status: `PRODUCTION_SCHEMA_DEPLOYED — CAPTURE_RUNTIME_NOT_ACTIVATED`. No Edge/app/Telegram/web deployment occurred; routes and canonical planner remain OFF.
+- Next gate requires a separate runtime-activation design/review and explicit production approval.

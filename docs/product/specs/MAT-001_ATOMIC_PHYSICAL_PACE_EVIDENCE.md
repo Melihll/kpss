@@ -1,12 +1,12 @@
 # MAT-001 Atomic Physical Pace Evidence
 
-Status: W2_SPECIFIED_LOCAL_CANDIDATE — MIGRATION_NOT_DEPLOYED — RUNTIME_OFF
+Status: PRODUCTION_SCHEMA_DEPLOYED — CAPTURE_RUNTIME_NOT_ACTIVATED
 
 ## 1. Goal
 
 W2 makes future physical study measurable without fabricating historical pace. An accepted sample exists only when actual break-adjusted active time and an authoritative physical page-progress delta are completed by the same sanctioned database transaction.
 
-W2 does not activate canonical planning, change the current app-api or Telegram study routes, backfill history, deploy an Edge Function, apply a migration, or write production data.
+The W2 schema/RPC migration is deployed. This release did not activate canonical planning, change the current app-api or Telegram study routes, backfill history, deploy an Edge Function, or write production evidence data.
 
 ## 2. Authoritative lifecycle audit
 
@@ -24,14 +24,14 @@ Current overlap protection remains authoritative: live sessions are unique per u
 
 ## 3. Chosen architecture
 
-The lifecycle audit found that authenticated users can directly update their own `study_sessions` and `study_session_breaks`. Those rows remain compatible accounting state, but they cannot safely hold W2's time or start-boundary authority. The local migration candidate therefore adds:
+The lifecycle audit found that authenticated users can directly update their own `study_sessions` and `study_session_breaks`. Those rows remain compatible accounting state, but they cannot safely hold W2's time or start-boundary authority. The deployed migration therefore adds:
 
 1. a protected, read-only-to-clients `physical_study_activity_snapshots` row containing the server start timestamp, exact material identity, unit page range, and authoritative start boundary;
 2. a protected `physical_study_activity_breaks` ledger controlled only by W2 pause/resume/finish RPCs;
 3. an accepted-only immutable `physical_pace_evidence` event table;
 4. `start_physical_study_session`, `pause_physical_study_session`, `resume_physical_study_session`, and `finish_physical_study_session` transactional RPCs.
 
-The existing generic start/finish, retroactive, task completion, test result, app-api, and Telegram flows are not replaced or wired to the candidate.
+The existing generic start/finish, retroactive, task completion, test result, app-api, and Telegram flows are not replaced or wired to W2 capture.
 
 The evidence causal identity is `study_session_id`. A unique constraint permits at most one accepted pace sample for that activity. Replaying a successful finish returns the existing event and does not add progress or accounting again.
 
@@ -98,7 +98,7 @@ Zero progress is a successful study finish with no progress mutation and no evid
 
 ## 8. Schema safety
 
-The candidate contains ownership-preserving foreign keys for profile, session, task, resource, section, unit, subject/topic identity; page/time/provenance/status constraints; unique session idempotency; authenticated own-row SELECT RLS; no authenticated direct insert/update/delete grant on W2 tables; and update protection for immutable snapshots/events. Deletes are not directly granted but ownership cascades remain available for account/session deletion.
+The deployed schema contains ownership-preserving foreign keys for profile, session, task, resource, section, unit, subject/topic identity; page/time/provenance/status constraints; unique session idempotency; authenticated own-row SELECT RLS; no authenticated direct insert/update/delete grant on W2 tables; and update protection for immutable snapshots/events. Deletes are not directly granted but ownership cascades remain available for account/session deletion.
 
 All four W2 mutation RPCs are `security definer` because direct snapshot, break-ledger, and evidence writes are intentionally unavailable. Each obtains `auth.uid()`, explicitly scopes and locks every mutable row to that user/profile/material identity, and uses an empty search path.
 
@@ -106,19 +106,15 @@ No historical insert or update statement exists in the migration.
 
 ## 9. Workload ingestion and rollout gate
 
-W1 ingestion accepts deployed `physical_pace_evidence` rows as `actual_elapsed_time + actual_progress_delta` with provenance `atomic_physical_finish`. The loader query is capability-gated and defaults OFF because the production table does not exist yet.
+W1 ingestion accepts `physical_pace_evidence` rows as `actual_elapsed_time + actual_progress_delta` with provenance `atomic_physical_finish`. The loader query remains capability-gated OFF despite the table now existing in production.
 
-The production workload shadow therefore remains on the W1 schema until a separate migration release is explicitly approved. After deployment, callers must deliberately enable the capability; app-api canonical planning remains separately gated.
+The production workload shadow remains on the W1 ingestion path because callers do not enable the new capability. App-api/Telegram capture and canonical planning remain separately gated.
 
 ## 10. Release and rollback considerations
 
-Deployment requires a separate explicit approval for exactly the new migration. Before approval:
+Migration `20260825130000_atomic_physical_pace_evidence.sql` was deployed to production on 2026-08-25 under explicit schema/RPC-only approval. Its SHA256 is `82006d04a089595308ff9b434dd4f4c8888c2191fdd0fb9c69f0af210c32a8e6`. Postflight confirmed exact schema/RPC exposure, zero W2 rows, zero historical evidence, unchanged existing counters, zero pending migrations, and no runtime activation.
 
-- run linked migration dry-run and schema/RLS review;
-- verify current session, overlap, task, and progress regressions;
-- deploy schema/RPC only, without app/Telegram activation;
-- confirm zero historical evidence rows and unchanged existing counters;
-- separately approve any later app-api/Telegram capture activation.
+Any later app-api, Telegram, or web capture activation requires a separate design, review, tests, and explicit production approval.
 
 Rollback before capture activation may drop the four new RPCs and three new tables in a reviewed compensating migration. After accepted events exist, rollback must preserve/export immutable evidence and must not silently discard it.
 
@@ -126,7 +122,7 @@ Rollback before capture activation may drop the four new RPCs and three new tabl
 
 No existing session, task, test, progress, or estimated-minute row is backfilled into `physical_pace_evidence`. The historical accepted count remains zero unless an already-atomic causal record independently satisfies W1’s existing test-result rule. Timestamp proximity never establishes causality.
 
-## 12. Local verification and production state
+## 12. Verification and production state
 
 - SPEC → RED was observed before the W2 module, migration, and ingestion path existed.
 - Targeted boundary, migration-contract, W1-ingestion, and runtime-isolation tests: `25/25` PASS.
@@ -135,7 +131,9 @@ No existing session, task, test, progress, or estimated-minute row is backfilled
 - Local PostgreSQL migration apply/lint and full integration regression: `114/114` across `12/12` files PASS.
 - Production read-only shadow: `341` total, `76` exact, `0` calibrated, `0` fallback, `265` unknown, `76` eligible; physical pages remain `0` calibrated and `5,103` unknown.
 - Production safety counters before/after: `79` resource units, `76` video-topic mappings, `0` non-null exact partial-page boundaries.
-- Production migration history ends at `20260824123500`; W2 `20260825130000` is local-only.
-- Accepted historical physical pace samples: `0`. Production rows written: `0`. Canonical runtime: OFF.
+- Production migration history includes `20260825130000`; linked dry-run reports zero pending migrations.
+- All three W2 tables contain `0` rows; accepted historical physical pace samples remain `0`; no backfill occurred.
+- Existing production counts remained unchanged before/after: `59` study sessions, `248` tasks, `1` test result, `1` resource-progress row, `79` resource units, `76` video-topic mappings, and `0` non-null exact partial-page boundaries.
+- All W2 tables and RPCs are deployed, but app-api, Telegram, web capture routes, W1 loader activation, and canonical planner runtime remain OFF.
 
-The exact next step requiring explicit approval is a schema/RPC-only release of `20260825130000_atomic_physical_pace_evidence.sql` to the linked production project, followed by read-only schema/RLS/count verification. That approval would not authorize app-api/Telegram capture activation, canonical planner cutover, Edge deployment, backfill, or any production data mutation beyond the migration's additive schema objects.
+The next gate requiring explicit approval is runtime-activation design/review for selected app-api, Telegram, or web capture paths. Schema deployment alone does not authorize route activation, canonical planner cutover, Edge deployment, backfill, or evidence creation.

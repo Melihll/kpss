@@ -972,9 +972,9 @@ The existing app-api workload path remains active and unchanged. Canonical workl
 
 ## 37. Atomic physical pace evidence (W2)
 
-W2 is implemented and locally verified as a production-inactive migration/RPC candidate. The detailed contract is `MAT-001_ATOMIC_PHYSICAL_PACE_EVIDENCE.md`.
+W2 is implemented, locally verified, and deployed as a production schema/RPC capability with capture runtime inactive. The detailed contract is `MAT-001_ATOMIC_PHYSICAL_PACE_EVIDENCE.md`.
 
-The sanctioned candidate flow owns both sides of a future physical pace sample:
+The deployed but runtime-inactive flow owns both sides of a future physical pace sample when later activated:
 
 - a protected start snapshot records server time, exact material identity, page range, and last-completed-page boundary;
 - protected physical pause/resume records exclude inactive time without trusting directly editable generic break rows;
@@ -984,4 +984,4 @@ The sanctioned candidate flow owns both sides of a future physical pace sample:
 
 W1 ingestion can consume accepted `physical_pace_evidence` only when explicitly capability-enabled after schema deployment. Reading/content `page_range` evidence and problem-solving `test` evidence remain incompatible calibration pools. Three compatible fixture samples satisfy the unchanged medium-confidence gate; one sample does not make a synthetic span planner-eligible.
 
-Local gates pass: targeted `25/25`, non-integration `792/792` across `123/123` files, integration `114/114` across `12/12` files, domain typecheck, bundle rebuild, and local PostgreSQL migration apply/lint. The linked production shadow remains unchanged and read-only. Migration `20260825130000_atomic_physical_pace_evidence.sql` is not deployed, accepted historical physical pace samples remain `0`, and canonical runtime remains OFF.
+Local gates pass: targeted `25/25`, non-integration `792/792` across `123/123` files, integration `114/114` across `12/12` files, domain typecheck, bundle rebuild, and local PostgreSQL migration apply/lint. Migration `20260825130000_atomic_physical_pace_evidence.sql` was deployed on 2026-08-25 under schema/RPC-only approval; its SHA256 is `82006d04a089595308ff9b434dd4f4c8888c2191fdd0fb9c69f0af210c32a8e6`. Production W2 tables and accepted historical pace evidence remain empty, routes are not activated, and canonical runtime remains OFF.
