@@ -19,8 +19,10 @@ function evidenceRows() {
     units: [{ id: "u1", resource_id: "r1", unit_type: "reading", page_start: 1, page_end: 10 }],
     studySessions: [], testResults: [], resourceProgress: [], tasks: [], taskResourceUnits: [], youtubeProgress: [],
     physicalPaceEvidence: Array.from({ length: 3 }, (_, index) => ({
-      id: `p${index}`, resource_id: "r1", resource_unit_id: "u1", subject_id: "s1",
-      curriculum_node_id: "n1", material_type: "page_range", progressed_pages: 10,
+      id: `p${index}`, study_session_id: `session${index}`,
+      resource_id: "r1", resource_unit_id: "u1", subject_id: "s1",
+      curriculum_node_id: "n1", material_type: "page_range", progress_unit: "page",
+      start_page_boundary: 0, end_page_boundary: 10, progressed_pages: 10,
       actual_active_seconds: 1200, activity_started_at: `2026-08-0${index + 1}T09:00:00Z`,
       activity_ended_at: `2026-08-0${index + 1}T09:20:00Z`, evidence_status: "accepted",
       evidence_provenance: "atomic_physical_finish",
@@ -58,7 +60,8 @@ describe("W2 physical pace evidence ingestion", () => {
       material: { ...material, id: "physical:section:sec1:gap:1-10" }, evidence,
     });
     expect(result).toMatchObject({
-      authority: "calibrated", confidence: "low", plannerEligible: false,
+      authority: "unknown", confidence: "low", plannerEligible: false,
+      estimatedMinutes: null,
       reason: "pace_confidence_insufficient",
     });
   });

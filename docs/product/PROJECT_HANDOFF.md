@@ -68,9 +68,27 @@ Material completion history remains separate from pedagogical state. Previously 
 
 ## NEXT EXACT STEP
 
-Observe the next natural W2-eligible physical study lifecycle for the enabled exact-profile pilot. Inspect start, pause/resume if naturally used, finish, evidence cardinality, cross-profile isolation, and planner isolation read-only. Do not manufacture activity, enable evidence-shadow consumption or planning, or widen the profile allowlist.
+Begin Planner V2 workload integration in shadow using `PlannerV2WorkloadHandoff`: schedule only `plannerEligible = true`; keep unknown/low-confidence physical workload blocked with its explicit unresolved reason. Do not enable production canonical planning or evidence-shadow consumption.
+
+In parallel, continue passive observation of the next natural W2-eligible physical study lifecycle for the exact-profile pilot. Inspect it read-only if it occurs; do not manufacture activity, widen the allowlist, or alter accepted evidence.
 
 Telegram requires a separately reviewed service-role W2 wrapper plus authoritative page-boundary UX before it can enter an activation proposal. Do not activate canonical workload planning while production physical pace evidence remains insufficient.
+
+## 2026-08-25 Canonical Workload Engine W4 closure
+
+- Status: `EVRE_4_ENGINEERING_COMPLETE_DATA_MATURITY_IN_PROGRESS`.
+- `CalibrationReadiness` now distinguishes low-confidence diagnostic shadow visibility from medium/high planner eligibility and records selected scope, reason, totals, median pace, confidence, evidence identities, provenance, and blocked reason.
+- Physical calibration admits only accepted atomic W2 rows with matching user/profile/type, causal activity identity, valid positive page delta, and valid positive active time. Planned duration, historical pseudo-pairs, malformed rows, and cross-scope evidence are excluded.
+- Pace uses deterministic median session minutes/page for outlier resistance. W1 confidence thresholds remain unchanged: one sample stays low and blocked; three compatible samples totaling at least 60 minutes can become medium.
+- Low-confidence physical material remains `unknown` with null minutes. Medium/high structural spans use inclusive remaining-page arithmetic and `ceil(remainingPages × pace)` in memory only; historical `resource_units.estimated_minutes` is not authority.
+- `PlannerV2WorkloadHandoff` carries only canonical workload authority/confidence and an explicit unresolved reason. It cannot turn an unknown duration into schedulable minutes.
+- Read-only diagnostic shadow now reports global admission/exclusions, exact/subject/type readiness, confidence, material pages/minutes, YouTube exact workload, total authority, blocked reasons, scope provenance, and concurrent natural-production change detection.
+- Verification: targeted W4 tests `51/51`, full non-integration `827/827` across `128/128`, local integration `116/116` across `12/12`, domain typecheck, planning Edge bundle, and PostgreSQL lint all PASS.
+- Final production read-only snapshot: `0 / 0 / 0` W2 snapshots/breaks/accepted evidence; `0` usable samples and ready scopes; `0 / 5,103` calibrated/unknown physical pages; `341` total views (`76` exact, `0` calibrated, `0` fallback, `265` unknown, `76` planner-eligible); `0` pending migrations.
+- Exact-profile capture secret remains present at its original activation timestamp. `PHYSICAL_PACE_EVIDENCE_SHADOW_V1` remains missing/OFF; canonical planner remains OFF; app-api remains v31 ACTIVE with unchanged W3 code bundle.
+- No production mutation, migration, secret change, backfill, synthetic activity, Edge deployment, web deployment, Telegram change, or planner cutover occurred in W4.
+
+Phase 4 engineering is complete. Production data maturity is ongoing and may advance only through natural accepted W2 evidence under the existing pilot controls.
 
 ## 2026-08-24 MAT-001 canonical material shadow checkpoint
 

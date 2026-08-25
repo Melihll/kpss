@@ -37,7 +37,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | `PLN-002` | `P0` | Separate Planned Study / Extra Study / Substitution / Carryover semantics | `IN_PROGRESS` |
 | `PLN-003` | `P1` | Study Block Duration Policy | `IN_PROGRESS` |
 | `PLN-004` | `P1` | Learning Stage Model | `IN_PROGRESS` |
-| `MAT-001` | `P1` | Canonical Material Content & Progress | `TODO` |
+| `MAT-001` | `P1` | Canonical Material Content & Progress | `IN_PROGRESS` |
 | `PLN-005` | `P1` | Resource Role Model | `TODO` |
 | `PLN-006` | `P1` | Daily Fragmentation Control | `TODO` |
 | `PLN-007` | `P1` | Planner Decision Trace | `TODO` |
@@ -123,7 +123,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 ## `MAT-001` — Canonical Material Content & Progress
 
 - Priority: `P1`
-- Status: `TODO`
+- Status: `IN_PROGRESS`
 - Problem: The planner can reference resources, but it cannot yet rely on a complete subject-agnostic model of the exact material units a learner should execute, such as page ranges, tests, chapters, or individual YouTube videos.
 - Desired outcome: Every supported KPSS resource can expose exact, ordered, progress-aware material units that map to curriculum topics and can be planned consistently across Today and Week views.
 - Acceptance criteria:
@@ -142,6 +142,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 
 - Architecture note: resource role remains owned by PLN-005, learning-stage progression remains owned by PLN-004, and duration normalization remains owned by PLN-003.
 - W2 release note (2026-08-25): atomic physical pace evidence migration `20260825130000` is deployed as schema/RPC capability only. Protected start/material snapshots, protected pause accounting, immutable accepted events, causal session idempotency, exact page-boundary semantics, RLS, and four W2 RPCs are present. All W2 tables and historical accepted samples remain at `0`; no backfill occurred; app-api/Telegram/web capture and canonical planning remain inactive. Runtime activation requires a separate design/review and explicit approval.
+- W4 engineering closure (2026-08-25): Canonical Workload Engine Phase 4 is `ENGINEERING_COMPLETE`; production data maturity remains `IN_PROGRESS`. Accepted-W2-only calibration, deterministic median pace, unchanged W1 confidence promotion, explicit readiness, structural-span shadow arithmetic, read-only production diagnostics, blocked unknown workload, and the Planner V2 handoff are implemented and verified. The exact-profile capture pilot remains active, but accepted evidence and calibrated physical pages remain zero; evidence-shadow and canonical planning remain OFF. MAT-001 is not marked `DONE` because natural evidence maturity and later planner shadow/rollout evidence are still pending.
 ## `PLN-005` — Resource Role Model
 
 - Priority: `P1`

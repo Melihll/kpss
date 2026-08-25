@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-08-22
+Last updated: 2026-08-25
 
 ## Roadmap rules
 
@@ -79,6 +79,12 @@ After the audit and foundational semantics:
 - perform a gated rollout (`PLN-010`).
 
 Items may be refined or split as evidence appears, but their acceptance criteria cannot be silently weakened.
+
+### 2026-08-25 MAT-001 Phase 4 checkpoint
+
+Canonical Workload Engine engineering is complete. Exact video workload, accepted-W2 physical calibration, deterministic readiness/confidence, robust median pace, in-memory structural workload, read-only diagnostics, blocked unknowns, and the Planner V2 handoff are implemented and verified. Production data maturity remains in progress: the exact-profile capture pilot is active, accepted W2 evidence is currently zero, evidence-shadow and canonical planning remain OFF, and no physical coverage is claimed calibrated.
+
+Planner V2 shadow work may proceed against the explicit handoff contract while unknown/low-confidence physical material stays blocked. Production activation remains governed by later shadow, simulation, and controlled-rollout gates.
 
 ## After M1
 

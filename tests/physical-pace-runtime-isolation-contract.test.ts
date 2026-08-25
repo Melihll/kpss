@@ -34,6 +34,16 @@ describe("W3 runtime isolation", () => {
     expect(runner).toContain("physical_pace_evidence");
     expect(runner).toContain("migrationCandidateDeployed");
     expect(runner).toContain("PHYSICAL_PACE_EVIDENCE_SHADOW_V1");
+    expect(runner).toContain("diagnosticPhysicalEvidenceBypass: true");
+    expect(runner).toContain("canonicalRuntimeActive: false");
     expect(runner).not.toMatch(/\.insert\(|\.update\(|\.upsert\(|\.delete\(|\.rpc\(/);
+  });
+
+  it("keeps capture, diagnostic evidence reading, and planner activation independent", () => {
+    expect(appApi).toContain("PHYSICAL_PACE_CAPTURE_V1_PROFILE_IDS");
+    expect(appApi).not.toContain("loadCanonicalWorkloadReadiness");
+    expect(runner).toContain("physicalPaceEvidenceAvailable: true");
+    expect(runner).toContain("physicalPaceEvidenceShadowEnabled");
+    expect(runner).toContain("canonicalRuntimeActive: false");
   });
 });

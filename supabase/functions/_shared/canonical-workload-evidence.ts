@@ -183,10 +183,25 @@ export function deriveCanonicalWorkloadEvidence(
   for (const row of rows.physicalPaceEvidence ?? []) {
     const actualSeconds = positiveNumber(row.actual_active_seconds);
     const progressedPages = positiveNumber(row.progressed_pages);
+    const startBoundary = Number(row.start_page_boundary);
+    const endBoundary = Number(row.end_page_boundary);
+    const intervalSeconds = row.activity_started_at && row.activity_ended_at
+      ? (new Date(String(row.activity_ended_at)).getTime() -
+        new Date(String(row.activity_started_at)).getTime()) / 1000
+      : Number.NaN;
     const accepted =
       row.evidence_status === "accepted" &&
+      Boolean(row.study_session_id) &&
       actualSeconds !== null &&
       progressedPages !== null &&
+      row.progress_unit === "page" &&
+      Number.isInteger(startBoundary) &&
+      Number.isInteger(endBoundary) &&
+      startBoundary >= 0 &&
+      endBoundary > startBoundary &&
+      progressedPages === endBoundary - startBoundary &&
+      Number.isFinite(intervalSeconds) &&
+      actualSeconds <= intervalSeconds &&
       (row.material_type === "page_range" || row.material_type === "test");
 
     result.push(Object.freeze({
@@ -209,6 +224,14 @@ export function deriveCanonicalWorkloadEvidence(
       provenance: accepted
         ? `physical_pace_evidence:${row.evidence_provenance ?? "atomic_physical_finish"}`
         : "physical_pace_evidence:invalid_persisted_row",
+      evidenceStatus: row.evidence_status === "accepted"
+        ? "accepted" as const
+        : row.evidence_status === "candidate"
+          ? "candidate" as const
+          : "rejected" as const,
+      causalActivityId: row.study_session_id ? String(row.study_session_id) : null,
+      startPageBoundary: Number.isInteger(startBoundary) ? startBoundary : null,
+      endPageBoundary: Number.isInteger(endBoundary) ? endBoundary : null,
     }));
   }
 
@@ -360,7 +383,7 @@ export async function loadCanonicalWorkloadEvidence(
     followups.push((async () => {
       const result = await client
         .from("physical_pace_evidence")
-        .select("id,resource_id,resource_section_id,resource_unit_id,subject_id,curriculum_node_id,material_type,start_page_boundary,end_page_boundary,progressed_pages,actual_active_seconds,activity_started_at,activity_ended_at,evidence_status,evidence_provenance,created_at")
+        .select("id,study_session_id,resource_id,resource_section_id,resource_unit_id,subject_id,curriculum_node_id,material_type,progress_unit,start_page_boundary,end_page_boundary,progressed_pages,actual_active_seconds,activity_started_at,activity_ended_at,evidence_status,evidence_provenance,created_at")
         .eq("user_id", userId)
         .eq("exam_profile_id", examProfileId)
         .eq("evidence_status", "accepted")

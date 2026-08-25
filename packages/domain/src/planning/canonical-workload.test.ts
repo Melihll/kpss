@@ -38,7 +38,7 @@ const evidence = (overrides: Partial<WorkloadEvidence> = {}): WorkloadEvidence =
   id: "e1",
   userId: "user1",
   examProfileId: "profile1",
-  sourceKind: "test_result_completion",
+  sourceKind: "physical_pace_evidence",
   resourceId: "r1",
   subjectId: "subject1",
   curriculumNodeId: "topic1",
@@ -50,6 +50,10 @@ const evidence = (overrides: Partial<WorkloadEvidence> = {}): WorkloadEvidence =
   sampleEnd: "2026-08-01T09:30:00.000Z",
   evidenceQuality: ["actual_elapsed_time", "actual_progress_delta"],
   provenance: "record_test_result:first_completion",
+  evidenceStatus: "accepted",
+  causalActivityId: "session1",
+  startPageBoundary: 0,
+  endPageBoundary: 10,
   ...overrides,
 });
 
@@ -99,6 +103,31 @@ describe("MAT-001 canonical workload engine", () => {
       authority: "calibrated",
       confidence: "medium",
       plannerEligible: true,
+    });
+  });
+
+  it("calibrates an in-memory structural span with inclusive page arithmetic and ceil rounding", () => {
+    const samples = Array.from({ length: 3 }, (_, index) => evidence({
+      id: `span-e${index}`,
+      causalActivityId: `span-session-${index}`,
+      actualMinutes: 25,
+      progressAmount: 10,
+    }));
+    const result = estimateCanonicalMaterialWorkload(request({
+      ...basePhysical,
+      id: "physical:section:sec1:gap:10-19",
+      sourceId: "section:sec1:gap:10-19",
+      estimatedMinutes: 999,
+      plannerEligible: false,
+    }, samples));
+
+    expect(result).toMatchObject({
+      remainingAmount: 10,
+      estimatedMinutes: 25,
+      authority: "calibrated",
+      confidence: "medium",
+      plannerEligible: true,
+      reason: "pace_calibrated",
     });
   });
 
@@ -201,7 +230,8 @@ describe("MAT-001 canonical workload engine", () => {
     const result = estimateCanonicalMaterialWorkload(request(basePhysical, [evidence()]));
 
     expect(result).toMatchObject({
-      authority: "calibrated",
+      authority: "unknown",
+      estimatedMinutes: null,
       confidence: "low",
       plannerEligible: false,
       reason: "pace_confidence_insufficient",

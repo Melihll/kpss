@@ -32,14 +32,15 @@ async function safetyGuard() {
   return { resourceUnits, youtubeVideoTopicLinks: mappings, completedThroughPageNonNull: partialPages };
 }
 
-async function productionCounters() {
+async function productionCounters(userId, examProfileId) {
+  const inScope = (query) => query.eq("user_id", userId).eq("exam_profile_id", examProfileId);
   const [snapshots, physicalBreaks, physicalEvidence, studySessions, tasks, testResults, resourceProgress] = await Promise.all([
-    exactCount("physical_study_activity_snapshots"),
-    exactCount("physical_study_activity_breaks"),
-    exactCount("physical_pace_evidence"),
-    exactCount("study_sessions"),
-    exactCount("tasks"),
-    exactCount("test_results"),
+    exactCount("physical_study_activity_snapshots", inScope),
+    exactCount("physical_study_activity_breaks", inScope),
+    exactCount("physical_pace_evidence", (query) => inScope(query).eq("evidence_status", "accepted")),
+    exactCount("study_sessions", inScope),
+    exactCount("tasks", inScope),
+    exactCount("test_results", inScope),
     exactCount("resource_unit_progress"),
   ]);
   return {
@@ -57,6 +58,7 @@ async function probePhysicalPaceEvidence() {
   const result = await client
     .from("physical_pace_evidence")
     .select("id,evidence_status", { count: "exact" })
+    .eq("evidence_status", "accepted")
     .limit(1);
   if (!result.error) {
     return {
@@ -109,32 +111,25 @@ if (resourcesResult.error) throw resourcesResult.error;
 const resourceIds = (resourcesResult.data ?? []).map((row) => String(row.id));
 
 const before = await safetyGuard();
-const countersBefore = await productionCounters();
+const countersBefore = await productionCounters(target.userId, target.examProfileId);
 const paceEvidenceBefore = await probePhysicalPaceEvidence();
 const readiness = await loadCanonicalWorkloadReadiness(
   client,
   target.userId,
   target.examProfileId,
   resourceIds,
-  { physicalPaceEvidenceAvailable: physicalPaceEvidenceShadowEnabled },
+  // Explicit W4 diagnostic bypass: reads accepted evidence without changing the
+  // independent production runtime activation flag.
+  { physicalPaceEvidenceAvailable: true },
 );
 const after = await safetyGuard();
-const countersAfter = await productionCounters();
+const countersAfter = await productionCounters(target.userId, target.examProfileId);
 const paceEvidenceAfter = await probePhysicalPaceEvidence();
 
-if (JSON.stringify(before) !== JSON.stringify(after)) {
-  throw new Error("READ_ONLY_SHADOW_GUARD_CHANGED");
-}
-if (JSON.stringify(paceEvidenceBefore) !== JSON.stringify(paceEvidenceAfter)) {
-  throw new Error("READ_ONLY_PACE_EVIDENCE_GUARD_CHANGED");
-}
-if (
-  countersBefore.physicalStudyActivitySnapshots !== countersAfter.physicalStudyActivitySnapshots ||
-  countersBefore.physicalStudyActivityBreaks !== countersAfter.physicalStudyActivityBreaks ||
-  countersBefore.physicalPaceEvidence !== countersAfter.physicalPaceEvidence
-) {
-  throw new Error("READ_ONLY_W2_CAPTURE_GUARD_CHANGED");
-}
+const concurrentProductionChangeDetected =
+  JSON.stringify(before) !== JSON.stringify(after) ||
+  JSON.stringify(paceEvidenceBefore) !== JSON.stringify(paceEvidenceAfter) ||
+  JSON.stringify(countersBefore) !== JSON.stringify(countersAfter);
 
 process.stdout.write(`${JSON.stringify({
   mode: "PRODUCTION_READ_ONLY_SHADOW",
@@ -145,12 +140,15 @@ process.stdout.write(`${JSON.stringify({
   workload: readiness.summary,
   evidenceClassificationCounts: readiness.evidenceClassificationCounts,
   acceptedPaceSamples: readiness.acceptedPaceSamples,
+  calibration: readiness.calibration,
   physicalPaceEvidenceShadowEnabled,
+  diagnosticPhysicalEvidenceBypass: true,
   migrationCandidateDeployed: paceEvidenceAfter.migrationCandidateDeployed,
   acceptedHistoricalPaceSamples: paceEvidenceAfter.acceptedHistoricalPaceSamples,
   countersBefore,
   countersAfter,
   safetyBefore: before,
   safetyAfter: after,
+  concurrentProductionChangeDetected,
   canonicalRuntimeActive: false,
 }, null, 2)}\n`);

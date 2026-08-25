@@ -1757,8 +1757,21 @@ function derivePhysicalStructuralCoverage(sections, units) {
 function hasQuality(evidence, quality) {
   return evidence.evidenceQuality.includes(quality);
 }
-function isPaceEvidence(evidence, request) {
-  return evidence.userId === request.userId && evidence.examProfileId === request.examProfileId && evidence.materialType === request.materialType && evidence.progressUnit === "page" && evidence.actualMinutes !== null && Number.isFinite(evidence.actualMinutes) && evidence.actualMinutes > 0 && evidence.progressAmount !== null && Number.isFinite(evidence.progressAmount) && evidence.progressAmount > 0 && hasQuality(evidence, "actual_elapsed_time") && hasQuality(evidence, "actual_progress_delta") && !hasQuality(evidence, "unreliable");
+function calibrationEvidenceExclusionReason(evidence, request) {
+  if (evidence.sourceKind !== "physical_pace_evidence") return "non_w2_source";
+  if (evidence.evidenceStatus !== "accepted") return "status_not_accepted";
+  if (evidence.userId !== request.userId) return "cross_user";
+  if (evidence.examProfileId !== request.examProfileId) return "cross_profile";
+  if (evidence.materialType !== request.materialType) return "incompatible_material_type";
+  if (evidence.progressUnit !== "page") return "invalid_progress_unit";
+  if (!evidence.causalActivityId) return "missing_causal_activity";
+  if (evidence.progressAmount === null || !Number.isFinite(evidence.progressAmount) || Number(evidence.progressAmount) <= 0) return "zero_progress";
+  const start = evidence.startPageBoundary;
+  const end = evidence.endPageBoundary;
+  if (!Number.isInteger(start) || !Number.isInteger(end) || Number(start) < 0 || Number(end) <= Number(start) || Number(evidence.progressAmount) !== Number(end) - Number(start)) return "malformed_boundaries";
+  if (evidence.actualMinutes === null || !Number.isFinite(evidence.actualMinutes) || Number(evidence.actualMinutes) <= 0 || !hasQuality(evidence, "actual_elapsed_time")) return "invalid_active_time";
+  if (!hasQuality(evidence, "actual_progress_delta") || hasQuality(evidence, "unreliable")) return "unreliable_evidence";
+  return null;
 }
 function confidenceFor(samples) {
   const rates = samples.map(
@@ -1793,8 +1806,11 @@ function buildPace(samples, scope) {
     0
   );
   const { confidence, coefficientOfVariation } = confidenceFor(ordered);
+  const sessionPaces = ordered.map((sample) => Number(sample.actualMinutes) / Number(sample.progressAmount)).sort((left, right) => left - right);
+  const middle = Math.floor(sessionPaces.length / 2);
+  const medianPace = sessionPaces.length % 2 === 0 ? (sessionPaces[middle - 1] + sessionPaces[middle]) / 2 : sessionPaces[middle];
   return Object.freeze({
-    pace: totalObservedMinutes / totalObservedProgress,
+    pace: medianPace,
     unit: "minutes_per_page",
     sampleCount: ordered.length,
     totalObservedMinutes,
@@ -1802,13 +1818,25 @@ function buildPace(samples, scope) {
     coefficientOfVariation,
     confidence,
     provenance: Object.freeze(ordered.map((sample) => sample.provenance)),
-    scope
+    scope,
+    aggregationPolicy: "median_session_minutes_per_page",
+    evidenceIds: Object.freeze(ordered.map((sample) => sample.id))
   });
 }
-function estimatePhysicalPace(request) {
-  const compatible = request.evidence.filter(
-    (sample) => isPaceEvidence(sample, request)
+function compatiblePaceEvidence(request) {
+  return request.evidence.filter(
+    (sample) => calibrationEvidenceExclusionReason(sample, request) === null
   );
+}
+function estimatePhysicalPaceAtScope(request, scope) {
+  const compatible = compatiblePaceEvidence(request);
+  const samples = scope === "resource_material_type" ? compatible.filter((sample) => sample.resourceId === request.resourceId) : scope === "subject_material_type" ? compatible.filter(
+    (sample) => request.subjectId !== null && sample.subjectId === request.subjectId
+  ) : compatible;
+  return samples.length ? buildPace(samples, scope) : null;
+}
+function estimatePhysicalPace(request) {
+  const compatible = compatiblePaceEvidence(request);
   const resource = compatible.filter(
     (sample) => sample.resourceId === request.resourceId
   );
@@ -1819,6 +1847,47 @@ function estimatePhysicalPace(request) {
   if (subject.length) return buildPace(subject, "subject_material_type");
   if (compatible.length) return buildPace(compatible, "material_type");
   return null;
+}
+function evaluateCalibrationReadiness(request) {
+  const estimate = estimatePhysicalPace(request);
+  if (!estimate) {
+    return Object.freeze({
+      scope: "none",
+      hierarchyReason: "no_compatible_accepted_w2_evidence",
+      compatibleSampleCount: 0,
+      totalObservedMinutes: 0,
+      totalProgressAmount: 0,
+      pace: null,
+      paceUnit: "minutes_per_page",
+      confidence: "none",
+      authority: "unknown",
+      usableForShadow: false,
+      usableForPlanner: false,
+      blockedReason: "accepted_w2_evidence_unavailable",
+      evidenceIds: Object.freeze([]),
+      provenance: Object.freeze([]),
+      aggregationPolicy: "none"
+    });
+  }
+  const usableForPlanner = estimate.confidence === "medium" || estimate.confidence === "high";
+  const hierarchyReason = estimate.scope === "resource_material_type" ? "exact_resource_compatible_evidence_won" : estimate.scope === "subject_material_type" ? "subject_type_evidence_won_after_exact_resource_absent" : "material_type_evidence_won_after_narrower_scopes_absent";
+  return Object.freeze({
+    scope: estimate.scope,
+    hierarchyReason,
+    compatibleSampleCount: estimate.sampleCount,
+    totalObservedMinutes: estimate.totalObservedMinutes,
+    totalProgressAmount: estimate.totalObservedProgress,
+    pace: estimate.pace,
+    paceUnit: estimate.unit,
+    confidence: estimate.confidence,
+    authority: "calibrated",
+    usableForShadow: true,
+    usableForPlanner,
+    blockedReason: usableForPlanner ? null : "confidence_insufficient",
+    evidenceIds: estimate.evidenceIds,
+    provenance: estimate.provenance,
+    aggregationPolicy: estimate.aggregationPolicy
+  });
 }
 function authoritativeProvenance(provenance) {
   return provenance !== "ai_candidate";
@@ -1988,7 +2057,7 @@ function estimatePhysical(request) {
       evidence: evidenceSummary("none")
     });
   }
-  const pace = estimatePhysicalPace({
+  const readiness = evaluateCalibrationReadiness({
     userId: request.userId,
     examProfileId: request.examProfileId,
     resourceId: material.resourceId,
@@ -1996,21 +2065,37 @@ function estimatePhysical(request) {
     materialType: material.unitType,
     evidence: request.evidence
   });
-  if (pace) {
-    const plannerEligible = pace.confidence === "medium" || pace.confidence === "high";
+  if (readiness.usableForPlanner && readiness.pace !== null) {
     return result(request, {
       remainingAmount: remainingPages,
       remainingUnit: "page",
-      estimatedMinutes: Math.ceil(remainingPages * pace.pace),
+      estimatedMinutes: Math.ceil(remainingPages * readiness.pace),
       authority: "calibrated",
-      confidence: pace.confidence,
-      plannerEligible,
-      reason: plannerEligible ? "pace_calibrated" : "pace_confidence_insufficient",
+      confidence: readiness.confidence,
+      plannerEligible: true,
+      reason: "pace_calibrated",
       evidence: evidenceSummary(
-        pace.scope,
-        pace.sampleCount,
-        pace.totalObservedMinutes,
-        pace.provenance
+        readiness.scope === "none" ? "none" : readiness.scope,
+        readiness.compatibleSampleCount,
+        readiness.totalObservedMinutes,
+        readiness.provenance
+      )
+    });
+  }
+  if (readiness.usableForShadow) {
+    return result(request, {
+      remainingAmount: remainingPages,
+      remainingUnit: "page",
+      estimatedMinutes: null,
+      authority: "unknown",
+      confidence: readiness.confidence,
+      plannerEligible: false,
+      reason: "pace_confidence_insufficient",
+      evidence: evidenceSummary(
+        readiness.scope === "none" ? "none" : readiness.scope,
+        readiness.compatibleSampleCount,
+        readiness.totalObservedMinutes,
+        readiness.provenance
       )
     });
   }
@@ -2042,6 +2127,24 @@ function estimatePhysical(request) {
 function estimateCanonicalMaterialWorkload(request) {
   return request.material.sourceKind === "youtube" ? estimateYoutube(request) : estimatePhysical(request);
 }
+function toPlannerV2WorkloadHandoff(estimate) {
+  const plannerEligible = estimate.plannerEligible && estimate.estimatedMinutes !== null && estimate.authority !== "unknown" && estimate.confidence !== "none" && (estimate.authority === "exact" || estimate.confidence === "medium" || estimate.confidence === "high");
+  return Object.freeze({
+    materialViewId: estimate.materialViewId,
+    sourceKind: estimate.sourceKind,
+    resourceId: estimate.resourceId,
+    subjectId: estimate.subjectId,
+    materialType: estimate.materialType,
+    remainingAmount: estimate.remainingAmount,
+    remainingUnit: estimate.remainingUnit,
+    estimatedMinutes: plannerEligible ? estimate.estimatedMinutes : null,
+    workloadAuthority: plannerEligible ? estimate.authority : "unknown",
+    workloadConfidence: estimate.confidence,
+    plannerEligible,
+    unresolvedWorkloadReason: plannerEligible ? null : estimate.reason,
+    evidence: estimate.evidence
+  });
+}
 function increment(record, key, amount = 1) {
   record[key] = (record[key] ?? 0) + amount;
 }
@@ -2064,13 +2167,21 @@ function summarizeCanonicalWorkload(estimates) {
   let exactYoutubeRemainingMinutes = 0;
   let physicalPagesWithCalibratedWorkload = 0;
   let physicalPagesWithUnknownWorkload = 0;
+  let physicalEstimatedRemainingMinutes = 0;
+  let plannerEligibleCalibratedViews = 0;
   for (const estimate of estimates) {
     if (estimate.authority === "exact") exactWorkloadViews += 1;
     if (estimate.authority === "calibrated") calibratedWorkloadViews += 1;
     if (estimate.authority === "fallback") fallbackWorkloadViews += 1;
     if (estimate.authority === "unknown") unknownWorkloadViews += 1;
-    if (estimate.plannerEligible) plannerEligibleViews += 1;
-    else increment(blockedByReason, estimate.reason);
+    if (estimate.plannerEligible) {
+      plannerEligibleViews += 1;
+      if (estimate.authority === "calibrated") {
+        plannerEligibleCalibratedViews += 1;
+      }
+    } else {
+      increment(blockedByReason, estimate.reason);
+    }
     confidenceDistribution[estimate.confidence] += 1;
     if (estimate.sourceKind === "youtube" && estimate.authority === "exact" && estimate.estimatedMinutes !== null) {
       exactYoutubeRemainingMinutes += estimate.estimatedMinutes;
@@ -2086,6 +2197,9 @@ function summarizeCanonicalWorkload(estimates) {
       increment(workloadMinutesBySubject, estimate.subjectId ?? "unmapped", estimate.estimatedMinutes);
       increment(workloadMinutesByResource, estimate.resourceId, estimate.estimatedMinutes);
       increment(workloadMinutesByMaterialType, estimate.materialType, estimate.estimatedMinutes);
+      if (estimate.sourceKind === "physical") {
+        physicalEstimatedRemainingMinutes += estimate.estimatedMinutes;
+      }
     }
   }
   return Object.freeze({
@@ -2099,6 +2213,8 @@ function summarizeCanonicalWorkload(estimates) {
     exactYoutubeRemainingMinutes,
     physicalPagesWithCalibratedWorkload,
     physicalPagesWithUnknownWorkload,
+    physicalEstimatedRemainingMinutes,
+    plannerEligibleCalibratedViews,
     confidenceDistribution: Object.freeze(confidenceDistribution),
     workloadMinutesBySubject: Object.freeze(workloadMinutesBySubject),
     workloadMinutesByResource: Object.freeze(workloadMinutesByResource),
@@ -2200,12 +2316,15 @@ export {
   calculateRemainingMaterialScope,
   calculateWeeklyAvailableMinutes,
   calculateWeeklyRevisionBudget,
+  calibrationEvidenceExclusionReason,
   completeRevisionStatus,
   derivePhysicalStructuralCoverage,
   deriveTaskStatus,
   estimateCanonicalMaterialWorkload,
   estimatePhysicalPace,
+  estimatePhysicalPaceAtScope,
   evaluateBacklog,
+  evaluateCalibrationReadiness,
   evaluateLearningStage,
   evaluatePhysicalPaceCompletion,
   evaluateTopicMastery,
@@ -2226,6 +2345,7 @@ export {
   replanWeeklyPlanV1,
   summarizeCanonicalWorkload,
   summarizeMaterialStageEvidence,
+  toPlannerV2WorkloadHandoff,
   transitionTopicForLearnTask,
   zonedMidnightToUtc
 };
