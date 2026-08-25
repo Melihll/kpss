@@ -53,3 +53,20 @@ Canonical planner cutover remains disabled until workload calibration and shadow
 - ENVIRONMENT_BLOCKED is not treated as a product regression.
 - No production data mutation occurred during H8B.
 - Canonical runtime remains inactive.
+
+## H8C production shadow verification
+
+- Production shadow scope: 27 active resources and 237 active physical sections.
+- 233 sections have valid canonical page ranges.
+- Valid canonical physical coverage contains 5,103 section-pages.
+- Existing active persisted units cover 458 section-pages.
+- Structural coverage derives 217 synthetic spans covering the remaining 4,645 section-pages.
+- 212 synthetic spans have curriculum mappings; 5 remain topic-unmapped.
+- Synthetic structural spans remain planner-ineligible and have no fabricated duration.
+- Coverage identity was verified: persisted covered pages plus uncovered pages equals total valid section-pages.
+- Physical anomalies: 4 missing-range sections; 0 invalid-range sections; 0 orphan active units; 0 invalid active-unit ranges; 0 units outside canonical section bounds.
+- Canonical shadow inventory contains 250 physical views and 91 YouTube views, for 341 total active material views.
+- YouTube inventory remains 76 authoritative full-video mappings and 15 held/unmapped videos.
+- Production resource_units remained unchanged at 79 global rows.
+- Canonical runtime remains inactive.
+- The Supabase integration suite remains ENVIRONMENT_BLOCKED in the local shell because integration credentials are not loaded.

@@ -108,3 +108,14 @@ Continue with `SPEC → TEST → IMPLEMENT → VERIFY`.
 - No exact partial-page progress rows were fabricated.
 - Canonical material runtime remains inactive.
 - No planner, Edge Function, Telegram or application deployment was performed as part of this release.
+
+## 2026-08-25 MAT-001 canonical material model milestone complete
+
+- Canonical Material Model / project Phase 3 is shadow-verified and considered structurally complete.
+- Production canonical runtime has NOT been activated.
+- Production YouTube mapping release contains 76 authoritative full-video mappings; 15 videos remain held.
+- Physical canonical content is represented by existing persisted execution units plus in-memory synthetic structural coverage.
+- H8C measured 5,103 valid physical section-pages: 458 persisted-covered and 4,645 synthetic structural pages.
+- 217 structural spans were derived; all remain planner-ineligible until workload authority exists.
+- Canonical shadow inventory totals 341 active material views: 250 physical and 91 YouTube.
+- Next milestone is Canonical Workload Engine: pace evidence, calibration, remaining-work estimation and confidence.
