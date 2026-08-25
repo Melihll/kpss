@@ -19,3 +19,4 @@ export * from "./material-db-adapter";
 
 export * from "./physical-structural-coverage";
 export * from "./canonical-workload";
+export * from "./physical-pace-evidence";

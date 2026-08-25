@@ -1,6 +1,6 @@
 # MAT-001 Canonical Workload Engine
 
-Status: W1_LOCAL_VERIFIED_AND_PRODUCTION_SHADOWED — SHADOW_ONLY — RUNTIME_OFF
+Status: W2_LOCAL_VERIFIED_CANDIDATE — MIGRATION_NOT_DEPLOYED — RUNTIME_OFF
 
 ## 1. Purpose
 
@@ -172,8 +172,19 @@ Canonical runtime remains OFF.
 - linked production shadow: PASS, read-only guards unchanged;
 - no migration, production write, Edge deployment, planner cutover, or app-api canonical workload activation occurred.
 
-## 14. Next phase
+## 14. W2 atomic physical pace evidence candidate
 
-Recommended next phase: `W2 — Atomic Physical Pace Evidence Capture`.
+W2 now has a locally verified, separately gated schema/RPC candidate. It introduces protected server-time/material snapshots, a protected physical pause ledger, and immutable accepted evidence created atomically with exact progress by a dedicated finish RPC. Generic study, app-api, and Telegram flows remain unchanged; the evidence loader remains capability-gated OFF by default.
 
-W2 should specify and separately gate an event/recording contract that binds actual overlap-safe elapsed time to an exact canonical physical before/after progress delta in one sanctioned flow. Any required migration or production release needs its own proposal, review, tests, and authorization. Until sufficient compatible samples exist, the W1 engine must continue reporting physical workload as unknown.
+Local W2 verification on 2026-08-25:
+
+- targeted boundary/migration/ingestion/runtime tests: `25/25` PASS;
+- domain typecheck and checked-in edge planning bundle: PASS;
+- full non-integration regression: `792/792` across `123/123` files PASS;
+- local PostgreSQL migration apply: PASS;
+- full local integration regression: `114/114` across `12/12` files PASS;
+- a three-sample exact-resource fixture calibrates 10 pages to 20 minutes at medium confidence and becomes planner-eligible; a one-sample synthetic span remains low-confidence and blocked;
+- linked production read-only shadow remains `341` views: `76` exact, `0` calibrated, `0` fallback, `265` unknown, and `76` planner-eligible;
+- production W2 migration is absent, historical accepted physical pace samples remain `0`, safety counters remain `79 / 76 / 0`, and canonical runtime remains OFF.
+
+Applying `20260825130000_atomic_physical_pace_evidence.sql` to the linked production project requires a new explicit schema/RPC-only release approval. That approval must not imply app-api/Telegram activation, canonical planner cutover, data backfill, or any other production mutation.

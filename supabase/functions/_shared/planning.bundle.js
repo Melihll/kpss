@@ -2105,6 +2105,50 @@ function summarizeCanonicalWorkload(estimates) {
     workloadMinutesByMaterialType: Object.freeze(workloadMinutesByMaterialType)
   });
 }
+
+// packages/domain/src/planning/physical-pace-evidence.ts
+function physicalPaceMaterialType(sourceUnitType, hasExactPageRange) {
+  if (!hasExactPageRange) return null;
+  return sourceUnitType === "test" ? "test" : "page_range";
+}
+function evaluatePhysicalPaceCompletion(input) {
+  const values = [
+    input.pageStart,
+    input.pageEnd,
+    input.startPageBoundary,
+    input.endPageBoundary
+  ];
+  const validRange = values.every(Number.isInteger) && input.pageStart > 0 && input.pageEnd >= input.pageStart && input.startPageBoundary >= input.pageStart - 1 && input.startPageBoundary <= input.pageEnd && input.endPageBoundary >= input.pageStart - 1 && input.endPageBoundary <= input.pageEnd;
+  if (!validRange) {
+    return Object.freeze({
+      status: "rejected",
+      reason: "invalid_page_boundary"
+    });
+  }
+  if (input.endPageBoundary < input.startPageBoundary) {
+    return Object.freeze({
+      status: "rejected",
+      reason: "progress_reversal"
+    });
+  }
+  const progressedPages = input.endPageBoundary - input.startPageBoundary;
+  if (progressedPages === 0) {
+    return Object.freeze({
+      status: "zero_progress",
+      startPageBoundary: input.startPageBoundary,
+      endPageBoundary: input.endPageBoundary,
+      progressedPages: 0,
+      resultingProgressState: "in_progress"
+    });
+  }
+  return Object.freeze({
+    status: "accepted",
+    startPageBoundary: input.startPageBoundary,
+    endPageBoundary: input.endPageBoundary,
+    progressedPages,
+    resultingProgressState: input.endPageBoundary === input.pageEnd ? "completed" : "in_progress"
+  });
+}
 export {
   BACKLOG_THRESHOLDS,
   CRITICAL_OVERDUE_AFTER_DAYS,
@@ -2163,6 +2207,7 @@ export {
   estimatePhysicalPace,
   evaluateBacklog,
   evaluateLearningStage,
+  evaluatePhysicalPaceCompletion,
   evaluateTopicMastery,
   findDailyCapacityOverloads,
   forecastP48Resources,
@@ -2176,6 +2221,7 @@ export {
   normalizeMaterialUnit,
   p48MondayOf,
   p48PhaseForDate,
+  physicalPaceMaterialType,
   remainingTaskMinutes,
   replanWeeklyPlanV1,
   summarizeCanonicalWorkload,

@@ -18,6 +18,7 @@ export type WorkloadEvidenceSourceKind =
   | "study_session"
   | "test_result_completion"
   | "resource_unit_progress"
+  | "physical_pace_evidence"
   | "youtube_video_progress"
   | "task_plan";
 

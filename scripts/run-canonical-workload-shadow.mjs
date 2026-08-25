@@ -31,6 +31,30 @@ async function safetyGuard() {
   return { resourceUnits, youtubeVideoTopicLinks: mappings, completedThroughPageNonNull: partialPages };
 }
 
+async function probePhysicalPaceEvidence() {
+  const result = await client
+    .from("physical_pace_evidence")
+    .select("id,evidence_status", { count: "exact" })
+    .limit(1);
+  if (!result.error) {
+    return {
+      migrationCandidateDeployed: true,
+      acceptedHistoricalPaceSamples: result.count ?? 0,
+    };
+  }
+  if (
+    result.error.code === "PGRST205" ||
+    result.error.code === "42P01" ||
+    String(result.error.message ?? "").includes("physical_pace_evidence")
+  ) {
+    return {
+      migrationCandidateDeployed: false,
+      acceptedHistoricalPaceSamples: 0,
+    };
+  }
+  throw result.error;
+}
+
 const mappingResult = await client
   .from("youtube_video_topic_links")
   .select("user_id,exam_profile_id")
@@ -63,6 +87,7 @@ if (resourcesResult.error) throw resourcesResult.error;
 const resourceIds = (resourcesResult.data ?? []).map((row) => String(row.id));
 
 const before = await safetyGuard();
+const paceEvidenceBefore = await probePhysicalPaceEvidence();
 const readiness = await loadCanonicalWorkloadReadiness(
   client,
   target.userId,
@@ -70,9 +95,13 @@ const readiness = await loadCanonicalWorkloadReadiness(
   resourceIds,
 );
 const after = await safetyGuard();
+const paceEvidenceAfter = await probePhysicalPaceEvidence();
 
 if (JSON.stringify(before) !== JSON.stringify(after)) {
   throw new Error("READ_ONLY_SHADOW_GUARD_CHANGED");
+}
+if (JSON.stringify(paceEvidenceBefore) !== JSON.stringify(paceEvidenceAfter)) {
+  throw new Error("READ_ONLY_PACE_EVIDENCE_GUARD_CHANGED");
 }
 
 process.stdout.write(`${JSON.stringify({
@@ -84,6 +113,8 @@ process.stdout.write(`${JSON.stringify({
   workload: readiness.summary,
   evidenceClassificationCounts: readiness.evidenceClassificationCounts,
   acceptedPaceSamples: readiness.acceptedPaceSamples,
+  migrationCandidateDeployed: paceEvidenceAfter.migrationCandidateDeployed,
+  acceptedHistoricalPaceSamples: paceEvidenceAfter.acceptedHistoricalPaceSamples,
   safetyBefore: before,
   safetyAfter: after,
   canonicalRuntimeActive: false,

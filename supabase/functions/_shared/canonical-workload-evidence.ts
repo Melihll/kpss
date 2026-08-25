@@ -13,6 +13,7 @@ type EvidenceRows = {
   readonly tasks: readonly any[];
   readonly taskResourceUnits: readonly any[];
   readonly youtubeProgress: readonly any[];
+  readonly physicalPaceEvidence?: readonly any[];
 };
 
 function uniqueStrings(values: readonly unknown[]): string[] {
@@ -179,6 +180,38 @@ export function deriveCanonicalWorkloadEvidence(
     }));
   }
 
+  for (const row of rows.physicalPaceEvidence ?? []) {
+    const actualSeconds = positiveNumber(row.actual_active_seconds);
+    const progressedPages = positiveNumber(row.progressed_pages);
+    const accepted =
+      row.evidence_status === "accepted" &&
+      actualSeconds !== null &&
+      progressedPages !== null &&
+      (row.material_type === "page_range" || row.material_type === "test");
+
+    result.push(Object.freeze({
+      id: `physical_pace_evidence:${row.id}`,
+      userId,
+      examProfileId,
+      sourceKind: "physical_pace_evidence" as const,
+      resourceId: row.resource_id ? String(row.resource_id) : null,
+      subjectId: row.subject_id ? String(row.subject_id) : null,
+      curriculumNodeId: row.curriculum_node_id ? String(row.curriculum_node_id) : null,
+      materialType: row.material_type === "test" ? "test" as const : "page_range" as const,
+      actualMinutes: accepted ? actualSeconds / 60 : null,
+      progressAmount: accepted ? progressedPages : null,
+      progressUnit: "page" as const,
+      sampleStart: row.activity_started_at ? String(row.activity_started_at) : null,
+      sampleEnd: row.activity_ended_at ? String(row.activity_ended_at) : null,
+      evidenceQuality: accepted
+        ? qualities("actual_elapsed_time", "actual_progress_delta")
+        : qualities("unreliable"),
+      provenance: accepted
+        ? `physical_pace_evidence:${row.evidence_provenance ?? "atomic_physical_finish"}`
+        : "physical_pace_evidence:invalid_persisted_row",
+    }));
+  }
+
   const linksByTask = new Map<string, any[]>();
   for (const link of rows.taskResourceUnits) {
     const taskId = String(link.task_id);
@@ -242,6 +275,7 @@ export async function loadCanonicalWorkloadEvidence(
   userId: string,
   examProfileId: string,
   requestedResourceIds: readonly string[] = [],
+  options: { readonly physicalPaceEvidenceAvailable?: boolean } = {},
 ): Promise<readonly WorkloadEvidence[]> {
   let resourceQuery = client
     .from("resources")
@@ -295,6 +329,7 @@ export async function loadCanonicalWorkloadEvidence(
   const taskIds = uniqueStrings((taskResult.data ?? []).map((row: any) => row.id));
   let resourceProgress: any[] = [];
   let taskResourceUnits: any[] = [];
+  let physicalPaceEvidence: any[] = [];
   const followups: Promise<void>[] = [];
 
   if (unitIds.length) {
@@ -321,6 +356,20 @@ export async function loadCanonicalWorkloadEvidence(
     })());
   }
 
+  if (options.physicalPaceEvidenceAvailable && resourceIds.length) {
+    followups.push((async () => {
+      const result = await client
+        .from("physical_pace_evidence")
+        .select("id,resource_id,resource_section_id,resource_unit_id,subject_id,curriculum_node_id,material_type,start_page_boundary,end_page_boundary,progressed_pages,actual_active_seconds,activity_started_at,activity_ended_at,evidence_status,evidence_provenance,created_at")
+        .eq("user_id", userId)
+        .eq("exam_profile_id", examProfileId)
+        .eq("evidence_status", "accepted")
+        .in("resource_id", resourceIds);
+      if (result.error) throw result.error;
+      physicalPaceEvidence = result.data ?? [];
+    })());
+  }
+
   await Promise.all(followups);
 
   const resourceSet = new Set(resourceIds);
@@ -333,5 +382,6 @@ export async function loadCanonicalWorkloadEvidence(
     tasks: (taskResult.data ?? []).filter((row: any) => !row.resource_id || resourceSet.has(String(row.resource_id))),
     taskResourceUnits,
     youtubeProgress: youtubeResult.data ?? [],
+    physicalPaceEvidence,
   });
 }

@@ -969,3 +969,19 @@ Production workload readiness on 2026-08-25:
 - read-only production guards remained `79` resource units, `76` video-topic links, and `0` non-null partial-page boundaries before and after.
 
 The existing app-api workload path remains active and unchanged. Canonical workload runtime remains OFF.
+
+## 37. Atomic physical pace evidence (W2)
+
+W2 is implemented and locally verified as a production-inactive migration/RPC candidate. The detailed contract is `MAT-001_ATOMIC_PHYSICAL_PACE_EVIDENCE.md`.
+
+The sanctioned candidate flow owns both sides of a future physical pace sample:
+
+- a protected start snapshot records server time, exact material identity, page range, and last-completed-page boundary;
+- protected physical pause/resume records exclude inactive time without trusting directly editable generic break rows;
+- one finish transaction validates unchanged identity/progress, records exact progress, performs existing session accounting, and inserts one immutable accepted event;
+- causal idempotency is enforced by unique `study_session_id`;
+- generic study, retroactive, task-completion, test, app-api, and Telegram behavior remains unchanged.
+
+W1 ingestion can consume accepted `physical_pace_evidence` only when explicitly capability-enabled after schema deployment. Reading/content `page_range` evidence and problem-solving `test` evidence remain incompatible calibration pools. Three compatible fixture samples satisfy the unchanged medium-confidence gate; one sample does not make a synthetic span planner-eligible.
+
+Local gates pass: targeted `25/25`, non-integration `792/792` across `123/123` files, integration `114/114` across `12/12` files, domain typecheck, bundle rebuild, and local PostgreSQL migration apply/lint. The linked production shadow remains unchanged and read-only. Migration `20260825130000_atomic_physical_pace_evidence.sql` is not deployed, accepted historical physical pace samples remain `0`, and canonical runtime remains OFF.

@@ -135,3 +135,16 @@ Do not activate canonical workload planning while production physical pace evide
 - MAT-001 persistence integration remains `ENVIRONMENT_BLOCKED` because local Supabase integration variables are unavailable; it failed before test collection/assertions.
 - No migration, production mutation, Edge deployment, planner cutover, or app-api canonical workload activation occurred.
 - Canonical runtime remains OFF.
+
+## 2026-08-25 atomic physical pace evidence W2
+
+- The lifecycle audit found generic session and break rows are authenticated-user editable and physical progress is written separately. They remain accounting state, not trustworthy pace authority.
+- The local W2 migration candidate adds protected physical activity start/material snapshots, a protected pause ledger, immutable accepted pace evidence, and dedicated start/pause/resume/finish RPCs.
+- The physical finish transaction validates the unchanged exact material identity and progress boundary, derives break-adjusted active seconds from protected server timestamps, advances exact progress, completes the task unit only at the unit end, and inserts at most one event per session.
+- Boundary semantics use the last completed page: first study starts at `page_start - 1`; `end - start` is the new-page count; equal boundaries create no event; reversal, invalid range, stale progress, and non-positive observed time reject.
+- W1 ingestion recognizes deployed accepted rows as `actual_elapsed_time + actual_progress_delta`, segregated between `page_range` and `test`. The loader capability defaults OFF and app-api/Telegram routes are not wired to W2.
+- Verification: targeted `25/25`, non-integration `792/792` across `123/123` files, local integration `114/114` across `12/12` files, domain typecheck PASS, edge planning bundle rebuilt, and local PostgreSQL migration apply/lint PASS.
+- Local fixture readiness: three compatible exact-resource samples produce medium-confidence calibrated workload and planner eligibility; one sample leaves synthetic material low-confidence and blocked.
+- Production read-only audit is unchanged: `341` views (`76` exact, `0` calibrated, `0` fallback, `265` unknown), `3,323` exact YouTube minutes, `0 / 5,103` calibrated/unknown physical pages, and safety counters `79` resource units / `76` mappings / `0` partial boundaries before and after.
+- Migration `20260825130000_atomic_physical_pace_evidence.sql` is **NOT DEPLOYED**; accepted historical physical pace samples remain `0`; production runtime remains OFF; no production row was written.
+- Next release, if approved separately, is schema/RPC only. Applying the W2 migration does not authorize capture-route activation, planner cutover, Edge deployment, backfill, or production data mutation.
