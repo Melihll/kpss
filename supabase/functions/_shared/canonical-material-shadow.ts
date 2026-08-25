@@ -216,6 +216,7 @@ export async function loadCanonicalWorkloadReadiness(
   userId: string,
   examProfileId: string,
   requestedResourceIds: readonly string[],
+  options: { readonly physicalPaceEvidenceAvailable?: boolean } = {},
 ) {
   const resourceIds = [...new Set(requestedResourceIds.filter(Boolean).map(String))];
   if (!resourceIds.length) {
@@ -229,7 +230,9 @@ export async function loadCanonicalWorkloadReadiness(
 
   const [canonicalUnits, evidence, resourceResult] = await Promise.all([
     loadCanonicalMaterialUnits(client, userId, examProfileId, resourceIds),
-    loadCanonicalWorkloadEvidence(client, userId, examProfileId, resourceIds),
+    loadCanonicalWorkloadEvidence(client, userId, examProfileId, resourceIds, {
+      physicalPaceEvidenceAvailable: options.physicalPaceEvidenceAvailable === true,
+    }),
     client
       .from("resources")
       .select("id,subject_id")

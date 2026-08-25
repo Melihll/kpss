@@ -3,6 +3,7 @@ import { loadCanonicalWorkloadReadiness } from "../supabase/functions/_shared/ca
 
 const url = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const physicalPaceEvidenceShadowEnabled = process.env.PHYSICAL_PACE_EVIDENCE_SHADOW_V1 === "true";
 
 if (!url || !serviceRoleKey) {
   throw new Error("SUPABASE_URL_AND_SERVICE_ROLE_KEY_REQUIRED");
@@ -29,6 +30,27 @@ async function safetyGuard() {
     exactCount("resource_unit_progress", (query) => query.not("completed_through_page", "is", null)),
   ]);
   return { resourceUnits, youtubeVideoTopicLinks: mappings, completedThroughPageNonNull: partialPages };
+}
+
+async function productionCounters() {
+  const [snapshots, physicalBreaks, physicalEvidence, studySessions, tasks, testResults, resourceProgress] = await Promise.all([
+    exactCount("physical_study_activity_snapshots"),
+    exactCount("physical_study_activity_breaks"),
+    exactCount("physical_pace_evidence"),
+    exactCount("study_sessions"),
+    exactCount("tasks"),
+    exactCount("test_results"),
+    exactCount("resource_unit_progress"),
+  ]);
+  return {
+    physicalStudyActivitySnapshots: snapshots,
+    physicalStudyActivityBreaks: physicalBreaks,
+    physicalPaceEvidence: physicalEvidence,
+    studySessions,
+    tasks,
+    testResults,
+    resourceUnitProgress: resourceProgress,
+  };
 }
 
 async function probePhysicalPaceEvidence() {
@@ -87,14 +109,17 @@ if (resourcesResult.error) throw resourcesResult.error;
 const resourceIds = (resourcesResult.data ?? []).map((row) => String(row.id));
 
 const before = await safetyGuard();
+const countersBefore = await productionCounters();
 const paceEvidenceBefore = await probePhysicalPaceEvidence();
 const readiness = await loadCanonicalWorkloadReadiness(
   client,
   target.userId,
   target.examProfileId,
   resourceIds,
+  { physicalPaceEvidenceAvailable: physicalPaceEvidenceShadowEnabled },
 );
 const after = await safetyGuard();
+const countersAfter = await productionCounters();
 const paceEvidenceAfter = await probePhysicalPaceEvidence();
 
 if (JSON.stringify(before) !== JSON.stringify(after)) {
@@ -102,6 +127,13 @@ if (JSON.stringify(before) !== JSON.stringify(after)) {
 }
 if (JSON.stringify(paceEvidenceBefore) !== JSON.stringify(paceEvidenceAfter)) {
   throw new Error("READ_ONLY_PACE_EVIDENCE_GUARD_CHANGED");
+}
+if (
+  countersBefore.physicalStudyActivitySnapshots !== countersAfter.physicalStudyActivitySnapshots ||
+  countersBefore.physicalStudyActivityBreaks !== countersAfter.physicalStudyActivityBreaks ||
+  countersBefore.physicalPaceEvidence !== countersAfter.physicalPaceEvidence
+) {
+  throw new Error("READ_ONLY_W2_CAPTURE_GUARD_CHANGED");
 }
 
 process.stdout.write(`${JSON.stringify({
@@ -113,8 +145,11 @@ process.stdout.write(`${JSON.stringify({
   workload: readiness.summary,
   evidenceClassificationCounts: readiness.evidenceClassificationCounts,
   acceptedPaceSamples: readiness.acceptedPaceSamples,
+  physicalPaceEvidenceShadowEnabled,
   migrationCandidateDeployed: paceEvidenceAfter.migrationCandidateDeployed,
   acceptedHistoricalPaceSamples: paceEvidenceAfter.acceptedHistoricalPaceSamples,
+  countersBefore,
+  countersAfter,
   safetyBefore: before,
   safetyAfter: after,
   canonicalRuntimeActive: false,

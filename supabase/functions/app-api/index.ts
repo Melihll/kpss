@@ -25,6 +25,10 @@ import { loadMaterialWorkloads } from "../_shared/material-workload.ts";
 import { normalizeTopicResourceLinkInput } from "../_shared/topic-resource-link.ts";
 import { fetchYouTubePlaylistCatalog } from "../_shared/youtube-playlist.ts";
 import { normalizeYouTubeVideoProgressInput, presentYouTubeVideoProgress } from "../_shared/youtube-video-progress.ts";
+import {
+  isPhysicalPaceCaptureEnabled,
+  PhysicalStudyLifecycleService,
+} from "../_shared/physical-study-lifecycle.ts";
 
 type WeeklyPlanningContext = {
   examProfileId: string;
@@ -135,6 +139,23 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   YOUTUBE_VIDEO_PROGRESS_INVALID_WATCHED_SECONDS: 400,
   P48_STRATEGY_NOT_CONFIGURED: 409,
   P48_CAPACITY_SOURCE_MISSING: 409,
+  PHYSICAL_RESOURCE_UNIT_SELECTION_INVALID: 409,
+  PHYSICAL_SESSION_OWNERSHIP_CONFLICT: 409,
+  PHYSICAL_SESSION_CANCEL_UNAVAILABLE: 409,
+  PHYSICAL_PAGE_BOUNDARY_REQUIRED: 400,
+  PHYSICAL_PAGE_BOUNDARY_INVALID: 400,
+  PHYSICAL_PROGRESS_REVERSAL: 409,
+  PHYSICAL_PROGRESS_CHANGED_DURING_SESSION: 409,
+  PHYSICAL_PROGRESS_BOUNDARY_UNAVAILABLE: 409,
+  PHYSICAL_BREAK_STATE_MISMATCH: 409,
+  PHYSICAL_SESSION_IDENTITY_CHANGED: 409,
+  PHYSICAL_PACE_SESSION_REQUIRED: 409,
+  PHYSICAL_RESOURCE_UNIT_RANGE_INVALID: 409,
+  PHYSICAL_RESOURCE_UNIT_ALREADY_COMPLETED: 409,
+  PHYSICAL_RESOURCE_UNIT_SKIPPED: 409,
+  RESOURCE_UNIT_NOT_PENDING_FOR_TASK: 409,
+  RESOURCE_UNIT_OWNER_MISMATCH: 403,
+  PHYSICAL_ACTIVE_TIME_REQUIRED: 400,
 };
 
 function caughtMessage(caught: unknown) {
@@ -752,6 +773,12 @@ Deno.serve(async (request) => {
     if (authError || !authData.user) return json({ error: { code: "UNAUTHORIZED", message: "Invalid token" } }, 401);
     const userId = authData.user.id;
     const profile = await activeProfile(client, userId);
+    const physicalLifecycle = new PhysicalStudyLifecycleService(client, {
+      captureEnabled: isPhysicalPaceCaptureEnabled(
+        Deno.env.get("PHYSICAL_PACE_CAPTURE_V1_PROFILE_IDS"),
+        profile.id,
+      ),
+    });
     const pathname = new URL(request.url).pathname;
     const route = pathname.includes("/app-api") ? pathname.split("/app-api")[1] || "/" : pathname;
     const today = istanbulDate();
@@ -1578,7 +1605,18 @@ Deno.serve(async (request) => {
         const seconds = (Date.parse(row.ended_at) - Date.parse(row.started_at)) / 1000;
         return sum + (Number.isFinite(seconds) ? Math.max(0, seconds) : 0);
       }, 0);
-      return json({ session:{...session,accountingIntent:session.task_id?"planned":null}, break: openBreak, paused: Boolean(openBreak), closedBreakSeconds });
+      const lifecycle = await physicalLifecycle.describeSession(session);
+      return json({
+        session:{
+          ...session,
+          accountingIntent:session.task_id?"planned":null,
+          lifecycle:lifecycle.lifecycle,
+          physicalCapture:lifecycle.physicalCapture,
+        },
+        break: openBreak,
+        paused: Boolean(openBreak),
+        closedBreakSeconds,
+      });
     }
     if (request.method === "GET" && route === "/execution/summary") {
       const weekRange = getZonedWeekRange(today);
@@ -1613,7 +1651,12 @@ Deno.serve(async (request) => {
       });
     }
     if (request.method === "POST" && route === "/study-sessions/start") {
-      const body=await request.json(); const {data,error}=await client.rpc("start_study_session",{p_task_id:body.taskId,p_entry_source:body.entrySource??"web"}); if(error) throw error; return json(data,201);
+      const body=await request.json();
+      return json(await physicalLifecycle.start({
+        taskId:body.taskId,
+        entrySource:body.entrySource??"web",
+        resourceUnitId:typeof body.resourceUnitId==="string"?body.resourceUnitId:null,
+      }),201);
     }
     if (request.method === "POST" && route === "/study-sessions/retroactive") {
       const body=await request.json();
@@ -1633,15 +1676,14 @@ Deno.serve(async (request) => {
     const sessionMatch=route.match(/^\/study-sessions\/([0-9a-f-]+)\/(finish|cancel|pause|resume)$/);
     if(request.method==="POST"&&sessionMatch){
       const action=sessionMatch[2];
-      const rpc=action==="finish"
-        ?"finish_study_session"
+      const body=action==="finish"?await request.json().catch(()=>({})):{};
+      const data=action==="finish"
+        ?await physicalLifecycle.finish(sessionMatch[1],body.completedThroughPage)
         :action==="cancel"
-          ?"cancel_study_session"
+          ?await physicalLifecycle.cancel(sessionMatch[1])
           :action==="pause"
-            ?"pause_study_session"
-            :"resume_study_session";
-      const {data,error}=await client.rpc(rpc,{p_session_id:sessionMatch[1]});
-      if(error)throw error;
+            ?await physicalLifecycle.pause(sessionMatch[1])
+            :await physicalLifecycle.resume(sessionMatch[1]);
       const plan=action==="finish"?await currentPlan(client,profile.id,weekStart):null;
       const replanPreview=plan?await previewCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
       return json(action==="finish"?{...data,replanPreview,planMutationApplied:false}:data);

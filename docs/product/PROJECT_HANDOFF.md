@@ -68,9 +68,9 @@ Material completion history remains separate from pedagogical state. Previously 
 
 ## NEXT EXACT STEP
 
-Specify `W2 — Atomic Physical Pace Evidence Capture`: bind overlap-safe actual elapsed time to an exact canonical physical before/after progress delta in one sanctioned flow, then collect enough compatible samples for the W1 confidence gate. Any migration or production release requires a separate proposal and authorization.
+Prepare a separate W3 production activation proposal for the already verified app-api/web capture path. That proposal must name the exact profile allowlist, deploy app-api and web, keep Telegram legacy, verify the first protected lifecycle under observation, and retain canonical workload planning OFF. No deployment or feature enablement is authorized by this handoff.
 
-Do not activate canonical workload planning while production physical pace evidence remains insufficient. Continue with `SPEC → TEST → IMPLEMENT → VERIFY`.
+Telegram requires a separately reviewed service-role W2 wrapper plus authoritative page-boundary UX before it can enter an activation proposal. Do not activate canonical workload planning while production physical pace evidence remains insufficient.
 
 ## 2026-08-24 MAT-001 canonical material shadow checkpoint
 
@@ -152,3 +152,19 @@ Do not activate canonical workload planning while production physical pace evide
 - Existing counts remained `59` sessions, `248` tasks, `1` test result, `1` resource-progress row, `79` resource units, `76` mappings, and `0` non-null exact partial-page boundaries.
 - Status: `PRODUCTION_SCHEMA_DEPLOYED — CAPTURE_RUNTIME_NOT_ACTIVATED`. No Edge/app/Telegram/web deployment occurred; routes and canonical planner remain OFF.
 - Next gate requires a separate runtime-activation design/review and explicit production approval.
+
+## 2026-08-25 atomic physical capture runtime W3
+
+- One shared `PhysicalStudyLifecycleService` now owns app-api lifecycle selection locally. The web expresses intent; it never dual-writes session, break, progress, task-unit, or evidence state.
+- Capture is OFF by default and can only be enabled for an explicit exam-profile allowlist through `PHYSICAL_PACE_CAPTURE_V1_PROFILE_IDS`; migration presence alone cannot activate it.
+- Capability OFF preserves generic start/pause/resume/finish/cancel. Capability ON uses W2 only for exactly one persisted, active, pending, page-ranged physical task unit. Ambiguous, missing, YouTube, and synthetic structural work remain legacy/non-W2.
+- Protected snapshot ownership routes pause/resume/finish even after the start gate is rolled back. A resource-unit session without its protected snapshot fails as mixed state.
+- Both web finish surfaces ask for the exact last completed page. Equality with the protected start boundary records study time without evidence; advancement calls the single atomic W2 finish; reversal, beyond-range, stale progress, and break mismatch fail safely.
+- W2-owned sessions do not expose generic cancel in web because the deployed W2 contract has no protected cancel RPC. Zero-progress finish is the sanctioned way to preserve actual time without evidence.
+- W1 shadow evidence loading uses the separate `PHYSICAL_PACE_EVIDENCE_SHADOW_V1` switch. Capture and calibration consumption remain independently gated, and canonical planner runtime remains OFF.
+- Telegram is `UI_BLOCKED`: its service-role webhook cannot invoke the deployed `auth.uid()`-scoped W2 RPCs, and it has no authoritative page-boundary finish interaction. It remains on the verified legacy wrappers; no ownership bypass or schema change was introduced.
+- Verification: targeted W3 lifecycle/UX/shadow/safety tests PASS; full non-integration and local Supabase integration suites PASS; domain/web typechecks, app-api bundle, and web production build PASS.
+- Production read-only postcheck: W2 snapshots/breaks/evidence remain `0 / 0 / 0`; workload remains `341` views (`76` exact, `0` calibrated, `0` fallback, `265` unknown, `76` eligible), with `0 / 5,103` calibrated/unknown physical pages.
+- Existing production counters are `60` sessions, `248` tasks, `1` test result, `1` resource-progress row, `79` units, `76` mappings, and `0` exact partial boundaries. The one additional session since W2 was legitimate activity unrelated to W3; all guarded counts were stable during the read-only audit.
+- Deployed app-api v29 and Telegram v33 remain the August 24 builds; no physical-pace feature secret exists. W3 performed no migration, Edge/web/Telegram deployment, feature enablement, production mutation, or planner cutover.
+- Status: `LOCAL_VERIFIED — PRODUCTION_RUNTIME_OFF — TELEGRAM_UI_BLOCKED`.

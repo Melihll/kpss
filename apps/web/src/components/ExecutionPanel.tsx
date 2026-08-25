@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { callAppApi, AppApiError, FRIENDLY_API_ERRORS } from "../lib/app-api";
 import { supabase } from "../lib/supabase";
+import type { PhysicalFinishCapture } from "../lib/physical-study-finish";
+import { PhysicalStudyFinishDialog } from "./PhysicalStudyFinishDialog";
 
 const EXECUTION_CHANGED_EVENT = "kpss:execution-changed";
 
-interface ActiveSession { id: string; started_at: string; accountingIntent?: "planned" | "extra" | null; tasks: { title: string } | null }
+interface ActiveSession {
+  id: string;
+  started_at: string;
+  accountingIntent?: "planned" | "extra" | null;
+  tasks: { title: string } | null;
+  lifecycle?: "legacy" | "physical_v1";
+  physicalCapture?: PhysicalFinishCapture | null;
+}
 interface RecentResult {
   id: string;
   correct_count: number;
@@ -71,6 +80,8 @@ export function ExecutionPanel() {
   const [retroTaskId, setRetroTaskId] = useState("");
   const [retroIntent, setRetroIntent] = useState<"" | "extra" | "replace_planned_task">("");
   const [substitutionPreview, setSubstitutionPreview] = useState<SubstitutionPreview | null>(null);
+  const [physicalFinishOpen, setPhysicalFinishOpen] = useState(false);
+  const [completionNotice, setCompletionNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -109,20 +120,36 @@ export function ExecutionPanel() {
     return () => window.removeEventListener(EXECUTION_CHANGED_EVENT, refresh);
   }, [load]);
 
-  async function act(action: () => Promise<unknown>) {
+  async function act<T>(action: () => Promise<T>): Promise<T | null> {
     setBusy(true);
     setError(null);
     try {
-      await action();
+      const result = await action();
       await load();
       window.dispatchEvent(new Event(EXECUTION_CHANGED_EVENT));
-      return true;
+      return result;
     } catch (caught) {
       setError(message(caught));
-      return false;
+      return null;
     } finally {
       setBusy(false);
     }
+  }
+
+  async function finishActive(completedThroughPage?: number) {
+    if (!active) return false;
+    const result = await act(() => callAppApi<any>(`/study-sessions/${active.id}/finish`, {
+      method: "POST",
+      ...(completedThroughPage === undefined ? {} : { body: { completedThroughPage } }),
+    }));
+    if (!result) return false;
+    setCompletionNotice(result.outcome === "completed_with_evidence"
+      ? "Çalışma ve sayfa ilerlemesi atomik olarak kaydedildi."
+      : result.outcome === "completed_without_evidence"
+        ? "Çalışma süresi kaydedildi; hız kanıtı oluşmadı."
+        : "Çalışma kaydedildi.");
+    setPhysicalFinishOpen(false);
+    return true;
   }
 
   async function recordRetroactive(event: FormEvent<HTMLFormElement>) {
@@ -233,6 +260,7 @@ export function ExecutionPanel() {
       {active && <span className="live-pill"><i /> Çalışma aktif</span>}
     </div>
     {error && <p className="error">{error}</p>}
+    {completionNotice && <p className="success" role="status">{completionNotice}</p>}
 
     <div className="execution-summary-grid">
       <article className="execution-stat"><span className="stat-icon purple-dot">◷</span><div><small>BUGÜN ÇALIŞILAN</small><strong>{label(summary.todayStudyMinutes)}</strong><span>Bugünkü toplam odak süresi</span></div></article>
@@ -243,10 +271,17 @@ export function ExecutionPanel() {
       <div className="active-session-orb"><span /></div>
       <div><span className="eyebrow">AKTİF ÇALIŞMA · {active.accountingIntent==="planned"?"PLANLI GÖREV":"ÇALIŞMA"}</span><h3>{active.tasks?.title ?? "Çalışma"}</h3><p>{new Date(active.started_at).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })} itibarıyla odaktasın.</p></div>
       <div className="inline-actions active-session-actions">
-        <button className="primary-action" disabled={busy} onClick={() => void act(() => callAppApi(`/study-sessions/${active.id}/finish`, { method: "POST" }))}>Çalışmayı Bitir</button>
-        <button className="ghost-action" disabled={busy} onClick={() => void act(() => callAppApi(`/study-sessions/${active.id}/cancel`, { method: "POST" }))}>İptal</button>
+        <button className="primary-action" disabled={busy} onClick={() => active.lifecycle === "physical_v1" && active.physicalCapture ? setPhysicalFinishOpen(true) : void finishActive()}>Çalışmayı Bitir</button>
+        {active.lifecycle !== "physical_v1" && <button className="ghost-action" disabled={busy} onClick={() => void act(() => callAppApi(`/study-sessions/${active.id}/cancel`, { method: "POST" }))}>İptal</button>}
       </div>
     </article>}
+
+    <PhysicalStudyFinishDialog
+      capture={physicalFinishOpen ? active?.physicalCapture ?? null : null}
+      busy={busy}
+      onCancel={() => setPhysicalFinishOpen(false)}
+      onFinish={finishActive}
+    />
 
     <div className="quick-entry-grid">
       <details className="soft-details action-details">

@@ -13,6 +13,10 @@ const appApi = readFileSync(
   new URL("../supabase/functions/app-api/index.ts", import.meta.url),
   "utf8",
 );
+const physicalLifecycle = readFileSync(
+  new URL("../supabase/functions/_shared/physical-study-lifecycle.ts", import.meta.url),
+  "utf8",
+);
 
 describe("P1-03 study session breaks contract", () => {
   it("models breaks separately from study_sessions status", () => {
@@ -53,7 +57,11 @@ describe("P1-03 study session breaks contract", () => {
     expect(appApi).toContain('from("study_session_breaks")');
     expect(appApi).toContain("paused: Boolean(openBreak)");
     expect(appApi).toContain("(finish|cancel|pause|resume)");
-    expect(appApi).toContain('"pause_study_session"');
-    expect(appApi).toContain('"resume_study_session"');
+    expect(appApi).toContain("physicalLifecycle.pause");
+    expect(appApi).toContain("physicalLifecycle.resume");
+    expect(physicalLifecycle).toContain('"pause_study_session"');
+    expect(physicalLifecycle).toContain('"resume_study_session"');
+    expect(physicalLifecycle).toContain('"pause_physical_study_session"');
+    expect(physicalLifecycle).toContain('"resume_physical_study_session"');
   });
 });

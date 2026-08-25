@@ -1033,3 +1033,19 @@ html,body,.product-shell{overflow-x:hidden}.coach-drawer-body{overscroll-behavio
 .confirmation-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .confirmation-card dt { color: var(--text-secondary); font-size: .62rem; }
 .confirmation-card dd { margin: 2px 0; font-size: .74rem; }
+
+.physical-finish-backdrop { position: fixed; inset: 0; z-index: 74; border: 0; background: rgba(17,17,19,.2); backdrop-filter: blur(3px); }
+.physical-finish-dialog { position: fixed; z-index: 75; top: 50%; left: 50%; width: min(440px,calc(100vw - 28px)); overflow: hidden; border: 1px solid rgba(17,17,19,.13); border-radius: 18px; background: #f8f8f6; box-shadow: 0 28px 90px rgba(17,17,19,.2); transform: translate(-50%,-50%); }
+.physical-finish-dialog > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 20px; border-bottom: 1px solid rgba(17,17,19,.09); }
+.physical-finish-dialog > header span { color: #77777b; font-size: .58rem; font-weight: 650; letter-spacing: .09em; text-transform: uppercase; }
+.physical-finish-dialog > header h2 { margin: 4px 0 0; font-size: 1rem; font-weight: 620; }
+.physical-finish-dialog > header > button { width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: #55555a; cursor: pointer; font-size: 1.25rem; }
+.physical-finish-dialog form { display: flex; flex-direction: column; gap: 14px; padding: 20px; }
+.physical-finish-dialog form > p { margin: 0; color: #606064; font-size: .72rem; }
+.physical-finish-dialog label { display: flex; flex-direction: column; gap: 7px; }
+.physical-finish-dialog label span { font-size: .64rem; font-weight: 620; }
+.physical-finish-dialog input { height: 46px; padding: 0 12px; border: 1px solid rgba(17,17,19,.15); border-radius: 10px; background: #fff; font: inherit; font-size: .9rem; outline: none; }
+.physical-finish-dialog input:focus { border-color: rgba(17,17,19,.45); box-shadow: 0 0 0 3px rgba(17,17,19,.055); }
+.physical-finish-dialog small { color: #747478; font-size: .62rem; line-height: 1.5; }
+.physical-finish-dialog form > div { display: flex; justify-content: flex-end; gap: 8px; }
+.physical-finish-error { color: #a43a3a!important; font-size: .65rem!important; }

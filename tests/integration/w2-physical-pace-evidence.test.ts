@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it } from "vitest";
+import { PhysicalStudyLifecycleService } from "../../supabase/functions/_shared/physical-study-lifecycle";
+import { loadCanonicalWorkloadEvidence } from "../../supabase/functions/_shared/canonical-workload-evidence";
 
 const url = process.env.SUPABASE_URL;
 const anonKey = process.env.SUPABASE_ANON_KEY;
@@ -272,6 +274,51 @@ describe.sequential("W2 atomic physical pace persistence", () => {
       p_resource_unit_id: unitId,
     });
     expect(completed.error).toBeNull();
+    expect((await actor.from("physical_pace_evidence").select("id").eq("resource_unit_id", unitId)).data).toEqual([]);
+  });
+
+  it("runs the gated application adapter through one W2 mutation per lifecycle action", async () => {
+    const { taskId, unitId } = await createTaskUnit(150, 160);
+    const service = new PhysicalStudyLifecycleService(actor, { captureEnabled: true });
+    const start = await service.start({ taskId, entrySource: "web" });
+    expect(start).toMatchObject({
+      lifecycle: "physical_v1",
+      outcome: "started",
+      physicalCapture: { resourceUnitId: unitId, pageStart: 150, pageEnd: 160, startPageBoundary: 149 },
+    });
+    await service.pause(start.id);
+    await service.resume(start.id);
+    await waitForObservedSecond();
+    const finish = await service.finish(start.id, 152);
+    expect(finish).toMatchObject({ lifecycle: "physical_v1", outcome: "completed_with_evidence" });
+    expect((await actor.from("physical_pace_evidence").select("id", { count: "exact", head: true }).eq("study_session_id", start.id)).count).toBe(1);
+    expect((await actor.from("study_session_allocations").select("id", { count: "exact", head: true }).eq("session_id", start.id)).count).toBe(1);
+    expect((await actor.from("resource_unit_progress").select("status,completed_through_page,attempt_count").eq("resource_unit_id", unitId).single()).data).toMatchObject({
+      status: "in_progress", completed_through_page: 152, attempt_count: 1,
+    });
+    const taskProgressBeforeReplay = (await actor.from("task_progress").select("actual_study_minutes,completed_minutes").eq("task_id", taskId).single()).data;
+    const replay = await service.finish(start.id, 152);
+    expect(replay).toMatchObject({ lifecycle: "physical_v1", outcome: "completed_with_evidence", idempotent: true });
+    expect((await actor.from("physical_pace_evidence").select("id", { count: "exact", head: true }).eq("study_session_id", start.id)).count).toBe(1);
+    expect((await actor.from("study_session_allocations").select("id", { count: "exact", head: true }).eq("session_id", start.id)).count).toBe(1);
+    expect((await actor.from("task_progress").select("actual_study_minutes,completed_minutes").eq("task_id", taskId).single()).data).toEqual(taskProgressBeforeReplay);
+
+    const hidden = await loadCanonicalWorkloadEvidence(actor, user.id, profileId, [resourceId]);
+    const visible = await loadCanonicalWorkloadEvidence(actor, user.id, profileId, [resourceId], {
+      physicalPaceEvidenceAvailable: true,
+    });
+    expect(hidden.some((row) => row.id === `physical_pace_evidence:${finish.evidence.id}`)).toBe(false);
+    expect(visible.some((row) => row.id === `physical_pace_evidence:${finish.evidence.id}`)).toBe(true);
+  });
+
+  it("keeps feature-OFF exact physical work on the unchanged legacy path", async () => {
+    const { taskId, unitId } = await createTaskUnit(170, 180);
+    const service = new PhysicalStudyLifecycleService(actor, { captureEnabled: false });
+    const start = await service.start({ taskId, entrySource: "web" });
+    expect(start).toMatchObject({ lifecycle: "legacy", outcome: "legacy_started" });
+    expect((await actor.from("physical_study_activity_snapshots").select("study_session_id").eq("study_session_id", start.id)).data).toEqual([]);
+    const finish = await service.finish(start.id);
+    expect(finish).toMatchObject({ lifecycle: "legacy", outcome: "legacy_completed" });
     expect((await actor.from("physical_pace_evidence").select("id").eq("resource_unit_id", unitId)).data).toEqual([]);
   });
 });

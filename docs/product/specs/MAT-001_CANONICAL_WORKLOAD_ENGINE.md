@@ -1,6 +1,6 @@
 # MAT-001 Canonical Workload Engine
 
-Status: W2_PRODUCTION_SCHEMA_DEPLOYED — CAPTURE_RUNTIME_NOT_ACTIVATED — CANONICAL_RUNTIME_OFF
+Status: W3_LOCAL_RUNTIME_VERIFIED — PRODUCTION_CAPTURE_OFF — TELEGRAM_UI_BLOCKED — CANONICAL_RUNTIME_OFF
 
 ## 1. Purpose
 
@@ -189,3 +189,20 @@ Local W2 verification on 2026-08-25:
 - all W2 tables contain `0` rows, historical accepted physical pace samples remain `0`, safety counters remain `79 / 76 / 0`, and canonical runtime remains OFF.
 
 The next gate is a separate runtime-activation design/review and explicit approval. The schema release does not imply app-api/Telegram/web capture activation, canonical planner cutover, data backfill, or evidence creation.
+
+## 15. W3 gated capture runtime integration
+
+W3 adds one local server adapter that selects either the existing generic lifecycle or the W2 physical lifecycle. App-api and both web finish surfaces are integrated; no deployed runtime changed.
+
+- `PHYSICAL_PACE_CAPTURE_V1_PROFILE_IDS` is an explicit app-api profile allowlist and defaults OFF.
+- Exactly one compatible persisted pending physical unit may be selected automatically. Explicit selected-unit input is supported by the server contract; ambiguous tasks remain legacy when the product supplies no selection.
+- W2-owned pause/resume/finish always remain on protected authority. Mixed generic/W2 identity fails safely.
+- Web finish requests the last completed page and surfaces evidence, no-evidence, and conflict outcomes. No page end is inferred from task completion or title.
+- W2 finish remains the only progress/evidence/task-unit/accounting mutation. Application code performs no dual write.
+- W1 read-only shadow consumption uses the separate `PHYSICAL_PACE_EVIDENCE_SHADOW_V1` gate; it defaults OFF and does not activate planner calibration.
+- Telegram remains legacy and `UI_BLOCKED` pending an ownership-preserving service wrapper and page-boundary interaction.
+- Local verification covers runtime OFF parity, exact-unit eligibility, W2 lifecycle routing, retry/idempotency, boundary validation, no double accounting/completion, W1 shadow visibility, overlap safety, and proposal-only study deviation.
+- Production read-only verification remains `0` snapshots, `0` protected breaks, and `0` evidence. Workload remains `76 exact / 0 calibrated / 0 fallback / 265 unknown`, and physical pages remain `0 calibrated / 5,103 unknown`.
+- Deployed app-api/Telegram code and production secrets remain unchanged. Production capture and canonical planning are OFF.
+
+The next production action requires separate explicit approval to deploy the verified app-api/web code and add one exact exam-profile ID to the capture allowlist. Telegram and canonical planner activation are excluded from that step.

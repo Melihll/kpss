@@ -11,12 +11,21 @@ import type { TaskActionPreviewAction } from "../lib/task-action-preview-ui";
 import { Icon } from "./Icon";
 import { ResourceDetailDrawer, type ResourceDetailTab } from "./ResourceDetailDrawer";
 import type { ResourcePageProgress, ResourceProgressResponse } from "../lib/resource-progress-ui";
+import type { PhysicalFinishCapture } from "../lib/physical-study-finish";
+import { PhysicalStudyFinishDialog } from "./PhysicalStudyFinishDialog";
 import {
   defaultTaskMaterialTab,
   taskMaterialResource,
 } from "../lib/today-material-actions";
 
-interface ActiveSession { id: string; task_id: string | null; started_at: string; tasks: { title: string } | null }
+interface ActiveSession {
+  id: string;
+  task_id: string | null;
+  started_at: string;
+  tasks: { title: string } | null;
+  lifecycle?: "legacy" | "physical_v1";
+  physicalCapture?: PhysicalFinishCapture | null;
+}
 interface ActiveBreak { id: string; session_id: string; started_at: string; ended_at: string | null }
 interface ActiveSessionResponse {
   session: ActiveSession | null;
@@ -154,6 +163,8 @@ export function StudyTodayPanel() {
     tab: ResourceDetailTab;
   } | null>(null);
   const [materialPageProgress, setMaterialPageProgress] = useState<ResourcePageProgress | null>(null);
+  const [physicalFinishOpen, setPhysicalFinishOpen] = useState(false);
+  const [completionNotice, setCompletionNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -194,16 +205,34 @@ export function StudyTodayPanel() {
     return () => window.clearInterval(timer);
   }, [active, activeBreak?.started_at, closedBreakSeconds, paused]);
 
-  async function act(action: () => Promise<unknown>) {
+  async function act<T>(action: () => Promise<T>): Promise<T | null> {
     setBusy(true);
     try {
-      await action();
+      const result = await action();
       await load();
       window.dispatchEvent(new Event("kpss:execution-changed"));
+      return result;
     } catch (caught) {
       console.error("STUDY_ACTION_FAILED", caught);
       setError(true);
+      return null;
     } finally { setBusy(false); }
+  }
+
+  async function finishActive(completedThroughPage?: number) {
+    if (!active) return false;
+    const result = await act(() => callAppApi<any>(`/study-sessions/${active.id}/finish`, {
+      method: "POST",
+      ...(completedThroughPage === undefined ? {} : { body: { completedThroughPage } }),
+    }));
+    if (!result) return false;
+    setCompletionNotice(result.outcome === "completed_with_evidence"
+      ? "Çalışma ve sayfa ilerlemesi atomik olarak kaydedildi."
+      : result.outcome === "completed_without_evidence"
+        ? "Çalışma süresi kaydedildi; yeni sayfa ilerlemesi olmadığı için hız kanıtı oluşmadı."
+        : "Çalışma kaydedildi.");
+    setPhysicalFinishOpen(false);
+    return true;
   }
 
   function moveSpotlight(event: PointerEvent<HTMLElement>) {
@@ -318,6 +347,7 @@ export function StudyTodayPanel() {
     </header>
 
     {error && <div className="inline-state error" role="alert"><span>Veriler yüklenemedi.</span><button type="button" onClick={() => void load()}>Tekrar Dene</button></div>}
+    {completionNotice && <div className="inline-state" role="status"><span>{completionNotice}</span><button type="button" onClick={() => setCompletionNotice(null)}>Kapat</button></div>}
 
     <article className={`focus-now-card ${active ? "is-running" : ""} ${paused ? "is-paused" : ""}`} onPointerMove={moveSpotlight}>
       <div className="focus-spotlight" aria-hidden="true" />
@@ -336,7 +366,7 @@ export function StudyTodayPanel() {
             {paused ? <Icon name="play" weight="fill" /> : <span className="pause-glyph" aria-hidden="true">Ⅱ</span>}
             {paused ? "Devam Et" : "Mola Ver"}
           </button>
-          <button className="focus-action finish" type="button" disabled={busy} onClick={() => void act(() => callAppApi(`/study-sessions/${active.id}/finish`, { method: "POST" }))}><Icon name="stop" weight="fill" />Çalışmayı Bitir</button>
+          <button className="focus-action finish" type="button" disabled={busy} onClick={() => active.lifecycle === "physical_v1" && active.physicalCapture ? setPhysicalFinishOpen(true) : void finishActive()}><Icon name="stop" weight="fill" />Çalışmayı Bitir</button>
         </div>        {activeTask && <TaskMaterialActions task={activeTask} onOpen={openTaskMaterial} />}
         {paused && <p className="focus-break-note" role="status">Mola süresi çalışma sürene eklenmez.</p>}
       </div> : focusTask ? <div className="focus-state" key="ready">
@@ -347,6 +377,13 @@ export function StudyTodayPanel() {
         <button className="focus-action" type="button" disabled={busy} onClick={() => void act(() => callAppApi("/study-sessions/start", { method: "POST", body: { taskId: focusTask.id, entrySource: "web" } }))}><Icon name="play" weight="fill" />Çalışmaya Başla</button>        <TaskMaterialActions task={focusTask} onOpen={openTaskMaterial} />
       </div> : <div className="focus-state focus-empty"><span className="focus-label">Şimdi</span><Icon name="check" size={32} /><h2>Sıradaki görev yok.</h2><p>Haftalık plan oluşturulduğunda burada görünecek.</p></div>}
     </article>
+
+    <PhysicalStudyFinishDialog
+      capture={physicalFinishOpen ? active?.physicalCapture ?? null : null}
+      busy={busy}
+      onCancel={() => setPhysicalFinishOpen(false)}
+      onFinish={finishActive}
+    />
 
     <section className="today-remaining" aria-labelledby="remaining-title">
       <div className="section-bar"><h2 id="remaining-title">Bugünün devamı</h2><span>{pendingTasks.length} görev · {compactMinutesLabel(pendingTasks.reduce((sum, task) => sum + (dailyMinutes.get(task.id) ?? 0), 0))}</span></div>

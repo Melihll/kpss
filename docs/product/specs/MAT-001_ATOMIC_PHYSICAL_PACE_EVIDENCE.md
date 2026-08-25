@@ -31,7 +31,7 @@ The lifecycle audit found that authenticated users can directly update their own
 3. an accepted-only immutable `physical_pace_evidence` event table;
 4. `start_physical_study_session`, `pause_physical_study_session`, `resume_physical_study_session`, and `finish_physical_study_session` transactional RPCs.
 
-The existing generic start/finish, retroactive, task completion, test result, app-api, and Telegram flows are not replaced or wired to W2 capture.
+At the W2 schema release, the existing generic start/finish, retroactive, task completion, test result, app-api, and Telegram flows were not replaced or wired to W2 capture. W3 now provides a local, default-OFF app-api/web adapter; no deployed runtime changed and Telegram remains legacy.
 
 The evidence causal identity is `study_session_id`. A unique constraint permits at most one accepted pace sample for that activity. Replaying a successful finish returns the existing event and does not add progress or accounting again.
 
@@ -108,13 +108,15 @@ No historical insert or update statement exists in the migration.
 
 W1 ingestion accepts `physical_pace_evidence` rows as `actual_elapsed_time + actual_progress_delta` with provenance `atomic_physical_finish`. The loader query remains capability-gated OFF despite the table now existing in production.
 
-The production workload shadow remains on the W1 ingestion path because callers do not enable the new capability. App-api/Telegram capture and canonical planning remain separately gated.
+The production workload shadow remains on the W1 ingestion path because callers do not enable the new capability. W3 exposes separate local capture and shadow-evidence gates; production app-api/Telegram capture and canonical planning remain inactive.
 
 ## 10. Release and rollback considerations
 
 Migration `20260825130000_atomic_physical_pace_evidence.sql` was deployed to production on 2026-08-25 under explicit schema/RPC-only approval. Its SHA256 is `82006d04a089595308ff9b434dd4f4c8888c2191fdd0fb9c69f0af210c32a8e6`. Postflight confirmed exact schema/RPC exposure, zero W2 rows, zero historical evidence, unchanged existing counters, zero pending migrations, and no runtime activation.
 
 Any later app-api, Telegram, or web capture activation requires a separate design, review, tests, and explicit production approval.
+
+W3 completed the local app-api/web design and verification without deployment. Telegram still requires a separate schema/RPC wrapper and page-boundary design. Production activation remains a later explicit decision.
 
 Rollback before capture activation may drop the four new RPCs and three new tables in a reviewed compensating migration. After accepted events exist, rollback must preserve/export immutable evidence and must not silently discard it.
 
