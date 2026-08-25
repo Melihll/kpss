@@ -1,6 +1,8 @@
 import {
   adaptPhysicalMaterialRow,
+  adaptPhysicalStructuralSpan,
   adaptYoutubeMaterialRows,
+  derivePhysicalStructuralCoverage,
 } from "./planning.bundle.js";
 
 function uniqueStrings(values: unknown[]): string[] {
@@ -20,7 +22,12 @@ export async function loadCanonicalMaterialUnits(
   const resourceIds = uniqueStrings([...requestedResourceIds]);
   if (!resourceIds.length) return [];
 
-  const [resourceResult, unitResult, linkResult] = await Promise.all([
+  const [
+    resourceResult,
+    unitResult,
+    sectionResult,
+    linkResult,
+  ] = await Promise.all([
     client
       .from("resources")
       .select("id,subject_id,status")
@@ -32,6 +39,10 @@ export async function loadCanonicalMaterialUnits(
       .select("id,resource_id,resource_section_id,unit_type,name,sort_order,page_start,page_end,estimated_minutes,is_active")
       .in("resource_id", resourceIds),
     client
+      .from("resource_sections")
+      .select("id,resource_id,curriculum_node_id,name,sort_order,page_start,page_end,source_unit_type,is_active")
+      .in("resource_id", resourceIds),
+    client
       .from("topic_resource_links")
       .select("resource_id,youtube_playlist_id")
       .eq("user_id", userId)
@@ -41,6 +52,7 @@ export async function loadCanonicalMaterialUnits(
 
   if (resourceResult.error) throw resourceResult.error;
   if (unitResult.error) throw unitResult.error;
+  if (sectionResult.error) throw sectionResult.error;
   if (linkResult.error) throw linkResult.error;
 
   const resources = (resourceResult.data ?? [])
@@ -57,22 +69,13 @@ export async function loadCanonicalMaterialUnits(
     (row: any) => resourceById.has(String(row.resource_id)),
   );
 
-  const sectionIds = uniqueStrings(
-    physicalRows.map((row: any) => row.resource_section_id),
+  const sectionRows = (sectionResult.data ?? []).filter(
+    (row: any) => resourceById.has(String(row.resource_id)),
   );
+
   const unitIds = uniqueStrings(
     physicalRows.map((row: any) => row.id),
   );
-
-  let sectionRows: any[] = [];
-  if (sectionIds.length) {
-    const result = await client
-      .from("resource_sections")
-      .select("id,resource_id,curriculum_node_id,is_active")
-      .in("id", sectionIds);
-    if (result.error) throw result.error;
-    sectionRows = result.data ?? [];
-  }
 
   let physicalProgressRows: any[] = [];
   if (unitIds.length) {
@@ -105,6 +108,46 @@ export async function loadCanonicalMaterialUnits(
       mappingProvenance: "reviewed_catalog",
     }),
   );
+
+  const structuralCoverage = derivePhysicalStructuralCoverage(
+    sectionRows.map((row: any) => ({
+      sectionId: String(row.id),
+      resourceId: String(row.resource_id),
+      curriculumNodeId: row.curriculum_node_id
+        ? String(row.curriculum_node_id)
+        : null,
+      pageStart: row.page_start == null
+        ? null
+        : Number(row.page_start),
+      pageEnd: row.page_end == null
+        ? null
+        : Number(row.page_end),
+      isActive: row.is_active === true,
+    })),
+    physicalRows.map((row: any) => ({
+      unitId: String(row.id),
+      sectionId: row.resource_section_id
+        ? String(row.resource_section_id)
+        : null,
+      pageStart: row.page_start == null
+        ? null
+        : Number(row.page_start),
+      pageEnd: row.page_end == null
+        ? null
+        : Number(row.page_end),
+      isActive: row.is_active === true,
+    })),
+  );
+
+  for (const span of structuralCoverage.spans) {
+    const section = sectionById.get(span.sectionId);
+    if (!section) continue;
+
+    units.push(adaptPhysicalStructuralSpan({
+      span,
+      section,
+    }));
+  }
 
   const playlistToResources = new Map<string, Set<string>>();
   for (const row of linkResult.data ?? []) {

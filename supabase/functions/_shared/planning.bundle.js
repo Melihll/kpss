@@ -533,6 +533,9 @@ function hasAuthoritativeMappingProvenance(provenance) {
   return provenance !== "ai_candidate";
 }
 function isPlannerEligible(input) {
+  if (input.sourceKind === "physical" && input.plannerEligibleOverride === false) {
+    return false;
+  }
   const hasExactProgress = input.sourceKind !== "youtube" || input.segmentStartSeconds == null && input.segmentEndSeconds == null;
   return input.isActive && input.mappingStatus === "validated" && input.curriculumNodeId !== null && hasAuthoritativeMappingProvenance(input.mappingProvenance) && hasExactProgress;
 }
@@ -1531,6 +1534,15 @@ function normalizePhysicalUnitType2(unitType) {
   if (unitType === "mock") return "mock";
   return "other";
 }
+function normalizePhysicalSectionSourceUnitType(sourceUnitType) {
+  if (sourceUnitType === "soru_bankas\u0131_blo\u011Fu") return "test";
+  if (sourceUnitType === "test") return "test";
+  if (sourceUnitType === "konu") return "chapter";
+  if (sourceUnitType === "video") return "video";
+  if (sourceUnitType === "reading") return "reading";
+  if (sourceUnitType === "mock") return "mock";
+  return "other";
+}
 function adaptPhysicalMaterialRow(request) {
   const sectionMatchesResource = request.section !== null && request.section.resource_id === request.unit.resource_id;
   const curriculumNodeId = sectionMatchesResource ? request.section?.curriculum_node_id ?? null : null;
@@ -1553,6 +1565,30 @@ function adaptPhysicalMaterialRow(request) {
     mappingStatus,
     mappingProvenance: request.mappingProvenance,
     isActive: request.unit.is_active && sectionActive
+  });
+}
+function adaptPhysicalStructuralSpan(request) {
+  const mappingStatus = request.span.curriculumNodeId !== null ? "validated" : "missing";
+  return normalizeMaterialUnit({
+    sourceKind: "physical",
+    id: request.span.spanId,
+    resourceId: request.span.resourceId,
+    curriculumNodeId: request.span.curriculumNodeId,
+    sourceUnitType: normalizePhysicalSectionSourceUnitType(
+      request.section.source_unit_type
+    ),
+    title: `${request.section.name} \xB7 s.${request.span.pageStart}\u2013${request.span.pageEnd}`,
+    sortOrder: request.span.pageStart,
+    pageStart: request.span.pageStart,
+    pageEnd: request.span.pageEnd,
+    estimatedMinutes: null,
+    progressState: "not_started",
+    completedThroughPage: null,
+    completedAt: null,
+    mappingStatus,
+    mappingProvenance: "reviewed_catalog",
+    isActive: request.section.is_active,
+    plannerEligibleOverride: false
   });
 }
 function adaptYoutubeMaterialRow(request) {
@@ -1604,6 +1640,118 @@ function adaptYoutubeMaterialRows(request) {
     });
   });
 }
+
+// packages/domain/src/planning/physical-structural-coverage.ts
+function mergeRanges(ranges) {
+  const ordered = [...ranges].sort(
+    (left, right) => left.start - right.start || left.end - right.end
+  );
+  const merged2 = [];
+  for (const range of ordered) {
+    const last = merged2[merged2.length - 1];
+    if (!last || range.start > last.end + 1) {
+      merged2.push({ ...range });
+      continue;
+    }
+    last.end = Math.max(last.end, range.end);
+  }
+  return merged2;
+}
+function derivePhysicalStructuralCoverage(sections, units) {
+  const spans = [];
+  const anomalies = [];
+  const unitsBySection = /* @__PURE__ */ new Map();
+  for (const unit of units) {
+    if (!unit.isActive || !unit.sectionId) continue;
+    const current = unitsBySection.get(unit.sectionId) ?? [];
+    current.push(unit);
+    unitsBySection.set(unit.sectionId, current);
+  }
+  for (const section of sections) {
+    if (!section.isActive) continue;
+    if (section.pageStart == null || section.pageEnd == null) {
+      anomalies.push({
+        kind: "section_missing_range",
+        sectionId: section.sectionId,
+        unitId: null
+      });
+      continue;
+    }
+    if (section.pageEnd < section.pageStart) {
+      anomalies.push({
+        kind: "section_invalid_range",
+        sectionId: section.sectionId,
+        unitId: null
+      });
+      continue;
+    }
+    const coveredRanges = [];
+    for (const unit of unitsBySection.get(section.sectionId) ?? []) {
+      if (unit.pageStart == null || unit.pageEnd == null) {
+        anomalies.push({
+          kind: "unit_invalid_range",
+          sectionId: section.sectionId,
+          unitId: unit.unitId
+        });
+        continue;
+      }
+      if (unit.pageEnd < unit.pageStart) {
+        anomalies.push({
+          kind: "unit_invalid_range",
+          sectionId: section.sectionId,
+          unitId: unit.unitId
+        });
+        continue;
+      }
+      if (unit.pageEnd < section.pageStart || unit.pageStart > section.pageEnd) {
+        anomalies.push({
+          kind: "unit_outside_section",
+          sectionId: section.sectionId,
+          unitId: unit.unitId
+        });
+        continue;
+      }
+      if (unit.pageStart < section.pageStart || unit.pageEnd > section.pageEnd) {
+        anomalies.push({
+          kind: "unit_outside_section",
+          sectionId: section.sectionId,
+          unitId: unit.unitId
+        });
+      }
+      coveredRanges.push({
+        start: Math.max(unit.pageStart, section.pageStart),
+        end: Math.min(unit.pageEnd, section.pageEnd)
+      });
+    }
+    const merged2 = mergeRanges(coveredRanges);
+    let cursor = section.pageStart;
+    const pushGap = (start, end) => {
+      if (end < start) return;
+      spans.push({
+        spanId: `physical:section:${section.sectionId}:gap:${start}-${end}`,
+        sectionId: section.sectionId,
+        resourceId: section.resourceId,
+        curriculumNodeId: section.curriculumNodeId,
+        pageStart: start,
+        pageEnd: end,
+        pageCount: end - start + 1,
+        source: "section_gap",
+        plannerEligible: false,
+        blockedReason: section.curriculumNodeId ? "duration_unresolved" : "topic_unmapped"
+      });
+    };
+    for (const range of merged2) {
+      if (cursor < range.start) {
+        pushGap(cursor, range.start - 1);
+      }
+      cursor = Math.max(cursor, range.end + 1);
+    }
+    if (cursor <= section.pageEnd) {
+      pushGap(cursor, section.pageEnd);
+    }
+  }
+  return { spans, anomalies };
+}
 export {
   BACKLOG_THRESHOLDS,
   CRITICAL_OVERDUE_AFTER_DAYS,
@@ -1634,6 +1782,7 @@ export {
   REVISION_INTERVAL_DAYS,
   REVISION_TYPE_BY_MASTERY,
   adaptPhysicalMaterialRow,
+  adaptPhysicalStructuralSpan,
   adaptYoutubeMaterialRow,
   adaptYoutubeMaterialRows,
   addCalendarDays,
@@ -1655,6 +1804,7 @@ export {
   calculateWeeklyAvailableMinutes,
   calculateWeeklyRevisionBudget,
   completeRevisionStatus,
+  derivePhysicalStructuralCoverage,
   deriveTaskStatus,
   evaluateBacklog,
   evaluateLearningStage,

@@ -54,6 +54,7 @@ export interface PhysicalMaterialUnitInput {
   mappingStatus: MaterialMappingStatus;
   mappingProvenance: MaterialMappingProvenance;
   isActive: boolean;
+  plannerEligibleOverride?: false;
 }
 
 export interface YoutubeMaterialUnitInput {
@@ -148,6 +149,13 @@ function hasAuthoritativeMappingProvenance(
 function isPlannerEligible(
   input: MaterialUnitInput,
 ): boolean {
+  if (
+    input.sourceKind === "physical" &&
+    input.plannerEligibleOverride === false
+  ) {
+    return false;
+  }
+
   const hasExactProgress =
     input.sourceKind !== "youtube" ||
     (input.segmentStartSeconds == null &&

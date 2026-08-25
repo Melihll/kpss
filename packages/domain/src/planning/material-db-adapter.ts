@@ -5,6 +5,7 @@ import {
   type MaterialUnitView,
   type PlannerMaterialProgressState,
 } from "./material-unit-view";
+import type { PhysicalStructuralSpan } from "./physical-structural-coverage";
 
 export interface PhysicalResourceUnitRow {
   id: string;
@@ -24,6 +25,15 @@ export interface PhysicalResourceSectionRow {
   resource_id: string;
   curriculum_node_id: string | null;
   is_active: boolean;
+}
+
+export interface PhysicalStructuralSectionRow
+  extends PhysicalResourceSectionRow {
+  name: string;
+  sort_order: number;
+  page_start: number | null;
+  page_end: number | null;
+  source_unit_type: string | null;
 }
 
 export interface PhysicalResourceUnitProgressRow {
@@ -79,6 +89,18 @@ function normalizePhysicalUnitType(
   return "other";
 }
 
+function normalizePhysicalSectionSourceUnitType(
+  sourceUnitType: string | null,
+): "test" | "video" | "chapter" | "reading" | "mock" | "other" {
+  if (sourceUnitType === "soru_bankası_bloğu") return "test";
+  if (sourceUnitType === "test") return "test";
+  if (sourceUnitType === "konu") return "chapter";
+  if (sourceUnitType === "video") return "video";
+  if (sourceUnitType === "reading") return "reading";
+  if (sourceUnitType === "mock") return "mock";
+  return "other";
+}
+
 export function adaptPhysicalMaterialRow(request: {
   unit: PhysicalResourceUnitRow;
   section: PhysicalResourceSectionRow | null;
@@ -117,6 +139,38 @@ export function adaptPhysicalMaterialRow(request: {
     mappingStatus,
     mappingProvenance: request.mappingProvenance,
     isActive: request.unit.is_active && sectionActive,
+  });
+}
+
+export function adaptPhysicalStructuralSpan(request: {
+  span: PhysicalStructuralSpan;
+  section: PhysicalStructuralSectionRow;
+}): MaterialUnitView {
+  const mappingStatus: MaterialMappingStatus =
+    request.span.curriculumNodeId !== null
+      ? "validated"
+      : "missing";
+
+  return normalizeMaterialUnit({
+    sourceKind: "physical",
+    id: request.span.spanId,
+    resourceId: request.span.resourceId,
+    curriculumNodeId: request.span.curriculumNodeId,
+    sourceUnitType: normalizePhysicalSectionSourceUnitType(
+      request.section.source_unit_type,
+    ),
+    title: `${request.section.name} · s.${request.span.pageStart}–${request.span.pageEnd}`,
+    sortOrder: request.span.pageStart,
+    pageStart: request.span.pageStart,
+    pageEnd: request.span.pageEnd,
+    estimatedMinutes: null,
+    progressState: "not_started",
+    completedThroughPage: null,
+    completedAt: null,
+    mappingStatus,
+    mappingProvenance: "reviewed_catalog",
+    isActive: request.section.is_active,
+    plannerEligibleOverride: false,
   });
 }
 

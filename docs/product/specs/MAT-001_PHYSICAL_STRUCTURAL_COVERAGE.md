@@ -1,6 +1,6 @@
 # MAT-001 Physical Structural Coverage
 
-Status: LOCAL_IMPLEMENTATION — RUNTIME_NOT_ACTIVATED
+Status: LOADER_INTEGRATED_SHADOW_ONLY — RUNTIME_NOT_ACTIVATED
 
 ## Decision
 
@@ -38,3 +38,18 @@ This policy is initially local/shadow-only.
 No production `resource_units` inserts are authorized by this spec.
 
 Canonical planner cutover remains disabled until workload calibration and shadow verification are complete.
+
+## H8B verification
+
+- Structural coverage domain tests: GREEN.
+- Structural material projection tests: GREEN.
+- Material adapter regression: GREEN.
+- Canonical loader structural contract: GREEN.
+- Canonical shadow contract: GREEN.
+- Domain typecheck: GREEN.
+- Edge planning bundle contains structural coverage functions.
+- Full non-integration regression: GREEN.
+- Supabase persistence integration test is ENVIRONMENT_BLOCKED in this shell because the required integration environment variables are not present.
+- ENVIRONMENT_BLOCKED is not treated as a product regression.
+- No production data mutation occurred during H8B.
+- Canonical runtime remains inactive.
