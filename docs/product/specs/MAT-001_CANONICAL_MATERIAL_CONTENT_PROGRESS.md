@@ -1,7 +1,7 @@
 # MAT-001 — Canonical Material Content & Progress
 
-Status: MODEL_COMPLETE_SHADOW_VERIFIED — PRODUCTION_DATA_PARTIALLY_POPULATED — CANONICAL_RUNTIME_NOT_ACTIVATED — WORKLOAD_CALIBRATION_PENDING
-Last updated: 2026-08-24
+Status: MODEL_COMPLETE_SHADOW_VERIFIED — WORKLOAD_ENGINE_SHADOW_VERIFIED — PHYSICAL_PACE_EVIDENCE_PENDING — CANONICAL_RUNTIME_NOT_ACTIVATED
+Last updated: 2026-08-25
 
 ## 1. Purpose
 
@@ -939,4 +939,33 @@ Verification:
 - domain typecheck: PASS;
 - full non-integration regression: 106/106 files, 710/710 tests PASS;
 - linked Supabase migration dry-run: PASS;
-- production migration: NOT APPLIED.
+- production migration: APPLIED on 2026-08-24 under the separately approved MAT-001 schema release; no migration was run by W1.
+
+## 36. Canonical workload engine (W1)
+
+The canonical workload engine is implemented and production-shadow verified without activating canonical planning.
+
+Authority rules:
+
+- authoritative full-video workload is exact from `duration_seconds - watched_seconds`;
+- completed canonical material has exact zero remaining workload;
+- physical page duration is calibrated only from a causally linked actual-time and actual-progress observation;
+- historical planned/unit estimates are never intrinsic material duration;
+- missing evidence returns `estimatedMinutes = null`, `authority = unknown`, and `plannerEligible = false`;
+- segment, ambiguous, unmapped, and AI-candidate video mappings remain blocked;
+- physical calibration uses exact-resource/type, then subject/type, then user/type evidence, with no cross-material-type leakage;
+- calibrated planning requires medium/high confidence under the contract-tested sample, observed-time, and dispersion gates.
+
+The production audit found that study sessions contain real elapsed time but do not atomically record physical page deltas. Exact resource progress contains progress but not paired elapsed time. The only currently legitimate pace shape is a first exact-unit page-ranged test completion whose actual `test_results.duration_minutes` and atomic `resource_unit_progress.completed_at` match. No such accepted samples exist for the target production profile.
+
+Production workload readiness on 2026-08-25:
+
+- `341` total views;
+- `76` exact, `0` calibrated, `0` fallback, `265` unknown;
+- `76` planner-eligible views;
+- `3,323` exact YouTube remaining minutes;
+- `0` calibrated physical pages and `5,103` unknown physical pages;
+- blockers: `245 pace_evidence_unavailable`, `20 mapping_missing`;
+- read-only production guards remained `79` resource units, `76` video-topic links, and `0` non-null partial-page boundaries before and after.
+
+The existing app-api workload path remains active and unchanged. Canonical workload runtime remains OFF.

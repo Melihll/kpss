@@ -18,3 +18,4 @@ export * from "../p48/index";
 export * from "./material-db-adapter";
 
 export * from "./physical-structural-coverage";
+export * from "./canonical-workload";

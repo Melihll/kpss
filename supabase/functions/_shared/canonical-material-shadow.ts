@@ -3,6 +3,11 @@ import {
   loadMaterialWorkloads,
   type MaterialWorkloadProjection,
 } from "./material-workload.ts";
+import { loadCanonicalWorkloadEvidence } from "./canonical-workload-evidence.ts";
+import {
+  estimateCanonicalMaterialWorkload,
+  summarizeCanonicalWorkload,
+} from "./planning.bundle.js";
 
 export interface CanonicalMaterialShadowTarget {
   readonly resourceId: string;
@@ -204,4 +209,75 @@ export async function loadMaterialWorkloadShadow(
       });
     }),
   );
+}
+
+export async function loadCanonicalWorkloadReadiness(
+  client: any,
+  userId: string,
+  examProfileId: string,
+  requestedResourceIds: readonly string[],
+) {
+  const resourceIds = [...new Set(requestedResourceIds.filter(Boolean).map(String))];
+  if (!resourceIds.length) {
+    return Object.freeze({
+      estimates: Object.freeze([]),
+      summary: summarizeCanonicalWorkload([]),
+      evidenceClassificationCounts: Object.freeze({}),
+      acceptedPaceSamples: 0,
+    });
+  }
+
+  const [canonicalUnits, evidence, resourceResult] = await Promise.all([
+    loadCanonicalMaterialUnits(client, userId, examProfileId, resourceIds),
+    loadCanonicalWorkloadEvidence(client, userId, examProfileId, resourceIds),
+    client
+      .from("resources")
+      .select("id,subject_id")
+      .eq("user_id", userId)
+      .eq("exam_profile_id", examProfileId)
+      .in("id", resourceIds),
+  ]);
+  if (resourceResult.error) throw resourceResult.error;
+
+  const subjectByResource = new Map(
+    (resourceResult.data ?? []).map((row: any) => [String(row.id), String(row.subject_id)]),
+  );
+  const estimates = canonicalUnits.map((material: any) =>
+    estimateCanonicalMaterialWorkload({
+      userId,
+      examProfileId,
+      subjectId: subjectByResource.get(String(material.resourceId)) ?? null,
+      material,
+      evidence,
+      fallbackPolicies: [],
+    })
+  );
+
+  const evidenceClassificationCounts: Record<string, number> = {
+    actual_elapsed_time: 0,
+    actual_progress_delta: 0,
+    planned_only: 0,
+    unreliable: 0,
+    unavailable: 0,
+  };
+  let acceptedPaceSamples = 0;
+  for (const observation of evidence) {
+    for (const quality of observation.evidenceQuality) {
+      evidenceClassificationCounts[quality] = (evidenceClassificationCounts[quality] ?? 0) + 1;
+    }
+    if (
+      observation.evidenceQuality.includes("actual_elapsed_time") &&
+      observation.evidenceQuality.includes("actual_progress_delta") &&
+      !observation.evidenceQuality.includes("unreliable")
+    ) {
+      acceptedPaceSamples += 1;
+    }
+  }
+
+  return Object.freeze({
+    estimates: Object.freeze(estimates),
+    summary: summarizeCanonicalWorkload(estimates),
+    evidenceClassificationCounts: Object.freeze(evidenceClassificationCounts),
+    acceptedPaceSamples,
+  });
 }

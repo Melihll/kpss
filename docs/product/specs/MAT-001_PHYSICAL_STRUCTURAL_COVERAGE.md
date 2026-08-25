@@ -70,3 +70,12 @@ Canonical planner cutover remains disabled until workload calibration and shadow
 - Production resource_units remained unchanged at 79 global rows.
 - Canonical runtime remains inactive.
 - The Supabase integration suite remains ENVIRONMENT_BLOCKED in the local shell because integration credentials are not loaded.
+
+## W1 canonical workload verification
+
+- Structural spans are no longer blocked by a fabricated-duration assumption; the workload engine may make a mapped, exact-range span eligible only when compatible user pace reaches the explicit medium/high confidence gate.
+- Production currently has `0` accepted pace samples, so all `4,645` synthetic structural pages remain workload-unknown and planner-ineligible.
+- Across persisted and synthetic physical views, all `5,103` canonical physical pages remain unknown-duration in the production shadow.
+- The `5` topic-unmapped structural spans remain additionally blocked by canonical mapping.
+- No historical `resource_units.estimated_minutes` value was used as intrinsic duration.
+- Canonical runtime remains inactive and production physical rows were not changed.

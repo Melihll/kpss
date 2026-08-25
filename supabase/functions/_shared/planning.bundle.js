@@ -189,14 +189,14 @@ function subjectCandidates(context) {
   });
 }
 function roundRobin(groups) {
-  const result = [];
+  const result2 = [];
   const maxLength = Math.max(0, ...groups.map((group) => group.length));
   for (let index = 0; index < maxLength; index += 1) {
     for (const group of groups) {
-      if (group[index]) result.push(group[index]);
+      if (group[index]) result2.push(group[index]);
     }
   }
-  return result;
+  return result2;
 }
 function buildWeeklyPlanV0(context) {
   const availableMinutes = calculateWeeklyAvailableMinutes(context.weeklyAvailability);
@@ -776,15 +776,15 @@ function topicStateFor(mastery, currentState, hasSufficientEvidence) {
 }
 function evaluateTopicMastery(context) {
   const recent = [...context.recentTestResults].sort((left, right) => new Date(right.completedAt).getTime() - new Date(left.completedAt).getTime()).slice(0, MASTERY_RECENT_RESULT_LIMIT);
-  for (const result of recent) {
-    if (![result.correct, result.wrong, result.blank, result.total].every(Number.isInteger) || result.correct < 0 || result.wrong < 0 || result.blank < 0 || result.total <= 0 || result.correct + result.wrong + result.blank !== result.total) {
+  for (const result2 of recent) {
+    if (![result2.correct, result2.wrong, result2.blank, result2.total].every(Number.isInteger) || result2.correct < 0 || result2.wrong < 0 || result2.blank < 0 || result2.total <= 0 || result2.correct + result2.wrong + result2.blank !== result2.total) {
       throw new Error("INVALID_MASTERY_TEST_RESULT");
     }
   }
-  const sampleQuestionCount = recent.reduce((sum, result) => sum + result.total, 0);
-  const sampleCorrectCount = recent.reduce((sum, result) => sum + result.correct, 0);
-  const sampleWrongCount = recent.reduce((sum, result) => sum + result.wrong, 0);
-  const sampleBlankCount = recent.reduce((sum, result) => sum + result.blank, 0);
+  const sampleQuestionCount = recent.reduce((sum, result2) => sum + result2.total, 0);
+  const sampleCorrectCount = recent.reduce((sum, result2) => sum + result2.correct, 0);
+  const sampleWrongCount = recent.reduce((sum, result2) => sum + result2.wrong, 0);
+  const sampleBlankCount = recent.reduce((sum, result2) => sum + result2.blank, 0);
   const hasSufficientEvidence = sampleQuestionCount >= MIN_QUESTIONS_FOR_MASTERY;
   const accuracy = sampleQuestionCount ? sampleCorrectCount / sampleQuestionCount : null;
   const candidateMasteryLevel = hasSufficientEvidence && accuracy !== null ? candidateForAccuracy(accuracy) : "unknown";
@@ -1393,7 +1393,7 @@ function forecastP48Resources(input) {
   return subjects;
 }
 function buildP48Months(input) {
-  const result = [];
+  const result2 = [];
   const cursor = parseDate3(input.asOfDate);
   cursor.setUTCDate(1);
   const end = parseDate3(input.targetExamDate);
@@ -1413,7 +1413,7 @@ function buildP48Months(input) {
     }
     const plannedMinutes = Math.max(0, Math.round(input.monthlyTargetMinutes * (activeFactor / totalMonthDays) / 30) * 30);
     const phase = p48PhaseForDate(dateString(rangeStart));
-    result.push({
+    result2.push({
       month: monthKey(startMonth),
       label: new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric", timeZone: "UTC" }).format(startMonth),
       plannedMinutes,
@@ -1423,7 +1423,7 @@ function buildP48Months(input) {
     });
     cursor.setUTCMonth(cursor.getUTCMonth() + 1);
   }
-  return result;
+  return result2;
 }
 function roundToThirty(minutes) {
   return Math.max(0, Math.round(minutes / 30) * 30);
@@ -1457,7 +1457,7 @@ function buildP48WeekBlocks(input) {
   for (const subject of input.subjects) {
     queues.set(subject.subjectId, input.resources.filter((resource) => resource.subjectId === subject.subjectId && resource.remainingMinutes > 0).sort((a, b) => a.sequenceOrder - b.sequenceOrder).map((resource) => ({ ...resource })));
   }
-  const result = [];
+  const result2 = [];
   let previousSubject = null;
   for (const date of activeDates) {
     let dayRemaining = Math.max(0, input.dayCapacities[date] ?? 0);
@@ -1498,7 +1498,7 @@ function buildP48WeekBlocks(input) {
       const minutes = policyDecision ? chunk : Math.max(30, roundToThirty(chunk));
       const bounded = Math.min(minutes, dayRemaining, weeklyRemaining);
       if (bounded < 30) break;
-      result.push({
+      result2.push({
         plannedDate: date,
         subjectId: subject.subjectId,
         subjectName: subject.subjectName,
@@ -1516,7 +1516,7 @@ function buildP48WeekBlocks(input) {
       guard += 1;
     }
   }
-  return result;
+  return result2;
 }
 
 // packages/domain/src/planning/material-db-adapter.ts
@@ -1752,6 +1752,359 @@ function derivePhysicalStructuralCoverage(sections, units) {
   }
   return { spans, anomalies };
 }
+
+// packages/domain/src/planning/canonical-workload.ts
+function hasQuality(evidence, quality) {
+  return evidence.evidenceQuality.includes(quality);
+}
+function isPaceEvidence(evidence, request) {
+  return evidence.userId === request.userId && evidence.examProfileId === request.examProfileId && evidence.materialType === request.materialType && evidence.progressUnit === "page" && evidence.actualMinutes !== null && Number.isFinite(evidence.actualMinutes) && evidence.actualMinutes > 0 && evidence.progressAmount !== null && Number.isFinite(evidence.progressAmount) && evidence.progressAmount > 0 && hasQuality(evidence, "actual_elapsed_time") && hasQuality(evidence, "actual_progress_delta") && !hasQuality(evidence, "unreliable");
+}
+function confidenceFor(samples) {
+  const rates = samples.map(
+    (sample) => Number(sample.actualMinutes) / Number(sample.progressAmount)
+  );
+  const mean = rates.reduce((sum, rate) => sum + rate, 0) / rates.length;
+  const variance = rates.reduce(
+    (sum, rate) => sum + (rate - mean) ** 2,
+    0
+  ) / rates.length;
+  const coefficientOfVariation = mean === 0 ? Number.POSITIVE_INFINITY : Math.sqrt(variance) / mean;
+  const totalMinutes = samples.reduce(
+    (sum, sample) => sum + Number(sample.actualMinutes),
+    0
+  );
+  if (samples.length >= 5 && totalMinutes >= 120 && coefficientOfVariation <= 0.35) {
+    return { confidence: "high", coefficientOfVariation };
+  }
+  if (samples.length >= 3 && totalMinutes >= 60 && coefficientOfVariation <= 0.75) {
+    return { confidence: "medium", coefficientOfVariation };
+  }
+  return { confidence: "low", coefficientOfVariation };
+}
+function buildPace(samples, scope) {
+  const ordered = [...samples].sort((left, right) => left.id.localeCompare(right.id));
+  const totalObservedMinutes = ordered.reduce(
+    (sum, sample) => sum + Number(sample.actualMinutes),
+    0
+  );
+  const totalObservedProgress = ordered.reduce(
+    (sum, sample) => sum + Number(sample.progressAmount),
+    0
+  );
+  const { confidence, coefficientOfVariation } = confidenceFor(ordered);
+  return Object.freeze({
+    pace: totalObservedMinutes / totalObservedProgress,
+    unit: "minutes_per_page",
+    sampleCount: ordered.length,
+    totalObservedMinutes,
+    totalObservedProgress,
+    coefficientOfVariation,
+    confidence,
+    provenance: Object.freeze(ordered.map((sample) => sample.provenance)),
+    scope
+  });
+}
+function estimatePhysicalPace(request) {
+  const compatible = request.evidence.filter(
+    (sample) => isPaceEvidence(sample, request)
+  );
+  const resource = compatible.filter(
+    (sample) => sample.resourceId === request.resourceId
+  );
+  if (resource.length) return buildPace(resource, "resource_material_type");
+  const subject = compatible.filter(
+    (sample) => request.subjectId !== null && sample.subjectId === request.subjectId
+  );
+  if (subject.length) return buildPace(subject, "subject_material_type");
+  if (compatible.length) return buildPace(compatible, "material_type");
+  return null;
+}
+function authoritativeProvenance(provenance) {
+  return provenance !== "ai_candidate";
+}
+function mappingBlockReason(material) {
+  if (!material.isActive) return "material_inactive";
+  if (material.mappingStatus === "ambiguous") return "mapping_ambiguous";
+  if (material.mappingStatus !== "validated" || material.curriculumNodeId === null) {
+    return "mapping_missing";
+  }
+  if (!authoritativeProvenance(material.mappingProvenance)) {
+    return "mapping_provenance_untrusted";
+  }
+  return null;
+}
+function evidenceSummary(scope, sampleCount = 0, totalObservedMinutes = 0, provenance = []) {
+  return Object.freeze({
+    scope,
+    sampleCount,
+    totalObservedMinutes,
+    provenance: Object.freeze([...provenance])
+  });
+}
+function result(request, values) {
+  return Object.freeze({
+    materialViewId: request.material.id,
+    sourceKind: request.material.sourceKind,
+    resourceId: request.material.resourceId,
+    subjectId: request.subjectId,
+    materialType: request.material.unitType,
+    ...values
+  });
+}
+function estimateYoutube(request) {
+  const material = request.material;
+  const mappingReason = mappingBlockReason(material);
+  if (mappingReason) {
+    return result(request, {
+      remainingAmount: null,
+      remainingUnit: "video_second",
+      estimatedMinutes: null,
+      authority: "unknown",
+      confidence: "none",
+      plannerEligible: false,
+      reason: mappingReason,
+      evidence: evidenceSummary("none")
+    });
+  }
+  if (material.segmentStartSeconds !== null || material.segmentEndSeconds !== null) {
+    return result(request, {
+      remainingAmount: null,
+      remainingUnit: "video_second",
+      estimatedMinutes: null,
+      authority: "unknown",
+      confidence: "none",
+      plannerEligible: false,
+      reason: "segment_progress_unavailable",
+      evidence: evidenceSummary("none")
+    });
+  }
+  if (material.durationSeconds === null || !Number.isFinite(material.durationSeconds) || material.durationSeconds <= 0) {
+    return result(request, {
+      remainingAmount: null,
+      remainingUnit: "video_second",
+      estimatedMinutes: null,
+      authority: "unknown",
+      confidence: "none",
+      plannerEligible: false,
+      reason: "video_duration_unavailable",
+      evidence: evidenceSummary("none")
+    });
+  }
+  const rawWatched = material.watchedSeconds ?? 0;
+  if (!Number.isFinite(rawWatched) || rawWatched < 0) {
+    return result(request, {
+      remainingAmount: null,
+      remainingUnit: "video_second",
+      estimatedMinutes: null,
+      authority: "unknown",
+      confidence: "none",
+      plannerEligible: false,
+      reason: "invalid_video_progress",
+      evidence: evidenceSummary("none")
+    });
+  }
+  const remainingSeconds2 = material.progressState === "completed" ? 0 : Math.max(0, Math.floor(material.durationSeconds) - Math.floor(rawWatched));
+  return result(request, {
+    remainingAmount: remainingSeconds2,
+    remainingUnit: "video_second",
+    estimatedMinutes: Math.ceil(remainingSeconds2 / 60),
+    authority: "exact",
+    confidence: "high",
+    plannerEligible: true,
+    reason: remainingSeconds2 === 0 ? "completed" : "authoritative_full_video",
+    evidence: evidenceSummary("intrinsic", 0, 0, ["duration_seconds", "watched_seconds"])
+  });
+}
+function findFallback(request) {
+  const policies = request.fallbackPolicies ?? [];
+  return policies.find(
+    (policy) => policy.materialType === request.material.unitType && (!policy.resourceId || policy.resourceId === request.material.resourceId) && (!policy.subjectId || policy.subjectId === request.subjectId) && Number.isFinite(policy.minutesPerPage) && policy.minutesPerPage > 0
+  ) ?? null;
+}
+function estimatePhysical(request) {
+  const material = request.material;
+  const mappingReason = mappingBlockReason(material);
+  if (material.progressState === "completed") {
+    return result(request, {
+      remainingAmount: 0,
+      remainingUnit: "page",
+      estimatedMinutes: 0,
+      authority: "exact",
+      confidence: "high",
+      plannerEligible: mappingReason === null,
+      reason: mappingReason ?? "completed",
+      evidence: evidenceSummary("intrinsic", 0, 0, ["resource_unit_progress:completed"])
+    });
+  }
+  if (material.progressState === "skipped") {
+    return result(request, {
+      remainingAmount: null,
+      remainingUnit: "page",
+      estimatedMinutes: null,
+      authority: "unknown",
+      confidence: "none",
+      plannerEligible: false,
+      reason: "progress_skipped",
+      evidence: evidenceSummary("none")
+    });
+  }
+  if (material.pageStart === null || material.pageEnd === null || !Number.isInteger(material.pageStart) || !Number.isInteger(material.pageEnd) || material.pageStart <= 0 || material.pageEnd < material.pageStart) {
+    return result(request, {
+      remainingAmount: null,
+      remainingUnit: "page",
+      estimatedMinutes: null,
+      authority: "unknown",
+      confidence: "none",
+      plannerEligible: false,
+      reason: "physical_range_unavailable",
+      evidence: evidenceSummary("none")
+    });
+  }
+  const boundary = material.completedThroughPage ?? null;
+  if (boundary !== null && (material.progressState !== "in_progress" || !Number.isInteger(boundary) || boundary < material.pageStart || boundary >= material.pageEnd) || boundary === null && material.progressState === "in_progress") {
+    return result(request, {
+      remainingAmount: null,
+      remainingUnit: "page",
+      estimatedMinutes: null,
+      authority: "unknown",
+      confidence: "none",
+      plannerEligible: false,
+      reason: "invalid_progress_boundary",
+      evidence: evidenceSummary("none")
+    });
+  }
+  const remainingStart = boundary === null ? material.pageStart : boundary + 1;
+  const remainingPages = material.pageEnd - remainingStart + 1;
+  if (mappingReason) {
+    return result(request, {
+      remainingAmount: remainingPages,
+      remainingUnit: "page",
+      estimatedMinutes: null,
+      authority: "unknown",
+      confidence: "none",
+      plannerEligible: false,
+      reason: mappingReason,
+      evidence: evidenceSummary("none")
+    });
+  }
+  const pace = estimatePhysicalPace({
+    userId: request.userId,
+    examProfileId: request.examProfileId,
+    resourceId: material.resourceId,
+    subjectId: request.subjectId,
+    materialType: material.unitType,
+    evidence: request.evidence
+  });
+  if (pace) {
+    const plannerEligible = pace.confidence === "medium" || pace.confidence === "high";
+    return result(request, {
+      remainingAmount: remainingPages,
+      remainingUnit: "page",
+      estimatedMinutes: Math.ceil(remainingPages * pace.pace),
+      authority: "calibrated",
+      confidence: pace.confidence,
+      plannerEligible,
+      reason: plannerEligible ? "pace_calibrated" : "pace_confidence_insufficient",
+      evidence: evidenceSummary(
+        pace.scope,
+        pace.sampleCount,
+        pace.totalObservedMinutes,
+        pace.provenance
+      )
+    });
+  }
+  const fallback = findFallback(request);
+  if (fallback) {
+    const plannerEligible = fallback.authorizedForPlanning && (fallback.confidence === "medium" || fallback.confidence === "high");
+    return result(request, {
+      remainingAmount: remainingPages,
+      remainingUnit: "page",
+      estimatedMinutes: Math.ceil(remainingPages * fallback.minutesPerPage),
+      authority: "fallback",
+      confidence: fallback.confidence,
+      plannerEligible,
+      reason: plannerEligible ? "configured_fallback" : "fallback_not_authorized_for_planning",
+      evidence: evidenceSummary("configured_fallback", 0, 0, [fallback.provenance])
+    });
+  }
+  return result(request, {
+    remainingAmount: remainingPages,
+    remainingUnit: "page",
+    estimatedMinutes: null,
+    authority: "unknown",
+    confidence: "none",
+    plannerEligible: false,
+    reason: "pace_evidence_unavailable",
+    evidence: evidenceSummary("none")
+  });
+}
+function estimateCanonicalMaterialWorkload(request) {
+  return request.material.sourceKind === "youtube" ? estimateYoutube(request) : estimatePhysical(request);
+}
+function increment(record, key, amount = 1) {
+  record[key] = (record[key] ?? 0) + amount;
+}
+function summarizeCanonicalWorkload(estimates) {
+  const blockedByReason = {};
+  const confidenceDistribution = {
+    none: 0,
+    low: 0,
+    medium: 0,
+    high: 0
+  };
+  const workloadMinutesBySubject = {};
+  const workloadMinutesByResource = {};
+  const workloadMinutesByMaterialType = {};
+  let exactWorkloadViews = 0;
+  let calibratedWorkloadViews = 0;
+  let fallbackWorkloadViews = 0;
+  let unknownWorkloadViews = 0;
+  let plannerEligibleViews = 0;
+  let exactYoutubeRemainingMinutes = 0;
+  let physicalPagesWithCalibratedWorkload = 0;
+  let physicalPagesWithUnknownWorkload = 0;
+  for (const estimate of estimates) {
+    if (estimate.authority === "exact") exactWorkloadViews += 1;
+    if (estimate.authority === "calibrated") calibratedWorkloadViews += 1;
+    if (estimate.authority === "fallback") fallbackWorkloadViews += 1;
+    if (estimate.authority === "unknown") unknownWorkloadViews += 1;
+    if (estimate.plannerEligible) plannerEligibleViews += 1;
+    else increment(blockedByReason, estimate.reason);
+    confidenceDistribution[estimate.confidence] += 1;
+    if (estimate.sourceKind === "youtube" && estimate.authority === "exact" && estimate.estimatedMinutes !== null) {
+      exactYoutubeRemainingMinutes += estimate.estimatedMinutes;
+    }
+    if (estimate.sourceKind === "physical" && estimate.remainingAmount !== null) {
+      if (estimate.authority === "calibrated") {
+        physicalPagesWithCalibratedWorkload += estimate.remainingAmount;
+      } else if (estimate.authority === "unknown") {
+        physicalPagesWithUnknownWorkload += estimate.remainingAmount;
+      }
+    }
+    if (estimate.estimatedMinutes !== null) {
+      increment(workloadMinutesBySubject, estimate.subjectId ?? "unmapped", estimate.estimatedMinutes);
+      increment(workloadMinutesByResource, estimate.resourceId, estimate.estimatedMinutes);
+      increment(workloadMinutesByMaterialType, estimate.materialType, estimate.estimatedMinutes);
+    }
+  }
+  return Object.freeze({
+    totalMaterialViews: estimates.length,
+    exactWorkloadViews,
+    calibratedWorkloadViews,
+    fallbackWorkloadViews,
+    unknownWorkloadViews,
+    plannerEligibleViews,
+    blockedByReason: Object.freeze(blockedByReason),
+    exactYoutubeRemainingMinutes,
+    physicalPagesWithCalibratedWorkload,
+    physicalPagesWithUnknownWorkload,
+    confidenceDistribution: Object.freeze(confidenceDistribution),
+    workloadMinutesBySubject: Object.freeze(workloadMinutesBySubject),
+    workloadMinutesByResource: Object.freeze(workloadMinutesByResource),
+    workloadMinutesByMaterialType: Object.freeze(workloadMinutesByMaterialType)
+  });
+}
 export {
   BACKLOG_THRESHOLDS,
   CRITICAL_OVERDUE_AFTER_DAYS,
@@ -1806,6 +2159,8 @@ export {
   completeRevisionStatus,
   derivePhysicalStructuralCoverage,
   deriveTaskStatus,
+  estimateCanonicalMaterialWorkload,
+  estimatePhysicalPace,
   evaluateBacklog,
   evaluateLearningStage,
   evaluateTopicMastery,
@@ -1823,6 +2178,7 @@ export {
   p48PhaseForDate,
   remainingTaskMinutes,
   replanWeeklyPlanV1,
+  summarizeCanonicalWorkload,
   summarizeMaterialStageEvidence,
   transitionTopicForLearnTask,
   zonedMidnightToUtc
