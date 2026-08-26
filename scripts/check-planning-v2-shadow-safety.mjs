@@ -137,6 +137,11 @@ for (const exportName of [
   "evaluatePlanningV2ShadowDecision",
   "toPlanningV2SnapshotRow",
   "toPlanningV2ProposalRow",
+  "CANONICAL_PLANNER_V2_VERSION",
+  "assertCanonicalPlannerV2Proposal",
+  "buildCanonicalPlannerV2Proposal",
+  "compareCanonicalPlannerV2Shadow",
+  "stableCanonicalPlannerJson",
 ]) {
   requireMatch(
     v2Bundle,
@@ -161,4 +166,4 @@ console.log("✅ Planning V2 shadow safety checks passed");
 console.log("tables:            3 additive shadow tables");
 console.log("real mutations:    0 detected");
 console.log("V1 bundle source sync: verified");
-console.log("V2 exports:        5 verified");
+console.log("V2 exports:        10 verified");

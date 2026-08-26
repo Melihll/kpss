@@ -15,3 +15,4 @@ export * from "./shadow-evaluation";
 export * from "./shadow-persistence";
 export * from "./db-snapshot-contract";
 export * from "./db-snapshot-builder";
+export * from "./canonical-shadow";

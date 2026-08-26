@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-08-23
+Last updated: 2026-08-26
 
 ## Workflow
 
@@ -143,6 +143,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 - Architecture note: resource role remains owned by PLN-005, learning-stage progression remains owned by PLN-004, and duration normalization remains owned by PLN-003.
 - W2 release note (2026-08-25): atomic physical pace evidence migration `20260825130000` is deployed as schema/RPC capability only. Protected start/material snapshots, protected pause accounting, immutable accepted events, causal session idempotency, exact page-boundary semantics, RLS, and four W2 RPCs are present. All W2 tables and historical accepted samples remain at `0`; no backfill occurred; app-api/Telegram/web capture and canonical planning remain inactive. Runtime activation requires a separate design/review and explicit approval.
 - W4 engineering closure (2026-08-25): Canonical Workload Engine Phase 4 is `ENGINEERING_COMPLETE`; production data maturity remains `IN_PROGRESS`. Accepted-W2-only calibration, deterministic median pace, unchanged W1 confidence promotion, explicit readiness, structural-span shadow arithmetic, read-only production diagnostics, blocked unknown workload, and the Planner V2 handoff are implemented and verified. The exact-profile capture pilot remains active, but accepted evidence and calibrated physical pages remain zero; evidence-shadow and canonical planning remain OFF. MAT-001 is not marked `DONE` because natural evidence maturity and later planner shadow/rollout evidence are still pending.
+- W5 engineering note (2026-08-26): the Planner V2 canonical shadow consumes MAT-001 handoffs without changing material or task state. It schedules exact whole boundaries only, carries unknown/blocked physical demand explicitly, deduplicates full-video workload, and produces immutable snapshot/proposal fingerprints. MAT-001 remains `IN_PROGRESS`: production data maturity and controlled application of exact material plans are later gates.
 ## `PLN-005` — Resource Role Model
 
 - Priority: `P1`

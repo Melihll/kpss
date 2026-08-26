@@ -1,12 +1,12 @@
 # KPSS Koçu — Project Handoff
 
-Last updated: 2026-08-25
+Last updated: 2026-08-26
 
 ## Canonical source
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Branch: `main`
-- Last verified product checkpoint before this handoff: `a582cff`
+- Last verified product checkpoint before W5: `fa46fd2`
 - Repository code and `docs/product/` are authoritative over chat recollection.
 
 ## Current milestone
@@ -68,11 +68,26 @@ Material completion history remains separate from pedagogical state. Previously 
 
 ## NEXT EXACT STEP
 
-Begin Planner V2 workload integration in shadow using `PlannerV2WorkloadHandoff`: schedule only `plannerEligible = true`; keep unknown/low-confidence physical workload blocked with its explicit unresolved reason. Do not enable production canonical planning or evidence-shadow consumption.
+Verify Planner V2 shadow quality over natural production evolution, then design W6 `Preview → Explain → Confirm → transactional Apply` as a separate reviewed phase. Do not enable production canonical planning or evidence-shadow consumption in W5.
 
 In parallel, continue passive observation of the next natural W2-eligible physical study lifecycle for the exact-profile pilot. Inspect it read-only if it occurs; do not manufacture activity, widen the allowlist, or alter accepted evidence.
 
 Telegram requires a separately reviewed service-role W2 wrapper plus authoritative page-boundary UX before it can enter an activation proposal. Do not activate canonical workload planning while production physical pace evidence remains insufficient.
+
+## 2026-08-26 Planner V2 canonical W5 engineering
+
+- `canonical-planner-v2-shadow-v1` builds an immutable deterministic weekly proposal from exact daily capacity, protected commitments, canonical material boundaries, `PlannerV2WorkloadHandoff`, progress identity, learning-stage facts, and stable policy metadata.
+- It schedules only positive-integer, planner-eligible whole canonical workloads. Exact remaining YouTube videos are supported; M:N topic views deduplicate by source video. Unknown physical pace, unsafe mappings, missing boundaries, completed material, and exact in-progress identities cannot schedule.
+- Current-day work is protected: no new canonical item is placed on or before the snapshot date. Pinned/manual/current-day/in-progress remaining minutes occupy capacity; future generated/legacy tasks are comparison-only.
+- Capacity is exact and never rounded upward. Pre-existing protected overcommit is visible, one-minute overflow stays unmet, and daily/horizon totals are asserted.
+- Snapshot/proposal fingerprints use deterministic SHA-256 canonical JSON and change with relevant capacity, workload, progress, commitment, policy, profile, or horizon state.
+- The production adapter is strictly read-only and separate from the older diagnostic-persistence runner. It has no mutation/RPC method, returns `applyAllowed: false`, and leaves live Today/Week behavior unchanged.
+- Full design and safety boundaries: [Planner V2 Canonical Shadow](specs/PLANNER_V2_CANONICAL_SHADOW.md).
+- Canonical planner runtime, evidence-shadow runtime, migrations, secrets, app-api, Telegram, task state, and deployments remain unchanged in W5.
+- Verification checkpoint: focused canonical/adapter tests `26/26`, targeted planner/canonical/P48 tests `228/228` across `28/28`, local integration/RLS `116/116` across `12/12`, full non-integration regression `853/853` across `130/130`, repository typecheck, local production build, V1/V2 bundle safety, read-only-path safety, and linked PostgreSQL lint all PASS.
+- Production read-only shadow (2026-08-26): `341` views (`76` exact YouTube, `265` unknown), `3,323` exact eligible video minutes, `0` calibrated physical pages, `5,103` unknown physical pages, and `0` accepted/usable W2 pace samples. With `15` unoccupied contiguous minutes, the proposal schedules `0`, leaves all `3,323` eligible minutes unmet, and blocks `245` pace-unknown plus `20` mapping-unknown views. It schedules zero unknown/completed/duplicate material and changes no production counters.
+- Live comparison: post-study capacity `1,386`, legacy remaining plan `1,372`, protected occupancy `1,372`, newly proposed `0`, legacy/V2 horizon overflow `0/0`, current-day differences `0`; one pre-existing day is overcommitted by `1` minute and is surfaced rather than hidden.
+- Docker/local Supabase integration was restored without changing implementation or tests. A transient fresh-JWT timing failure immediately after Docker startup cleared after host/Auth/database clock verification; the complete rerun passed `116/116`. W5 engineering gates are GREEN.
 
 ## 2026-08-25 Canonical Workload Engine W4 closure
 

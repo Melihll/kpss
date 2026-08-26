@@ -1942,10 +1942,434 @@ function toPlanningV2ProposalRow(input) {
     ) : null
   });
 }
+
+// packages/domain/src/planning-v2/canonical-shadow.ts
+var CANONICAL_PLANNER_V2_VERSION = "canonical-planner-v2-shadow-v1";
+var ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+function assertIsoDate2(name, value) {
+  const parsed = /* @__PURE__ */ new Date(`${value}T00:00:00Z`);
+  if (!ISO_DATE.test(value) || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
+    throw new Error(`${name} must be a valid YYYY-MM-DD date`);
+  }
+}
+function assertNonNegativeInteger2(name, value) {
+  if (!Number.isInteger(value) || value < 0) throw new Error(`${name} must be a non-negative integer`);
+}
+function stableValue(value) {
+  if (Array.isArray(value)) return value.map(stableValue);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).sort(([left], [right]) => left.localeCompare(right)).map(([key, nested]) => [key, stableValue(nested)])
+    );
+  }
+  return value;
+}
+function stableCanonicalPlannerJson(value) {
+  return JSON.stringify(stableValue(value));
+}
+async function sha256(value) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+function datesBetween(start, end) {
+  const dates = [];
+  const cursor = /* @__PURE__ */ new Date(`${start}T00:00:00Z`);
+  const last = /* @__PURE__ */ new Date(`${end}T00:00:00Z`);
+  while (cursor <= last) {
+    dates.push(cursor.toISOString().slice(0, 10));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return dates;
+}
+function stageRank(stage) {
+  if (stage === "learn") return 0;
+  if (stage === "practice") return 1;
+  if (stage === "review") return 2;
+  if (stage === "reinforcement") return 3;
+  return 4;
+}
+function compareDemand(left, right) {
+  return right.userPriority - left.userPriority || Number(right.alreadyStarted) - Number(left.alreadyStarted) || stageRank(left.learningStage) - stageRank(right.learningStage) || left.latestDate.localeCompare(right.latestDate) || left.curriculumOrder - right.curriculumOrder || left.canonicalWorkloadIdentity.localeCompare(right.canonicalWorkloadIdentity) || left.demandId.localeCompare(right.demandId);
+}
+function block(demand, reason, facts) {
+  return Object.freeze({
+    demandId: demand.demandId,
+    canonicalWorkloadIdentity: demand.canonicalWorkloadIdentity,
+    materialViewId: demand.workload.materialViewId,
+    resourceId: demand.workload.resourceId,
+    curriculumNodeId: demand.curriculumNodeId,
+    remainingAmount: demand.workload.remainingAmount,
+    remainingUnit: demand.workload.remainingUnit,
+    blockedReason: reason,
+    unresolvedWorkloadReason: demand.workload.unresolvedWorkloadReason,
+    explanationFacts: Object.freeze([...facts])
+  });
+}
+function normalizedFingerprintInput(input) {
+  return {
+    ...input,
+    dailyCapacities: [...input.dailyCapacities].sort((a, b) => a.date.localeCompare(b.date)),
+    commitments: [...input.commitments].sort((a, b) => a.commitmentId.localeCompare(b.commitmentId)),
+    demands: [...input.demands].sort((a, b) => a.demandId.localeCompare(b.demandId)).map((demand) => ({
+      ...demand,
+      prerequisiteWorkloadIdentities: [...demand.prerequisiteWorkloadIdentities].sort(),
+      sourceProvenance: [...demand.sourceProvenance].sort()
+    })),
+    completedWorkloadIdentities: [...input.completedWorkloadIdentities].sort()
+  };
+}
+async function buildCanonicalPlannerV2Proposal(input) {
+  if (!input.userId || !input.examProfileId || !input.progressVersion) throw new Error("planner identity and progressVersion are required");
+  assertIsoDate2("currentDate", input.currentDate);
+  assertIsoDate2("horizonStart", input.horizonStart);
+  assertIsoDate2("horizonEnd", input.horizonEnd);
+  if (input.horizonStart > input.horizonEnd) throw new Error("invalid planning horizon");
+  if (input.policy.plannerVersion !== CANONICAL_PLANNER_V2_VERSION || input.policy.protectCurrentDay !== true || input.policy.materialSplitting !== "whole_canonical_workload_only" || input.policy.orderingPolicy !== "user_priority_continuation_stage_curriculum_stable_id") {
+    throw new Error("unsupported canonical planner policy");
+  }
+  const horizonDates = datesBetween(input.horizonStart, input.horizonEnd);
+  const capacityByDate = /* @__PURE__ */ new Map();
+  for (const day of input.dailyCapacities) {
+    assertIsoDate2("capacity.date", day.date);
+    assertNonNegativeInteger2("configuredCapacityMinutes", day.configuredCapacityMinutes);
+    assertNonNegativeInteger2("alreadyStudiedMinutes", day.alreadyStudiedMinutes);
+    if (day.date < input.horizonStart || day.date > input.horizonEnd) throw new Error("capacity outside planning horizon");
+    if (capacityByDate.has(day.date)) throw new Error(`duplicate capacity date: ${day.date}`);
+    capacityByDate.set(day.date, day);
+  }
+  if (horizonDates.some((date) => !capacityByDate.has(date))) throw new Error("daily capacity missing inside horizon");
+  const commitmentsByDate = /* @__PURE__ */ new Map();
+  const inProgressIdentities = /* @__PURE__ */ new Set();
+  for (const commitment of input.commitments) {
+    assertNonNegativeInteger2("commitment.minutes", commitment.minutes);
+    if (commitment.date !== null) {
+      assertIsoDate2("commitment.date", commitment.date);
+      const list = commitmentsByDate.get(commitment.date) ?? [];
+      list.push(commitment);
+      commitmentsByDate.set(commitment.date, list);
+    }
+    if (commitment.classification === "in_progress" && commitment.canonicalWorkloadIdentity) {
+      inProgressIdentities.add(commitment.canonicalWorkloadIdentity);
+    }
+  }
+  const mutableDays = /* @__PURE__ */ new Map();
+  for (const date of horizonDates) {
+    const capacity2 = capacityByDate.get(date);
+    const protectedCommitments = (commitmentsByDate.get(date) ?? []).filter((item) => item.occupiesCapacity).sort((a, b) => a.commitmentId.localeCompare(b.commitmentId));
+    const protectedMinutes = protectedCommitments.reduce((sum2, item) => sum2 + item.minutes, 0);
+    const rawAvailable = capacity2.configuredCapacityMinutes - capacity2.alreadyStudiedMinutes - protectedMinutes;
+    const available = Math.max(0, rawAvailable);
+    const overcommitted = Math.max(0, -rawAvailable);
+    mutableDays.set(date, { input: capacity2, protectedCommitments, protectedMinutes, overcommitted, available, planned: 0, scheduled: [] });
+  }
+  const completed = new Set(input.completedWorkloadIdentities);
+  const completedDemandIds = [];
+  const blocked = [];
+  const unmet = [];
+  const pending = [];
+  const seenDemandIds = /* @__PURE__ */ new Set();
+  const bestByWorkload = /* @__PURE__ */ new Map();
+  for (const demand of [...input.demands].sort(compareDemand)) {
+    if (!demand.demandId || !demand.canonicalWorkloadIdentity) throw new Error("demand identity required");
+    if (seenDemandIds.has(demand.demandId)) throw new Error(`duplicate demand id: ${demand.demandId}`);
+    seenDemandIds.add(demand.demandId);
+    assertIsoDate2("demand.earliestDate", demand.earliestDate);
+    assertIsoDate2("demand.latestDate", demand.latestDate);
+    if (demand.earliestDate > demand.latestDate) {
+      blocked.push(block(demand, "invalid_date_window", ["earliest_date_after_latest_date"]));
+      continue;
+    }
+    const previous = bestByWorkload.get(demand.canonicalWorkloadIdentity);
+    if (previous) {
+      blocked.push(block(demand, "duplicate_canonical_workload_identity", [`selected:${previous.demandId}`]));
+      continue;
+    }
+    bestByWorkload.set(demand.canonicalWorkloadIdentity, demand);
+    if (completed.has(demand.canonicalWorkloadIdentity) || demand.workload.remainingAmount === 0 || demand.workload.estimatedMinutes === 0) {
+      completedDemandIds.push(demand.demandId);
+      completed.add(demand.canonicalWorkloadIdentity);
+      continue;
+    }
+    if (inProgressIdentities.has(demand.canonicalWorkloadIdentity)) {
+      blocked.push(block(demand, "already_in_progress", ["existing_in_progress_commitment"]));
+      continue;
+    }
+    if (!demand.workload.plannerEligible || demand.workload.estimatedMinutes === null || demand.workload.workloadAuthority === "unknown") {
+      blocked.push(block(demand, demand.workload.unresolvedWorkloadReason ?? "canonical_workload_ineligible", ["planner_eligible_false"]));
+      continue;
+    }
+    if (!demand.learningStageAllowed) {
+      blocked.push(block(demand, "learning_stage_blocked", [demand.learningStageReason]));
+      continue;
+    }
+    if (!Number.isInteger(demand.workload.estimatedMinutes) || demand.workload.estimatedMinutes <= 0) {
+      blocked.push(block(demand, "invalid_canonical_duration", ["positive_integer_minutes_required"]));
+      continue;
+    }
+    if (demand.boundary === null) {
+      blocked.push(block(demand, "authoritative_material_boundary_unavailable", ["whole_workload_boundary_required"]));
+      continue;
+    }
+    pending.push(demand);
+  }
+  const scheduledIdentities = /* @__PURE__ */ new Set();
+  let remaining = [...pending].sort(compareDemand);
+  while (remaining.length) {
+    let progressed = false;
+    const next = [];
+    for (const demand of remaining) {
+      const unmetPrerequisites = demand.prerequisiteWorkloadIdentities.filter(
+        (identity) => !completed.has(identity) && !scheduledIdentities.has(identity)
+      );
+      const prerequisitesStillPending = unmetPrerequisites.some(
+        (identity) => remaining.some((candidate) => candidate.canonicalWorkloadIdentity === identity)
+      );
+      if (prerequisitesStillPending) {
+        next.push(demand);
+        continue;
+      }
+      if (unmetPrerequisites.length) {
+        unmet.push(Object.freeze({
+          demandId: demand.demandId,
+          canonicalWorkloadIdentity: demand.canonicalWorkloadIdentity,
+          materialViewId: demand.workload.materialViewId,
+          estimatedMinutes: demand.workload.estimatedMinutes,
+          reason: "prerequisite_unsatisfied"
+        }));
+        progressed = true;
+        continue;
+      }
+      const earliest = demand.earliestDate > input.horizonStart ? demand.earliestDate : input.horizonStart;
+      const latest = demand.latestDate < input.horizonEnd ? demand.latestDate : input.horizonEnd;
+      const eligibleDates = horizonDates.filter(
+        (date) => date >= earliest && date <= latest && date > input.currentDate
+      );
+      const day = eligibleDates.map((date) => mutableDays.get(date)).find((candidate) => candidate.available - candidate.planned >= demand.workload.estimatedMinutes);
+      if (!day) {
+        unmet.push(Object.freeze({
+          demandId: demand.demandId,
+          canonicalWorkloadIdentity: demand.canonicalWorkloadIdentity,
+          materialViewId: demand.workload.materialViewId,
+          estimatedMinutes: demand.workload.estimatedMinutes,
+          reason: "insufficient_contiguous_capacity"
+        }));
+        progressed = true;
+        continue;
+      }
+      const item = Object.freeze({
+        demandId: demand.demandId,
+        canonicalWorkloadIdentity: demand.canonicalWorkloadIdentity,
+        materialViewId: demand.workload.materialViewId,
+        resourceId: demand.workload.resourceId,
+        curriculumNodeId: demand.curriculumNodeId,
+        materialType: demand.workload.materialType,
+        plannedDate: day.input.date,
+        estimatedMinutes: demand.workload.estimatedMinutes,
+        workloadAuthority: demand.workload.workloadAuthority,
+        workloadConfidence: demand.workload.workloadConfidence,
+        boundary: demand.boundary,
+        learningStage: demand.learningStage,
+        reasonCodes: Object.freeze(["canonical_workload_eligible", "whole_boundary_fit", demand.learningStageReason]),
+        sourceProvenance: Object.freeze([...demand.sourceProvenance].sort())
+      });
+      day.scheduled.push(item);
+      day.planned += item.estimatedMinutes;
+      scheduledIdentities.add(demand.canonicalWorkloadIdentity);
+      progressed = true;
+    }
+    if (!progressed) {
+      for (const demand of next) {
+        unmet.push(Object.freeze({
+          demandId: demand.demandId,
+          canonicalWorkloadIdentity: demand.canonicalWorkloadIdentity,
+          materialViewId: demand.workload.materialViewId,
+          estimatedMinutes: demand.workload.estimatedMinutes,
+          reason: "prerequisite_unsatisfied"
+        }));
+      }
+      break;
+    }
+    remaining = next.sort(compareDemand);
+  }
+  const dailyPlans = Object.freeze(horizonDates.map((date) => {
+    const day = mutableDays.get(date);
+    const plannedMinutes = day.scheduled.reduce((sum2, item) => sum2 + item.estimatedMinutes, 0);
+    return Object.freeze({
+      date,
+      configuredCapacityMinutes: day.input.configuredCapacityMinutes,
+      alreadyStudiedMinutes: day.input.alreadyStudiedMinutes,
+      protectedCommitmentMinutes: day.protectedMinutes,
+      overcommittedMinutes: day.overcommitted,
+      availableMinutes: day.available,
+      plannedMinutes,
+      unusedMinutes: day.available - plannedMinutes,
+      protectedCommitmentIds: Object.freeze(day.protectedCommitments.map((item) => item.commitmentId)),
+      scheduledItems: Object.freeze([...day.scheduled])
+    });
+  }));
+  const scheduledItems = Object.freeze(dailyPlans.flatMap((day) => day.scheduledItems));
+  const capacity = Object.freeze({
+    configuredMinutes: dailyPlans.reduce((sum2, day) => sum2 + day.configuredCapacityMinutes, 0),
+    alreadyStudiedMinutes: dailyPlans.reduce((sum2, day) => sum2 + day.alreadyStudiedMinutes, 0),
+    protectedCommitmentMinutes: dailyPlans.reduce((sum2, day) => sum2 + day.protectedCommitmentMinutes, 0),
+    overcommittedMinutes: dailyPlans.reduce((sum2, day) => sum2 + day.overcommittedMinutes, 0),
+    availableMinutes: dailyPlans.reduce((sum2, day) => sum2 + day.availableMinutes, 0),
+    plannedMinutes: scheduledItems.reduce((sum2, item) => sum2 + item.estimatedMinutes, 0),
+    unusedMinutes: dailyPlans.reduce((sum2, day) => sum2 + day.unusedMinutes, 0),
+    unmetEligibleMinutes: unmet.reduce((sum2, item) => sum2 + item.estimatedMinutes, 0)
+  });
+  const snapshotFingerprint = await sha256(stableCanonicalPlannerJson(normalizedFingerprintInput(input)));
+  const proposalPayload = {
+    snapshotFingerprint,
+    scheduledItems,
+    blockedDemands: blocked,
+    unmetEligibleDemand: unmet,
+    completedDemandIds: [...completedDemandIds].sort(),
+    capacity
+  };
+  const proposalFingerprint = await sha256(stableCanonicalPlannerJson(proposalPayload));
+  const warnings = [
+    ...blocked.length ? ["BLOCKED_CANONICAL_DEMAND_PRESENT"] : [],
+    ...unmet.length ? ["UNMET_ELIGIBLE_DEMAND_PRESENT"] : [],
+    ...capacity.overcommittedMinutes ? ["PROTECTED_COMMITMENTS_EXCEED_CONFIGURED_CAPACITY"] : [],
+    ...input.policy.protectCurrentDay ? ["CURRENT_DAY_PROTECTED"] : []
+  ];
+  const proposal = Object.freeze({
+    proposalId: `canonical-planner-v2:${proposalFingerprint.slice(0, 24)}`,
+    snapshotFingerprint,
+    proposalFingerprint,
+    plannerVersion: CANONICAL_PLANNER_V2_VERSION,
+    userId: input.userId,
+    examProfileId: input.examProfileId,
+    currentDate: input.currentDate,
+    horizonStart: input.horizonStart,
+    horizonEnd: input.horizonEnd,
+    dailyPlans,
+    scheduledItems,
+    blockedDemands: Object.freeze(blocked),
+    unmetEligibleDemand: Object.freeze(unmet),
+    completedDemandIds: Object.freeze([...completedDemandIds].sort()),
+    capacity,
+    warnings: Object.freeze(warnings),
+    explanationFacts: Object.freeze([
+      "deterministic_whole_workload_first_fit",
+      "user_priority_before_optimizer_preferences",
+      "unknown_workload_never_scheduled",
+      "current_day_existing_plan_protected",
+      "proposal_only_no_apply_authority"
+    ]),
+    applyAllowed: false
+  });
+  assertCanonicalPlannerV2Proposal(proposal);
+  return proposal;
+}
+function assertCanonicalPlannerV2Proposal(proposal) {
+  const identities = /* @__PURE__ */ new Set();
+  let planned = 0;
+  for (const day of proposal.dailyPlans) {
+    assertNonNegativeInteger2("day.availableMinutes", day.availableMinutes);
+    assertNonNegativeInteger2("day.plannedMinutes", day.plannedMinutes);
+    assertNonNegativeInteger2("day.overcommittedMinutes", day.overcommittedMinutes);
+    if (day.date < proposal.horizonStart || day.date > proposal.horizonEnd) throw new Error("scheduled day outside proposal horizon");
+    if (day.availableMinutes !== Math.max(0, day.configuredCapacityMinutes - day.alreadyStudiedMinutes - day.protectedCommitmentMinutes)) {
+      throw new Error("daily available capacity does not reconcile");
+    }
+    if (day.overcommittedMinutes !== Math.max(0, day.alreadyStudiedMinutes + day.protectedCommitmentMinutes - day.configuredCapacityMinutes)) {
+      throw new Error("daily overcommit does not reconcile");
+    }
+    if (day.unusedMinutes !== day.availableMinutes - day.plannedMinutes) throw new Error("daily unused minutes do not reconcile");
+    if (day.plannedMinutes > day.availableMinutes) throw new Error("canonical planner capacity overflow");
+    const daySum = day.scheduledItems.reduce((sum2, item) => sum2 + item.estimatedMinutes, 0);
+    if (daySum !== day.plannedMinutes) throw new Error("daily planned minutes do not reconcile");
+    for (const item of day.scheduledItems) {
+      if (!Number.isInteger(item.estimatedMinutes) || item.estimatedMinutes <= 0) throw new Error("scheduled minutes must be positive integers");
+      if (item.workloadAuthority === "unknown") throw new Error("unknown workload scheduled");
+      if (item.plannedDate !== day.date) throw new Error("scheduled item day mismatch");
+      if (item.plannedDate <= proposal.currentDate) throw new Error("current or past day received new canonical work");
+      if (identities.has(item.canonicalWorkloadIdentity)) throw new Error("duplicate canonical workload scheduled");
+      identities.add(item.canonicalWorkloadIdentity);
+      planned += item.estimatedMinutes;
+    }
+  }
+  if (planned !== proposal.capacity.plannedMinutes || planned !== proposal.scheduledItems.reduce((sum2, item) => sum2 + item.estimatedMinutes, 0)) {
+    throw new Error("whole-horizon planned minutes do not reconcile");
+  }
+  if (proposal.capacity.plannedMinutes > proposal.capacity.availableMinutes) throw new Error("whole-horizon capacity overflow");
+  if (proposal.capacity.unusedMinutes !== proposal.capacity.availableMinutes - proposal.capacity.plannedMinutes) throw new Error("whole-horizon unused minutes do not reconcile");
+  if (proposal.capacity.overcommittedMinutes !== proposal.dailyPlans.reduce((sum2, day) => sum2 + day.overcommittedMinutes, 0)) throw new Error("whole-horizon overcommit does not reconcile");
+  if (proposal.applyAllowed !== false) throw new Error("W5 proposal cannot authorize apply");
+}
+function compareCanonicalPlannerV2Shadow(input, proposal, legacyItems) {
+  const legacy = legacyItems.filter((item) => !item.completed);
+  const legacyPlannedMinutes = legacy.reduce((sum2, item) => sum2 + Math.max(0, item.estimatedMinutes), 0);
+  const exactCapacityMinutes = Math.max(
+    0,
+    proposal.capacity.configuredMinutes - proposal.capacity.alreadyStudiedMinutes
+  );
+  const v2OccupiedMinutes = proposal.capacity.protectedCommitmentMinutes + proposal.capacity.plannedMinutes;
+  const legacyByIdentity = new Map(legacy.filter((item) => item.canonicalWorkloadIdentity).map((item) => [item.canonicalWorkloadIdentity, item]));
+  const v2ByIdentity = new Map(proposal.scheduledItems.map((item) => [item.canonicalWorkloadIdentity, item]));
+  const comparable = [...v2ByIdentity.keys()].filter((identity) => legacyByIdentity.has(identity));
+  const days = proposal.dailyPlans.map((day) => {
+    const legacyDay = legacy.filter((item) => item.plannedDate === day.date);
+    return Object.freeze({
+      date: day.date,
+      legacyItems: legacyDay.length,
+      legacyMinutes: legacyDay.reduce((sum2, item) => sum2 + item.estimatedMinutes, 0),
+      v2Items: day.scheduledItems.length,
+      v2Minutes: day.plannedMinutes
+    });
+  });
+  const scheduledIdentityCount = new Set(proposal.scheduledItems.map((item) => item.canonicalWorkloadIdentity)).size;
+  return Object.freeze({
+    capacity: Object.freeze({
+      exactCapacityMinutes,
+      legacyPlannedMinutes,
+      v2PlannedMinutes: proposal.capacity.plannedMinutes,
+      legacyOverflowMinutes: Math.max(0, legacyPlannedMinutes - exactCapacityMinutes),
+      v2OverflowMinutes: Math.max(0, v2OccupiedMinutes - exactCapacityMinutes),
+      v2UnusedMinutes: proposal.capacity.unusedMinutes
+    }),
+    workload: Object.freeze({
+      canonicalEligibleDemandMinutes: [...new Map(
+        input.demands.filter((item) => item.workload.plannerEligible && item.workload.estimatedMinutes !== null && !input.completedWorkloadIdentities.includes(item.canonicalWorkloadIdentity)).map((item) => [item.canonicalWorkloadIdentity, Number(item.workload.estimatedMinutes)])
+      ).values()].reduce((sum2, minutes) => sum2 + minutes, 0),
+      scheduledEligibleDemandMinutes: proposal.capacity.plannedMinutes,
+      unmetEligibleDemandMinutes: proposal.capacity.unmetEligibleMinutes,
+      blockedUnknownDemandCount: proposal.blockedDemands.filter((item) => item.unresolvedWorkloadReason?.includes("pace") || item.blockedReason.includes("pace")).length,
+      blockedMappingDemandCount: proposal.blockedDemands.filter((item) => item.blockedReason.includes("mapping") || item.unresolvedWorkloadReason?.includes("mapping")).length
+    }),
+    material: Object.freeze({
+      exactYoutubeScheduled: proposal.scheduledItems.filter((item) => item.boundary.kind === "full_video" && item.workloadAuthority === "exact").length,
+      physicalCalibratedScheduled: proposal.scheduledItems.filter((item) => item.boundary.kind === "physical_pages" && item.workloadAuthority === "calibrated").length,
+      duplicateMaterialIdentities: proposal.scheduledItems.length - scheduledIdentityCount,
+      completedMaterialMistakenlyPlanned: proposal.scheduledItems.filter((item) => input.completedWorkloadIdentities.includes(item.canonicalWorkloadIdentity)).length,
+      unknownWorkloadScheduledCount: proposal.scheduledItems.filter((item) => item.workloadAuthority === "unknown").length
+    }),
+    plan: Object.freeze({
+      days: Object.freeze(days),
+      legacyOnlyItems: legacy.filter((item) => !item.canonicalWorkloadIdentity || !v2ByIdentity.has(item.canonicalWorkloadIdentity)).length,
+      v2OnlyItems: proposal.scheduledItems.filter((item) => !legacyByIdentity.has(item.canonicalWorkloadIdentity)).length,
+      comparableMatches: comparable.length,
+      orderingDifferences: comparable.filter((identity) => legacyByIdentity.get(identity).plannedDate !== v2ByIdentity.get(identity).plannedDate).length
+    }),
+    safety: Object.freeze({
+      currentDayProtectedDifferences: proposal.scheduledItems.filter((item) => item.plannedDate === input.currentDate).length,
+      capacityViolations: proposal.dailyPlans.filter((day) => day.plannedMinutes > day.availableMinutes || day.overcommittedMinutes > 0).length,
+      staleOrUnknownViolations: proposal.scheduledItems.filter((item) => item.workloadAuthority === "unknown").length,
+      duplicateViolations: proposal.scheduledItems.length - scheduledIdentityCount
+    })
+  });
+}
 export {
+  CANONICAL_PLANNER_V2_VERSION,
+  assertCanonicalPlannerV2Proposal,
+  buildCanonicalPlannerV2Proposal,
   buildPlanningSnapshotFromDbBundleV1,
+  compareCanonicalPlannerV2Shadow,
   decidePlanningActionV2,
   evaluatePlanningV2ShadowDecision,
+  stableCanonicalPlannerJson,
   toPlanningV2ProposalRow,
   toPlanningV2SnapshotRow
 };

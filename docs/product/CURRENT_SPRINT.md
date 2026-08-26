@@ -1,6 +1,6 @@
 # Current Sprint
 
-Last updated: 2026-08-23
+Last updated: 2026-08-26
 
 ## Sprint 02 — Planning Semantics & Duration Policy
 
@@ -53,6 +53,13 @@ The full item definition is in [PRODUCT_BACKLOG.md](PRODUCT_BACKLOG.md#pln-003--
 - Integration/RLS suites were not rerun in this shell because local Supabase environment variables were unavailable; this checkpoint introduces no database migration or production mutation path.
 
 The next active product-foundation task is `MAT-001`, which supplies the exact page/test/video material model required before stage-aware planner activation.
+
+### Planner V2 canonical shadow (W5)
+
+- Phase: engineering shadow implemented; production mutation/runtime activation prohibited.
+- Scope: deterministic canonical proposal, exact capacity, whole-material boundaries, blocked/unmet demand, current-day/user-commitment protection, stable staleness fingerprints, and read-only legacy comparison.
+- Production evaluation uses a separate strictly read-only runner; it cannot write diagnostic rows or call Apply.
+- W6 proposal Apply, PLN-003/004/005 production authority, and PLN-010 rollout remain separately gated.
 ## NEXT
 
 1. Close `PLN-002` natural Extra Study authenticated real-user acceptance when real usage provides evidence

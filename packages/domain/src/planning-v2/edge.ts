@@ -14,3 +14,11 @@ export {
   toPlanningV2SnapshotRow,
   toPlanningV2ProposalRow,
 } from "./shadow-persistence";
+
+export {
+  CANONICAL_PLANNER_V2_VERSION,
+  assertCanonicalPlannerV2Proposal,
+  buildCanonicalPlannerV2Proposal,
+  compareCanonicalPlannerV2Shadow,
+  stableCanonicalPlannerJson,
+} from "./canonical-shadow";
