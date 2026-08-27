@@ -121,6 +121,17 @@ Telegram requires a separately reviewed service-role W2 wrapper plus authoritati
 - Canonical planner, W6 lifecycle, and evidence-shadow remain OFF. The exact physical capture allowlist digest is unchanged. app-api remains v31, Telegram remains v34, and no Edge Function or web deployment, secret change, proposal/confirmation/Apply call, task/plan mutation, or runtime activation occurred.
 - The next release gate is a separately approved Gate-OFF app-api/web runtime deployment. A future trusted Apply route must derive actor user/profile from the verified human JWT and pass both bindings to the service-only RPC; W7 does not implement or enable that route.
 
+### 2026-08-27 W7 gate-off runtime production release
+
+- Status: `W7_GATE_OFF_RUNTIME_DEPLOYED`.
+- Approved source `395a536d18b79ea124bdac0d4498a021d9ce9bc0` was deployed to production app-api as v32 ACTIVE at `2026-08-27T12:29:12Z`. The supported CLI does not expose an exact deployed bundle SHA; the reviewed source-closure SHA256 is `ed963a421a7feefb8e5da10985eee9d9dec293349c3c819a2683ca2f60d7aaef`. Rollback remains app-api v31 with bundle SHA256 `4747c9f5e9343587eec0da34beae149e3a289633ef1c9ca79d28a134827af573`.
+- The verified 18-file web artifact (manifest SHA256 `f447f1b1a4c32fa8cda6dbb8ab5c5628f1a7f90bbb14401289b9ac377a7ef114`) was uploaded to Cloudflare Pages production branch `main`. Deployment `f7c4dd8e-e3a4-4a19-8b47-cbcd8016abae` completed at `2026-08-27T12:52:27Z`; immutable URL `https://f7c4dd8e.kpss-coach.pages.dev` and production alias `https://kpss-coach.pages.dev` matched all 18 candidate files byte-for-byte. Web rollback remains deployment `1fdc476a-c62e-4d7d-be94-24e2e12416c9` at source `8354deff78b06f56411dc969a073c54f68829c69`.
+- Public root, Week, and Roadmap routes returned HTTP 200 and the production login shell rendered successfully. While the lifecycle gate is absent, the Planner V2 panel returns null; only the designed capability probe is automatic. Preview and confirmation remain user-initiated and unavailable, and no Apply button, client request, or app-api `/planner-v2/apply` route exists.
+- Postflight remained `248 / 241` total/non-cancelled tasks, `9 / 9` total/active weekly plans, `79` task-resource-unit links, `6 / 6` legacy V2 snapshots/proposals, `0` Planner V2 lifecycle proposals in every state, `0` confirmed/applied lifecycle rows, `0` canonical Planner V2 tasks, and `0 / 0 / 0` W2 snapshots/breaks/evidence. Release-caused Planner V2 application-data mutation was zero.
+- `PLANNER_V2_PROPOSAL_LIFECYCLE_PROFILE_IDS` and `PHYSICAL_PACE_EVIDENCE_SHADOW_V1` remain absent/OFF. Canonical planner runtime remains OFF. The exact physical capture allowlist digest is unchanged. Linked migration history remains synchronized with zero pending migrations.
+- Telegram webhook remains v34 ACTIVE and was not deployed. No secret, migration, Telegram runtime, production preview, confirmation, Apply call, task/plan/progress row, or pilot configuration changed.
+- The next gate is a separately approved exact-profile **PREVIEW-ONLY** production pilot. Apply must remain unavailable.
+
 ## 2026-08-25 Canonical Workload Engine W4 closure
 
 - Status: `EVRE_4_ENGINEERING_COMPLETE_DATA_MATURITY_IN_PROGRESS`.
