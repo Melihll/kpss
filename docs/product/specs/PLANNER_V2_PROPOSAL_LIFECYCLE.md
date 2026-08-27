@@ -1,6 +1,6 @@
 # Planner V2 Proposal Lifecycle
 
-Status: W6 local/test verified candidate; production inactive
+Status: W7 schema/RPC deployed; Planner V2 runtime inactive
 Lifecycle version: `planner-v2-lifecycle-v1`
 Planner version: `canonical-planner-v2-shadow-v1`
 
@@ -10,7 +10,7 @@ W6 turns the immutable W5 canonical proposal into a reviewable lifecycle:
 
 `snapshot → proposal → preview → structured explanation → exact confirmation → freshness check → atomic Apply candidate`
 
-This is not a production Planner V2 release. The profile capability `PLANNER_V2_PROPOSAL_LIFECYCLE_PROFILE_IDS` defaults OFF, rejects `*`, and is unset in production. There is no Planner V2 Apply HTTP route, no production secret change, no deployment, and no production migration in W6. The SQL migration is a local/test release candidate that requires a separately approved production schema/RPC release before any runtime activation can be considered.
+This is not a production Planner V2 runtime release. The profile capability `PLANNER_V2_PROPOSAL_LIFECYCLE_PROFILE_IDS` defaults OFF, rejects `*`, and is unset in production. There is no Planner V2 Apply HTTP route, no production secret change, and no app-api/web/Telegram deployment in W7. The additive schema/RPC capability was deployed separately on 2026-08-27; migration presence alone does not generate, preview, confirm, or apply a proposal.
 
 ## Existing infrastructure audit
 
@@ -18,7 +18,7 @@ The established `confirmed_action_proposals` framework already supplies server-c
 
 The existing schema was not sufficient for canonical Apply. Tasks had no persisted canonical workload/material boundary, planner version, or proposal fingerprint; duplicate canonical work could not be proven without title inference. Existing proposal rows did not bind the W5 proposal fingerprint, W5 snapshot fingerprint, planner version, or confirmation timestamp. The legacy/P48 replacement RPCs also cannot express the conservative W6 replacement scope. An additive local migration candidate was therefore required; unsafe client multi-write logic was not created.
 
-W7 release preflight identified two privilege-boundary gaps before production apply: authenticated users could execute the public-schema Apply RPC through PostgREST, and existing authenticated task INSERT/UPDATE grants would automatically cover the new canonical metadata columns. The still-undeployed candidate was hardened in place. Apply is now executable only by `service_role`, and a database trigger protects Planner V2 task metadata while preserving existing legacy task writes.
+W7 release preflight identified two privilege-boundary gaps before production apply: authenticated users could execute the public-schema Apply RPC through PostgREST, and existing authenticated task INSERT/UPDATE grants would automatically cover the new canonical metadata columns. The candidate was hardened in place before release. Apply is executable only by `service_role`, and a database trigger protects Planner V2 task metadata while preserving existing legacy task writes. The reviewed hardened migration was then deployed on 2026-08-27 with runtime gates still OFF.
 
 ## State machine
 
@@ -95,11 +95,11 @@ Telegram remains unchanged and legacy/UI-blocked. No weaker service-role or gene
 
 ## Future release sequence
 
-1. Review and approve the hardened additive schema/RPC candidate separately.
-2. Apply the migration under schema-only production approval; keep capability OFF.
-3. Verify zero proposal/task mutation and production guards.
-4. Run a separately approved exact-profile preview/confirm pilot with Apply still unavailable.
-5. Review natural preview quality and stale behavior.
+1. Completed: review and harden the additive schema/RPC candidate.
+2. Completed: apply the migration under schema-only production approval with capability OFF.
+3. Completed: verify zero proposal/task mutation, service-only Apply, metadata guards, and zero pending migrations.
+4. Next: separately approve and deploy the Gate-OFF app-api/web preview/confirmation runtime while keeping the lifecycle profile gate OFF and Apply unavailable.
+5. Later: run a separately approved exact-profile preview/confirm pilot with Apply still unavailable, then review natural preview quality and stale behavior.
 6. Design a distinct app-api Apply activation gate and rollback plan. That future route must derive actor user/profile from the verified JWT and invoke the service-role-only RPC; deploy/activate only under explicit approval.
 
-The hardened migration remains undeployed. Production canonical planning, evidence-shadow consumption, capture-pilot configuration, and Telegram remain outside W6/W7-FIX authority.
+The hardened migration `20260826120000_planner_v2_proposal_lifecycle_candidate.sql` is deployed with SHA256 `a52d9ccc1f7b135ce7a93bb9c546e866c57beffeabb8d34bc0803e08558691a5`. Production canonical planning, W6 lifecycle, evidence-shadow consumption, capture-pilot configuration, app-api/web runtime, Apply routing, and Telegram remain unchanged and outside this schema-only release authority.

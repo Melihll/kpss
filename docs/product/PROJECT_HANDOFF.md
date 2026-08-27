@@ -1,6 +1,6 @@
 # KPSS Koçu — Project Handoff
 
-Last updated: 2026-08-26
+Last updated: 2026-08-27
 
 ## Canonical source
 
@@ -68,7 +68,7 @@ Material completion history remains separate from pedagogical state. Previously 
 
 ## NEXT EXACT STEP
 
-Review the W6 local migration/RPC candidate as a separate production schema release. Do not deploy or activate Planner V2 proposal generation, confirmation, or Apply until that release and later runtime gates receive explicit approval. Continue read-only W5 shadow observation and natural W2 pilot evidence observation.
+Prepare a separately approved Gate-OFF app-api/web release for Planner V2 preview and confirmation. The W7 schema/RPC capability is deployed, but proposal generation, confirmation, Apply, the canonical planner, and the W6 lifecycle runtime remain OFF. Apply has no production HTTP route and must remain unavailable until a later independently reviewed activation gate.
 
 In parallel, continue passive observation of the next natural W2-eligible physical study lifecycle for the exact-profile pilot. Inspect it read-only if it occurs; do not manufacture activity, widen the allowlist, or alter accepted evidence.
 
@@ -109,6 +109,17 @@ Telegram requires a separately reviewed service-role W2 wrapper plus authoritati
 - A database trigger denies authenticated/anon canonical metadata insertion or modification while leaving legacy owner task INSERT/UPDATE behavior intact. A completeness constraint binds `planner_v2` source semantics to nonblank canonical identity/material/version/fingerprint fields and valid exact physical/video boundaries.
 - A future app-api Apply route must verify the human JWT, derive actor user/profile server-side, and call the server-only RPC. No such route was added or enabled during W7-FIX.
 - Production migration, tasks/plans/proposals, gates, secrets, app-api v31, web, and Telegram remain unchanged. Repeat the complete W7 release preflight against the hardened commit before requesting schema-release approval.
+
+### 2026-08-27 W7 schema/RPC production release
+
+- Status: `W7_SCHEMA_RPC_DEPLOYED — PLANNER_V2_RUNTIME_OFF`.
+- The sole approved migration `20260826120000_planner_v2_proposal_lifecycle_candidate.sql` was applied from reviewed source `a4833593f94ede42f7b7399bec9ebb939e2efa74`; its SHA256 is `a52d9ccc1f7b135ce7a93bb9c546e866c57beffeabb8d34bc0803e08558691a5`.
+- Postflight found every expected canonical task column/constraint/index, proposal lifecycle field/index, helper RPC, metadata guard function/trigger, and Apply RPC. Linked migration history is synchronized, the dry-run reports the remote database up to date, and linked PostgreSQL lint reports no schema errors.
+- `apply_planner_v2_proposal_candidate()` is `SECURITY DEFINER`, uses an empty `search_path`, and is executable only by `service_role`. `public`, `anon`, and `authenticated` have no direct Apply authority; the service-role PostgREST schema exposes the trusted path while the database privilege matrix prevents a usable client path.
+- `tasks_guard_planner_v2_metadata` is active. It blocks direct untrusted canonical metadata writes while preserving legacy owner task operations; `tasks_planner_v2_metadata_complete` enforces exact all-or-nothing canonical identity and physical/video boundary shapes.
+- The migration performed no backfill and activated no behavior. Production remained at `248 / 241` total/active tasks, `9 / 9` total/active weekly plans, `79` task-resource-unit links, `6 / 6` legacy V2 snapshots/proposals, `0` confirmed-action proposals, `0` canonical Planner V2 tasks, and `0 / 0 / 0` W2 snapshots/breaks/evidence.
+- Canonical planner, W6 lifecycle, and evidence-shadow remain OFF. The exact physical capture allowlist digest is unchanged. app-api remains v31, Telegram remains v34, and no Edge Function or web deployment, secret change, proposal/confirmation/Apply call, task/plan mutation, or runtime activation occurred.
+- The next release gate is a separately approved Gate-OFF app-api/web runtime deployment. A future trusted Apply route must derive actor user/profile from the verified human JWT and pass both bindings to the service-only RPC; W7 does not implement or enable that route.
 
 ## 2026-08-25 Canonical Workload Engine W4 closure
 
