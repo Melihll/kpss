@@ -132,7 +132,7 @@ function commitmentClassification(task: any, pinned: boolean, currentDate: strin
   if (String(task.planned_date ?? "") === currentDate) return "protected_current_day";
   if (pinned) return "locked";
   if (task.source_reason === "manual") return "manual";
-  if (task.source_reason === "baseline_import") return "legacy";
+  if (["baseline_import", "carryover"].includes(String(task.source_reason))) return "legacy";
   return "future_replaceable_generated";
 }
 
@@ -310,6 +310,7 @@ export async function runCanonicalPlannerV2ReadOnlyShadow(input: {
   readonly userId: string;
   readonly examProfileId: string;
   readonly currentDate?: string;
+  readonly includeLifecycleContracts?: boolean;
 }) {
   const currentDate = input.currentDate ?? calendarToday();
   const profileResult = await input.client
@@ -404,6 +405,16 @@ export async function runCanonicalPlannerV2ReadOnlyShadow(input: {
   const plannerInput = assembleCanonicalPlannerV2ReadOnlyInput(model);
   const proposal = await buildCanonicalPlannerV2Proposal(plannerInput);
   const comparison = compareCanonicalPlannerV2Shadow(plannerInput, proposal, legacyItems(model));
+  const existingTaskScopes = Object.freeze(model.adaptive.tasks.map((task: any) => {
+    const taskId = String(task.id);
+    return Object.freeze({
+      taskId,
+      plannedDate: task.planned_date ? String(task.planned_date) : null,
+      classification: commitmentClassification(task, pinnedTasksForModel(model).has(taskId), model.currentDate),
+      canonicalWorkloadIdentity: exactTaskWorkloadIdentity(taskId, model.taskResourceLinks),
+      source: String(task.source_reason ?? "legacy_task"),
+    });
+  }));
 
   return Object.freeze({
     mode: "PRODUCTION_READ_ONLY_CANONICAL_PLANNER_V2_SHADOW",
@@ -419,5 +430,16 @@ export async function runCanonicalPlannerV2ReadOnlyShadow(input: {
     calibration: readiness.calibration,
     proposal,
     comparison,
+    ...(input.includeLifecycleContracts ? {
+      plannerInput,
+      existingTaskScopes,
+      planGenerationVersion: Number(weeklyPlan.generation_version),
+    } : {}),
   });
+}
+
+function pinnedTasksForModel(model: CanonicalPlannerV2ReadModel): Set<string> {
+  return new Set(
+    model.taskPreferences.filter((row) => row.pinned === true).map((row) => String(row.task_id)),
+  );
 }

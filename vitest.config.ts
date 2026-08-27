@@ -13,6 +13,7 @@ export default defineConfig({
       "supabase/functions/_shared/ai-coach/**/*.test.ts",
       "supabase/functions/_shared/physical-study-lifecycle.test.ts",
       "supabase/functions/_shared/canonical-planner-v2-readonly.test.ts",
+      "supabase/functions/_shared/planner-v2-proposal-capability.test.ts",
     ],
   },
 });

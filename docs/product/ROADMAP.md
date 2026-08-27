@@ -90,6 +90,10 @@ Planner V2 shadow work may proceed against the explicit handoff contract while u
 
 The canonical deterministic proposal engine, stable staleness fingerprints, exact-capacity/whole-material policy, current-day and user-commitment protection, explicit blocked/unmet demand, and legacy comparison are implemented in shadow. The production evaluator is strictly read-only and does not use the existing diagnostic-persistence route. This advances planner simulation/shadow foundations (`PLN-008`/`PLN-009`) but does not complete their natural-evidence acceptance or authorize `PLN-010` rollout. Canonical planner runtime remains OFF; W6 Apply requires a separate design and release decision.
 
+### 2026-08-26 Planner V2 W6 checkpoint
+
+The deterministic Preview → Explain → exact Confirm → freshness → atomic Apply-candidate lifecycle is implemented and locally verified. The candidate persists canonical task identity, protects current-day/manual/locked/in-progress/completed work, scopes replacement to named future Planner V2 work, rechecks freshness/capacity transactionally, and is rollback-safe and idempotent. This advances `PLN-009` engineering but does not authorize `PLN-010`: the required migration is undeployed, the exact-profile capability defaults OFF, no Apply HTTP route exists, and production runtime remains unchanged.
+
 ## After M1
 
 No post-M1 milestone is committed or sequenced yet. Candidate directions may include deeper coaching, engagement mechanics, broader onboarding, and experience improvements, but they must be evaluated against the [product vision](PRODUCT_VISION.md), M1 evidence, and [metrics](METRICS.md) before entering `READY`.

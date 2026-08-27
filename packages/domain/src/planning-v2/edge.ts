@@ -22,3 +22,14 @@ export {
   compareCanonicalPlannerV2Shadow,
   stableCanonicalPlannerJson,
 } from "./canonical-shadow";
+
+export {
+  PLANNER_V2_LIFECYCLE_VERSION,
+  buildPlannerV2ApplyPlan,
+  buildPlannerV2ApplyPlanCandidate,
+  buildPlannerV2Preview,
+  confirmPlannerV2Preview,
+  fingerprintPlannerV2SnapshotComponents,
+  transitionPlannerV2ProposalState,
+  validatePlannerV2Freshness,
+} from "./proposal-lifecycle";

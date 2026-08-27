@@ -91,9 +91,11 @@ export interface CanonicalPlannerV2Input {
 
 export interface CanonicalPlannerV2ScheduledItem {
   readonly demandId: string;
+  readonly title: string;
   readonly canonicalWorkloadIdentity: string;
   readonly materialViewId: string;
   readonly resourceId: string;
+  readonly subjectId: string | null;
   readonly curriculumNodeId: string | null;
   readonly materialType: string;
   readonly plannedDate: string;
@@ -475,9 +477,11 @@ export async function buildCanonicalPlannerV2Proposal(input: CanonicalPlannerV2I
       }
       const item = Object.freeze({
         demandId: demand.demandId,
+        title: demand.title,
         canonicalWorkloadIdentity: demand.canonicalWorkloadIdentity,
         materialViewId: demand.workload.materialViewId,
         resourceId: demand.workload.resourceId,
+        subjectId: demand.workload.subjectId,
         curriculumNodeId: demand.curriculumNodeId,
         materialType: demand.workload.materialType,
         plannedDate: day.input.date,
@@ -486,7 +490,12 @@ export async function buildCanonicalPlannerV2Proposal(input: CanonicalPlannerV2I
         workloadConfidence: demand.workload.workloadConfidence,
         boundary: demand.boundary!,
         learningStage: demand.learningStage,
-        reasonCodes: Object.freeze(["canonical_workload_eligible", "whole_boundary_fit", demand.learningStageReason]),
+        reasonCodes: Object.freeze([
+          "canonical_workload_eligible",
+          "whole_boundary_fit",
+          ...(demand.alreadyStarted ? ["continuation_preference"] : []),
+          demand.learningStageReason,
+        ]),
         sourceProvenance: Object.freeze([...demand.sourceProvenance].sort()),
       });
       day.scheduled.push(item);

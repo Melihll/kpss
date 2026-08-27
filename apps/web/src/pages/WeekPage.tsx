@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Icon } from "../components/Icon";
 import { PlanningPanel } from "../components/PlanningPanel";
+import { PlannerV2PreviewPanel } from "../components/PlannerV2PreviewPanel";
 import { useRoadmap } from "../hooks/useRoadmap";
 import { addDays, compactMinutesLabel, dateLabel, DAY_NAMES, isoToday, taskName, taskRemainingMinutes, totalTaskRemainingMinutes, WORK_MODE_LABELS } from "../lib/roadmap";
 
@@ -168,6 +169,7 @@ export function WeekPage() {
         })}</div> : <div className="plain-empty">Bu gün için planlanmış çalışma yok.</div>}
       </section>
 
+      <PlannerV2PreviewPanel />
       <details className="week-edit-tools"><summary><span><Icon name="settings" />Planı düzenle</span><Icon name="arrow" /></summary><PlanningPanel /></details>
     </> : <div className="plain-empty action-empty"><span>Bu hafta henüz plan oluşturulmadı.</span></div>}
   </section>;

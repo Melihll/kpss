@@ -72,6 +72,25 @@ const alignToday = await client.from("tasks").update({ planned_date: smokeToday 
 if (alignToday.error) throw alignToday.error;
 const current = await request("/weekly-plan/current");
 if (current.plan.id !== built.plan.id) throw new Error("Current plan does not match built plan");
+const plannerV2Capability = await request("/planner-v2/capability");
+if (plannerV2Capability.enabled || plannerV2Capability.previewEnabled || plannerV2Capability.confirmationEnabled || plannerV2Capability.applyEnabled || plannerV2Capability.productionMutationAuthority) {
+  throw new Error(`Planner V2 W6 capability must default OFF: ${JSON.stringify(plannerV2Capability)}`);
+}
+const tasksBeforeDisabledPreview = await client.from("tasks").select("id", { count: "exact", head: true }).eq("weekly_plan_id", built.plan.id);
+const disabledPreviewResponse = await fetch(`${base}/planner-v2/preview`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${signup.data.session.access_token}`,
+    apikey: anonKey,
+    "Content-Type": "application/json",
+  },
+});
+const disabledPreviewPayload = await disabledPreviewResponse.json();
+if (disabledPreviewResponse.status !== 403 || disabledPreviewPayload.error?.code !== "PLANNER_V2_PROPOSAL_LIFECYCLE_DISABLED") {
+  throw new Error(`Disabled Planner V2 preview did not fail closed: ${disabledPreviewResponse.status} ${JSON.stringify(disabledPreviewPayload)}`);
+}
+const tasksAfterDisabledPreview = await client.from("tasks").select("id", { count: "exact", head: true }).eq("weekly_plan_id", built.plan.id);
+if (tasksAfterDisabledPreview.count !== tasksBeforeDisabledPreview.count) throw new Error("Disabled Planner V2 preview mutated tasks");
 const next = await request("/tasks/next");
 if (!next.task?.id || !next.reason) throw new Error("Next task did not return a recommendation");
 const started = await request(`/tasks/${next.task.id}/start`, "POST");
@@ -82,6 +101,8 @@ console.log(JSON.stringify({
   availableMinutes: built.plan.available_minutes,
   planningBudgetMinutes: built.plan.planning_budget_minutes,
   generatedTasks: built.tasks.length,
+  plannerV2Capability,
+  disabledPlannerV2PreviewMutationCount: 0,
   recommendation: { taskId: next.task.id, reason: next.reason, remainingMinutes: next.remainingMinutes },
   startedStatus: started.status,
 }, null, 2));

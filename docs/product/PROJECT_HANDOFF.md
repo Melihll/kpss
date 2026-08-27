@@ -68,7 +68,7 @@ Material completion history remains separate from pedagogical state. Previously 
 
 ## NEXT EXACT STEP
 
-Verify Planner V2 shadow quality over natural production evolution, then design W6 `Preview → Explain → Confirm → transactional Apply` as a separate reviewed phase. Do not enable production canonical planning or evidence-shadow consumption in W5.
+Review the W6 local migration/RPC candidate as a separate production schema release. Do not deploy or activate Planner V2 proposal generation, confirmation, or Apply until that release and later runtime gates receive explicit approval. Continue read-only W5 shadow observation and natural W2 pilot evidence observation.
 
 In parallel, continue passive observation of the next natural W2-eligible physical study lifecycle for the exact-profile pilot. Inspect it read-only if it occurs; do not manufacture activity, widen the allowlist, or alter accepted evidence.
 
@@ -88,6 +88,19 @@ Telegram requires a separately reviewed service-role W2 wrapper plus authoritati
 - Production read-only shadow (2026-08-26): `341` views (`76` exact YouTube, `265` unknown), `3,323` exact eligible video minutes, `0` calibrated physical pages, `5,103` unknown physical pages, and `0` accepted/usable W2 pace samples. With `15` unoccupied contiguous minutes, the proposal schedules `0`, leaves all `3,323` eligible minutes unmet, and blocks `245` pace-unknown plus `20` mapping-unknown views. It schedules zero unknown/completed/duplicate material and changes no production counters.
 - Live comparison: post-study capacity `1,386`, legacy remaining plan `1,372`, protected occupancy `1,372`, newly proposed `0`, legacy/V2 horizon overflow `0/0`, current-day differences `0`; one pre-existing day is overcommitted by `1` minute and is surfaced rather than hidden.
 - Docker/local Supabase integration was restored without changing implementation or tests. A transient fresh-JWT timing failure immediately after Docker startup cleared after host/Auth/database clock verification; the complete rerun passed `116/116`. W5 engineering gates are GREEN.
+
+## 2026-08-26 Planner V2 proposal lifecycle W6 engineering
+
+- `planner-v2-lifecycle-v1` adds an explicit generated/previewed/confirmed/applied/stale/rejected/expired state machine around the unchanged deterministic W5 proposal.
+- Preview exposes reconciled horizon/day/item/blocked/replacement data and structured domain explanation facts. Exact confirmation binds owner, profile, proposal ID, proposal fingerprint, snapshot fingerprint, planner version, and timestamp.
+- Component hashes categorize freshness changes; the local transaction candidate also rechecks an authoritative database fingerprint, plan generation, ownership, exact material boundary, conservative replacement scope, canonical uniqueness, and capacity under lock.
+- A local-only additive migration candidate was required because production tasks cannot currently persist canonical workload/material boundary/proposal identity and existing proposal rows cannot bind W5 identity. It adds no production state in W6.
+- App-api preview/confirmation is exact-profile allowlisted, rejects wildcard activation, and defaults OFF. Web shows a minimal review/confirm panel only when enabled. No Planner V2 Apply HTTP route exists; confirmation alone cannot mutate a task or plan.
+- Local transaction tests prove stale never applies, unconfirmed/foreign calls fail, current-day/manual work is retained, a late failure rolls back replacement and inserts, duplicate canonical work is blocked, and replay returns the original result idempotently.
+- Verification: focused W5/W6 lifecycle/read-only/capability/safety `61/61`, canonical planning/P48 `365/365`, local integration/RLS/transaction `124/124`, and full non-integration regression `888/888` all PASS. Domain/web typechecks, production web build, final app-api local bundle/HTTP smoke, default-OFF zero-mutation smoke, V1/V2/read-only safety checks, clean migration reset, PostgreSQL lint, and `git diff --check` PASS.
+- Production read-only audit: app-api remains v31 ACTIVE; the exact-profile capture secret remains present; evidence-shadow, canonical planner, and W6 lifecycle secrets remain absent/OFF. Production table statistics report estimated `0 / 0 / 0` physical snapshots/breaks/evidence and estimated `0` confirmed action proposals. The only local/remote migration difference is the intentionally undeployed W6 candidate `20260826120000`; no production migration was applied.
+- Telegram is unchanged. Canonical planner, evidence-shadow, capture pilot, production secrets/migrations/data, Edge/web deployments, and live app-api remain unchanged.
+- Full contract: [Planner V2 Proposal Lifecycle](specs/PLANNER_V2_PROPOSAL_LIFECYCLE.md).
 
 ## 2026-08-25 Canonical Workload Engine W4 closure
 

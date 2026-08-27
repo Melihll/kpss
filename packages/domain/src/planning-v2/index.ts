@@ -16,3 +16,4 @@ export * from "./shadow-persistence";
 export * from "./db-snapshot-contract";
 export * from "./db-snapshot-builder";
 export * from "./canonical-shadow";
+export * from "./proposal-lifecycle";

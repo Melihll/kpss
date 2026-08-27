@@ -29,6 +29,13 @@ import {
   isPhysicalPaceCaptureEnabled,
   PhysicalStudyLifecycleService,
 } from "../_shared/physical-study-lifecycle.ts";
+import { runCanonicalPlannerV2ReadOnlyShadow } from "../_shared/canonical-planner-v2-readonly.ts";
+import { isPlannerV2ProposalLifecycleEnabled } from "../_shared/planner-v2-proposal-capability.ts";
+import {
+  buildPlannerV2ApplyPlanCandidate,
+  buildPlannerV2Preview,
+  fingerprintPlannerV2SnapshotComponents,
+} from "../_shared/planning-v2.bundle.js";
 
 type WeeklyPlanningContext = {
   examProfileId: string;
@@ -65,6 +72,9 @@ function json(body: unknown, status = 200) {
 const domainErrorStatuses: Readonly<Record<string, number>> = {
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
+  PLANNER_V2_PROPOSAL_LIFECYCLE_DISABLED: 403,
+  PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH: 409,
+  PLANNER_V2_PROPOSAL_NOT_FOUND: 404,
   NO_ACTIVE_EXAM_PROFILE: 400,
   NO_WEEKLY_AVAILABILITY: 400,
   INVALID_TEST_RESULT: 400,
@@ -783,6 +793,87 @@ Deno.serve(async (request) => {
     const route = pathname.includes("/app-api") ? pathname.split("/app-api")[1] || "/" : pathname;
     const today = istanbulDate();
     const weekStart = mondayOf(today);
+    const plannerV2ProposalEnabled = isPlannerV2ProposalLifecycleEnabled(
+      Deno.env.get("PLANNER_V2_PROPOSAL_LIFECYCLE_PROFILE_IDS"),
+      profile.id,
+    );
+
+    if (request.method === "GET" && route === "/planner-v2/capability") {
+      return json({
+        enabled: plannerV2ProposalEnabled,
+        previewEnabled: plannerV2ProposalEnabled,
+        confirmationEnabled: plannerV2ProposalEnabled,
+        applyEnabled: false,
+        productionMutationAuthority: false,
+      });
+    }
+    if (request.method === "POST" && route === "/planner-v2/preview") {
+      if (!plannerV2ProposalEnabled) throw new Error("PLANNER_V2_PROPOSAL_LIFECYCLE_DISABLED");
+      const shadow: any = await runCanonicalPlannerV2ReadOnlyShadow({
+        client,
+        userId,
+        examProfileId: profile.id,
+        currentDate: today,
+        includeLifecycleContracts: true,
+      });
+      const preview = buildPlannerV2Preview(shadow.proposal, shadow.existingTaskScopes);
+      const componentFingerprints = await fingerprintPlannerV2SnapshotComponents(
+        shadow.plannerInput,
+        shadow.proposal.snapshotFingerprint,
+      );
+      const applyPlan = buildPlannerV2ApplyPlanCandidate({
+        proposal: shadow.proposal,
+        tasks: shadow.existingTaskScopes,
+      });
+      const stored = await serviceClient.rpc("create_planner_v2_proposal_candidate", {
+        p_user_id: userId,
+        p_exam_profile_id: profile.id,
+        p_weekly_plan_id: shadow.weeklyPlanId,
+        p_plan_generation_version: shadow.planGenerationVersion,
+        p_planner_proposal_id: preview.proposalId,
+        p_proposal_fingerprint: preview.proposalFingerprint,
+        p_planner_snapshot_fingerprint: preview.snapshotFingerprint,
+        p_planner_version: preview.plannerVersion,
+        p_component_fingerprints: componentFingerprints,
+        p_apply_plan: applyPlan,
+        p_preview: preview,
+        p_idempotency_key: `planner-v2-preview:${preview.proposalFingerprint}`,
+      });
+      if (stored.error) throw stored.error;
+      return json({
+        preview,
+        confirmation: stored.data,
+        applyEnabled: false,
+        productionMutationAuthority: false,
+      }, 201);
+    }
+    if (request.method === "POST" && route === "/planner-v2/confirm") {
+      if (!plannerV2ProposalEnabled) throw new Error("PLANNER_V2_PROPOSAL_LIFECYCLE_DISABLED");
+      const body = await request.json().catch(() => null);
+      const exact = {
+        recordId: typeof body?.recordId === "string" ? body.recordId : "",
+        proposalId: typeof body?.proposalId === "string" ? body.proposalId : "",
+        proposalFingerprint: typeof body?.proposalFingerprint === "string" ? body.proposalFingerprint : "",
+        snapshotFingerprint: typeof body?.snapshotFingerprint === "string" ? body.snapshotFingerprint : "",
+        plannerVersion: typeof body?.plannerVersion === "string" ? body.plannerVersion : "",
+      };
+      if (!/^[0-9a-f-]{36}$/i.test(exact.recordId) || Object.values(exact).some((value) => !value)) {
+        throw new Error("PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH");
+      }
+      const confirmed = await client.rpc("confirm_planner_v2_proposal_candidate", {
+        p_record_id: exact.recordId,
+        p_planner_proposal_id: exact.proposalId,
+        p_proposal_fingerprint: exact.proposalFingerprint,
+        p_planner_snapshot_fingerprint: exact.snapshotFingerprint,
+        p_planner_version: exact.plannerVersion,
+      });
+      if (confirmed.error) throw confirmed.error;
+      return json({
+        confirmation: confirmed.data,
+        applyEnabled: false,
+        productionMutationAuthority: false,
+      });
+    }
 
     if (request.method === "GET" && route === "/p48/roadmap") {
       return json(await loadP48Roadmap(client, userId, profile));

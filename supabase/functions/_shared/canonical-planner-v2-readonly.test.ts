@@ -97,6 +97,8 @@ describe("W5 canonical Planner V2 strictly read-only adapter", () => {
           ...base.adaptive.tasks,
           { id: "pinned", status: "planned", planned_date: "2026-08-28", estimated_minutes: 10, source_reason: "baseline_import", task_progress: [] },
           { id: "manual", status: "planned", planned_date: "2026-08-29", estimated_minutes: 15, source_reason: "manual", task_progress: [] },
+          { id: "carryover", status: "planned", planned_date: "2026-08-29", estimated_minutes: 25, source_reason: "carryover", task_progress: [] },
+          { id: "generated", status: "planned", planned_date: "2026-08-30", estimated_minutes: 25, source_reason: "dynamic_replan", task_progress: [] },
           { id: "replaceable", status: "planned", planned_date: "2026-08-30", estimated_minutes: 30, source_reason: "baseline_import", task_progress: [] },
         ],
       },
@@ -106,6 +108,8 @@ describe("W5 canonical Planner V2 strictly read-only adapter", () => {
       ["today-task", "protected_current_day", true],
       ["pinned", "locked", true],
       ["manual", "manual", true],
+      ["carryover", "legacy", false],
+      ["generated", "future_replaceable_generated", false],
       ["replaceable", "legacy", false],
     ]);
   });

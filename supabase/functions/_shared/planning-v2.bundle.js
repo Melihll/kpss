@@ -2158,9 +2158,11 @@ async function buildCanonicalPlannerV2Proposal(input) {
       }
       const item = Object.freeze({
         demandId: demand.demandId,
+        title: demand.title,
         canonicalWorkloadIdentity: demand.canonicalWorkloadIdentity,
         materialViewId: demand.workload.materialViewId,
         resourceId: demand.workload.resourceId,
+        subjectId: demand.workload.subjectId,
         curriculumNodeId: demand.curriculumNodeId,
         materialType: demand.workload.materialType,
         plannedDate: day.input.date,
@@ -2169,7 +2171,12 @@ async function buildCanonicalPlannerV2Proposal(input) {
         workloadConfidence: demand.workload.workloadConfidence,
         boundary: demand.boundary,
         learningStage: demand.learningStage,
-        reasonCodes: Object.freeze(["canonical_workload_eligible", "whole_boundary_fit", demand.learningStageReason]),
+        reasonCodes: Object.freeze([
+          "canonical_workload_eligible",
+          "whole_boundary_fit",
+          ...demand.alreadyStarted ? ["continuation_preference"] : [],
+          demand.learningStageReason
+        ]),
         sourceProvenance: Object.freeze([...demand.sourceProvenance].sort())
       });
       day.scheduled.push(item);
@@ -2361,15 +2368,277 @@ function compareCanonicalPlannerV2Shadow(input, proposal, legacyItems) {
     })
   });
 }
+
+// packages/domain/src/planning-v2/proposal-lifecycle.ts
+var PLANNER_V2_LIFECYCLE_VERSION = "planner-v2-lifecycle-v1";
+var LIFECYCLE_TRANSITIONS = Object.freeze({
+  generated: Object.freeze({ preview: "previewed", reject: "rejected", expire: "expired" }),
+  previewed: Object.freeze({ confirm: "confirmed", mark_stale: "stale", reject: "rejected", expire: "expired" }),
+  confirmed: Object.freeze({ apply: "applied", mark_stale: "stale", reject: "rejected", expire: "expired" }),
+  applied: Object.freeze({ apply: "applied" }),
+  stale: Object.freeze({}),
+  rejected: Object.freeze({}),
+  expired: Object.freeze({})
+});
+function transitionPlannerV2ProposalState(current, event) {
+  const next = LIFECYCLE_TRANSITIONS[current][event];
+  if (!next) throw new Error(`PLANNER_V2_INVALID_LIFECYCLE_TRANSITION:${current}:${event}`);
+  return next;
+}
+async function sha2562(value) {
+  const bytes = new TextEncoder().encode(stableCanonicalPlannerJson(value));
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+function sorted(values, key) {
+  return [...values].sort((left, right) => key(left).localeCompare(key(right)));
+}
+async function fingerprintPlannerV2SnapshotComponents(input, snapshotFingerprint) {
+  const tasks = sorted(input.commitments, (item) => item.commitmentId).map((item) => ({
+    id: item.commitmentId,
+    date: item.date,
+    minutes: item.minutes,
+    classification: item.classification,
+    canonicalWorkloadIdentity: item.canonicalWorkloadIdentity,
+    source: item.source
+  }));
+  const workload = sorted(input.demands, (item) => item.demandId).map((item) => ({
+    demandId: item.demandId,
+    canonicalWorkloadIdentity: item.canonicalWorkloadIdentity,
+    workload: item.workload,
+    boundary: item.boundary,
+    learningStage: item.learningStage,
+    learningStageAllowed: item.learningStageAllowed,
+    userPriority: item.userPriority,
+    curriculumOrder: item.curriculumOrder,
+    earliestDate: item.earliestDate,
+    latestDate: item.latestDate,
+    prerequisites: [...item.prerequisiteWorkloadIdentities].sort()
+  }));
+  return Object.freeze({
+    snapshotFingerprint,
+    capacityFingerprint: await sha2562(sorted(input.dailyCapacities, (item) => item.date)),
+    progressFingerprint: await sha2562({
+      progressVersion: input.progressVersion,
+      completed: [...input.completedWorkloadIdentities].sort()
+    }),
+    taskStateFingerprint: await sha2562(tasks),
+    workloadFingerprint: await sha2562(workload),
+    commitmentFingerprint: await sha2562(tasks.filter((item) => ["in_progress", "protected_current_day", "locked", "manual"].includes(item.classification))),
+    policyFingerprint: await sha2562({
+      userId: input.userId,
+      examProfileId: input.examProfileId,
+      currentDate: input.currentDate,
+      horizonStart: input.horizonStart,
+      horizonEnd: input.horizonEnd,
+      policy: input.policy
+    })
+  });
+}
+function replacementScope(proposal, tasks) {
+  const retained = [];
+  const replaceable = [];
+  const outside = [];
+  for (const task of sorted(tasks, (item) => item.taskId)) {
+    if (!task.plannedDate || task.plannedDate < proposal.horizonStart || task.plannedDate > proposal.horizonEnd) {
+      outside.push(task.taskId);
+    } else if (task.plannedDate > proposal.currentDate && task.classification === "future_replaceable_generated") {
+      replaceable.push(task.taskId);
+    } else {
+      retained.push(task.taskId);
+    }
+  }
+  return Object.freeze({
+    retainedTaskIds: Object.freeze(retained),
+    replaceableTaskIds: Object.freeze(replaceable),
+    outsideScopeTaskIds: Object.freeze(outside)
+  });
+}
+function buildPlannerV2Preview(proposal, tasks) {
+  const scope = replacementScope(proposal, tasks);
+  const facts = [];
+  for (const day of proposal.dailyPlans) {
+    facts.push(Object.freeze({ kind: "day_capacity", date: day.date, availableMinutes: day.availableMinutes }));
+    if (day.date === proposal.currentDate) {
+      facts.push(Object.freeze({
+        kind: "current_day_protected",
+        date: day.date,
+        commitmentIds: Object.freeze([...day.protectedCommitmentIds])
+      }));
+    }
+    if (day.unusedMinutes > 0 && proposal.unmetEligibleDemand.length > 0) {
+      facts.push(Object.freeze({
+        kind: "unused_capacity",
+        date: day.date,
+        unusedMinutes: day.unusedMinutes,
+        reason: "next_indivisible_workload_does_not_fit"
+      }));
+    }
+  }
+  for (const item of proposal.scheduledItems.filter((candidate) => candidate.reasonCodes.includes("continuation_preference"))) {
+    facts.push(Object.freeze({ kind: "continuation_selected", canonicalWorkloadIdentity: item.canonicalWorkloadIdentity }));
+  }
+  for (const item of proposal.blockedDemands) {
+    facts.push(Object.freeze({ kind: "blocked_workload", canonicalWorkloadIdentity: item.canonicalWorkloadIdentity, reason: item.blockedReason }));
+  }
+  facts.push(Object.freeze({
+    kind: "replacement_scope",
+    replaceableTaskIds: scope.replaceableTaskIds,
+    retainedTaskIds: scope.retainedTaskIds
+  }));
+  return Object.freeze({
+    lifecycleVersion: PLANNER_V2_LIFECYCLE_VERSION,
+    state: "previewed",
+    proposalId: proposal.proposalId,
+    proposalFingerprint: proposal.proposalFingerprint,
+    snapshotFingerprint: proposal.snapshotFingerprint,
+    plannerVersion: proposal.plannerVersion,
+    userId: proposal.userId,
+    examProfileId: proposal.examProfileId,
+    horizon: Object.freeze({ start: proposal.horizonStart, end: proposal.horizonEnd }),
+    summary: Object.freeze({
+      totalAvailableMinutes: proposal.capacity.availableMinutes,
+      protectedMinutes: proposal.capacity.protectedCommitmentMinutes,
+      newlyPlannedMinutes: proposal.capacity.plannedMinutes,
+      unusedMinutes: proposal.capacity.unusedMinutes,
+      unmetEligibleMinutes: proposal.capacity.unmetEligibleMinutes,
+      blockedDemandCount: proposal.blockedDemands.length
+    }),
+    days: Object.freeze(proposal.dailyPlans.map((day) => Object.freeze({
+      date: day.date,
+      configuredCapacityMinutes: day.configuredCapacityMinutes,
+      availableMinutes: day.availableMinutes,
+      protectedMinutes: day.protectedCommitmentMinutes,
+      proposedMinutes: day.plannedMinutes,
+      unusedMinutes: day.unusedMinutes,
+      warnings: Object.freeze([
+        ...day.overcommittedMinutes > 0 ? ["PROTECTED_OVERCOMMIT"] : [],
+        ...day.date === proposal.currentDate ? ["CURRENT_DAY_PROTECTED"] : []
+      ]),
+      items: day.scheduledItems
+    }))),
+    blocked: proposal.blockedDemands,
+    differences: Object.freeze({
+      createCanonicalWorkloadIdentities: Object.freeze(proposal.scheduledItems.map((item) => item.canonicalWorkloadIdentity)),
+      ...scope
+    }),
+    explanationFacts: Object.freeze(facts),
+    explicitConfirmationRequired: true,
+    applyAvailable: false
+  });
+}
+function confirmPlannerV2Preview(input) {
+  const expected = input.preview;
+  if (input.userId !== expected.userId || input.examProfileId !== expected.examProfileId) throw new Error("PLANNER_V2_CONFIRMATION_OWNERSHIP_MISMATCH");
+  if (input.proposalId !== expected.proposalId || input.proposalFingerprint !== expected.proposalFingerprint || input.snapshotFingerprint !== expected.snapshotFingerprint || input.plannerVersion !== expected.plannerVersion) throw new Error("PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH");
+  if (Number.isNaN(new Date(input.confirmedAt).getTime())) throw new Error("PLANNER_V2_CONFIRMATION_TIMESTAMP_INVALID");
+  return Object.freeze({
+    lifecycleVersion: PLANNER_V2_LIFECYCLE_VERSION,
+    state: "confirmed",
+    userId: input.userId,
+    examProfileId: input.examProfileId,
+    proposalId: input.proposalId,
+    proposalFingerprint: input.proposalFingerprint,
+    snapshotFingerprint: input.snapshotFingerprint,
+    plannerVersion: input.plannerVersion,
+    confirmedAt: input.confirmedAt
+  });
+}
+function validatePlannerV2Freshness(expected, current) {
+  const reasons = [];
+  if (expected.capacityFingerprint !== current.capacityFingerprint) reasons.push("capacity_changed");
+  if (expected.progressFingerprint !== current.progressFingerprint) reasons.push("progress_changed");
+  if (expected.taskStateFingerprint !== current.taskStateFingerprint) reasons.push("task_state_changed");
+  if (expected.workloadFingerprint !== current.workloadFingerprint) reasons.push("workload_changed");
+  if (expected.commitmentFingerprint !== current.commitmentFingerprint) reasons.push("commitment_changed");
+  if (expected.policyFingerprint !== current.policyFingerprint) reasons.push("policy_changed");
+  if (!reasons.length && expected.snapshotFingerprint !== current.snapshotFingerprint) reasons.push("snapshot_changed");
+  return Object.freeze({ fresh: reasons.length === 0, state: reasons.length ? "stale" : "confirmed", reasons: Object.freeze(reasons) });
+}
+function taskType(item) {
+  if (item.boundary.kind === "physical_pages") return "solve_resource_units";
+  if (item.learningStage === "review" || item.learningStage === "reinforcement") return "review_topic";
+  if (item.learningStage === "learn") return "learn_topic";
+  return "custom";
+}
+function workMode(item) {
+  if (item.boundary.kind === "full_video") return "video";
+  if (item.materialType === "test" || item.materialType === "question_set") return "questions";
+  if (item.materialType === "mock") return "mock";
+  if (item.learningStage === "review" || item.learningStage === "reinforcement") return "review";
+  if (item.boundary.kind === "physical_pages") return "book";
+  return "other";
+}
+function buildPlannerV2ApplyPlanCandidate(input) {
+  const { proposal } = input;
+  const scope = replacementScope(proposal, input.tasks);
+  const identities = /* @__PURE__ */ new Set();
+  const creates = proposal.scheduledItems.map((item) => {
+    if (item.workloadAuthority === "unknown") throw new Error("PLANNER_V2_UNKNOWN_WORKLOAD_IN_APPLY_PLAN");
+    if (identities.has(item.canonicalWorkloadIdentity)) throw new Error("PLANNER_V2_DUPLICATE_WORKLOAD_IN_APPLY_PLAN");
+    if (!item.subjectId) throw new Error("PLANNER_V2_SUBJECT_ID_REQUIRED");
+    if (item.plannedDate <= proposal.currentDate) throw new Error("PLANNER_V2_CURRENT_DAY_OR_PAST_CREATE_BLOCKED");
+    if (item.plannedDate < proposal.horizonStart || item.plannedDate > proposal.horizonEnd) {
+      throw new Error("PLANNER_V2_CREATE_OUTSIDE_HORIZON");
+    }
+    identities.add(item.canonicalWorkloadIdentity);
+    return Object.freeze({
+      canonicalWorkloadIdentity: item.canonicalWorkloadIdentity,
+      materialViewId: item.materialViewId,
+      subjectId: item.subjectId,
+      resourceId: item.resourceId,
+      curriculumNodeId: item.curriculumNodeId,
+      taskType: taskType(item),
+      workMode: workMode(item),
+      title: item.title,
+      plannedDate: item.plannedDate,
+      estimatedMinutes: item.estimatedMinutes,
+      workloadAuthority: item.workloadAuthority,
+      workloadConfidence: item.workloadConfidence,
+      boundary: item.boundary,
+      dedupeKey: `planner-v2:${proposal.proposalFingerprint}:${item.canonicalWorkloadIdentity}`
+    });
+  });
+  return Object.freeze({
+    lifecycleVersion: PLANNER_V2_LIFECYCLE_VERSION,
+    proposalId: proposal.proposalId,
+    proposalFingerprint: proposal.proposalFingerprint,
+    snapshotFingerprint: proposal.snapshotFingerprint,
+    plannerVersion: proposal.plannerVersion,
+    userId: proposal.userId,
+    examProfileId: proposal.examProfileId,
+    horizonStart: proposal.horizonStart,
+    horizonEnd: proposal.horizonEnd,
+    ...scope,
+    creates: Object.freeze(creates),
+    expectedNewMinutes: creates.reduce((sum2, item) => sum2 + item.estimatedMinutes, 0),
+    atomicRequired: true,
+    applyCandidateOnly: true
+  });
+}
+function buildPlannerV2ApplyPlan(input) {
+  const { proposal, confirmation } = input;
+  if (confirmation.state !== "confirmed") throw new Error("PLANNER_V2_EXPLICIT_CONFIRMATION_REQUIRED");
+  if (confirmation.userId !== proposal.userId || confirmation.examProfileId !== proposal.examProfileId || confirmation.proposalId !== proposal.proposalId || confirmation.proposalFingerprint !== proposal.proposalFingerprint || confirmation.snapshotFingerprint !== proposal.snapshotFingerprint || confirmation.plannerVersion !== proposal.plannerVersion) throw new Error("PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH");
+  return buildPlannerV2ApplyPlanCandidate({ proposal, tasks: input.tasks });
+}
 export {
   CANONICAL_PLANNER_V2_VERSION,
+  PLANNER_V2_LIFECYCLE_VERSION,
   assertCanonicalPlannerV2Proposal,
   buildCanonicalPlannerV2Proposal,
+  buildPlannerV2ApplyPlan,
+  buildPlannerV2ApplyPlanCandidate,
+  buildPlannerV2Preview,
   buildPlanningSnapshotFromDbBundleV1,
   compareCanonicalPlannerV2Shadow,
+  confirmPlannerV2Preview,
   decidePlanningActionV2,
   evaluatePlanningV2ShadowDecision,
+  fingerprintPlannerV2SnapshotComponents,
   stableCanonicalPlannerJson,
   toPlanningV2ProposalRow,
-  toPlanningV2SnapshotRow
+  toPlanningV2SnapshotRow,
+  transitionPlannerV2ProposalState,
+  validatePlannerV2Freshness
 };
