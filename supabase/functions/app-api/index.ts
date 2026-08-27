@@ -30,7 +30,7 @@ import {
   PhysicalStudyLifecycleService,
 } from "../_shared/physical-study-lifecycle.ts";
 import { runCanonicalPlannerV2ReadOnlyShadow } from "../_shared/canonical-planner-v2-readonly.ts";
-import { isPlannerV2ProposalLifecycleEnabled } from "../_shared/planner-v2-proposal-capability.ts";
+import { plannerV2ProposalCapabilities } from "../_shared/planner-v2-proposal-capability.ts";
 import {
   buildPlannerV2ApplyPlanCandidate,
   buildPlannerV2Preview,
@@ -72,7 +72,8 @@ function json(body: unknown, status = 200) {
 const domainErrorStatuses: Readonly<Record<string, number>> = {
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
-  PLANNER_V2_PROPOSAL_LIFECYCLE_DISABLED: 403,
+  PLANNER_V2_PREVIEW_DISABLED: 403,
+  PLANNER_V2_CONFIRM_DISABLED: 403,
   PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH: 409,
   PLANNER_V2_PROPOSAL_NOT_FOUND: 404,
   NO_ACTIVE_EXAM_PROFILE: 400,
@@ -793,22 +794,19 @@ Deno.serve(async (request) => {
     const route = pathname.includes("/app-api") ? pathname.split("/app-api")[1] || "/" : pathname;
     const today = istanbulDate();
     const weekStart = mondayOf(today);
-    const plannerV2ProposalEnabled = isPlannerV2ProposalLifecycleEnabled(
-      Deno.env.get("PLANNER_V2_PROPOSAL_LIFECYCLE_PROFILE_IDS"),
+    const plannerV2Capabilities = plannerV2ProposalCapabilities(
+      Deno.env.get("PLANNER_V2_PREVIEW_V1_PROFILE_IDS"),
+      Deno.env.get("PLANNER_V2_CONFIRM_V1_PROFILE_IDS"),
       profile.id,
     );
+    const plannerV2PreviewEnabled = plannerV2Capabilities.previewEnabled;
+    const plannerV2ConfirmationEnabled = plannerV2Capabilities.confirmationEnabled;
 
     if (request.method === "GET" && route === "/planner-v2/capability") {
-      return json({
-        enabled: plannerV2ProposalEnabled,
-        previewEnabled: plannerV2ProposalEnabled,
-        confirmationEnabled: plannerV2ProposalEnabled,
-        applyEnabled: false,
-        productionMutationAuthority: false,
-      });
+      return json(plannerV2Capabilities);
     }
     if (request.method === "POST" && route === "/planner-v2/preview") {
-      if (!plannerV2ProposalEnabled) throw new Error("PLANNER_V2_PROPOSAL_LIFECYCLE_DISABLED");
+      if (!plannerV2PreviewEnabled) throw new Error("PLANNER_V2_PREVIEW_DISABLED");
       const shadow: any = await runCanonicalPlannerV2ReadOnlyShadow({
         client,
         userId,
@@ -848,7 +846,7 @@ Deno.serve(async (request) => {
       }, 201);
     }
     if (request.method === "POST" && route === "/planner-v2/confirm") {
-      if (!plannerV2ProposalEnabled) throw new Error("PLANNER_V2_PROPOSAL_LIFECYCLE_DISABLED");
+      if (!plannerV2ConfirmationEnabled) throw new Error("PLANNER_V2_CONFIRM_DISABLED");
       const body = await request.json().catch(() => null);
       const exact = {
         recordId: typeof body?.recordId === "string" ? body.recordId : "",

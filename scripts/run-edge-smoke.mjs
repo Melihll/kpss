@@ -86,8 +86,21 @@ const disabledPreviewResponse = await fetch(`${base}/planner-v2/preview`, {
   },
 });
 const disabledPreviewPayload = await disabledPreviewResponse.json();
-if (disabledPreviewResponse.status !== 403 || disabledPreviewPayload.error?.code !== "PLANNER_V2_PROPOSAL_LIFECYCLE_DISABLED") {
+if (disabledPreviewResponse.status !== 403 || disabledPreviewPayload.error?.code !== "PLANNER_V2_PREVIEW_DISABLED") {
   throw new Error(`Disabled Planner V2 preview did not fail closed: ${disabledPreviewResponse.status} ${JSON.stringify(disabledPreviewPayload)}`);
+}
+const disabledConfirmResponse = await fetch(`${base}/planner-v2/confirm`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${signup.data.session.access_token}`,
+    apikey: anonKey,
+    "Content-Type": "application/json",
+  },
+  body: "{}",
+});
+const disabledConfirmPayload = await disabledConfirmResponse.json();
+if (disabledConfirmResponse.status !== 403 || disabledConfirmPayload.error?.code !== "PLANNER_V2_CONFIRM_DISABLED") {
+  throw new Error(`Disabled Planner V2 confirm did not fail closed: ${disabledConfirmResponse.status} ${JSON.stringify(disabledConfirmPayload)}`);
 }
 const tasksAfterDisabledPreview = await client.from("tasks").select("id", { count: "exact", head: true }).eq("weekly_plan_id", built.plan.id);
 if (tasksAfterDisabledPreview.count !== tasksBeforeDisabledPreview.count) throw new Error("Disabled Planner V2 preview mutated tasks");
@@ -103,6 +116,7 @@ console.log(JSON.stringify({
   generatedTasks: built.tasks.length,
   plannerV2Capability,
   disabledPlannerV2PreviewMutationCount: 0,
+  disabledPlannerV2ConfirmationMutationCount: 0,
   recommendation: { taskId: next.task.id, reason: next.reason, remainingMinutes: next.remainingMinutes },
   startedStatus: started.status,
 }, null, 2));

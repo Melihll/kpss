@@ -68,11 +68,22 @@ Material completion history remains separate from pedagogical state. Previously 
 
 ## NEXT EXACT STEP
 
-Prepare a separately approved Gate-OFF app-api/web release for Planner V2 preview and confirmation. The W7 schema/RPC capability is deployed, but proposal generation, confirmation, Apply, the canonical planner, and the W6 lifecycle runtime remain OFF. Apply has no production HTTP route and must remain unavailable until a later independently reviewed activation gate.
+Prepare a separately approved Gate-OFF app-api/web release for the W8A split preview/confirm candidate. Deploy with `PLANNER_V2_PREVIEW_V1_PROFILE_IDS` and `PLANNER_V2_CONFIRM_V1_PROFILE_IDS` both absent, then verify both gates OFF before any distinct pilot activation approval. The W7 schema/RPC capability is deployed, but proposal generation, confirmation, Apply, and the canonical planner remain OFF. Apply has no production HTTP route and must remain unavailable until a later independently reviewed activation gate.
 
 In parallel, continue passive observation of the next natural W2-eligible physical study lifecycle for the exact-profile pilot. Inspect it read-only if it occurs; do not manufacture activity, widen the allowlist, or alter accepted evidence.
 
 Telegram requires a separately reviewed service-role W2 wrapper plus authoritative page-boundary UX before it can enter an activation proposal. Do not activate canonical workload planning while production physical pace evidence remains insufficient.
+
+## 2026-08-27 W8A exact-profile preview-only pilot preflight
+
+- The W7 single lifecycle allowlist coupled preview and confirmation, so it was not activated. W8A implements independent `PLANNER_V2_PREVIEW_V1_PROFILE_IDS` and `PLANNER_V2_CONFIRM_V1_PROFILE_IDS` gates; confirmation additionally requires preview eligibility for the same profile.
+- Missing, empty, malformed, or wildcard settings fail closed. UUID lists are whitespace-safe and duplicate-safe. The Week page shows preview content for a preview-only profile but hides confirmation controls and never implies Apply.
+- Preview authority is limited to an inert short-lived `previewed` lifecycle row. It cannot mutate tasks, plans, resource links, progress, sessions, capacity, or canonical tasks. No `/planner-v2/apply` route, Apply UI, or client/service Apply call exists.
+- Exact profile `73f9b34c-da73-43d9-a05c-2026409cf290` remains active, ownership-consistent, non-test, and outside an active study/planning transition: 0 active sessions, 0 in-progress tasks, 57 tasks (4 current-day / 15 future), 2 plans, 27 active resources, 9 subjects, and 0 lifecycle proposals.
+- Fresh production read-only shadow: 76 exact eligible YouTube items / 3,323 minutes, 265 unknown blocked items, 15 available minutes after protected commitments, 0 scheduled items, 0 unknown/completed/duplicate items scheduled, current day protected, Apply false, and identical before/after counters.
+- Verification is green: split focused 32/32; W5/W6/W7/W8A focused 211/211; planning/canonical/P48 154/154; integration 130/130; full non-integration 909/909; typecheck, production web build, app-api bundles, safety checks, normal HTTP smoke, and dedicated preview-only matrix PASS.
+- Production remains app-api v32 / Pages `f7c4dd8e-e3a4-4a19-8b47-cbcd8016abae` / Telegram v34 with zero pending migrations. Both new gates, canonical planner, and evidence shadow are OFF; the physical-capture pilot is unchanged. W8A caused zero production mutation and performed no deployment or secret change.
+- Full preflight and the unexecuted activation/rollback commands are recorded in [W8A Planner V2 Preview-Only Pilot Preflight](releases/2026-08-27_W8A_PREVIEW_ONLY_PILOT_PREFLIGHT.md).
 
 ## 2026-08-26 Planner V2 canonical W5 engineering
 

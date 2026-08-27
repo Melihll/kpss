@@ -9,20 +9,39 @@ const migration = readFileSync(join(root, "supabase/migrations/20260826120000_pl
 const web = readFileSync(join(root, "apps/web/src/components/PlannerV2PreviewPanel.tsx"), "utf8");
 
 describe("W6 production-inactive proposal runtime safety", () => {
-  it("keeps the profile capability default-OFF and refuses wildcard activation", () => {
-    expect(capability).toContain("if (!configuredProfileIds?.trim() || !examProfileId) return false");
-    expect(capability).toContain('value !== "*"');
+  it("keeps independent preview and confirmation gates default-OFF and refuses wildcard or malformed activation", () => {
+    expect(capability).toContain('PLANNER_V2_PREVIEW_V1_PROFILE_IDS');
+    expect(capability).toContain('PLANNER_V2_CONFIRM_V1_PROFILE_IDS');
+    expect(capability).toContain('value === "*"');
+    expect(capability).toContain("PROFILE_UUID");
+    expect(api).not.toContain("PLANNER_V2_PROPOSAL_LIFECYCLE_PROFILE_IDS");
   });
 
-  it("checks the gate before generation or proposal persistence", () => {
+  it("checks the preview gate before generation or proposal persistence", () => {
     const route = api.indexOf('route === "/planner-v2/preview"');
-    const gate = api.indexOf("if (!plannerV2ProposalEnabled)", route);
+    const gate = api.indexOf("if (!plannerV2PreviewEnabled)", route);
     const generation = api.indexOf("runCanonicalPlannerV2ReadOnlyShadow", gate);
     const persistence = api.indexOf('serviceClient.rpc("create_planner_v2_proposal_candidate"', generation);
     expect(route).toBeGreaterThan(0);
     expect(gate).toBeGreaterThan(route);
     expect(generation).toBeGreaterThan(gate);
     expect(persistence).toBeGreaterThan(generation);
+  });
+
+  it("requires both preview and confirmation authority before confirmation", () => {
+    const route = api.indexOf('route === "/planner-v2/confirm"');
+    const gate = api.indexOf("if (!plannerV2ConfirmationEnabled)", route);
+    const confirmation = api.indexOf('client.rpc("confirm_planner_v2_proposal_candidate"', gate);
+    expect(route).toBeGreaterThan(0);
+    expect(gate).toBeGreaterThan(route);
+    expect(confirmation).toBeGreaterThan(gate);
+    expect(capability).toContain("previewEnabled &&");
+  });
+
+  it("hides confirmation UI for preview-only profiles", () => {
+    expect(web).toContain("capability.confirmationEnabled ?");
+    expect(web).toContain("Pilot önizleme modu");
+    expect(web).not.toContain('disabled={!capability.confirmationEnabled');
   });
 
   it("exposes no Planner V2 Apply HTTP route", () => {

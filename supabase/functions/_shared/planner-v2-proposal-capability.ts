@@ -1,13 +1,52 @@
-export const PLANNER_V2_PROPOSAL_CAPABILITY_ENV = "PLANNER_V2_PROPOSAL_LIFECYCLE_PROFILE_IDS" as const;
+export const PLANNER_V2_PREVIEW_CAPABILITY_ENV = "PLANNER_V2_PREVIEW_V1_PROFILE_IDS" as const;
+export const PLANNER_V2_CONFIRM_CAPABILITY_ENV = "PLANNER_V2_CONFIRM_V1_PROFILE_IDS" as const;
 
-export function isPlannerV2ProposalLifecycleEnabled(
+const PROFILE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function exactProfileAllowlist(
   configuredProfileIds: string | null | undefined,
+): ReadonlySet<string> | null {
+  if (!configuredProfileIds?.trim()) return null;
+  const values = configuredProfileIds
+    .split(",")
+    .map((value) => value.trim());
+  if (values.length === 0 || values.some((value) => !value || value === "*" || !PROFILE_UUID.test(value))) return null;
+  return new Set(values.map((value) => value.toLowerCase()));
+}
+
+export function isPlannerV2PreviewEnabled(
+  configuredPreviewProfileIds: string | null | undefined,
   examProfileId: string,
 ): boolean {
-  if (!configuredProfileIds?.trim() || !examProfileId) return false;
-  return configuredProfileIds
-    .split(",")
-    .map((value) => value.trim())
-    .filter((value) => value.length > 0 && value !== "*")
-    .includes(examProfileId);
+  const allowlist = exactProfileAllowlist(configuredPreviewProfileIds);
+  return Boolean(allowlist && PROFILE_UUID.test(examProfileId) && allowlist.has(examProfileId.toLowerCase()));
+}
+
+export function isPlannerV2ConfirmEnabled(
+  configuredPreviewProfileIds: string | null | undefined,
+  configuredConfirmProfileIds: string | null | undefined,
+  examProfileId: string,
+): boolean {
+  return isPlannerV2PreviewEnabled(configuredPreviewProfileIds, examProfileId)
+    && Boolean(exactProfileAllowlist(configuredConfirmProfileIds)?.has(examProfileId.toLowerCase()));
+}
+
+export function plannerV2ProposalCapabilities(
+  configuredPreviewProfileIds: string | null | undefined,
+  configuredConfirmProfileIds: string | null | undefined,
+  examProfileId: string,
+) {
+  const previewEnabled = isPlannerV2PreviewEnabled(configuredPreviewProfileIds, examProfileId);
+  const confirmationEnabled = previewEnabled && isPlannerV2ConfirmEnabled(
+    configuredPreviewProfileIds,
+    configuredConfirmProfileIds,
+    examProfileId,
+  );
+  return {
+    enabled: previewEnabled,
+    previewEnabled,
+    confirmationEnabled,
+    applyEnabled: false as const,
+    productionMutationAuthority: false as const,
+  };
 }

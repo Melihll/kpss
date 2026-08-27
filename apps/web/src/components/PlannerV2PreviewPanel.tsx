@@ -123,7 +123,9 @@ export function PlannerV2PreviewPanel() {
       <div>
         <span>Deneysel · işlem yapmaz</span>
         <h2 id="planner-v2-preview-title">Planner V2 haftalık öneri</h2>
-        <p>Önizleme ve açık onay yereldir. Uygulama yetkisi kapalıdır.</p>
+        <p>{capability.confirmationEnabled
+          ? "Önizleme ve açık onay yereldir. Uygulama yetkisi kapalıdır."
+          : "Pilot önizleme modu. Öneri yalnızca incelenebilir."}</p>
       </div>
       <button type="button" className="secondary-button" disabled={busy} onClick={() => void generate()}>
         {busy && !payload ? "Hazırlanıyor…" : payload ? "Yeniden oluştur" : "Planner V2 önizlemesi oluştur"}
@@ -155,14 +157,17 @@ export function PlannerV2PreviewPanel() {
       <details className="planner-v2-facts"><summary>Nedenler ve değişim kapsamı</summary>
         <ul>{payload.preview.explanationFacts.map((fact, index) => <li key={`${fact.kind}:${index}`}>{factLabel(fact)}</li>)}</ul>
       </details>
-      <div className="planner-v2-confirm">
-        <p>{confirmed
-          ? "Bu tam öneri kimliği onaylandı. Apply üretimde ve bu ekranda kapalıdır."
-          : `${payload.preview.differences.createCanonicalWorkloadIdentities.length} yeni iş · ${payload.preview.differences.replaceableTaskIds.length} değiştirilebilir gelecek görev`}</p>
-        <button type="button" disabled={busy || confirmed} onClick={() => void confirmExactProposal()}>
-          {confirmed ? "Tam öneri onaylandı" : "Bu tam öneriyi onayla"}
-        </button>
-      </div>
+      {capability.confirmationEnabled ? <div className="planner-v2-confirm">
+          <p>{confirmed
+            ? "Bu tam öneri kimliği onaylandı. Apply üretimde ve bu ekranda kapalıdır."
+            : `${payload.preview.differences.createCanonicalWorkloadIdentities.length} yeni iş · ${payload.preview.differences.replaceableTaskIds.length} değiştirilebilir gelecek görev`}</p>
+          <button type="button" disabled={busy || confirmed} onClick={() => void confirmExactProposal()}>
+            {confirmed ? "Tam öneri onaylandı" : "Bu tam öneriyi onayla"}
+          </button>
+        </div> : <div className="planner-v2-preview-only">
+          <p>{payload.preview.differences.createCanonicalWorkloadIdentities.length} yeni iş · {payload.preview.differences.replaceableTaskIds.length} değiştirilebilir gelecek görev</p>
+          <strong>Pilot önizleme modu · onay kapalı</strong>
+        </div>}
     </>}
   </section>;
 }
