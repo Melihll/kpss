@@ -102,6 +102,14 @@ Telegram requires a separately reviewed service-role W2 wrapper plus authoritati
 - Telegram is unchanged. Canonical planner, evidence-shadow, capture pilot, production secrets/migrations/data, Edge/web deployments, and live app-api remain unchanged.
 - Full contract: [Planner V2 Proposal Lifecycle](specs/PLANNER_V2_PROPOSAL_LIFECYCLE.md).
 
+### 2026-08-27 W7 release-gate privilege hardening
+
+- The first W7 production preflight correctly blocked release because authenticated users could execute the public-schema Apply RPC through PostgREST and existing authenticated task writes extended to the new canonical metadata columns.
+- The still-undeployed `20260826120000` migration was hardened in place so exactly one linked migration remains pending. Apply is `service_role`-only and requires explicit actor user/profile bindings; the database rechecks proposal, confirmation, profile, and plan ownership.
+- A database trigger denies authenticated/anon canonical metadata insertion or modification while leaving legacy owner task INSERT/UPDATE behavior intact. A completeness constraint binds `planner_v2` source semantics to nonblank canonical identity/material/version/fingerprint fields and valid exact physical/video boundaries.
+- A future app-api Apply route must verify the human JWT, derive actor user/profile server-side, and call the server-only RPC. No such route was added or enabled during W7-FIX.
+- Production migration, tasks/plans/proposals, gates, secrets, app-api v31, web, and Telegram remain unchanged. Repeat the complete W7 release preflight against the hardened commit before requesting schema-release approval.
+
 ## 2026-08-25 Canonical Workload Engine W4 closure
 
 - Status: `EVRE_4_ENGINEERING_COMPLETE_DATA_MATURITY_IN_PROGRESS`.

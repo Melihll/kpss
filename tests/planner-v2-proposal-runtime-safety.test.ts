@@ -31,6 +31,23 @@ describe("W6 production-inactive proposal runtime safety", () => {
     expect(web).toContain("Apply üretimde ve bu ekranda kapalıdır");
   });
 
+  it("makes the database Apply RPC server-only and actor-bound", () => {
+    expect(migration).toContain("p_actor_user_id uuid");
+    expect(migration).toContain("p_actor_exam_profile_id uuid");
+    expect(migration).toContain("coalesce(auth.role(),'') <> 'service_role'");
+    expect(migration).toContain("from public,anon,authenticated");
+    expect(migration).toMatch(/grant execute on function public\.apply_planner_v2_proposal_candidate[\s\S]*?to service_role;/);
+    expect(migration).not.toMatch(/grant execute on function public\.apply_planner_v2_proposal_candidate[\s\S]*?to authenticated;/);
+  });
+
+  it("protects canonical task metadata without revoking legacy task writes", () => {
+    expect(migration).toContain("tasks_planner_v2_metadata_complete");
+    expect(migration).toContain("guard_planner_v2_task_metadata");
+    expect(migration).toContain("tasks_guard_planner_v2_metadata");
+    expect(migration).toContain("PLANNER_V2_CANONICAL_METADATA_SERVER_ONLY");
+    expect(migration).not.toMatch(/revoke\s+(insert|update)[\s\S]*?on\s+public\.tasks/i);
+  });
+
   it("binds confirmation to every exact proposal identity field", () => {
     for (const field of ["recordId", "proposalId", "proposalFingerprint", "snapshotFingerprint", "plannerVersion"]) {
       expect(api).toContain(field);

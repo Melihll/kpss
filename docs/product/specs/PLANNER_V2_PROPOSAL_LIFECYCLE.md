@@ -18,6 +18,8 @@ The established `confirmed_action_proposals` framework already supplies server-c
 
 The existing schema was not sufficient for canonical Apply. Tasks had no persisted canonical workload/material boundary, planner version, or proposal fingerprint; duplicate canonical work could not be proven without title inference. Existing proposal rows did not bind the W5 proposal fingerprint, W5 snapshot fingerprint, planner version, or confirmation timestamp. The legacy/P48 replacement RPCs also cannot express the conservative W6 replacement scope. An additive local migration candidate was therefore required; unsafe client multi-write logic was not created.
 
+W7 release preflight identified two privilege-boundary gaps before production apply: authenticated users could execute the public-schema Apply RPC through PostgREST, and existing authenticated task INSERT/UPDATE grants would automatically cover the new canonical metadata columns. The still-undeployed candidate was hardened in place. Apply is now executable only by `service_role`, and a database trigger protects Planner V2 task metadata while preserving existing legacy task writes.
+
 ## State machine
 
 | State | Meaning | Allowed next transitions |
@@ -68,9 +70,17 @@ Physical tasks require a persisted `physical:<resource_unit_uuid>` identity and 
 
 ## Transaction and idempotency
 
-`apply_planner_v2_proposal_candidate()` is authenticated and executes in one PostgreSQL transaction. It locks the proposal and weekly plan, takes a per-user advisory transaction lock, verifies exact confirmation identity, plan generation, the authoritative database fingerprint, owner/profile, horizon, protected replacement scope, active resource/material boundary, canonical uniqueness, and final capacity. Only then does it cancel the explicitly named future Planner V2 tasks, insert exact canonical tasks/progress/unit links, reconcile plan minutes, advance generation, and store one result.
+`apply_planner_v2_proposal_candidate()` is server-only and executes in one PostgreSQL transaction. `public`, `anon`, and `authenticated` have no EXECUTE authority; only `service_role` may call it. A future app-api Apply route must first verify the human JWT, derive the actor user and active profile, and pass both bindings to the server-only RPC. The database independently verifies that the actor owns the proposal, confirmation, profile, and active plan before continuing.
+
+The transaction locks the proposal and weekly plan, takes a per-user advisory transaction lock, verifies exact confirmation identity, plan generation, the authoritative database fingerprint, owner/profile, horizon, protected replacement scope, active resource/material boundary, canonical uniqueness, and final capacity. Only then does it cancel the explicitly named future Planner V2 tasks, insert exact canonical tasks/progress/unit links, reconcile plan minutes, advance generation, and store one result.
 
 Any raised failure rolls back all replacement and insert operations. A repeated call after `applied` returns the stored result with `idempotent=true`; it cannot create tasks or consume capacity again. A unique partial index prevents the same active canonical workload from appearing twice in one plan.
+
+## Canonical task metadata privilege boundary
+
+Existing authenticated task INSERT/UPDATE and owner RLS remain unchanged for backward compatibility. `tasks_guard_planner_v2_metadata` rejects direct `authenticated` or `anon` attempts to create Planner V2 tasks, inject canonical metadata into legacy tasks, or change protected metadata on canonical tasks. Trusted `service_role` writes and the postgres-owned transactional Apply function are allowed through the guard.
+
+`tasks_planner_v2_metadata_complete` makes canonical metadata all-or-nothing: only `source_reason='planner_v2'` may carry it, every identity/version/fingerprint field must be nonblank, and the boundary must be a valid exact physical-page or full-video shape consistent with the canonical workload identity. Historical and new legacy tasks continue to require all canonical fields to be null; no backfill is required.
 
 ## App-api and web
 
@@ -85,11 +95,11 @@ Telegram remains unchanged and legacy/UI-blocked. No weaker service-role or gene
 
 ## Future release sequence
 
-1. Review and approve the additive schema/RPC candidate separately.
+1. Review and approve the hardened additive schema/RPC candidate separately.
 2. Apply the migration under schema-only production approval; keep capability OFF.
 3. Verify zero proposal/task mutation and production guards.
 4. Run a separately approved exact-profile preview/confirm pilot with Apply still unavailable.
 5. Review natural preview quality and stale behavior.
-6. Design a distinct Apply activation gate and rollback plan; deploy/activate only under explicit approval.
+6. Design a distinct app-api Apply activation gate and rollback plan. That future route must derive actor user/profile from the verified JWT and invoke the service-role-only RPC; deploy/activate only under explicit approval.
 
-Production canonical planning, evidence-shadow consumption, capture-pilot configuration, and Telegram remain outside W6 authority.
+The hardened migration remains undeployed. Production canonical planning, evidence-shadow consumption, capture-pilot configuration, and Telegram remain outside W6/W7-FIX authority.

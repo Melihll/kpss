@@ -38,13 +38,18 @@ async function register(api: SupabaseClient, label: string): Promise<User> {
 describe("W6 Planner V2 local transactional candidate", () => {
   const owner = client();
   const other = client();
+  const anonymous = client();
   const admin = client(serviceRoleKey);
   let ownerUser: User;
+  let otherUser: User;
   let profileId: string;
+  let otherProfileId: string;
   let planId: string;
   let resourceId: string;
   let videoId: string;
   let replaceableTaskId: string;
+  let legacyTaskId: string;
+  let successfulCandidate: Awaited<ReturnType<typeof createCandidate>> | null = null;
 
   function identity(suffix: string) {
     return {
@@ -142,24 +147,39 @@ describe("W6 Planner V2 local transactional candidate", () => {
     });
   }
 
-  async function apply(candidate: Awaited<ReturnType<typeof createCandidate>>) {
-    return owner.rpc("apply_planner_v2_proposal_candidate", {
+  function applyArgs(
+    candidate: Awaited<ReturnType<typeof createCandidate>>,
+    actorUserId = ownerUser.id,
+    actorExamProfileId = profileId,
+  ) {
+    return {
+      p_actor_user_id: actorUserId,
+      p_actor_exam_profile_id: actorExamProfileId,
       p_record_id: candidate.recordId,
       p_planner_proposal_id: candidate.plannerProposalId,
       p_proposal_fingerprint: candidate.proposalFingerprint,
       p_planner_snapshot_fingerprint: candidate.snapshotFingerprint,
       p_planner_version: PLANNER_VERSION,
-    });
+    };
+  }
+
+  async function apply(candidate: Awaited<ReturnType<typeof createCandidate>>) {
+    return admin.rpc("apply_planner_v2_proposal_candidate", applyArgs(candidate));
   }
 
   beforeAll(async () => {
     ownerUser = await register(owner, "owner");
-    await register(other, "other");
+    otherUser = await register(other, "other");
     const profile = await owner.from("exam_profiles").insert({
       user_id: ownerUser.id, exam_edition_id: EDITION, preparation_start_date: TODAY, status: "active",
     }).select("id").single();
     expect(profile.error).toBeNull();
     profileId = profile.data!.id;
+    const otherProfile = await other.from("exam_profiles").insert({
+      user_id: otherUser.id, exam_edition_id: EDITION, preparation_start_date: TODAY, status: "active",
+    }).select("id").single();
+    expect(otherProfile.error).toBeNull();
+    otherProfileId = otherProfile.data!.id;
     expect((await owner.from("user_subjects").insert({
       user_id: ownerUser.id, exam_profile_id: profileId, subject_id: SUBJECT, status: "active",
     })).error).toBeNull();
@@ -191,26 +211,148 @@ describe("W6 Planner V2 local transactional candidate", () => {
     }).select("id").single();
     expect(plan.error).toBeNull();
     planId = plan.data!.id;
-    const existing = await owner.from("tasks").insert([
-      {
-        user_id: ownerUser.id, exam_profile_id: profileId, weekly_plan_id: planId, subject_id: SUBJECT,
-        curriculum_node_id: TOPIC, resource_id: resourceId, task_type: "learn_topic", title: "Protected today",
-        planned_date: TODAY, estimated_minutes: 30, importance: "important", priority_score: 50,
-        status: "ready", source_reason: "manual", dedupe_key: `manual-${randomUUID()}`,
+    const protectedTask = await owner.from("tasks").insert({
+      user_id: ownerUser.id, exam_profile_id: profileId, weekly_plan_id: planId, subject_id: SUBJECT,
+      curriculum_node_id: TOPIC, resource_id: resourceId, task_type: "learn_topic", title: "Protected today",
+      planned_date: TODAY, estimated_minutes: 30, importance: "important", priority_score: 50,
+      status: "ready", source_reason: "manual", dedupe_key: `manual-${randomUUID()}`,
+    }).select("id").single();
+    expect(protectedTask.error).toBeNull();
+    legacyTaskId = protectedTask.data!.id;
+
+    const oldVideoId = randomUUID();
+    const replaceable = await admin.from("tasks").insert({
+      user_id: ownerUser.id, exam_profile_id: profileId, weekly_plan_id: planId, subject_id: SUBJECT,
+      curriculum_node_id: TOPIC, resource_id: resourceId, task_type: "custom", title: "Replaceable W6 generated",
+      planned_date: TARGET, estimated_minutes: 20, importance: "important", priority_score: 40,
+      status: "ready", source_reason: "planner_v2", dedupe_key: `old-${randomUUID()}`,
+      canonical_workload_identity: `youtube:${oldVideoId}`,
+      canonical_material_view_id: "youtube:old:mapping:old",
+      canonical_boundary: { kind: "full_video", videoId: oldVideoId, durationSeconds: 1200, watchedSeconds: 0 },
+      planner_version: PLANNER_VERSION, planner_proposal_fingerprint: "old-proposal",
+    }).select("id").single();
+    expect(replaceable.error).toBeNull();
+    replaceableTaskId = replaceable.data!.id;
+  });
+
+  it("denies direct Apply RPC execution to authenticated, anon, and public clients", async () => {
+    const candidate = await createCandidate({ suffix: "client-apply-denied", creates: [] });
+    const authenticated = await owner.rpc("apply_planner_v2_proposal_candidate", applyArgs(candidate));
+    expect(authenticated.error).not.toBeNull();
+    expect(`${authenticated.error?.code}:${authenticated.error?.message}`).toMatch(/42501|PGRST202|permission denied/i);
+
+    const anon = await anonymous.rpc("apply_planner_v2_proposal_candidate", applyArgs(candidate));
+    expect(anon.error).not.toBeNull();
+    expect(`${anon.error?.code}:${anon.error?.message}`).toMatch(/42501|PGRST202|permission denied/i);
+
+    const publicResponse = await fetch(`${url}/rest/v1/rpc/apply_planner_v2_proposal_candidate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(applyArgs(candidate)),
+    });
+    expect(publicResponse.status).toBe(401);
+
+    const session = await owner.auth.getSession();
+    expect(session.error).toBeNull();
+    const openApiResponse = await fetch(`${url}/rest/v1/`, {
+      headers: {
+        apikey: anonKey!,
+        Authorization: `Bearer ${session.data.session!.access_token}`,
+        Accept: "application/openapi+json",
       },
-      {
-        user_id: ownerUser.id, exam_profile_id: profileId, weekly_plan_id: planId, subject_id: SUBJECT,
-        curriculum_node_id: TOPIC, resource_id: resourceId, task_type: "custom", title: "Replaceable W6 generated",
-        planned_date: TARGET, estimated_minutes: 20, importance: "important", priority_score: 40,
-        status: "ready", source_reason: "planner_v2", dedupe_key: `old-${randomUUID()}`,
-        canonical_workload_identity: `youtube:old-${randomUUID()}`,
-        canonical_material_view_id: "youtube:old:mapping:old",
-        canonical_boundary: { kind: "full_video", videoId: randomUUID(), durationSeconds: 1200, watchedSeconds: 0 },
-        planner_version: PLANNER_VERSION, planner_proposal_fingerprint: "old-proposal",
-      },
-    ]).select("id,title");
-    expect(existing.error).toBeNull();
-    replaceableTaskId = existing.data!.find((row) => row.title.startsWith("Replaceable"))!.id;
+    });
+    expect(openApiResponse.ok).toBe(true);
+    const openApi = await openApiResponse.json() as { paths?: Record<string, unknown> };
+    expect(openApi.paths?.["/rpc/apply_planner_v2_proposal_candidate"]).toBeUndefined();
+  });
+
+  it("binds trusted Apply to the exact actor user and profile", async () => {
+    const candidate = await createCandidate({ suffix: "actor-binding", creates: [] });
+    expect((await confirm(candidate)).error).toBeNull();
+
+    const wrongActor = await admin.rpc(
+      "apply_planner_v2_proposal_candidate",
+      applyArgs(candidate, otherUser.id, otherProfileId),
+    );
+    expect(wrongActor.error?.message).toContain("PLANNER_V2_PROPOSAL_NOT_FOUND");
+
+    const wrongProfile = await admin.rpc(
+      "apply_planner_v2_proposal_candidate",
+      applyArgs(candidate, ownerUser.id, otherProfileId),
+    );
+    expect(wrongProfile.error?.message).toContain("PLANNER_V2_PROPOSAL_NOT_FOUND");
+
+    const exact = await apply(candidate);
+    expect(exact.error).toBeNull();
+    expect(exact.data).toMatchObject({ state: "applied", applied: true });
+  });
+
+  it("blocks authenticated canonical metadata insert and injection", async () => {
+    const directVideoId = randomUUID();
+    const directInsert = await owner.from("tasks").insert({
+      user_id: ownerUser.id, exam_profile_id: profileId, weekly_plan_id: planId, subject_id: SUBJECT,
+      curriculum_node_id: TOPIC, resource_id: resourceId, task_type: "custom", title: "Forbidden canonical insert",
+      planned_date: TARGET, estimated_minutes: 10, importance: "important", priority_score: 40,
+      status: "ready", source_reason: "planner_v2", dedupe_key: `forbidden-${randomUUID()}`,
+      canonical_workload_identity: `youtube:${directVideoId}`,
+      canonical_material_view_id: "youtube:forbidden:mapping:test",
+      canonical_boundary: { kind: "full_video", videoId: directVideoId, durationSeconds: 600, watchedSeconds: 0 },
+      planner_version: PLANNER_VERSION, planner_proposal_fingerprint: "forbidden-proposal",
+    });
+    expect(directInsert.error?.message).toContain("PLANNER_V2_CANONICAL_METADATA_SERVER_ONLY");
+
+    const injectedVideoId = randomUUID();
+    const injection = await owner.from("tasks").update({
+      source_reason: "planner_v2",
+      canonical_workload_identity: `youtube:${injectedVideoId}`,
+      canonical_material_view_id: "youtube:injected:mapping:test",
+      canonical_boundary: { kind: "full_video", videoId: injectedVideoId, durationSeconds: 600, watchedSeconds: 0 },
+      planner_version: PLANNER_VERSION,
+      planner_proposal_fingerprint: "injected-proposal",
+    }).eq("id", legacyTaskId);
+    expect(injection.error?.message).toContain("PLANNER_V2_CANONICAL_METADATA_SERVER_ONLY");
+  });
+
+  it("rejects malformed or partial canonical metadata even from a trusted writer", async () => {
+    const partial = await admin.from("tasks").insert({
+      user_id: ownerUser.id, exam_profile_id: profileId, weekly_plan_id: planId, subject_id: SUBJECT,
+      task_type: "custom", title: "Partial canonical metadata", planned_date: TARGET,
+      estimated_minutes: 10, importance: "important", priority_score: 40, status: "ready",
+      source_reason: "planner_v2", dedupe_key: `partial-${randomUUID()}`,
+      canonical_workload_identity: `youtube:${randomUUID()}`,
+    });
+    expect(partial.error?.message).toContain("tasks_canonical_metadata_consistent");
+
+    const identityVideoId = randomUUID();
+    const boundaryVideoId = randomUUID();
+    const mismatched = await admin.from("tasks").insert({
+      user_id: ownerUser.id, exam_profile_id: profileId, weekly_plan_id: planId, subject_id: SUBJECT,
+      task_type: "custom", title: "Mismatched canonical boundary", planned_date: TARGET,
+      estimated_minutes: 10, importance: "important", priority_score: 40, status: "ready",
+      source_reason: "planner_v2", dedupe_key: `mismatch-${randomUUID()}`,
+      canonical_workload_identity: `youtube:${identityVideoId}`,
+      canonical_material_view_id: "youtube:mismatch:mapping:test",
+      canonical_boundary: { kind: "full_video", videoId: boundaryVideoId, durationSeconds: 600, watchedSeconds: 0 },
+      planner_version: PLANNER_VERSION, planner_proposal_fingerprint: "mismatch-proposal",
+    });
+    expect(mismatched.error?.message).toContain("tasks_planner_v2_metadata_complete");
+  });
+
+  it("blocks canonical identity modification while preserving legacy task writes", async () => {
+    const canonicalMutation = await owner.from("tasks")
+      .update({ canonical_workload_identity: `youtube:${randomUUID()}` })
+      .eq("id", replaceableTaskId);
+    expect(canonicalMutation.error?.message).toContain("PLANNER_V2_CANONICAL_METADATA_SERVER_ONLY");
+
+    const legacyUpdate = await owner.from("tasks").update({ priority_score: 51 }).eq("id", legacyTaskId);
+    expect(legacyUpdate.error).toBeNull();
+    const legacyInsert = await owner.from("tasks").insert({
+      user_id: ownerUser.id, exam_profile_id: profileId, subject_id: SUBJECT,
+      task_type: "custom", title: "Legacy task remains writable", estimated_minutes: 5,
+      importance: "optional", priority_score: 10, status: "planned", source_reason: "manual",
+      dedupe_key: `legacy-${randomUUID()}`,
+    });
+    expect(legacyInsert.error).toBeNull();
   });
 
   it("preview persistence creates zero task mutations", async () => {
@@ -257,6 +399,7 @@ describe("W6 Planner V2 local transactional candidate", () => {
 
   it("atomically replaces only owned future generated work and creates canonical linkage", async () => {
     const candidate = await createCandidate({ suffix: "success", replaceableTaskIds: [replaceableTaskId] });
+    successfulCandidate = candidate;
     const confirmed = await confirm(candidate);
     expect(confirmed.error).toBeNull();
     expect(confirmed.data.state).toBe("confirmed");
@@ -275,15 +418,8 @@ describe("W6 Planner V2 local transactional candidate", () => {
   });
 
   it("returns the original result on duplicate Apply without duplicating tasks", async () => {
-    const row = await owner.from("confirmed_action_proposals")
-      .select("id,planner_proposal_id,proposal_fingerprint,planner_snapshot_fingerprint")
-      .eq("status", "applied").eq("action_kind", "planner_v2_week").single();
-    const result = await owner.rpc("apply_planner_v2_proposal_candidate", {
-      p_record_id: row.data!.id, p_planner_proposal_id: row.data!.planner_proposal_id,
-      p_proposal_fingerprint: row.data!.proposal_fingerprint,
-      p_planner_snapshot_fingerprint: row.data!.planner_snapshot_fingerprint,
-      p_planner_version: PLANNER_VERSION,
-    });
+    expect(successfulCandidate).not.toBeNull();
+    const result = await apply(successfulCandidate!);
     expect(result.error).toBeNull();
     expect(result.data.idempotent).toBe(true);
     const count = await owner.from("tasks").select("id", { count: "exact", head: true })
@@ -299,6 +435,19 @@ describe("W6 Planner V2 local transactional candidate", () => {
     const count = await owner.from("tasks").select("id", { count: "exact", head: true })
       .eq("canonical_workload_identity", `youtube:${videoId}`).neq("status", "cancelled");
     expect(count.count).toBe(1);
+  });
+
+  it("rejects unknown workload before canonical task persistence", async () => {
+    const unknownIdentity = `youtube:${randomUUID()}`;
+    const candidate = await createCandidate({
+      suffix: "unknown-workload",
+      creates: [createItem({ canonicalWorkloadIdentity: unknownIdentity, workloadAuthority: "unknown" })],
+    });
+    expect((await confirm(candidate)).error).toBeNull();
+    expect((await apply(candidate)).error?.message).toContain("PLANNER_V2_CREATE_UNSAFE");
+    const count = await owner.from("tasks").select("id", { count: "exact", head: true })
+      .eq("canonical_workload_identity", unknownIdentity);
+    expect(count.count).toBe(0);
   });
 
   it("marks a confirmed proposal stale after authoritative capacity changes and never applies it", async () => {

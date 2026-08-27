@@ -22,6 +22,53 @@ alter table public.tasks
       (canonical_workload_identity is not null and canonical_material_view_id is not null
         and canonical_boundary is not null and planner_version is not null
         and planner_proposal_fingerprint is not null)
+    ),
+  add constraint tasks_planner_v2_metadata_complete
+    check (
+      (
+        source_reason <> 'planner_v2'
+        and canonical_workload_identity is null
+        and canonical_material_view_id is null
+        and canonical_boundary is null
+        and planner_version is null
+        and planner_proposal_fingerprint is null
+      )
+      or
+      (
+        source_reason = 'planner_v2'
+        and btrim(canonical_workload_identity) <> ''
+        and btrim(canonical_material_view_id) <> ''
+        and jsonb_typeof(canonical_boundary) = 'object'
+        and btrim(planner_version) <> ''
+        and btrim(planner_proposal_fingerprint) <> ''
+        and (
+          (
+            canonical_boundary->>'kind' = 'physical_pages'
+            and canonical_workload_identity ~ '^physical:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+            and jsonb_typeof(canonical_boundary->'pageStart') = 'number'
+            and jsonb_typeof(canonical_boundary->'pageEnd') = 'number'
+            and jsonb_typeof(canonical_boundary->'remainingPageStart') = 'number'
+            and jsonb_typeof(canonical_boundary->'remainingPageEnd') = 'number'
+            and (canonical_boundary->>'pageStart')::integer >= 1
+            and (canonical_boundary->>'pageEnd')::integer >= (canonical_boundary->>'pageStart')::integer
+            and (canonical_boundary->>'remainingPageStart')::integer between
+              (canonical_boundary->>'pageStart')::integer and (canonical_boundary->>'pageEnd')::integer
+            and (canonical_boundary->>'remainingPageEnd')::integer between
+              (canonical_boundary->>'remainingPageStart')::integer and (canonical_boundary->>'pageEnd')::integer
+          )
+          or
+          (
+            canonical_boundary->>'kind' = 'full_video'
+            and canonical_boundary->>'videoId' ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+            and canonical_workload_identity = 'youtube:'||(canonical_boundary->>'videoId')
+            and jsonb_typeof(canonical_boundary->'durationSeconds') = 'number'
+            and jsonb_typeof(canonical_boundary->'watchedSeconds') = 'number'
+            and (canonical_boundary->>'durationSeconds')::integer > 0
+            and (canonical_boundary->>'watchedSeconds')::integer >= 0
+            and (canonical_boundary->>'watchedSeconds')::integer < (canonical_boundary->>'durationSeconds')::integer
+          )
+        )
+      )
     );
 
 create unique index tasks_active_canonical_workload_unique
@@ -36,6 +83,49 @@ alter table public.tasks add constraint tasks_source_reason_valid check (
     'revision_due','dynamic_replan','baseline_import','planner_v2'
   )
 );
+
+create or replace function public.guard_planner_v2_task_metadata()
+returns trigger
+language plpgsql
+security invoker
+set search_path=''
+as $$
+begin
+  -- Trusted server writes execute either as service_role directly or inside the
+  -- SECURITY DEFINER Apply transaction owned by postgres. Existing authenticated
+  -- task writes remain valid only while Planner V2 protected fields are untouched.
+  if current_user in ('service_role','postgres') then return new; end if;
+
+  if tg_op = 'INSERT' then
+    if new.source_reason = 'planner_v2'
+      or new.canonical_workload_identity is not null
+      or new.canonical_material_view_id is not null
+      or new.canonical_boundary is not null
+      or new.planner_version is not null
+      or new.planner_proposal_fingerprint is not null
+    then raise exception 'PLANNER_V2_CANONICAL_METADATA_SERVER_ONLY' using errcode='42501'; end if;
+  elsif
+    (old.source_reason = 'planner_v2' or new.source_reason = 'planner_v2')
+      and old.source_reason is distinct from new.source_reason
+    or old.canonical_workload_identity is distinct from new.canonical_workload_identity
+    or old.canonical_material_view_id is distinct from new.canonical_material_view_id
+    or old.canonical_boundary is distinct from new.canonical_boundary
+    or old.planner_version is distinct from new.planner_version
+    or old.planner_proposal_fingerprint is distinct from new.planner_proposal_fingerprint
+  then raise exception 'PLANNER_V2_CANONICAL_METADATA_SERVER_ONLY' using errcode='42501'; end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function public.guard_planner_v2_task_metadata()
+from public,anon,authenticated;
+grant execute on function public.guard_planner_v2_task_metadata()
+to service_role;
+
+create trigger tasks_guard_planner_v2_metadata
+before insert or update on public.tasks
+for each row execute function public.guard_planner_v2_task_metadata();
 
 alter table public.confirmed_action_proposals
   add column planner_proposal_id text null,
@@ -173,7 +263,7 @@ declare
   v_plan public.weekly_plans;
   v_row public.confirmed_action_proposals;
 begin
-  if current_user not in ('service_role','postgres') then raise exception 'FORBIDDEN'; end if;
+  if coalesce(auth.role(),'') <> 'service_role' then raise exception 'FORBIDDEN'; end if;
   if nullif(btrim(p_planner_proposal_id),'') is null
     or nullif(btrim(p_proposal_fingerprint),'') is null
     or nullif(btrim(p_planner_snapshot_fingerprint),'') is null
@@ -302,6 +392,8 @@ grant execute on function public.confirm_planner_v2_proposal_candidate(uuid,text
 to authenticated;
 
 create or replace function public.apply_planner_v2_proposal_candidate(
+  p_actor_user_id uuid,
+  p_actor_exam_profile_id uuid,
   p_record_id uuid,
   p_planner_proposal_id text,
   p_proposal_fingerprint text,
@@ -314,7 +406,7 @@ security definer
 set search_path=''
 as $$
 declare
-  v_user uuid := auth.uid();
+  v_user uuid := p_actor_user_id;
   v_row public.confirmed_action_proposals;
   v_plan public.weekly_plans;
   v_create jsonb;
@@ -328,11 +420,23 @@ declare
   v_actual_minutes integer := 0;
   v_new_plan_minutes integer := 0;
 begin
-  if v_user is null then raise exception 'UNAUTHORIZED'; end if;
+  if coalesce(auth.role(),'') <> 'service_role' then raise exception 'FORBIDDEN'; end if;
+  if v_user is null or p_actor_exam_profile_id is null then
+    raise exception 'PLANNER_V2_ACTOR_BINDING_REQUIRED';
+  end if;
   select * into v_row from public.confirmed_action_proposals
-  where id=p_record_id and user_id=v_user and action_kind='planner_v2_week'
+  where id=p_record_id and user_id=v_user
+    and exam_profile_id=p_actor_exam_profile_id and action_kind='planner_v2_week'
   for update;
   if not found then raise exception 'PLANNER_V2_PROPOSAL_NOT_FOUND'; end if;
+  if v_row.planner_proposal_id <> p_planner_proposal_id
+    or v_row.proposal_fingerprint <> p_proposal_fingerprint
+    or v_row.planner_snapshot_fingerprint <> p_planner_snapshot_fingerprint
+    or v_row.planner_version <> p_planner_version
+  then raise exception 'PLANNER_V2_APPLY_IDENTITY_MISMATCH'; end if;
+  perform 1 from public.exam_profiles ep
+  where ep.id=p_actor_exam_profile_id and ep.user_id=v_user and ep.status='active';
+  if not found then raise exception 'PLANNER_V2_ACTOR_PROFILE_MISMATCH'; end if;
   if v_row.status='applied' then
     return coalesce(v_row.result_payload,'{}'::jsonb)
       || jsonb_build_object('idempotent',true,'recordId',v_row.id);
@@ -342,11 +446,6 @@ begin
     update public.confirmed_action_proposals set status='expired' where id=v_row.id;
     return jsonb_build_object('recordId',v_row.id,'state','expired','applied',false);
   end if;
-  if v_row.planner_proposal_id <> p_planner_proposal_id
-    or v_row.proposal_fingerprint <> p_proposal_fingerprint
-    or v_row.planner_snapshot_fingerprint <> p_planner_snapshot_fingerprint
-    or v_row.planner_version <> p_planner_version
-  then raise exception 'PLANNER_V2_APPLY_IDENTITY_MISMATCH'; end if;
 
   perform pg_advisory_xact_lock(hashtextextended(v_user::text,62));
   select * into v_plan from public.weekly_plans
@@ -494,9 +593,9 @@ begin
 end;
 $$;
 
-revoke all on function public.apply_planner_v2_proposal_candidate(uuid,text,text,text,text)
-from public,anon;
-grant execute on function public.apply_planner_v2_proposal_candidate(uuid,text,text,text,text)
-to authenticated;
+revoke all on function public.apply_planner_v2_proposal_candidate(uuid,uuid,uuid,text,text,text,text)
+from public,anon,authenticated;
+grant execute on function public.apply_planner_v2_proposal_candidate(uuid,uuid,uuid,text,text,text,text)
+to service_role;
 
 commit;
