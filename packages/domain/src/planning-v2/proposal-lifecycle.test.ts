@@ -140,6 +140,72 @@ describe("W6 Planner V2 proposal lifecycle", () => {
     });
   });
 
+  it("reports only future schedulable capacity in preview", async () => {
+    const input = plannerInput({
+      currentDate: "2026-08-26",
+      demands: [
+        demand("oversized", {
+          earliestDate: "2026-08-25",
+          latestDate: "2026-08-27",
+          workload: workload({
+            materialViewId: "youtube:oversized:mapping:map-1",
+            remainingAmount: 5400,
+            estimatedMinutes: 90,
+          }),
+          boundary: {
+            kind: "full_video",
+            videoId: "oversized",
+            durationSeconds: 5400,
+            watchedSeconds: 0,
+          },
+        }),
+      ],
+    });
+
+    const proposal = await buildCanonicalPlannerV2Proposal(input);
+    const preview = buildPlannerV2Preview(proposal, []);
+
+    expect(preview.days.map((day) => ({
+      date: day.date,
+      availableMinutes: day.availableMinutes,
+      unusedMinutes: day.unusedMinutes,
+    }))).toEqual([
+      { date: "2026-08-25", availableMinutes: 0, unusedMinutes: 0 },
+      { date: "2026-08-26", availableMinutes: 0, unusedMinutes: 0 },
+      { date: "2026-08-27", availableMinutes: 60, unusedMinutes: 60 },
+    ]);
+
+    expect(preview.summary).toMatchObject({
+      totalAvailableMinutes: 60,
+      newlyPlannedMinutes: 0,
+      unusedMinutes: 60,
+      unmetEligibleMinutes: 90,
+    });
+
+    expect(
+      preview.explanationFacts.filter((fact) => fact.kind === "unused_capacity"),
+    ).toEqual([
+      {
+        kind: "unused_capacity",
+        date: "2026-08-27",
+        unusedMinutes: 60,
+        reason: "next_indivisible_workload_does_not_fit",
+      },
+    ]);
+
+    expect(
+      preview.explanationFacts
+        .filter((fact) => fact.kind === "day_capacity")
+        .map((fact) => fact.kind === "day_capacity"
+          ? { date: fact.date, availableMinutes: fact.availableMinutes }
+          : null),
+    ).toEqual([
+      { date: "2026-08-25", availableMinutes: 0 },
+      { date: "2026-08-26", availableMinutes: 0 },
+      { date: "2026-08-27", availableMinutes: 60 },
+    ]);
+  });
+
   it("protects current-day, locked, and outside-scope work from replacement", async () => {
     const { preview } = await lifecycleFixture();
     expect(preview.differences.replaceableTaskIds).toEqual(["generated"]);
