@@ -1,12 +1,22 @@
 import { useEffect, useState } from "react";
 import { AppApiError, callAppApi } from "../lib/app-api";
+import {
+  canApplyPlannerV2Proposal,
+  confirmationFailureMessage,
+  deriveAppliedPlannerV2State,
+  deriveConfirmedPlannerV2State,
+  exactPlannerV2ProposalIdentity,
+  type AppliedPlannerV2Proposal,
+  type ConfirmedPlannerV2Proposal,
+  type PlannerV2ProposalIdentity,
+} from "../lib/planner-v2-lifecycle-ui";
 
 type Capability = {
   enabled: boolean;
   previewEnabled: boolean;
   confirmationEnabled: boolean;
-  applyEnabled: false;
-  productionMutationAuthority: false;
+  applyEnabled: boolean;
+  productionMutationAuthority: boolean;
 };
 
 type PreviewItem = {
@@ -51,15 +61,11 @@ type PlannerPreview = {
 
 type PreviewResponse = {
   preview: PlannerPreview;
-  confirmation: {
-    recordId: string;
-    proposalId: string;
-    proposalFingerprint: string;
-    snapshotFingerprint: string;
-    plannerVersion: string;
-  };
-  applyEnabled: false;
+  confirmation: PlannerV2ProposalIdentity;
+  applyEnabled: boolean;
 };
+
+type LocalProposalState = "previewed" | "confirmed" | "applied" | "expired" | "stale" | "invalid";
 
 function factLabel(fact: PlannerPreview["explanationFacts"][number]): string {
   if (fact.kind === "day_capacity") return `${fact.date}: ${fact.availableMinutes} dk kullanılabilir.`;
@@ -75,7 +81,9 @@ export function PlannerV2PreviewPanel() {
   const [capability, setCapability] = useState<Capability | null>(null);
   const [payload, setPayload] = useState<PreviewResponse | null>(null);
   const [busy, setBusy] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
+  const [proposalState, setProposalState] = useState<LocalProposalState | null>(null);
+  const [confirmation, setConfirmation] = useState<ConfirmedPlannerV2Proposal | null>(null);
+  const [application, setApplication] = useState<AppliedPlannerV2Proposal | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -91,9 +99,14 @@ export function PlannerV2PreviewPanel() {
   async function generate() {
     setBusy(true);
     setError("");
-    setConfirmed(false);
+    setProposalState(null);
+    setConfirmation(null);
+    setApplication(null);
+    setPayload(null);
     try {
-      setPayload(await callAppApi<PreviewResponse>("/planner-v2/preview", { method: "POST" }));
+      const next = await callAppApi<PreviewResponse>("/planner-v2/preview", { method: "POST" });
+      setPayload({ ...next, confirmation: exactPlannerV2ProposalIdentity(next.confirmation) });
+      setProposalState("previewed");
     } catch (caught) {
       setError(caught instanceof AppApiError ? caught.message : "Planner V2 önizlemesi oluşturulamadı.");
     } finally {
@@ -106,13 +119,56 @@ export function PlannerV2PreviewPanel() {
     setBusy(true);
     setError("");
     try {
-      await callAppApi("/planner-v2/confirm", {
+      const response = await callAppApi<unknown>("/planner-v2/confirm", {
         method: "POST",
         body: payload.confirmation,
       });
-      setConfirmed(true);
+      const authoritative = deriveConfirmedPlannerV2State(response, payload.confirmation);
+      setConfirmation(authoritative);
+      setProposalState("confirmed");
     } catch (caught) {
-      setError(caught instanceof AppApiError ? caught.message : "Öneri onaylanamadı.");
+      const code = caught instanceof AppApiError ? caught.code : caught instanceof Error ? caught.message : "UNKNOWN";
+      if (code === "ACTION_PROPOSAL_EXPIRED") setProposalState("expired");
+      else if (code === "ACTION_PROPOSAL_STALE") setProposalState("stale");
+      else if (code.includes("IDENTITY") || code.includes("NOT_PENDING") || code.includes("NOT_APPLYABLE")) {
+        setProposalState("invalid");
+      }
+      setConfirmation(null);
+      setError(confirmationFailureMessage(code));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function applyExactProposal() {
+    if (!payload || !confirmation || !canApplyPlannerV2Proposal(capability, confirmation)) return;
+    setBusy(true);
+    setError("");
+    try {
+      const response = await callAppApi<unknown>("/planner-v2/apply", {
+        method: "POST",
+        body: payload.confirmation,
+      });
+      const authoritative = deriveAppliedPlannerV2State(response, payload.confirmation);
+      setApplication(authoritative);
+      setProposalState("applied");
+    } catch (caught) {
+      const code = caught instanceof AppApiError ? caught.code : caught instanceof Error ? caught.message : "UNKNOWN";
+      if (code === "ACTION_PROPOSAL_EXPIRED") setProposalState("expired");
+      else if (code === "ACTION_PROPOSAL_STALE") setProposalState("stale");
+      setError(confirmationFailureMessage(code));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function refreshCapability() {
+    setBusy(true);
+    setError("");
+    try {
+      setCapability(await callAppApi<Capability>("/planner-v2/capability"));
+    } catch (caught) {
+      setError(caught instanceof AppApiError ? caught.message : "Planner V2 yetkisi denetlenemedi.");
     } finally {
       setBusy(false);
     }
@@ -157,13 +213,25 @@ export function PlannerV2PreviewPanel() {
       <details className="planner-v2-facts"><summary>Nedenler ve değişim kapsamı</summary>
         <ul>{payload.preview.explanationFacts.map((fact, index) => <li key={`${fact.kind}:${index}`}>{factLabel(fact)}</li>)}</ul>
       </details>
-      {capability.confirmationEnabled ? <div className="planner-v2-confirm">
-          <p>{confirmed
-            ? "Bu tam öneri kimliği onaylandı. Apply üretimde ve bu ekranda kapalıdır."
+      {capability.confirmationEnabled || confirmation || proposalState === "applied" ? <div className="planner-v2-confirm">
+          <p>{proposalState === "confirmed"
+            ? `Bu tam öneri kimliği kalıcı olarak onaylandı. ${capability.applyEnabled ? "Uygulanmaya hazır." : "Apply yetkisi kapalıdır."}`
+            : proposalState === "applied"
+              ? `${application?.createdTaskIds.length ?? 0} görev güvenli işlemle uygulandı.`
             : `${payload.preview.differences.createCanonicalWorkloadIdentities.length} yeni iş · ${payload.preview.differences.replaceableTaskIds.length} değiştirilebilir gelecek görev`}</p>
-          <button type="button" disabled={busy || confirmed} onClick={() => void confirmExactProposal()}>
-            {confirmed ? "Tam öneri onaylandı" : "Bu tam öneriyi onayla"}
-          </button>
+          {capability.confirmationEnabled && proposalState !== "applied" && <button type="button"
+            disabled={busy || proposalState !== "previewed"}
+            onClick={() => void confirmExactProposal()}>
+            {proposalState === "confirmed" ? "Tam öneri onaylandı" : "Bu tam öneriyi onayla"}
+          </button>}
+          {canApplyPlannerV2Proposal(capability, confirmation) && proposalState === "confirmed" &&
+            <button type="button" disabled={busy} onClick={() => void applyExactProposal()}>
+              Onaylanan planı uygula
+            </button>}
+          {confirmation && proposalState === "confirmed" && !capability.applyEnabled &&
+            <button type="button" className="secondary-button" disabled={busy} onClick={() => void refreshCapability()}>
+              Apply yetkisini denetle
+            </button>}
         </div> : <div className="planner-v2-preview-only">
           <p>{payload.preview.differences.createCanonicalWorkloadIdentities.length} yeni iş · {payload.preview.differences.replaceableTaskIds.length} değiştirilebilir gelecek görev</p>
           <strong>Pilot önizleme modu · onay kapalı</strong>

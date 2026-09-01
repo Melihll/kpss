@@ -1,5 +1,6 @@
 export const PLANNER_V2_PREVIEW_CAPABILITY_ENV = "PLANNER_V2_PREVIEW_V1_PROFILE_IDS" as const;
 export const PLANNER_V2_CONFIRM_CAPABILITY_ENV = "PLANNER_V2_CONFIRM_V1_PROFILE_IDS" as const;
+export const PLANNER_V2_APPLY_CAPABILITY_ENV = "PLANNER_V2_APPLY_V1_PROFILE_IDS" as const;
 
 const PROFILE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -31,9 +32,19 @@ export function isPlannerV2ConfirmEnabled(
     && Boolean(exactProfileAllowlist(configuredConfirmProfileIds)?.has(examProfileId.toLowerCase()));
 }
 
+export function isPlannerV2ApplyEnabled(
+  configuredPreviewProfileIds: string | null | undefined,
+  configuredApplyProfileIds: string | null | undefined,
+  examProfileId: string,
+): boolean {
+  return isPlannerV2PreviewEnabled(configuredPreviewProfileIds, examProfileId)
+    && Boolean(exactProfileAllowlist(configuredApplyProfileIds)?.has(examProfileId.toLowerCase()));
+}
+
 export function plannerV2ProposalCapabilities(
   configuredPreviewProfileIds: string | null | undefined,
   configuredConfirmProfileIds: string | null | undefined,
+  configuredApplyProfileIds: string | null | undefined,
   examProfileId: string,
 ) {
   const previewEnabled = isPlannerV2PreviewEnabled(configuredPreviewProfileIds, examProfileId);
@@ -42,11 +53,16 @@ export function plannerV2ProposalCapabilities(
     configuredConfirmProfileIds,
     examProfileId,
   );
+  const applyEnabled = previewEnabled && isPlannerV2ApplyEnabled(
+    configuredPreviewProfileIds,
+    configuredApplyProfileIds,
+    examProfileId,
+  );
   return {
     enabled: previewEnabled,
     previewEnabled,
     confirmationEnabled,
-    applyEnabled: false as const,
-    productionMutationAuthority: false as const,
+    applyEnabled,
+    productionMutationAuthority: applyEnabled,
   };
 }

@@ -32,9 +32,18 @@ import {
 import { runCanonicalPlannerV2ReadOnlyShadow } from "../_shared/canonical-planner-v2-readonly.ts";
 import { plannerV2ProposalCapabilities } from "../_shared/planner-v2-proposal-capability.ts";
 import {
+  assertAuthoritativePlannerV2Apply,
+  assertAuthoritativePlannerV2Confirmation,
+  assertExactPlannerV2ProposalPersistence,
+  parseExactPlannerV2ProposalIdentity,
+  plannerV2LifecycleErrorCode,
+  type PlannerV2ProposalIdentity,
+} from "../_shared/planner-v2-proposal-http.ts";
+import {
   buildPlannerV2ApplyPlanCandidate,
   buildPlannerV2Preview,
   fingerprintPlannerV2SnapshotComponents,
+  validatePlannerV2Freshness,
 } from "../_shared/planning-v2.bundle.js";
 
 type WeeklyPlanningContext = {
@@ -74,7 +83,13 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   FORBIDDEN: 403,
   PLANNER_V2_PREVIEW_DISABLED: 403,
   PLANNER_V2_CONFIRM_DISABLED: 403,
+  PLANNER_V2_APPLY_DISABLED: 403,
+  PLANNER_V2_CLIENT_AUTHORITY_REFUSED: 400,
   PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH: 409,
+  PLANNER_V2_CONFIRMATION_NOT_PERSISTED: 409,
+  PLANNER_V2_EXPLICIT_CONFIRMATION_REQUIRED: 409,
+  PLANNER_V2_APPLY_IDENTITY_MISMATCH: 409,
+  PLANNER_V2_APPLY_RESULT_INVALID: 502,
   PLANNER_V2_PROPOSAL_NOT_FOUND: 404,
   NO_ACTIVE_EXAM_PROFILE: 400,
   NO_WEEKLY_AVAILABILITY: 400,
@@ -218,6 +233,25 @@ async function activeProfile(client: SupabaseClient, userId: string) {
     .maybeSingle();
   if (error) throw error;
   if (!data) throw new PlanningDomainError("NO_ACTIVE_EXAM_PROFILE");
+  return data;
+}
+
+async function loadPlannerV2Proposal(
+  client: SupabaseClient,
+  exact: PlannerV2ProposalIdentity,
+  userId: string,
+  examProfileId: string,
+) {
+  const { data, error } = await client
+    .from("confirmed_action_proposals")
+    .select("id,user_id,exam_profile_id,action_kind,status,confirmed_at,expires_at,planner_proposal_id,proposal_fingerprint,planner_snapshot_fingerprint,planner_version,component_fingerprints,weekly_plan_id,plan_generation_version")
+    .eq("id", exact.recordId)
+    .eq("user_id", userId)
+    .eq("exam_profile_id", examProfileId)
+    .eq("action_kind", "planner_v2_week")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("PLANNER_V2_PROPOSAL_NOT_FOUND");
   return data;
 }
 
@@ -797,10 +831,12 @@ Deno.serve(async (request) => {
     const plannerV2Capabilities = plannerV2ProposalCapabilities(
       Deno.env.get("PLANNER_V2_PREVIEW_V1_PROFILE_IDS"),
       Deno.env.get("PLANNER_V2_CONFIRM_V1_PROFILE_IDS"),
+      Deno.env.get("PLANNER_V2_APPLY_V1_PROFILE_IDS"),
       profile.id,
     );
     const plannerV2PreviewEnabled = plannerV2Capabilities.previewEnabled;
     const plannerV2ConfirmationEnabled = plannerV2Capabilities.confirmationEnabled;
+    const plannerV2ApplyEnabled = plannerV2Capabilities.applyEnabled;
 
     if (request.method === "GET" && route === "/planner-v2/capability") {
       return json(plannerV2Capabilities);
@@ -841,22 +877,18 @@ Deno.serve(async (request) => {
       return json({
         preview,
         confirmation: stored.data,
-        applyEnabled: false,
-        productionMutationAuthority: false,
+        applyEnabled: plannerV2ApplyEnabled,
+        productionMutationAuthority: plannerV2Capabilities.productionMutationAuthority,
       }, 201);
     }
     if (request.method === "POST" && route === "/planner-v2/confirm") {
       if (!plannerV2ConfirmationEnabled) throw new Error("PLANNER_V2_CONFIRM_DISABLED");
       const body = await request.json().catch(() => null);
-      const exact = {
-        recordId: typeof body?.recordId === "string" ? body.recordId : "",
-        proposalId: typeof body?.proposalId === "string" ? body.proposalId : "",
-        proposalFingerprint: typeof body?.proposalFingerprint === "string" ? body.proposalFingerprint : "",
-        snapshotFingerprint: typeof body?.snapshotFingerprint === "string" ? body.snapshotFingerprint : "",
-        plannerVersion: typeof body?.plannerVersion === "string" ? body.plannerVersion : "",
-      };
-      if (!/^[0-9a-f-]{36}$/i.test(exact.recordId) || Object.values(exact).some((value) => !value)) {
-        throw new Error("PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH");
+      const exact = parseExactPlannerV2ProposalIdentity(body);
+      const prior = await loadPlannerV2Proposal(client, exact, userId, profile.id);
+      assertExactPlannerV2ProposalPersistence(prior, exact, "PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH");
+      if (prior.status !== "previewed" && prior.status !== "confirmed") {
+        throw new Error(plannerV2LifecycleErrorCode(prior.status));
       }
       const confirmed = await client.rpc("confirm_planner_v2_proposal_candidate", {
         p_record_id: exact.recordId,
@@ -866,10 +898,53 @@ Deno.serve(async (request) => {
         p_planner_version: exact.plannerVersion,
       });
       if (confirmed.error) throw confirmed.error;
+      const persisted = await loadPlannerV2Proposal(client, exact, userId, profile.id);
+      const confirmation = assertAuthoritativePlannerV2Confirmation(persisted, exact);
       return json({
-        confirmation: confirmed.data,
-        applyEnabled: false,
-        productionMutationAuthority: false,
+        confirmation,
+        applyEnabled: plannerV2ApplyEnabled,
+        productionMutationAuthority: plannerV2Capabilities.productionMutationAuthority,
+      });
+    }
+    if (request.method === "POST" && route === "/planner-v2/apply") {
+      if (!plannerV2ApplyEnabled) throw new Error("PLANNER_V2_APPLY_DISABLED");
+      const exact = parseExactPlannerV2ProposalIdentity(await request.json().catch(() => null));
+      const persisted = await loadPlannerV2Proposal(client, exact, userId, profile.id);
+      assertExactPlannerV2ProposalPersistence(persisted, exact, "PLANNER_V2_APPLY_IDENTITY_MISMATCH");
+
+      if (persisted.status !== "applied") {
+        assertAuthoritativePlannerV2Confirmation(persisted, exact);
+        const shadow: any = await runCanonicalPlannerV2ReadOnlyShadow({
+          client,
+          userId,
+          examProfileId: profile.id,
+          currentDate: today,
+          includeLifecycleContracts: true,
+        });
+        const currentFingerprints = await fingerprintPlannerV2SnapshotComponents(
+          shadow.plannerInput,
+          shadow.proposal.snapshotFingerprint,
+        );
+        const freshness = validatePlannerV2Freshness(persisted.component_fingerprints, currentFingerprints);
+        if (
+          persisted.weekly_plan_id !== shadow.weeklyPlanId ||
+          persisted.plan_generation_version !== shadow.planGenerationVersion ||
+          !freshness.fresh
+        ) throw new Error("ACTION_PROPOSAL_STALE");
+      }
+
+      const applied = await serviceClient.rpc("apply_planner_v2_proposal_candidate", {
+        p_actor_user_id: userId,
+        p_actor_exam_profile_id: profile.id,
+        p_record_id: exact.recordId,
+        p_planner_proposal_id: exact.proposalId,
+        p_proposal_fingerprint: exact.proposalFingerprint,
+        p_planner_snapshot_fingerprint: exact.snapshotFingerprint,
+        p_planner_version: exact.plannerVersion,
+      });
+      if (applied.error) throw applied.error;
+      return json({
+        application: assertAuthoritativePlannerV2Apply(applied.data, exact),
       });
     }
 

@@ -8,10 +8,11 @@ const capability = readFileSync(join(root, "supabase/functions/_shared/planner-v
 const migration = readFileSync(join(root, "supabase/migrations/20260826120000_planner_v2_proposal_lifecycle_candidate.sql"), "utf8");
 const web = readFileSync(join(root, "apps/web/src/components/PlannerV2PreviewPanel.tsx"), "utf8");
 
-describe("W6 production-inactive proposal runtime safety", () => {
-  it("keeps independent preview and confirmation gates default-OFF and refuses wildcard or malformed activation", () => {
+describe("Planner V2 gated proposal runtime safety", () => {
+  it("keeps independent preview, confirmation, and Apply gates default-OFF and refuses wildcard or malformed activation", () => {
     expect(capability).toContain('PLANNER_V2_PREVIEW_V1_PROFILE_IDS');
     expect(capability).toContain('PLANNER_V2_CONFIRM_V1_PROFILE_IDS');
+    expect(capability).toContain('PLANNER_V2_APPLY_V1_PROFILE_IDS');
     expect(capability).toContain('value === "*"');
     expect(capability).toContain("PROFILE_UUID");
     expect(api).not.toContain("PLANNER_V2_PROPOSAL_LIFECYCLE_PROFILE_IDS");
@@ -39,15 +40,42 @@ describe("W6 production-inactive proposal runtime safety", () => {
   });
 
   it("hides confirmation UI for preview-only profiles", () => {
-    expect(web).toContain("capability.confirmationEnabled ?");
+    expect(web).toContain('capability.confirmationEnabled || confirmation || proposalState === "applied"');
+    expect(web).toContain("capability.confirmationEnabled && proposalState");
     expect(web).toContain("Pilot önizleme modu");
     expect(web).not.toContain('disabled={!capability.confirmationEnabled');
   });
 
-  it("exposes no Planner V2 Apply HTTP route", () => {
-    expect(api).not.toContain('route === "/planner-v2/apply"');
-    expect(web).not.toContain('"/planner-v2/apply"');
-    expect(web).toContain("Apply üretimde ve bu ekranda kapalıdır");
+  it("exposes Apply only behind the independent gate and exact persisted confirmation", () => {
+    const route = api.indexOf('route === "/planner-v2/apply"');
+    const gate = api.indexOf("if (!plannerV2ApplyEnabled)", route);
+    const persistence = api.indexOf("loadPlannerV2Proposal", gate);
+    const confirmation = api.indexOf("assertAuthoritativePlannerV2Confirmation", persistence);
+    const freshness = api.indexOf("validatePlannerV2Freshness", confirmation);
+    const apply = api.indexOf('serviceClient.rpc("apply_planner_v2_proposal_candidate"', freshness);
+    expect(route).toBeGreaterThan(0);
+    expect(gate).toBeGreaterThan(route);
+    expect(persistence).toBeGreaterThan(gate);
+    expect(confirmation).toBeGreaterThan(persistence);
+    expect(freshness).toBeGreaterThan(confirmation);
+    expect(apply).toBeGreaterThan(freshness);
+    expect(web).toContain('"/planner-v2/apply"');
+    expect(web).toContain("canApplyPlannerV2Proposal(capability, confirmation)");
+  });
+
+  it("derives Apply actor and profile from authenticated server context", () => {
+    expect(api).toContain("p_actor_user_id: userId");
+    expect(api).toContain("p_actor_exam_profile_id: profile.id");
+    expect(api).toContain("PLANNER_V2_CLIENT_AUTHORITY_REFUSED");
+    expect(web).not.toContain("serviceRoleKey");
+    expect(web).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
+  });
+
+  it("returns confirmed UI state only from an authoritative persisted confirmation", () => {
+    expect(api).toContain("assertAuthoritativePlannerV2Confirmation(persisted, exact)");
+    expect(web).toContain("deriveConfirmedPlannerV2State(response, payload.confirmation)");
+    expect(web).not.toContain("setConfirmed(true)");
+    expect(web).toContain("confirmationFailureMessage(code)");
   });
 
   it("makes the database Apply RPC server-only and actor-bound", () => {

@@ -223,6 +223,15 @@ async function call(fixture, path, method = "GET", body) {
   return { status: response.status, payload };
 }
 
+async function callUnauthenticated(path, method = "GET", body) {
+  const response = await fetch(`${url}/functions/v1/app-api${path}`, {
+    method,
+    headers: { apikey: anonKey, "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  return { status: response.status, payload: await response.json() };
+}
+
 async function waitForServer(child, output) {
   const deadline = Date.now() + 45_000;
   while (Date.now() < deadline) {
@@ -251,6 +260,7 @@ async function withGates(gates, test) {
   const lines = ["W8A_LOCAL_HTTP_SMOKE=1"];
   if (gates.preview !== undefined) lines.push(`PLANNER_V2_PREVIEW_V1_PROFILE_IDS=${gates.preview}`);
   if (gates.confirm !== undefined) lines.push(`PLANNER_V2_CONFIRM_V1_PROFILE_IDS=${gates.confirm}`);
+  if (gates.apply !== undefined) lines.push(`PLANNER_V2_APPLY_V1_PROFILE_IDS=${gates.apply}`);
   await writeFile(envFile, `${lines.join("\n")}\n`, "utf8");
   const output = { value: "" };
   const child = spawn(supabaseBinary, ["functions", "serve", "app-api", "--env-file", envFile], {
@@ -276,10 +286,22 @@ function expectStatus(result, status, code) {
   }
 }
 
+function exactIdentity(value) {
+  return {
+    recordId: value.recordId,
+    proposalId: value.proposalId,
+    proposalFingerprint: value.proposalFingerprint,
+    snapshotFingerprint: value.snapshotFingerprint,
+    plannerVersion: value.plannerVersion,
+  };
+}
+
 const pilot = await createFixture(PILOT_PROFILE, "pilot");
 const other = await createFixture(OTHER_PROFILE, "other");
 const confirmFixture = await createFixture(CONFIRM_PROFILE, "confirm");
 const matrix = {};
+let pilotPreview;
+let confirmedIdentity;
 
 await withGates({}, async () => {
   const capability = await call(pilot, "/planner-v2/capability");
@@ -289,6 +311,7 @@ await withGates({}, async () => {
   }
   expectStatus(await call(pilot, "/planner-v2/preview", "POST"), 403, "PLANNER_V2_PREVIEW_DISABLED");
   expectStatus(await call(pilot, "/planner-v2/confirm", "POST", {}), 403, "PLANNER_V2_CONFIRM_DISABLED");
+  expectStatus(await call(pilot, "/planner-v2/apply", "POST", {}), 403, "PLANNER_V2_APPLY_DISABLED");
   matrix.noGates = "PASS";
 });
 
@@ -300,6 +323,7 @@ await withGates({ preview: PILOT_PROFILE }, async () => {
     throw new Error(`Preview-only capability mismatch: ${JSON.stringify(capability.payload)}`);
   }
   const preview = await call(pilot, "/planner-v2/preview", "POST");
+  pilotPreview = { ...preview.payload, confirmation: exactIdentity(preview.payload.confirmation) };
   expectStatus(preview, 201);
   if (!preview.payload.preview?.proposalFingerprint || !preview.payload.preview?.snapshotFingerprint) {
     throw new Error("Preview did not return exact proposal and snapshot fingerprints");
@@ -314,7 +338,7 @@ await withGates({ preview: PILOT_PROFILE }, async () => {
   if (otherCapability.payload.enabled) throw new Error("Other profile unexpectedly received preview authority");
   expectStatus(await call(other, "/planner-v2/preview", "POST"), 403, "PLANNER_V2_PREVIEW_DISABLED");
   expectStatus(await call(other, "/planner-v2/confirm", "POST", preview.payload.confirmation), 403, "PLANNER_V2_CONFIRM_DISABLED");
-  expectStatus(await call(pilot, "/planner-v2/apply", "POST", {}), 404, "NOT_FOUND");
+  expectStatus(await call(pilot, "/planner-v2/apply", "POST", {}), 403, "PLANNER_V2_APPLY_DISABLED");
   const after = await scopedCounts(pilot);
   if (JSON.stringify(applicationState(after)) !== JSON.stringify(applicationState(before))) {
     throw new Error(`Preview mutated application state: ${JSON.stringify({ before, after })}`);
@@ -332,6 +356,48 @@ await withGates({ preview: PILOT_PROFILE }, async () => {
   matrix.otherProfile = "PASS";
 });
 
+await withGates({ preview: PILOT_PROFILE, apply: PILOT_PROFILE }, async () => {
+  const capability = await call(pilot, "/planner-v2/capability");
+  expectStatus(capability, 200);
+  if (!capability.payload.previewEnabled || !capability.payload.applyEnabled || capability.payload.confirmationEnabled) {
+    throw new Error(`Apply capability mismatch: ${JSON.stringify(capability.payload)}`);
+  }
+  expectStatus(
+    await call(pilot, "/planner-v2/apply", "POST", pilotPreview.confirmation),
+    409,
+    "PLANNER_V2_EXPLICIT_CONFIRMATION_REQUIRED",
+  );
+  expectStatus(await callUnauthenticated("/planner-v2/apply", "POST", pilotPreview.confirmation), 401);
+  matrix.applyPreviewedDenied = "PASS";
+  matrix.applyUnauthenticatedDenied = "PASS";
+});
+
+const incidentCreated = await requireOk(await admin.from("confirmed_action_proposals")
+  .select("created_at")
+  .eq("id", pilotPreview.confirmation.recordId)
+  .single(), "incident fixture creation time");
+await requireOk(await admin.from("confirmed_action_proposals")
+  .update({ expires_at: new Date(new Date(incidentCreated.created_at).getTime() + 100).toISOString() })
+  .eq("id", pilotPreview.confirmation.recordId), "expire incident fixture");
+
+await withGates({ preview: PILOT_PROFILE, confirm: PILOT_PROFILE }, async () => {
+  const before = await scopedCounts(pilot);
+  const expired = await call(pilot, "/planner-v2/confirm", "POST", pilotPreview.confirmation);
+  expectStatus(expired, 409, "ACTION_PROPOSAL_EXPIRED");
+  const row = await requireOk(await admin.from("confirmed_action_proposals")
+    .select("status,confirmed_at")
+    .eq("id", pilotPreview.confirmation.recordId)
+    .single(), "expired incident row");
+  if (row.status !== "expired" || row.confirmed_at !== null) {
+    throw new Error(`Expired confirmation was falsely persisted: ${JSON.stringify(row)}`);
+  }
+  const after = await scopedCounts(pilot);
+  if (JSON.stringify(applicationState(after)) !== JSON.stringify(applicationState(before))) {
+    throw new Error("Expired confirmation mutated application state");
+  }
+  matrix.expiredConfirmRegression = { status: "PASS", confirmedAt: null, applicationMutationDelta: 0 };
+});
+
 await withGates({ preview: CONFIRM_PROFILE, confirm: CONFIRM_PROFILE }, async () => {
   const before = await scopedCounts(confirmFixture);
   const capability = await call(confirmFixture, "/planner-v2/capability");
@@ -341,19 +407,21 @@ await withGates({ preview: CONFIRM_PROFILE, confirm: CONFIRM_PROFILE }, async ()
   }
   const preview = await call(confirmFixture, "/planner-v2/preview", "POST");
   expectStatus(preview, 201);
+  const previewIdentity = exactIdentity(preview.payload.confirmation);
   expectStatus(await call(confirmFixture, "/planner-v2/confirm", "POST", {
-    ...preview.payload.confirmation,
-    proposalFingerprint: `${preview.payload.confirmation.proposalFingerprint}-wrong`,
+    ...previewIdentity,
+    proposalFingerprint: `${previewIdentity.proposalFingerprint}-wrong`,
   }), 409, "PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH");
   expectStatus(await call(confirmFixture, "/planner-v2/confirm", "POST", {
-    ...preview.payload.confirmation,
-    proposalId: `${preview.payload.confirmation.proposalId}-wrong`,
+    ...previewIdentity,
+    proposalId: `${previewIdentity.proposalId}-wrong`,
   }), 409, "PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH");
-  const confirmed = await call(confirmFixture, "/planner-v2/confirm", "POST", preview.payload.confirmation);
+  const confirmed = await call(confirmFixture, "/planner-v2/confirm", "POST", previewIdentity);
   expectStatus(confirmed, 200);
   if (confirmed.payload.confirmation?.state !== "confirmed") {
     throw new Error(`Exact confirmation did not succeed: ${JSON.stringify(confirmed.payload)}`);
   }
+  confirmedIdentity = previewIdentity;
   const after = await scopedCounts(confirmFixture);
   if (JSON.stringify(applicationState(after)) !== JSON.stringify(applicationState(before))) {
     throw new Error(`Confirmation mutated application state: ${JSON.stringify({ before, after })}`);
@@ -363,10 +431,47 @@ await withGates({ preview: CONFIRM_PROFILE, confirm: CONFIRM_PROFILE }, async ()
   matrix.wrongProposal = "PASS";
 });
 
-await withGates({ preview: `${PILOT_PROFILE},*`, confirm: "not-a-uuid" }, async () => {
+await withGates({ preview: CONFIRM_PROFILE, apply: CONFIRM_PROFILE }, async () => {
+  const before = await scopedCounts(confirmFixture);
+  expectStatus(await call(confirmFixture, "/planner-v2/apply", "POST", {
+    ...confirmedIdentity,
+    actorUserId: confirmFixture.userId,
+  }), 400, "PLANNER_V2_CLIENT_AUTHORITY_REFUSED");
+  const applied = await call(confirmFixture, "/planner-v2/apply", "POST", confirmedIdentity);
+  expectStatus(applied, 200);
+  if (applied.payload.application?.state !== "applied" || applied.payload.application?.applied !== true) {
+    throw new Error(`Exact Apply did not succeed: ${JSON.stringify(applied.payload)}`);
+  }
+  const after = await scopedCounts(confirmFixture);
+  if (after.tasks <= before.tasks || after.lifecycleRows !== before.lifecycleRows) {
+    throw new Error(`Apply mutation scope mismatch: ${JSON.stringify({ before, after })}`);
+  }
+  const replay = await call(confirmFixture, "/planner-v2/apply", "POST", confirmedIdentity);
+  expectStatus(replay, 200);
+  if (replay.payload.application?.idempotent !== true) {
+    throw new Error(`Apply replay was not idempotent: ${JSON.stringify(replay.payload)}`);
+  }
+  const afterReplay = await scopedCounts(confirmFixture);
+  if (JSON.stringify(applicationState(afterReplay)) !== JSON.stringify(applicationState(after))) {
+    throw new Error("Idempotent replay changed application state");
+  }
+  matrix.applyExactConfirmed = {
+    status: "PASS",
+    createdTasks: after.tasks - before.tasks,
+    replayIdempotent: true,
+    clientActorRefused: true,
+  };
+});
+
+await withGates({ preview: `${CONFIRM_PROFILE},${OTHER_PROFILE}`, apply: `${CONFIRM_PROFILE},${OTHER_PROFILE}` }, async () => {
+  expectStatus(await call(other, "/planner-v2/apply", "POST", confirmedIdentity), 404, "PLANNER_V2_PROPOSAL_NOT_FOUND");
+  matrix.applyWrongOwnerProfileDenied = "PASS";
+});
+
+await withGates({ preview: `${PILOT_PROFILE},*`, confirm: "not-a-uuid", apply: "*" }, async () => {
   const capability = await call(pilot, "/planner-v2/capability");
   expectStatus(capability, 200);
-  if (capability.payload.enabled || capability.payload.previewEnabled || capability.payload.confirmationEnabled) {
+  if (capability.payload.enabled || capability.payload.previewEnabled || capability.payload.confirmationEnabled || capability.payload.applyEnabled) {
     throw new Error(`Invalid/wildcard settings did not fail closed: ${JSON.stringify(capability.payload)}`);
   }
   expectStatus(await call(pilot, "/planner-v2/preview", "POST"), 403, "PLANNER_V2_PREVIEW_DISABLED");
@@ -387,6 +492,6 @@ console.log(JSON.stringify({
   W8A_PREVIEW_ONLY_HTTP_SMOKE: "PASS",
   profiles: { pilot: PILOT_PROFILE, other: OTHER_PROFILE, confirmTest: CONFIRM_PROFILE },
   matrix,
-  applyHttpRoute: "ABSENT",
-  productionMutationAuthority: false,
+  applyHttpRoute: "PRESENT_DEFAULT_OFF",
+  productionMutationAuthority: "EXACT_LOCAL_TEST_PROFILE_ONLY",
 }, null, 2));

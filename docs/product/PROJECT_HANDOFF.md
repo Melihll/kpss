@@ -1,6 +1,6 @@
 # KPSS Koçu — Project Handoff
 
-Last updated: 2026-08-27
+Last updated: 2026-09-01
 
 ## Canonical source
 
@@ -68,11 +68,26 @@ Material completion history remains separate from pedagogical state. Previously 
 
 ## NEXT EXACT STEP
 
-Prepare a separately approved Gate-OFF app-api/web release for the W8A split preview/confirm candidate. Deploy with `PLANNER_V2_PREVIEW_V1_PROFILE_IDS` and `PLANNER_V2_CONFIRM_V1_PROFILE_IDS` both absent, then verify both gates OFF before any distinct pilot activation approval. The W7 schema/RPC capability is deployed, but proposal generation, confirmation, Apply, and the canonical planner remain OFF. Apply has no production HTTP route and must remain unavailable until a later independently reviewed activation gate.
+Prepare a separate gate-OFF runtime release preflight for the W8D/W8E candidate. It fixes the false confirmation success and adds a server-only `/planner-v2/apply` boundary behind the new independent `PLANNER_V2_APPLY_V1_PROFILE_IDS` allowlist. Do not deploy or set that gate without distinct approval. Production preview remains exact-profile-only; confirmation, Apply, canonical planning, and evidence shadow remain OFF.
+
+Before a fresh pilot can preview anything, use the existing user workflow under separate approval: Settings → Weekly capacity → Edit, save at least one recurring availability window, then open Week. Week/Today already invokes `POST /p48/week/generate` when the configured profile has no current plan. Never reuse historical proposal `19ade727-e534-4be1-bdb0-3c7b6e505af0`; it is expired and `confirmed_at` is null.
 
 In parallel, continue passive observation of the next natural W2-eligible physical study lifecycle for the exact-profile pilot. Inspect it read-only if it occurs; do not manufacture activity, widen the allowlist, or alter accepted evidence.
 
 Telegram requires a separately reviewed service-role W2 wrapper plus authoritative page-boundary UX before it can enter an activation proposal. Do not activate canonical workload planning while production physical pace evidence remains insufficient.
+
+## 2026-09-01 W8D confirm correction + W8E controlled Apply engineering
+
+- Historical proposal `19ade727-e534-4be1-bdb0-3c7b6e505af0` is authoritatively `expired` with `confirmed_at = null`. The false success came from a three-layer contract gap: the confirmation RPC returned an expired result as JSON without a transport error, app-api forwarded it as HTTP 200, and the web ignored the body and set a local `confirmed=true` flag.
+- Confirmation now parses only the exact five identity fields, rereads the owned lifecycle row after the RPC, and returns success only when persistence is exactly `confirmed` with matching record/proposal/fingerprint/snapshot/planner identities and a valid non-null `confirmed_at`. Expired, stale, rejected, non-pending, wrong-owner, and wrong-identity outcomes cannot render confirmed UI.
+- `PLANNER_V2_APPLY_V1_PROFILE_IDS` is independent and default OFF. Missing, blank, malformed, empty-entry, or wildcard configuration fails the whole setting closed. Apply also requires preview eligibility, an exact persisted confirmed proposal, active owned profile, and fresh current Planner V2 state.
+- `POST /planner-v2/apply` authenticates the human JWT, derives actor user/profile server-side, refuses client authority fields, reloads the exact proposal, recomputes component freshness, and calls the deployed service-role-only `apply_planner_v2_proposal_candidate` RPC. Atomicity, current-day/protected-task retention, capacity, canonical dedupe, unknown-workload blocking, rollback, and idempotency remain database-enforced.
+- Web Apply is shown only for an authoritative confirmed response plus Apply capability ON. Neither confirmation nor Apply is optimistic; expired/stale outcomes require a fresh preview.
+- Current-week absence is expected input-state behavior, not a missing rollover engine. The active P48 strategy has no current plan because it has neither active recurring availability nor current-week daily overrides. Recurring availability would carry forward if present; the existing Week/Today `ensureWeek` flow already calls `/p48/week/generate` and correctly refuses to invent capacity.
+- No migration was required. No production deployment, secret change, proposal action, plan/task mutation, or bootstrap was performed. Production remains preview exact-profile-only, confirmation OFF, new Apply gate absent/OFF, canonical planner OFF, and evidence shadow OFF.
+- Verification is GREEN: focused lifecycle/security `86/86`; targeted canonical Planner V2/planning/capacity/P48 `451/451`; local HTTP gate/authority/incident matrix PASS; local integration/RLS/transaction `130/130`; full non-integration `939/939`; typechecks, explicit production-target web build, app-api local bundle/HTTP serve, client secret/target scan, Planner V2 bundle/read-only safety, local PostgreSQL lint, and diff checks PASS.
+- Read-only production refresh: app-api v36 ACTIVE, Telegram v37 ACTIVE, preview/capture exact-profile allowlists present, confirm/Apply/canonical/evidence-shadow secrets absent, and linked migrations synchronized with zero pending. No production command changed state.
+- Full engineering record: [W8D/W8E Confirm + Apply Engineering](releases/2026-09-01_W8D_W8E_CONFIRM_APPLY_ENGINEERING.md).
 
 ## 2026-08-27 W8A exact-profile preview-only pilot preflight
 

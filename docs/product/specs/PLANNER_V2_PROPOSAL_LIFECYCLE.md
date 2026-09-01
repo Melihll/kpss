@@ -1,6 +1,6 @@
 # Planner V2 Proposal Lifecycle
 
-Status: W7 schema/RPC and gate-off app-api/web runtime deployed; Planner V2 lifecycle inactive
+Status: W8D/W8E confirm/Apply engineering candidate verified locally; Apply not deployed and production gate OFF
 Lifecycle version: `planner-v2-lifecycle-v1`
 Planner version: `canonical-planner-v2-shadow-v1`
 
@@ -10,9 +10,9 @@ W6 turns the immutable W5 canonical proposal into a reviewable lifecycle:
 
 `snapshot → proposal → preview → structured explanation → exact confirmation → freshness check → atomic Apply candidate`
 
-W8A separates proposal visibility from confirmation authority. `PLANNER_V2_PREVIEW_V1_PROFILE_IDS` controls capability visibility and preview creation; `PLANNER_V2_CONFIRM_V1_PROFILE_IDS` controls confirmation only and is effective only when the same profile is also preview-eligible. Both settings default OFF, accept only comma-separated exact UUIDs, trim whitespace, deduplicate entries, and fail the whole setting closed on an empty, malformed, or wildcard (`*`) entry. The earlier `PLANNER_V2_PROPOSAL_LIFECYCLE_PROFILE_IDS` setting is not used by the W8A candidate because it coupled preview and confirmation.
+W8A separates proposal visibility from confirmation authority. W8E adds a third, independent Apply authority. `PLANNER_V2_PREVIEW_V1_PROFILE_IDS` controls capability visibility and preview creation; `PLANNER_V2_CONFIRM_V1_PROFILE_IDS` controls confirmation only; `PLANNER_V2_APPLY_V1_PROFILE_IDS` controls the server Apply boundary only. Confirmation and Apply each additionally require preview eligibility for the same profile. All settings default OFF, accept only comma-separated exact UUIDs, trim whitespace, deduplicate entries, and fail the whole setting closed on an empty, malformed, or wildcard (`*`) entry.
 
-The additive schema/RPC capability and W7 gate-off app-api/web runtime were deployed separately on 2026-08-27. The W8A split-gate candidate is committed but not deployed. There is no Planner V2 Apply HTTP route, no production gate activation, and no Telegram deployment. Schema or runtime presence alone does not generate, preview, confirm, or apply a proposal.
+The additive schema/RPC capability and earlier gate-off app-api/web runtime were deployed separately. W8D/W8E is an engineering-only candidate: it adds the missing authenticated Apply HTTP route, but that code is not deployed and its production allowlist is absent/OFF. There is no Telegram Apply path. Schema or runtime presence alone does not generate, preview, confirm, or apply a proposal.
 
 ## Existing infrastructure audit
 
@@ -86,12 +86,13 @@ Existing authenticated task INSERT/UPDATE and owner RLS remain unchanged for bac
 
 ## App-api and web
 
-- `GET /planner-v2/capability` reports preview and confirmation independently and always reports Apply disabled.
+- `GET /planner-v2/capability` reports preview, confirmation, and Apply independently. Apply is false unless both preview eligibility and the exact Apply allowlist match.
 - `POST /planner-v2/preview` requires exact-profile preview eligibility, uses the authenticated read-only W5 adapter, creates a short-lived server proposal candidate, and performs no task/plan mutation.
-- `POST /planner-v2/confirm` requires both preview and confirmation eligibility, accepts every exact identity field, and records confirmation only.
-- no `/planner-v2/apply` route exists.
+- `POST /planner-v2/confirm` requires both preview and confirmation eligibility, accepts only the five exact identity fields, and returns confirmed only after rereading exact persisted `confirmed` state with non-null `confirmed_at`. Expired/stale/invalid outcomes are non-2xx and cannot become web success.
+- `POST /planner-v2/apply` requires the independent Apply allowlist, verified human JWT, active owned profile, exact persisted confirmed proposal, and a fresh recomputed canonical Planner V2 snapshot. Actor user/profile come only from server authentication. The client cannot submit trusted actor or service-role authority.
+- The Apply route invokes only `apply_planner_v2_proposal_candidate()` with server-derived bindings. The database remains the sole transactional writer and independently rechecks ownership, identity, expiry, plan generation/database fingerprint, capacity, replacement scope, canonical boundary/dedupe, current-day protection, and idempotency.
 
-The Week page hides the panel when preview capability is OFF. In preview-only mode it shows capacity, proposed days/items, blocked work, deterministic facts, replacement counts, and proposal/freshness identity, but hides the confirmation control and labels the result as pilot preview only. It never auto-previews or implies that the plan changed. When confirmation is independently enabled, the existing exact-confirm control is available; after confirmation it explicitly states that Apply is unavailable.
+The Week page hides the panel when preview capability is OFF. In preview-only mode it shows capacity, proposed days/items, blocked work, deterministic facts, replacement counts, and proposal/freshness identity, but hides the confirmation control. It never auto-previews or implies that the plan changed. Confirmed state comes only from the authoritative response. Apply appears only when the exact current proposal is authoritatively confirmed and Apply capability is ON; applied state likewise comes only from the server result.
 
 Telegram remains unchanged and legacy/UI-blocked. No weaker service-role or generic-text confirmation channel was added.
 
@@ -102,13 +103,14 @@ Telegram remains unchanged and legacy/UI-blocked. No weaker service-role or gene
 3. Completed: verify zero proposal/task mutation, service-only Apply, metadata guards, and zero pending migrations.
 4. Completed: separately approve and deploy the Gate-OFF app-api/web preview/confirmation runtime while keeping the lifecycle profile gate OFF and Apply unavailable.
 5. Completed in W8A engineering: split preview and confirmation into independent exact-profile gates and verify the preview-only local matrix. The candidate remains undeployed and both new gates remain absent/OFF in production.
-6. Next: under separate approval, deploy the split-gate runtime with both gates OFF; verify that state; then activate only the preview allowlist for the exact pilot profile and review one manually requested preview.
-7. Design a distinct app-api Apply activation gate and rollback plan. That future route must derive actor user/profile from the verified JWT and invoke the service-role-only RPC; deploy/activate only under explicit approval.
+6. Completed: exact-profile preview was activated separately; the historical preview later expired and must not be reused.
+7. Completed in W8D/W8E engineering: correct false confirm success and add a distinct default-OFF server Apply boundary. No deployment or production gate change occurred.
+8. Next under separate approvals: release the candidate gate-OFF, establish current-week capacity through the normal user workflow, create one fresh preview, audit, confirm exact persistence, enable Apply for the exact profile only, invoke once, audit, then disable Apply immediately.
 
-The hardened migration `20260826120000_planner_v2_proposal_lifecycle_candidate.sql` is deployed with SHA256 `a52d9ccc1f7b135ce7a93bb9c546e866c57beffeabb8d34bc0803e08558691a5`. Gate-off app-api v32 and Cloudflare Pages deployment `f7c4dd8e-e3a4-4a19-8b47-cbcd8016abae` are live from source `395a536d18b79ea124bdac0d4498a021d9ce9bc0`. Production canonical planning, W6 lifecycle, evidence-shadow consumption, capture-pilot configuration, Apply routing, and Telegram remain unchanged; release-caused Planner V2 application-data mutation is zero.
+The hardened migration `20260826120000_planner_v2_proposal_lifecycle_candidate.sql` remains deployed with SHA256 `a52d9ccc1f7b135ce7a93bb9c546e866c57beffeabb8d34bc0803e08558691a5`. The 2026-09-01 read-only refresh reports app-api v36 ACTIVE, Telegram v37 ACTIVE, corrected Pages deployment `446c7cdc-8b50-409e-a31b-ebdfd57fa221` from source `0cdd49db7778735bd096ac60c492624041ffbc76`, exact-profile preview/capture allowlists present, confirm/Apply/canonical/evidence-shadow gates absent, and zero pending migrations. W8D/W8E performed no deployment, secret change, proposal action, bootstrap, or production application-data mutation.
 
-Authority is deliberately non-transitive:
+Authority is deliberately non-transitive and production Apply remains OFF:
 
 `Preview allowlist ≠ Confirm allowlist ≠ Apply authority`
 
-Preview may persist one inert `previewed` lifecycle row. It cannot mutate tasks, weekly plans, task-resource links, progress, study sessions, capacity, or canonical task rows. Confirmation is a distinct capability, and Apply remains a future separately controlled server-only release.
+Preview may persist one inert `previewed` lifecycle row. It cannot mutate tasks, weekly plans, task-resource links, progress, study sessions, capacity, or canonical task rows. Confirmation is a distinct capability. Apply requires its own exact allowlist and the server-only transaction boundary; it is never implied by preview or confirmation.
