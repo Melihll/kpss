@@ -2456,9 +2456,23 @@ function replacementScope(proposal, tasks) {
 }
 function buildPlannerV2Preview(proposal, tasks) {
   const scope = replacementScope(proposal, tasks);
+  const futureSchedulableDays = proposal.dailyPlans.filter(
+    (day) => day.date > proposal.currentDate
+  );
+  const previewAvailableMinutes = futureSchedulableDays.reduce(
+    (sum2, day) => sum2 + day.availableMinutes,
+    0
+  );
+  const previewUnusedMinutes = futureSchedulableDays.reduce(
+    (sum2, day) => sum2 + day.unusedMinutes,
+    0
+  );
   const facts = [];
   for (const day of proposal.dailyPlans) {
-    facts.push(Object.freeze({ kind: "day_capacity", date: day.date, availableMinutes: day.availableMinutes }));
+    const schedulable = day.date > proposal.currentDate;
+    const availableMinutes = schedulable ? day.availableMinutes : 0;
+    const unusedMinutes = schedulable ? day.unusedMinutes : 0;
+    facts.push(Object.freeze({ kind: "day_capacity", date: day.date, availableMinutes }));
     if (day.date === proposal.currentDate) {
       facts.push(Object.freeze({
         kind: "current_day_protected",
@@ -2466,11 +2480,11 @@ function buildPlannerV2Preview(proposal, tasks) {
         commitmentIds: Object.freeze([...day.protectedCommitmentIds])
       }));
     }
-    if (day.unusedMinutes > 0 && proposal.unmetEligibleDemand.length > 0) {
+    if (unusedMinutes > 0 && proposal.unmetEligibleDemand.length > 0) {
       facts.push(Object.freeze({
         kind: "unused_capacity",
         date: day.date,
-        unusedMinutes: day.unusedMinutes,
+        unusedMinutes,
         reason: "next_indivisible_workload_does_not_fit"
       }));
     }
@@ -2497,20 +2511,20 @@ function buildPlannerV2Preview(proposal, tasks) {
     examProfileId: proposal.examProfileId,
     horizon: Object.freeze({ start: proposal.horizonStart, end: proposal.horizonEnd }),
     summary: Object.freeze({
-      totalAvailableMinutes: proposal.capacity.availableMinutes,
+      totalAvailableMinutes: previewAvailableMinutes,
       protectedMinutes: proposal.capacity.protectedCommitmentMinutes,
       newlyPlannedMinutes: proposal.capacity.plannedMinutes,
-      unusedMinutes: proposal.capacity.unusedMinutes,
+      unusedMinutes: previewUnusedMinutes,
       unmetEligibleMinutes: proposal.capacity.unmetEligibleMinutes,
       blockedDemandCount: proposal.blockedDemands.length
     }),
     days: Object.freeze(proposal.dailyPlans.map((day) => Object.freeze({
       date: day.date,
       configuredCapacityMinutes: day.configuredCapacityMinutes,
-      availableMinutes: day.availableMinutes,
+      availableMinutes: day.date > proposal.currentDate ? day.availableMinutes : 0,
       protectedMinutes: day.protectedCommitmentMinutes,
       proposedMinutes: day.plannedMinutes,
-      unusedMinutes: day.unusedMinutes,
+      unusedMinutes: day.date > proposal.currentDate ? day.unusedMinutes : 0,
       warnings: Object.freeze([
         ...day.overcommittedMinutes > 0 ? ["PROTECTED_OVERCOMMIT"] : [],
         ...day.date === proposal.currentDate ? ["CURRENT_DAY_PROTECTED"] : []
