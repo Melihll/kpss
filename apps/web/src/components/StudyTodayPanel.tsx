@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties, type Poi
 import { useRoadmap } from "../hooks/useRoadmap";
 import { callAppApi } from "../lib/app-api";
 import { mergeMovableTaskOrder, moveTaskId } from "../lib/today-task-order";
+import { resolveTodayFocus } from "../lib/today-focus";
 import { activeStudyElapsedMinutes } from "../lib/study-session-timer";
 import { compactMinutesLabel, taskName, WORK_MODE_LABELS, type RoadmapTask } from "../lib/roadmap";
 import { CoachDrawer, type CoachDrawerMode } from "./CoachDrawer";
@@ -61,6 +62,7 @@ const REASON_LABELS: Record<string, string> = {
   weak_topic: "Bu konu biraz daha çalışma istiyor.",
   important_topic: "Bu görev haftanın öncelikleri arasında.",
   fits_available_window: "Bugünkü zamanına en iyi uyan görev bu.",
+  daily_plan_fallback: "Bugünün planındaki sıradaki görev. Çalışmaya devam edebilirsin.",
   default: "Sıradaki çalışma görevin.",
 };
 
@@ -243,7 +245,13 @@ export function StudyTodayPanel() {
   const dailyMinutes = useMemo(() => new Map(summary.dailyPlan.tasks.map((task) => [task.id, task.minutes])), [summary.dailyPlan.tasks]);
   const dailyTaskIds = useMemo(() => new Set([...dailyMinutes.keys(), ...summary.dailyPlan.completedTaskIds]), [dailyMinutes, summary.dailyPlan.completedTaskIds]);
   const todayTasks = useMemo(() => tasks.filter((task) => dailyTaskIds.has(task.id)), [dailyTaskIds, tasks]);
-  const focusTask = recommendation?.task;
+  const resolvedFocus = resolveTodayFocus({
+    recommendation,
+    todayTasks,
+    dailyMinutes,
+    hasActiveSession: Boolean(active),
+  });
+  const focusTask = resolvedFocus?.task;
   const activeTask = active?.task_id
     ? tasks.find((task) => task.id === active.task_id) ?? null
     : null;
@@ -372,8 +380,8 @@ export function StudyTodayPanel() {
       </div> : focusTask ? <div className="focus-state" key="ready">
         <span className="focus-label">Şimdi</span>
         <div className="focus-main"><span>{focusTask.subjects?.name ?? focusTask.title.split(" · ")[0] ?? "Ders"}</span><h2>{taskName(focusTask)}</h2><div className="focus-resource"><p>{focusTask.resources?.name ?? focusTask.description ?? "Kaynak belirtilmedi"}</p></div></div>
-        <div className="focus-facts"><span>{focusTask.work_mode ? WORK_MODE_LABELS[focusTask.work_mode] ?? "Çalışma" : "Çalışma"}</span><strong>{recommendation.remainingMinutes} dk</strong></div>
-        <p className="focus-reason">{REASON_LABELS[recommendation.reason] ?? REASON_LABELS.default}</p>
+        <div className="focus-facts"><span>{focusTask.work_mode ? WORK_MODE_LABELS[focusTask.work_mode] ?? "Çalışma" : "Çalışma"}</span><strong>{resolvedFocus?.remainingMinutes ?? 0} dk</strong></div>
+        <p className="focus-reason">{REASON_LABELS[resolvedFocus?.reason ?? "default"] ?? REASON_LABELS.default}</p>
         <button className="focus-action" type="button" disabled={busy} onClick={() => void act(() => callAppApi("/study-sessions/start", { method: "POST", body: { taskId: focusTask.id, entrySource: "web" } }))}><Icon name="play" weight="fill" />Çalışmaya Başla</button>        <TaskMaterialActions task={focusTask} onOpen={openTaskMaterial} />
       </div> : <div className="focus-state focus-empty"><span className="focus-label">Şimdi</span><Icon name="check" size={32} /><h2>Sıradaki görev yok.</h2><p>Haftalık plan oluşturulduğunda burada görünecek.</p></div>}
     </article>
