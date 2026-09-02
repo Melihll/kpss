@@ -426,6 +426,22 @@ describe("W6 Planner V2 local transactional candidate", () => {
     expect(after.data).toEqual(before.data);
   });
 
+  it("expires a confirmed proposal without violating confirmation state", async () => {
+    const candidate = await createCandidate({ suffix: "confirmed-expiry", creates: [] });
+    expect((await confirm(candidate)).error).toBeNull();
+    await expireCandidate(candidate.recordId);
+
+    const result = await apply(candidate);
+    expect(result.error).toBeNull();
+    expect(result.data).toMatchObject({ recordId: candidate.recordId, state: "expired", applied: false });
+    const stored = await owner.from("confirmed_action_proposals")
+      .select("status,confirmed_at,applied_at")
+      .eq("id", candidate.recordId)
+      .single();
+    expect(stored.error).toBeNull();
+    expect(stored.data).toEqual({ status: "expired", confirmed_at: null, applied_at: null });
+  });
+
   it("rejects generic or wrong proposal confirmation identity", async () => {
     const candidate = await createCandidate({ suffix: "wrong-confirm" });
     const result = await owner.rpc("confirm_planner_v2_proposal_candidate", {

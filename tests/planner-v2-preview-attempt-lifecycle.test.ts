@@ -14,6 +14,13 @@ const migration = readFileSync(
   ),
   "utf8",
 );
+const expiryMigration = readFileSync(
+  join(
+    root,
+    "supabase/migrations/20260902103000_harden_planner_v2_expired_confirmation_state.sql",
+  ),
+  "utf8",
+);
 
 describe("Planner V2 preview attempt lifecycle", () => {
   it("gives every explicit preview request a distinct lifecycle idempotency identity", () => {
@@ -43,5 +50,21 @@ describe("Planner V2 preview attempt lifecycle", () => {
     );
     expect(migration).not.toContain("confirmed_at");
     expect(migration).not.toContain("applied_at");
+  });
+
+  it("keeps the confirmation-state constraint strict when a confirmed attempt expires", () => {
+    expect(expiryMigration).toContain("set status='expired',confirmed_at=null");
+    expect(expiryMigration).not.toContain("drop constraint confirmed_action_proposals_confirmation_state");
+  });
+
+  it("preserves the service-only Apply privilege boundary", () => {
+    expect(expiryMigration).toContain("if coalesce(auth.role(),'') <> 'service_role'");
+    expect(expiryMigration).toContain("from public,anon,authenticated");
+    expect(expiryMigration).toMatch(
+      /grant execute on function public\.apply_planner_v2_proposal_candidate\([\s\S]*?\)\s*to service_role;/,
+    );
+    expect(expiryMigration).not.toMatch(
+      /grant execute on function public\.apply_planner_v2_proposal_candidate\([\s\S]*?\)\s*to (?:public|anon|authenticated);/,
+    );
   });
 });
