@@ -1,11 +1,17 @@
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
-import { beforeAll, describe, expect, it } from "vitest";
+import postgres from "postgres";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const url = process.env.SUPABASE_URL;
+const dbUrl = process.env.SUPABASE_DB_URL;
 const anonKey = process.env.SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !anonKey || !serviceRoleKey) throw new Error("Local Supabase env required");
+if (!url || !dbUrl || !anonKey || !serviceRoleKey) throw new Error("Local Supabase env required");
+if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(url) || new URL(dbUrl).hostname !== "127.0.0.1") {
+  throw new Error("Planner V2 integration tests require local Supabase");
+}
+const localDb = postgres(dbUrl, { max: 1 });
 
 const EDITION = "11000000-0000-0000-0000-000000000001";
 const SUBJECT = "20000000-0000-0000-0000-000000000002";
@@ -83,8 +89,10 @@ describe("W6 Planner V2 local transactional candidate", () => {
     suffix: string;
     creates?: Record<string, unknown>[];
     replaceableTaskIds?: string[];
+    identity?: ReturnType<typeof identity>;
+    idempotencyKey?: string;
   }) {
-    const ids = identity(input.suffix);
+    const ids = input.identity ?? identity(input.suffix);
     const plan = await owner.from("weekly_plans").select("generation_version").eq("id", planId).single();
     expect(plan.error).toBeNull();
     const creates = input.creates ?? [createItem()];
@@ -131,7 +139,7 @@ describe("W6 Planner V2 local transactional candidate", () => {
       p_component_fingerprints: { capacityFingerprint: "capacity", workloadFingerprint: "workload" },
       p_apply_plan: applyPlan,
       p_preview: preview,
-      p_idempotency_key: `w6:${input.suffix}:${randomUUID()}`,
+      p_idempotency_key: input.idempotencyKey ?? `w6:${input.suffix}:${randomUUID()}`,
     });
     expect(created.error).toBeNull();
     return { recordId: created.data.recordId as string, ...ids };
@@ -165,6 +173,15 @@ describe("W6 Planner V2 local transactional candidate", () => {
 
   async function apply(candidate: Awaited<ReturnType<typeof createCandidate>>) {
     return admin.rpc("apply_planner_v2_proposal_candidate", applyArgs(candidate));
+  }
+
+  async function expireCandidate(recordId: string) {
+    await localDb`
+      update public.confirmed_action_proposals
+      set created_at = now() - interval '2 minutes',
+          expires_at = now() - interval '1 minute'
+      where id = ${recordId}::uuid
+    `;
   }
 
   beforeAll(async () => {
@@ -233,6 +250,10 @@ describe("W6 Planner V2 local transactional candidate", () => {
     }).select("id").single();
     expect(replaceable.error).toBeNull();
     replaceableTaskId = replaceable.data!.id;
+  });
+
+  afterAll(async () => {
+    await localDb.end({ timeout: 5 });
   });
 
   it("denies direct Apply RPC execution to authenticated, anon, and public clients", async () => {
@@ -361,6 +382,48 @@ describe("W6 Planner V2 local transactional candidate", () => {
     const after = await owner.from("tasks").select("id", { count: "exact", head: true }).eq("weekly_plan_id", planId);
     expect(after.count).toBe(before.count);
     expect(candidate.recordId).toBeTruthy();
+  });
+
+  it("creates a fresh lifecycle attempt for the same deterministic proposal without resurrecting the expired attempt", async () => {
+    const exactIdentity = identity("repeat-preview");
+    const candidateA = await createCandidate({
+      suffix: "repeat-preview-a",
+      identity: exactIdentity,
+      idempotencyKey: `w6:repeat-preview:a:${randomUUID()}`,
+    });
+    await expireCandidate(candidateA.recordId);
+    const expired = await confirm(candidateA);
+    expect(expired.error).toBeNull();
+    expect(expired.data).toMatchObject({ recordId: candidateA.recordId, state: "expired", confirmed: false });
+    const before = await owner.from("confirmed_action_proposals")
+      .select("status,expires_at,confirmed_at,applied_at")
+      .eq("id", candidateA.recordId)
+      .single();
+    expect(before.error).toBeNull();
+
+    const candidateB = await createCandidate({
+      suffix: "repeat-preview-b",
+      identity: exactIdentity,
+      idempotencyKey: `w6:repeat-preview:b:${randomUUID()}`,
+    });
+    expect(candidateB.recordId).not.toBe(candidateA.recordId);
+    expect(candidateB).toMatchObject(exactIdentity);
+    const fresh = await owner.from("confirmed_action_proposals")
+      .select("status,expires_at,confirmed_at,applied_at")
+      .eq("id", candidateB.recordId)
+      .single();
+    expect(fresh.error).toBeNull();
+    expect(fresh.data?.status).toBe("previewed");
+    expect(new Date(fresh.data!.expires_at).getTime()).toBeGreaterThan(Date.now());
+    expect(fresh.data?.confirmed_at).toBeNull();
+    expect(fresh.data?.applied_at).toBeNull();
+
+    const after = await owner.from("confirmed_action_proposals")
+      .select("status,expires_at,confirmed_at,applied_at")
+      .eq("id", candidateA.recordId)
+      .single();
+    expect(after.error).toBeNull();
+    expect(after.data).toEqual(before.data);
   });
 
   it("rejects generic or wrong proposal confirmation identity", async () => {

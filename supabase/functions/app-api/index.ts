@@ -871,7 +871,7 @@ Deno.serve(async (request) => {
         p_component_fingerprints: componentFingerprints,
         p_apply_plan: applyPlan,
         p_preview: preview,
-        p_idempotency_key: `planner-v2-preview:${preview.proposalFingerprint}`,
+        p_idempotency_key: `planner-v2-preview:${preview.proposalFingerprint}:${crypto.randomUUID()}`,
       });
       if (stored.error) throw stored.error;
       return json({
