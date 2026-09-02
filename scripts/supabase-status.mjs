@@ -11,6 +11,7 @@ export function readLocalSupabaseStatus() {
 
   const status = JSON.parse(result.stdout);
   const url = status.API_URL ?? status.api_url;
+  const dbUrl = status.DB_URL ?? status.db_url;
   const anonKey =
     status.ANON_KEY ??
     status.PUBLISHABLE_KEY ??
@@ -26,5 +27,5 @@ export function readLocalSupabaseStatus() {
     throw new Error("Supabase status did not return API_URL and an anon/publishable key.");
   }
 
-  return { url, anonKey, serviceRoleKey };
+  return { url, dbUrl, anonKey, serviceRoleKey };
 }
