@@ -1,6 +1,6 @@
 # KPSS Koçu — Project Handoff
 
-Last updated: 2026-09-01
+Last updated: 2026-09-02
 
 ## Canonical source
 
@@ -68,13 +68,22 @@ Material completion history remains separate from pedagogical state. Previously 
 
 ## NEXT EXACT STEP
 
-Prepare a separate gate-OFF runtime release preflight for the W8D/W8E candidate. It fixes the false confirmation success and adds a server-only `/planner-v2/apply` boundary behind the new independent `PLANNER_V2_APPLY_V1_PROFILE_IDS` allowlist. Do not deploy or set that gate without distinct approval. Production preview remains exact-profile-only; confirmation, Apply, canonical planning, and evidence shadow remain OFF.
+Run a separate read-only production schema/RPC and gate-off runtime release preflight for the committed Evre 5 lifecycle-hardening candidate. Review preview-attempt identity, local privilege parity against the hosted baseline, confirmed-expiry behavior, pending migration order, and rollback identities. Do not deploy migrations/runtime or change Confirm/Apply gates without distinct approval. Production preview remains exact-profile-only; confirmation, Apply, canonical planning, and evidence shadow remain OFF.
 
 Before a fresh pilot can preview anything, use the existing user workflow under separate approval: Settings → Weekly capacity → Edit, save at least one recurring availability window, then open Week. Week/Today already invokes `POST /p48/week/generate` when the configured profile has no current plan. Never reuse historical proposal `19ade727-e534-4be1-bdb0-3c7b6e505af0`; it is expired and `confirmed_at` is null.
 
 In parallel, continue passive observation of the next natural W2-eligible physical study lifecycle for the exact-profile pilot. Inspect it read-only if it occurs; do not manufacture activity, widen the allowlist, or alter accepted evidence.
 
 Telegram requires a separately reviewed service-role W2 wrapper plus authoritative page-boundary UX before it can enter an activation proposal. Do not activate canonical workload planning while production physical pace evidence remains insufficient.
+
+## 2026-09-02 Evre 5 preview-attempt lifecycle hardening
+
+- Root cause: preview persistence reused `planner-v2-preview:<proposalFingerprint>` and the partial unique `(user_id, planner_proposal_id)` index, so a repeated deterministic preview could return an expired lifecycle row instead of a fresh confirmation lease.
+- The app-api candidate now appends a random attempt UUID to the deterministic fingerprint-based idempotency prefix. `20260901123000_planner_v2_preview_attempt_lifecycle.sql` replaces the unique proposal-identity index with a non-unique lookup index; proposal/snapshot fingerprints stay deterministic and exact confirmation remains bound to the returned `recordId`.
+- `20260902101000_align_service_role_task_privileges.sql` reproduces the already-hosted CRUD baseline for four task/plan tables after local reset. It does not grant proposal-table writes or broaden hosted authority.
+- A real DB regression exposed the latent confirmed→expired Apply failure against `confirmed_action_proposals_confirmation_state`. `20260902103000_harden_planner_v2_expired_confirmation_state.sql` preserves the strict constraint and clears `confirmed_at` atomically with the expiry transition; Apply remains executable only by `service_role`.
+- Local verification is GREEN: focused lifecycle/security/HTTP `26/26`; Planner V2 lifecycle DB integration `16/16`; all integration `132/132`; full non-integration `949/949`; workspace typecheck, Planner V2 safety/read-only checks, local PostgreSQL lint, and diff check PASS.
+- No production command, deploy, migration, secret/gate change, proposal action, Apply, or application-data mutation occurred. Confirm and Apply remain OFF. The candidate is committed locally and remains unpushed pending release review.
 
 ## 2026-09-01 W8D confirm correction + W8E controlled Apply engineering
 

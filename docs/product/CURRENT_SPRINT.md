@@ -1,6 +1,6 @@
 # Current Sprint
 
-Last updated: 2026-08-26
+Last updated: 2026-09-02
 
 ## Sprint 02 — Planning Semantics & Duration Policy
 
@@ -60,6 +60,15 @@ The next active product-foundation task is `MAT-001`, which supplies the exact p
 - Scope: deterministic canonical proposal, exact capacity, whole-material boundaries, blocked/unmet demand, current-day/user-commitment protection, stable staleness fingerprints, and read-only legacy comparison.
 - Production evaluation uses a separate strictly read-only runner; it cannot write diagnostic rows or call Apply.
 - W6 proposal Apply, PLN-003/004/005 production authority, and PLN-010 rollout remain separately gated.
+
+### Planner V2 proposal lifecycle reliability (Evre 5)
+
+- Phase: local engineering verified; migrations/runtime candidate undeployed; production Confirm and Apply remain OFF.
+- Each explicit preview now receives a distinct lifecycle attempt record and idempotency key while deterministic proposal/snapshot fingerprints remain unchanged. Terminal attempts are never resurrected.
+- Local rebuilds reproduce the existing hosted `service_role` CRUD baseline for `weekly_plans`, `tasks`, `task_resource_units`, and `task_progress`; proposal-table authority remains unchanged.
+- A confirmed proposal that expires before Apply atomically clears `confirmed_at` as it enters `expired`, preserving the strict confirmation-state constraint.
+- Verification: focused lifecycle/security/HTTP `26/26`, Planner V2 lifecycle DB integration `16/16`, all integration `132/132`, full non-integration `949/949`, workspace typecheck, Planner V2 safety checks, local PostgreSQL lint, and diff check PASS.
+- No production deployment, migration, secret/gate change, proposal action, or application-data mutation was performed.
 ## NEXT
 
 1. Close `PLN-002` natural Extra Study authenticated real-user acceptance when real usage provides evidence

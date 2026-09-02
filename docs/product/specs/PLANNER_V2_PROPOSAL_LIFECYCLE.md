@@ -1,6 +1,6 @@
 # Planner V2 Proposal Lifecycle
 
-Status: W8D/W8E confirm/Apply engineering candidate verified locally; Apply not deployed and production gate OFF
+Status: Evre 5 preview-attempt/expiry hardening verified locally; candidate migrations/runtime undeployed; production Confirm and Apply OFF
 Lifecycle version: `planner-v2-lifecycle-v1`
 Planner version: `canonical-planner-v2-shadow-v1`
 
@@ -40,6 +40,7 @@ The domain transition function rejects every unlisted transition. UI navigation 
 
 - `snapshotFingerprint` is deterministic SHA-256 over decision inputs.
 - `proposalFingerprint` is deterministic SHA-256 over the exact output.
+- Every explicit preview request creates a distinct lifecycle attempt with a fresh `recordId` and idempotency-key UUID suffix. Repeating the same deterministic proposal may keep the same proposal/snapshot fingerprints, but it never revives an expired, stale, rejected, confirmed, or applied attempt.
 - confirmation binds user, profile, proposal ID, proposal fingerprint, snapshot fingerprint, planner version, and server confirmation time.
 - component hashes classify capacity, progress, task state, workload, protected commitments, and policy changes.
 - the transaction also compares `planner_v2_database_fingerprint()`, which covers the active plan, task/progress/session/capacity state, exact task-unit links, resource-unit progress, YouTube catalog/progress/mappings, and topic progress.
@@ -77,6 +78,8 @@ Physical tasks require a persisted `physical:<resource_unit_uuid>` identity and 
 The transaction locks the proposal and weekly plan, takes a per-user advisory transaction lock, verifies exact confirmation identity, plan generation, the authoritative database fingerprint, owner/profile, horizon, protected replacement scope, active resource/material boundary, canonical uniqueness, and final capacity. Only then does it cancel the explicitly named future Planner V2 tasks, insert exact canonical tasks/progress/unit links, reconcile plan minutes, advance generation, and store one result.
 
 Any raised failure rolls back all replacement and insert operations. A repeated call after `applied` returns the stored result with `idempotent=true`; it cannot create tasks or consume capacity again. A unique partial index prevents the same active canonical workload from appearing twice in one plan.
+
+If a confirmed attempt expires before Apply, the transaction changes it to `expired` and clears `confirmed_at` in the same statement. This preserves `confirmed_action_proposals_confirmation_state`; the constraint is not relaxed, no work is applied, and recovery requires a new preview attempt and explicit confirmation.
 
 ## Canonical task metadata privilege boundary
 
