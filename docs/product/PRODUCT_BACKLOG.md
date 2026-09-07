@@ -146,6 +146,8 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 - W5 engineering note (2026-08-26): the Planner V2 canonical shadow consumes MAT-001 handoffs without changing material or task state. It schedules exact whole boundaries only, carries unknown/blocked physical demand explicitly, deduplicates full-video workload, and produces immutable snapshot/proposal fingerprints. MAT-001 remains `IN_PROGRESS`: production data maturity and controlled application of exact material plans are later gates.
 - W6 engineering note (2026-08-26): the Planner V2 proposal lifecycle is locally implemented through exact confirmation and an atomic Apply candidate. Canonical task identity/boundary persistence, stale/capacity rechecks, conservative replacement, rollback, and idempotency require the new additive migration candidate. It is not applied to production; app-api/web capability remains default OFF and there is no live Apply route. Production schema review, preview pilot, and any later Apply activation remain separate backlog/release decisions.
 - Evre 5 reliability note (2026-09-02): repeated deterministic previews now create distinct lifecycle attempt rows instead of reusing an expired record; deterministic proposal/snapshot identity remains stable and confirmation stays bound to the returned attempt `recordId`. Local migration rebuilds reproduce the existing hosted task/plan `service_role` baseline, and confirmed→expired Apply now clears the current confirmation marker without weakening its constraint. Local integration and regression gates are GREEN; all new migration/runtime changes remain undeployed, production Confirm/Apply remain OFF, and no production mutation occurred.
+- Evre 5 production acceptance note (2026-09-07): exact-profile Preview, exact Confirm, and one meaningful atomic Apply passed in production. Lifecycle record `805be0cb-7d68-4b12-8df9-7b14f52a852e` created exactly one 22-minute canonical YouTube task on 2026-09-08, replaced zero tasks, advanced the weekly plan once from generation 3 to 4, preserved past/Today/41 protected manual future tasks, and left study sessions unchanged. Duplicate protection passed with exactly one active canonical task. Confirm and Apply returned to OFF immediately after the pilot. Evre 5 engineering and production acceptance are complete; the remaining work is a short bounded observation/closure before the separately scoped Evre 6 AI Coach macro phase.
+
 ## `PLN-005` — Resource Role Model
 
 - Priority: `P1`
@@ -239,6 +241,8 @@ Priority describes impact, not implementation order. Dependencies and safety gat
   - Seven consecutive days of normal Esra usage complete without manual database repair caused by planner behavior.
   - No P0 planner invariant is violated during the observation window.
   - Real-user behavior and explanations are reviewed before broader expansion.
+
+- Evre 5 acceptance checkpoint (2026-09-07): the approved exact-profile meaningful Apply pilot passed with `1 create / 0 replace / 22 min`, exact canonical linkage, one generation increment, unchanged protected work/sessions, and no duplicate. This is evidence for controlled rollout safety, not completion of the separate seven-day `PLN-010` observation criterion or authorization for broader exposure. Confirm and Apply remain OFF.
 
 ## Definition of Done
 

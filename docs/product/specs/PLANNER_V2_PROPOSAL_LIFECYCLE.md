@@ -1,6 +1,6 @@
 # Planner V2 Proposal Lifecycle
 
-Status: Evre 5 preview-attempt/expiry hardening verified locally; candidate migrations/runtime undeployed; production Confirm and Apply OFF
+Status: Evre 5 engineering and exact-profile production acceptance complete; bounded observation/closure remains; production Confirm and Apply OFF
 Lifecycle version: `planner-v2-lifecycle-v1`
 Planner version: `canonical-planner-v2-shadow-v1`
 
@@ -12,7 +12,7 @@ W6 turns the immutable W5 canonical proposal into a reviewable lifecycle:
 
 W8A separates proposal visibility from confirmation authority. W8E adds a third, independent Apply authority. `PLANNER_V2_PREVIEW_V1_PROFILE_IDS` controls capability visibility and preview creation; `PLANNER_V2_CONFIRM_V1_PROFILE_IDS` controls confirmation only; `PLANNER_V2_APPLY_V1_PROFILE_IDS` controls the server Apply boundary only. Confirmation and Apply each additionally require preview eligibility for the same profile. All settings default OFF, accept only comma-separated exact UUIDs, trim whitespace, deduplicate entries, and fail the whole setting closed on an empty, malformed, or wildcard (`*`) entry.
 
-The additive schema/RPC capability and earlier gate-off app-api/web runtime were deployed separately. W8D/W8E is an engineering-only candidate: it adds the missing authenticated Apply HTTP route, but that code is not deployed and its production allowlist is absent/OFF. There is no Telegram Apply path. Schema or runtime presence alone does not generate, preview, confirm, or apply a proposal.
+The additive schema/RPC capability, preview-attempt/expiry hardening, and authenticated app-api/web lifecycle runtime were deployed under separate approvals. The independent Confirm and Apply allowlists remain absent/OFF after the exact-profile acceptance pilot. There is no Telegram Apply path. Schema or runtime presence alone does not generate, preview, confirm, or apply a proposal.
 
 ## Existing infrastructure audit
 
@@ -73,7 +73,7 @@ Physical tasks require a persisted `physical:<resource_unit_uuid>` identity and 
 
 ## Transaction and idempotency
 
-`apply_planner_v2_proposal_candidate()` is server-only and executes in one PostgreSQL transaction. `public`, `anon`, and `authenticated` have no EXECUTE authority; only `service_role` may call it. A future app-api Apply route must first verify the human JWT, derive the actor user and active profile, and pass both bindings to the server-only RPC. The database independently verifies that the actor owns the proposal, confirmation, profile, and active plan before continuing.
+`apply_planner_v2_proposal_candidate()` is server-only and executes in one PostgreSQL transaction. `public`, `anon`, and `authenticated` have no EXECUTE authority; only `service_role` may call it. The app-api Apply route first verifies the human JWT, derives the actor user and active profile, and passes both bindings to the server-only RPC. The database independently verifies that the actor owns the proposal, confirmation, profile, and active plan before continuing.
 
 The transaction locks the proposal and weekly plan, takes a per-user advisory transaction lock, verifies exact confirmation identity, plan generation, the authoritative database fingerprint, owner/profile, horizon, protected replacement scope, active resource/material boundary, canonical uniqueness, and final capacity. Only then does it cancel the explicitly named future Planner V2 tasks, insert exact canonical tasks/progress/unit links, reconcile plan minutes, advance generation, and store one result.
 
@@ -105,12 +105,15 @@ Telegram remains unchanged and legacy/UI-blocked. No weaker service-role or gene
 2. Completed: apply the migration under schema-only production approval with capability OFF.
 3. Completed: verify zero proposal/task mutation, service-only Apply, metadata guards, and zero pending migrations.
 4. Completed: separately approve and deploy the Gate-OFF app-api/web preview/confirmation runtime while keeping the lifecycle profile gate OFF and Apply unavailable.
-5. Completed in W8A engineering: split preview and confirmation into independent exact-profile gates and verify the preview-only local matrix. The candidate remains undeployed and both new gates remain absent/OFF in production.
+5. Completed: split preview and confirmation into independent exact-profile gates, verify the preview-only matrix, and release the gate-off runtime.
 6. Completed: exact-profile preview was activated separately; the historical preview later expired and must not be reused.
-7. Completed in W8D/W8E engineering: correct false confirm success and add a distinct default-OFF server Apply boundary. No deployment or production gate change occurred.
-8. Next under separate approvals: release the candidate gate-OFF, establish current-week capacity through the normal user workflow, create one fresh preview, audit, confirm exact persistence, enable Apply for the exact profile only, invoke once, audit, then disable Apply immediately.
+7. Completed: correct false confirm success, add the distinct default-OFF server Apply boundary, deploy the reviewed schema/runtime, and retain exact-profile gate isolation.
+8. Completed under exact pilot approval: establish sanctioned future-only capacity, create one fresh preview, audit exact `1 create / 0 replace / 22 min`, confirm the same record, invoke Apply once, audit, and disable Confirm/Apply immediately.
+9. Next: complete the short bounded post-pilot observation/closure without widening authority. Evre 6 AI Coach is the next separately scoped macro phase.
 
-The hardened migration `20260826120000_planner_v2_proposal_lifecycle_candidate.sql` remains deployed with SHA256 `a52d9ccc1f7b135ce7a93bb9c546e866c57beffeabb8d34bc0803e08558691a5`. The 2026-09-01 read-only refresh reports app-api v36 ACTIVE, Telegram v37 ACTIVE, corrected Pages deployment `446c7cdc-8b50-409e-a31b-ebdfd57fa221` from source `0cdd49db7778735bd096ac60c492624041ffbc76`, exact-profile preview/capture allowlists present, confirm/Apply/canonical/evidence-shadow gates absent, and zero pending migrations. W8D/W8E performed no deployment, secret change, proposal action, bootstrap, or production application-data mutation.
+The hardened migration `20260826120000_planner_v2_proposal_lifecycle_candidate.sql` remains deployed with SHA256 `a52d9ccc1f7b135ce7a93bb9c546e866c57beffeabb8d34bc0803e08558691a5`; the later preview-attempt, service-role parity, and expiry-state migrations are also applied, with zero pending linked migrations. The 2026-09-07 closure postflight reports app-api v47 ACTIVE with JWT verification enabled. Its downloaded 27-file source is content-equivalent to the local Planner V2 release after newline normalization. Preview remains exact-profile-only; Confirm and Apply are absent/OFF.
+
+Production acceptance record `805be0cb-7d68-4b12-8df9-7b14f52a852e` is `applied` with non-null confirmation and application timestamps. It created task `c428ab7b-5186-42cb-a3a3-de6058387471` for exact canonical identity `youtube:bae6f705-159f-4e45-a22e-456b091d45bd` on 2026-09-08 for 22 minutes, replaced zero tasks, advanced the plan exactly once to generation 4, preserved past/Today/41 protected manual future tasks, left all 85 study sessions unchanged, and left exactly one active canonical task. This completes Evre 5 engineering and production acceptance; only bounded observation/closure remains.
 
 Authority is deliberately non-transitive and production Apply remains OFF:
 

@@ -1,6 +1,6 @@
 # KPSS Koçu — Project Handoff
 
-Last updated: 2026-09-02
+Last updated: 2026-09-07
 
 ## Canonical source
 
@@ -30,6 +30,7 @@ The architecture is subject-agnostic across all KPSS subjects. Do not create Mat
 - `PLN-003`: deterministic duration policy locally verified; production-authoritative stage activation gated.
 - P48 planned-credit accounting correction: deployed and observing.
 - `PLN-004`: `IMPLEMENTED_LOCAL_VERIFIED`; production-authoritative activation gated.
+- Planner V2 Evre 5: engineering and exact-profile production acceptance complete; bounded observation/closure remains. Confirm and Apply are OFF.
 
 PLN-004 verification:
 - targeted domain tests `22/22` PASS;
@@ -50,13 +51,13 @@ PLN-004 verification:
 
 ## Active task
 
-`MAT-001 — Canonical Material Content & Progress`
+`Planner V2 Evre 5 — bounded post-pilot observation and closure`
 
-Goal: make the planner capable of using exact subject-independent scope such as `pages 42–53`, `Test 3–4`, or `Video 5 + Video 6`, while tracking exactly where the learner stopped and what the week is expected to finish.
+Goal: observe the accepted exact-profile production result without widening authority, verify that the applied canonical task proceeds normally, and close Evre 5 without manual repair.
 
-Physical and YouTube authoritative stores should be reused rather than duplicated.
+The next macro phase is Evre 6 AI Coach. It begins only under a separate discovery/specification scope; this handoff does not authorize AI Coach implementation or production activation.
 
-Material completion history remains separate from pedagogical state. Previously completed material stays completed even when PLN-004 later requires review/remediation.
+MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning foundations remain tracked work rather than being silently treated as closed by the Planner V2 pilot.
 
 ## Production guardrails
 
@@ -68,13 +69,24 @@ Material completion history remains separate from pedagogical state. Previously 
 
 ## NEXT EXACT STEP
 
-Run a separate read-only production schema/RPC and gate-off runtime release preflight for the committed Evre 5 lifecycle-hardening candidate. Review preview-attempt identity, local privilege parity against the hosted baseline, confirmed-expiry behavior, pending migration order, and rollback identities. Do not deploy migrations/runtime or change Confirm/Apply gates without distinct approval. Production preview remains exact-profile-only; confirmation, Apply, canonical planning, and evidence shadow remain OFF.
+Observe lifecycle record `805be0cb-7d68-4b12-8df9-7b14f52a852e` and canonical task `c428ab7b-5186-42cb-a3a3-de6058387471` read-only during the short bounded closure window. Do not widen preview access, re-enable Confirm/Apply, manufacture another proposal, or manually repair the accepted result. Production preview remains exact-profile-only; Confirm and Apply remain OFF.
 
-Before a fresh pilot can preview anything, use the existing user workflow under separate approval: Settings → Weekly capacity → Edit, save at least one recurring availability window, then open Week. Week/Today already invokes `POST /p48/week/generate` when the configured profile has no current plan. Never reuse historical proposal `19ade727-e534-4be1-bdb0-3c7b6e505af0`; it is expired and `confirmed_at` is null.
+After the bounded observation closes, prepare the Evre 6 AI Coach discovery/specification brief as the next macro phase. Any implementation, authority, deployment, or production-data change requires a separate decision.
 
 In parallel, continue passive observation of the next natural W2-eligible physical study lifecycle for the exact-profile pilot. Inspect it read-only if it occurs; do not manufacture activity, widen the allowlist, or alter accepted evidence.
 
 Telegram requires a separately reviewed service-role W2 wrapper plus authoritative page-boundary UX before it can enter an activation proposal. Do not activate canonical workload planning while production physical pace evidence remains insufficient.
+
+## 2026-09-07 Evre 5 production acceptance
+
+- Preview production PASS, exact Confirm production PASS, and meaningful atomic Apply production PASS for exact profile `73f9b34c-da73-43d9-a05c-2026409cf290`.
+- Fresh lifecycle record `805be0cb-7d68-4b12-8df9-7b14f52a852e` reached `applied` with non-null `confirmed_at` and `applied_at`. The earlier expired attempt was not reused.
+- Apply created task `c428ab7b-5186-42cb-a3a3-de6058387471`: `13 - TABAN ARİTMETİĞİ - İLYAS GÜNEŞ l KPSS - MEB AGS`, scheduled 2026-09-08 for 22 minutes with canonical identity `youtube:bae6f705-159f-4e45-a22e-456b091d45bd` and an exact `full_video` boundary.
+- Result: `1 create / 0 replace / 22 min`. Weekly plan `ebbba80d-427c-4d5b-9562-e235f58ba266` moved from `2662 / 2662 / 2640`, generation 3, to `2662 / 2662 / 2662`, generation 4.
+- Safety acceptance PASS: past and Today task fingerprints were unchanged; all 41 protected manual future tasks were unchanged; study sessions remained 85 completed / 0 active / 0 cancelled; active canonical duplicate count is exactly one.
+- Read-only closure postflight reconfirmed the same lifecycle, task, plan, protection, duplicate, and session state. Linked migrations are synchronized with zero pending. app-api v47 is ACTIVE with JWT verification enabled and its downloaded 27-file source matches the local Planner V2 release after newline normalization.
+- Confirm and Apply gates are absent/OFF after the pilot. Preview remains exact-profile-only. No deployment, migration, gate change, or production-data mutation occurred during the closure postflight.
+- Evre 5 engineering and production acceptance are complete; only the bounded observation/closure remains. Evre 6 AI Coach is the next macro phase.
 
 ## 2026-09-02 Evre 5 preview-attempt lifecycle hardening
 

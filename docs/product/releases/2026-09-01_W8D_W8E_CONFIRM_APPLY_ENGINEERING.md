@@ -62,3 +62,17 @@ Production was not deployed or mutated. Read-only CLI refresh reports app-api v3
 `sanctioned current-week capacity → current plan → one fresh preview → read-only audit → exact confirm → persisted-confirm audit → exact Apply gate ON → one Apply → read-only audit → Apply gate OFF`
 
 Every production step requires its own explicit release/activation approval. The historical expired proposal is permanently ineligible.
+
+## 2026-09-07 production acceptance closure update
+
+The candidate schema and app-api runtime were subsequently released under separate approvals. Exact-profile Preview, exact Confirm, and one meaningful atomic Apply passed in production for profile `73f9b34c-da73-43d9-a05c-2026409cf290`.
+
+- Fresh lifecycle record: `805be0cb-7d68-4b12-8df9-7b14f52a852e`; final state `applied`, with non-null `confirmed_at` and `applied_at`.
+- Result: `1 create / 0 replace / 22 min`.
+- Created task: `c428ab7b-5186-42cb-a3a3-de6058387471`, scheduled 2026-09-08 for canonical identity `youtube:bae6f705-159f-4e45-a22e-456b091d45bd` with the exact full-video boundary.
+- Weekly plan: `2662 / 2662 / 2640`, generation 3, became `2662 / 2662 / 2662`, generation 4.
+- Protection: past tasks, Today tasks, and all 41 pre-existing protected manual future tasks were unchanged; study sessions remained unchanged; active canonical duplicate count is exactly one.
+- Gates: Confirm OFF and Apply OFF after the pilot; preview remains exact-profile-only.
+- Closure postflight: lifecycle/task/plan/protection state unchanged, app-api v47 ACTIVE with JWT verification, deployed source content-equivalent to the local Planner V2 release, and linked migrations synchronized with zero pending.
+
+Evre 5 engineering and production acceptance are complete. Only a short bounded observation/closure remains before the separately scoped Evre 6 AI Coach macro phase.

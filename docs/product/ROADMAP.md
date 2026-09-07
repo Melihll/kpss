@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-08-26
+Last updated: 2026-09-07
 
 ## Roadmap rules
 
@@ -63,11 +63,11 @@ M1 is complete only when:
 
 ## Now
 
-[Sprint 01 — Planner Reality Audit](CURRENT_SPRINT.md)
+[Current sprint](CURRENT_SPRINT.md)
 
-- `NOW`: `PLN-001` — Esra 7-day Planning Reality Audit (`READY`, explicitly not started)
-- `NEXT`: `PLN-002` — Study accounting semantics
-- `NEXT`: `PLN-003` — Study Block Duration Policy
+- `NOW`: bounded Evre 5 Planner V2 post-pilot observation/closure; engineering and exact-profile production acceptance are complete.
+- `NEXT MACRO PHASE`: Evre 6 AI Coach discovery/specification under a separately approved scope.
+- `CONTINUING FOUNDATIONS`: natural `PLN-002` Extra Study acceptance and gated `PLN-003`/`PLN-004`/`MAT-001`/`PLN-005` maturity work.
 
 ## Later within M1
 
@@ -94,13 +94,19 @@ The canonical deterministic proposal engine, stable staleness fingerprints, exac
 
 The deterministic Preview → Explain → exact Confirm → freshness → atomic Apply-candidate lifecycle is implemented and locally verified. The candidate persists canonical task identity, protects current-day/manual/locked/in-progress/completed work, scopes replacement to named future Planner V2 work, rechecks freshness/capacity transactionally, and is rollback-safe and idempotent. This advances `PLN-009` engineering but does not authorize `PLN-010`: the required migration is undeployed, the exact-profile capability defaults OFF, no Apply HTTP route exists, and production runtime remains unchanged.
 
+### 2026-09-07 Planner V2 Evre 5 production acceptance checkpoint
+
+Planner V2 Preview, exact Confirm, and one meaningful future-only Apply completed successfully for the approved exact profile. Lifecycle record `805be0cb-7d68-4b12-8df9-7b14f52a852e` created exactly one 22-minute canonical YouTube task on 2026-09-08, replaced zero tasks, preserved all past, Today, and protected manual future work, left study sessions unchanged, and advanced the weekly plan exactly once to generation 4. Active canonical duplicate count is exactly one. Confirm and Apply returned to OFF immediately after the pilot; preview remains exact-profile-only.
+
+Evre 5 engineering and production acceptance are complete. A short bounded observation/closure remains and does not authorize broader Planner V2 rollout. Evre 6 AI Coach is the next macro phase, beginning with a separately scoped discovery/specification decision rather than production authority.
+
 ## After M1
 
-No post-M1 milestone is committed or sequenced yet. Candidate directions may include deeper coaching, engagement mechanics, broader onboarding, and experience improvements, but they must be evaluated against the [product vision](PRODUCT_VISION.md), M1 evidence, and [metrics](METRICS.md) before entering `READY`.
+Evre 6 AI Coach is the next named macro phase after the bounded Evre 5 closure. Its concrete milestone, acceptance criteria, runtime authority, and release sequence are not yet approved; they must be evaluated against the [product vision](PRODUCT_VISION.md), M1 evidence, and [metrics](METRICS.md) before implementation or production activation.
 
 The following must not start while M1 is incomplete unless required to resolve a P0 incident:
 
-- new AI Coach features;
+- unscoped AI Coach implementation or production activation before the Evre 6 brief and approval;
 - gamification;
 - multi-user onboarding;
 - large visual redesigns;
