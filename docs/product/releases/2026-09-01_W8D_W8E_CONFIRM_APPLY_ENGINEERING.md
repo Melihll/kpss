@@ -75,4 +75,11 @@ The candidate schema and app-api runtime were subsequently released under separa
 - Gates: Confirm OFF and Apply OFF after the pilot; preview remains exact-profile-only.
 - Closure postflight: lifecycle/task/plan/protection state unchanged, app-api v47 ACTIVE with JWT verification, deployed source content-equivalent to the local Planner V2 release, and linked migrations synchronized with zero pending.
 
-Evre 5 engineering and production acceptance are complete. Only a short bounded observation/closure remains before the separately scoped Evre 6 AI Coach macro phase.
+## 2026-09-08 final real-user observation and Evre 5 closure
+
+- The authenticated exact-profile production account showed task `c428ab7b-5186-42cb-a3a3-de6058387471` on both Week and Today before start. The UI exposed the correct 2026-09-08 placement, 22-minute duration, exact task title, and linked Mathematics video material.
+- Read-only database verification found the task `ready`, with zero progress and zero linked sessions, exact canonical identity `youtube:bae6f705-159f-4e45-a22e-456b091d45bd`, an active full-video boundary, and exactly one active canonical duplicate total.
+- The weekly plan remained `2662 / 2662 / 2662`, generation 4. Three changes to other Today tasks were fully attributable to natural linked study sessions totaling 127 minutes; no future manual task changed after Apply and no unexplained mutation was found.
+- Confirm and Apply remained absent/OFF. The observation created or updated zero tasks, sessions, proposals, or plans and performed no deployment, migration, gate change, or repository push.
+
+Meaningful production Apply and final Week/Today real-user observation both passed. Evre 5 Planner V2 / Planner Truth is `CLOSED`; Evre 6 AI Coach is the next active macro phase under a separately scoped discovery/specification decision.

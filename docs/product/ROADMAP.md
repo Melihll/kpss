@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-09-07
+Last updated: 2026-09-08
 
 ## Roadmap rules
 
@@ -65,8 +65,8 @@ M1 is complete only when:
 
 [Current sprint](CURRENT_SPRINT.md)
 
-- `NOW`: bounded Evre 5 Planner V2 post-pilot observation/closure; engineering and exact-profile production acceptance are complete.
-- `NEXT MACRO PHASE`: Evre 6 AI Coach discovery/specification under a separately approved scope.
+- `CLOSED`: Evre 5 Planner V2 / Planner Truth engineering, exact-profile production acceptance, and final Week/Today real-user observation.
+- `NEXT ACTIVE MACRO PHASE`: Evre 6 AI Coach discovery/specification under a separately approved scope.
 - `CONTINUING FOUNDATIONS`: natural `PLN-002` Extra Study acceptance and gated `PLN-003`/`PLN-004`/`MAT-001`/`PLN-005` maturity work.
 
 ## Later within M1
@@ -98,11 +98,15 @@ The deterministic Preview → Explain → exact Confirm → freshness → atomic
 
 Planner V2 Preview, exact Confirm, and one meaningful future-only Apply completed successfully for the approved exact profile. Lifecycle record `805be0cb-7d68-4b12-8df9-7b14f52a852e` created exactly one 22-minute canonical YouTube task on 2026-09-08, replaced zero tasks, preserved all past, Today, and protected manual future work, left study sessions unchanged, and advanced the weekly plan exactly once to generation 4. Active canonical duplicate count is exactly one. Confirm and Apply returned to OFF immediately after the pilot; preview remains exact-profile-only.
 
-Evre 5 engineering and production acceptance are complete. A short bounded observation/closure remains and does not authorize broader Planner V2 rollout. Evre 6 AI Coach is the next macro phase, beginning with a separately scoped discovery/specification decision rather than production authority.
+### 2026-09-08 Planner V2 Evre 5 final closure
+
+The applied canonical task remained `ready` and appeared correctly on both production Week and Today before start, with the accepted 2026-09-08 date, 22-minute duration, linked Mathematics video material, and exact canonical identity. Database observation reconfirmed one active canonical task, zero task progress/sessions, and weekly plan `2662 / 2662 / 2662` generation 4. Other Today-task changes were explained by natural linked sessions; no future manual-task or observation-window mutation occurred. Confirm and Apply remained OFF.
+
+Evre 5 Planner V2 / Planner Truth is `CLOSED`. This closure does not complete the separate seven-day `PLN-010` rollout criterion or authorize broader Planner V2 exposure. Evre 6 AI Coach is the next active macro phase, beginning with a separately scoped discovery/specification decision rather than production authority.
 
 ## After M1
 
-Evre 6 AI Coach is the next named macro phase after the bounded Evre 5 closure. Its concrete milestone, acceptance criteria, runtime authority, and release sequence are not yet approved; they must be evaluated against the [product vision](PRODUCT_VISION.md), M1 evidence, and [metrics](METRICS.md) before implementation or production activation.
+Evre 6 AI Coach is the next active macro phase after the completed Evre 5 closure. Its concrete milestone, acceptance criteria, runtime authority, and release sequence are not yet approved; they must be evaluated against the [product vision](PRODUCT_VISION.md), M1 evidence, and [metrics](METRICS.md) before implementation or production activation. Continuing M1 foundation items remain tracked and gated rather than being silently closed by this sequencing decision.
 
 The following must not start while M1 is incomplete unless required to resolve a P0 incident:
 

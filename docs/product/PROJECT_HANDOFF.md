@@ -1,6 +1,6 @@
 # KPSS Koçu — Project Handoff
 
-Last updated: 2026-09-07
+Last updated: 2026-09-08
 
 ## Canonical source
 
@@ -30,7 +30,7 @@ The architecture is subject-agnostic across all KPSS subjects. Do not create Mat
 - `PLN-003`: deterministic duration policy locally verified; production-authoritative stage activation gated.
 - P48 planned-credit accounting correction: deployed and observing.
 - `PLN-004`: `IMPLEMENTED_LOCAL_VERIFIED`; production-authoritative activation gated.
-- Planner V2 Evre 5: engineering and exact-profile production acceptance complete; bounded observation/closure remains. Confirm and Apply are OFF.
+- Planner V2 / Planner Truth Evre 5: `CLOSED`. Engineering, exact-profile production acceptance, and final Week/Today real-user observation are complete. Confirm and Apply are OFF.
 
 PLN-004 verification:
 - targeted domain tests `22/22` PASS;
@@ -51,11 +51,11 @@ PLN-004 verification:
 
 ## Active task
 
-`Planner V2 Evre 5 — bounded post-pilot observation and closure`
+`Evre 6 AI Coach — discovery/specification kickoff`
 
-Goal: observe the accepted exact-profile production result without widening authority, verify that the applied canonical task proceeds normally, and close Evre 5 without manual repair.
+Goal: define the AI Coach problem, user outcomes, evidence contract, safety boundaries, and phased acceptance plan without granting plan mutation authority or production activation.
 
-The next macro phase is Evre 6 AI Coach. It begins only under a separate discovery/specification scope; this handoff does not authorize AI Coach implementation or production activation.
+Evre 6 AI Coach is the next active macro phase. It begins with discovery/specification only; this handoff does not authorize AI Coach implementation, deployment, plan mutation, or production activation.
 
 MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning foundations remain tracked work rather than being silently treated as closed by the Planner V2 pilot.
 
@@ -69,9 +69,9 @@ MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning founda
 
 ## NEXT EXACT STEP
 
-Observe lifecycle record `805be0cb-7d68-4b12-8df9-7b14f52a852e` and canonical task `c428ab7b-5186-42cb-a3a3-de6058387471` read-only during the short bounded closure window. Do not widen preview access, re-enable Confirm/Apply, manufacture another proposal, or manually repair the accepted result. Production preview remains exact-profile-only; Confirm and Apply remain OFF.
+Prepare the Evre 6 AI Coach discovery/specification brief as the next active macro phase. Define evidence inputs, deterministic product facts, user-visible coaching boundaries, evaluation criteria, and explicit authority limits before implementation. Any implementation, authority, deployment, or production-data change requires a separate decision.
 
-After the bounded observation closes, prepare the Evre 6 AI Coach discovery/specification brief as the next macro phase. Any implementation, authority, deployment, or production-data change requires a separate decision.
+Keep the accepted Evre 5 Planner V2 result intact. Do not widen preview access, re-enable Confirm/Apply, manufacture another proposal, or manually repair the accepted result. Production preview remains exact-profile-only; Confirm and Apply remain OFF.
 
 In parallel, continue passive observation of the next natural W2-eligible physical study lifecycle for the exact-profile pilot. Inspect it read-only if it occurs; do not manufacture activity, widen the allowlist, or alter accepted evidence.
 
@@ -86,7 +86,15 @@ Telegram requires a separately reviewed service-role W2 wrapper plus authoritati
 - Safety acceptance PASS: past and Today task fingerprints were unchanged; all 41 protected manual future tasks were unchanged; study sessions remained 85 completed / 0 active / 0 cancelled; active canonical duplicate count is exactly one.
 - Read-only closure postflight reconfirmed the same lifecycle, task, plan, protection, duplicate, and session state. Linked migrations are synchronized with zero pending. app-api v47 is ACTIVE with JWT verification enabled and its downloaded 27-file source matches the local Planner V2 release after newline normalization.
 - Confirm and Apply gates are absent/OFF after the pilot. Preview remains exact-profile-only. No deployment, migration, gate change, or production-data mutation occurred during the closure postflight.
-- Evre 5 engineering and production acceptance are complete; only the bounded observation/closure remains. Evre 6 AI Coach is the next macro phase.
+- Evre 5 engineering and production acceptance completed here; the bounded real-user observation closed successfully on 2026-09-08. Evre 6 AI Coach is now the next active macro phase.
+
+## 2026-09-08 Evre 5 final real-user observation and closure
+
+- The authenticated production Week page showed the accepted task on 8 September as a 22-minute Mathematics video item; the Today page showed the same exact task title and linked material in the normal task sequence. Week visibility and Today visibility both passed before the Planner V2 task was started.
+- Database observation reconfirmed task `c428ab7b-5186-42cb-a3a3-de6058387471` as `ready`, dated 2026-09-08, with 22 estimated minutes, zero task progress, zero linked study sessions, exact canonical identity `youtube:bae6f705-159f-4e45-a22e-456b091d45bd`, an active full-video boundary, and exactly one active canonical duplicate total.
+- Weekly plan `ebbba80d-427c-4d5b-9562-e235f58ba266` remained `2662 / 2662 / 2662`, generation 4. Three other Today-task changes were fully explained by natural linked study sessions totaling 127 minutes; no future manual task had changed after Apply and no unexplained task mutation was found.
+- Confirm and Apply remained absent/OFF. The observation created or updated zero tasks, sessions, proposals, or plans and performed no deployment, migration, gate change, or repository push.
+- Final classification: `EVRE_5_PLANNER_V2_PLANNER_TRUTH_CLOSED`. Meaningful production Apply and final Week/Today real-user observation both passed. Evre 6 AI Coach is the next active macro phase under a separate discovery/specification scope.
 
 ## 2026-09-02 Evre 5 preview-attempt lifecycle hardening
 

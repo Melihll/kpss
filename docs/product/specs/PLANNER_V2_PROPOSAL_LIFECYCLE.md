@@ -1,6 +1,6 @@
 # Planner V2 Proposal Lifecycle
 
-Status: Evre 5 engineering and exact-profile production acceptance complete; bounded observation/closure remains; production Confirm and Apply OFF
+Status: Evre 5 Planner V2 / Planner Truth `CLOSED`; engineering, exact-profile production acceptance, and final Week/Today real-user observation complete; production Confirm and Apply OFF
 Lifecycle version: `planner-v2-lifecycle-v1`
 Planner version: `canonical-planner-v2-shadow-v1`
 
@@ -109,11 +109,14 @@ Telegram remains unchanged and legacy/UI-blocked. No weaker service-role or gene
 6. Completed: exact-profile preview was activated separately; the historical preview later expired and must not be reused.
 7. Completed: correct false confirm success, add the distinct default-OFF server Apply boundary, deploy the reviewed schema/runtime, and retain exact-profile gate isolation.
 8. Completed under exact pilot approval: establish sanctioned future-only capacity, create one fresh preview, audit exact `1 create / 0 replace / 22 min`, confirm the same record, invoke Apply once, audit, and disable Confirm/Apply immediately.
-9. Next: complete the short bounded post-pilot observation/closure without widening authority. Evre 6 AI Coach is the next separately scoped macro phase.
+9. Completed: observe the accepted task read-only on production Week and Today before start, reconfirm exact task/canonical/duplicate/plan state, and close Evre 5 without widening authority or mutating production.
+10. Next active macro phase: Evre 6 AI Coach discovery/specification under separate scope and approval.
 
 The hardened migration `20260826120000_planner_v2_proposal_lifecycle_candidate.sql` remains deployed with SHA256 `a52d9ccc1f7b135ce7a93bb9c546e866c57beffeabb8d34bc0803e08558691a5`; the later preview-attempt, service-role parity, and expiry-state migrations are also applied, with zero pending linked migrations. The 2026-09-07 closure postflight reports app-api v47 ACTIVE with JWT verification enabled. Its downloaded 27-file source is content-equivalent to the local Planner V2 release after newline normalization. Preview remains exact-profile-only; Confirm and Apply are absent/OFF.
 
-Production acceptance record `805be0cb-7d68-4b12-8df9-7b14f52a852e` is `applied` with non-null confirmation and application timestamps. It created task `c428ab7b-5186-42cb-a3a3-de6058387471` for exact canonical identity `youtube:bae6f705-159f-4e45-a22e-456b091d45bd` on 2026-09-08 for 22 minutes, replaced zero tasks, advanced the plan exactly once to generation 4, preserved past/Today/41 protected manual future tasks, left all 85 study sessions unchanged, and left exactly one active canonical task. This completes Evre 5 engineering and production acceptance; only bounded observation/closure remains.
+Production acceptance record `805be0cb-7d68-4b12-8df9-7b14f52a852e` is `applied` with non-null confirmation and application timestamps. It created task `c428ab7b-5186-42cb-a3a3-de6058387471` for exact canonical identity `youtube:bae6f705-159f-4e45-a22e-456b091d45bd` on 2026-09-08 for 22 minutes, replaced zero tasks, advanced the plan exactly once to generation 4, preserved past/Today/41 protected manual future tasks, left all 85 study sessions unchanged at Apply time, and left exactly one active canonical task.
+
+The 2026-09-08 final real-user observation found the task correctly visible on both Week and Today before start. It remained `ready` with zero task progress and zero linked sessions; its active full-video boundary and canonical/material linkage were exact; duplicate count remained one; and the plan remained `2662 / 2662 / 2662`, generation 4. Three changes to other Today tasks were fully explained by natural linked study sessions totaling 127 minutes, while future manual tasks were unchanged. Observation-window task/session/proposal/plan mutation was zero. Confirm and Apply remained OFF. Evre 5 Planner V2 / Planner Truth is therefore `CLOSED`.
 
 Authority is deliberately non-transitive and production Apply remains OFF:
 

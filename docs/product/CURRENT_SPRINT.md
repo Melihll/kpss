@@ -1,6 +1,6 @@
 # Current Sprint
 
-Last updated: 2026-09-07
+Last updated: 2026-09-08
 
 ## Sprint 02 — Planning Semantics & Duration Policy
 
@@ -63,22 +63,28 @@ The next active product-foundation task is `MAT-001`, which supplies the exact p
 
 ### Planner V2 proposal lifecycle reliability (Evre 5)
 
-- Phase: engineering and exact-profile production acceptance complete; a short bounded observation/closure remains. Production Confirm and Apply are OFF.
+- Phase: `CLOSED`. Engineering, exact-profile production acceptance, and final Week/Today real-user observation are complete. Production Confirm and Apply are OFF.
 - Each explicit preview now receives a distinct lifecycle attempt record and idempotency key while deterministic proposal/snapshot fingerprints remain unchanged. Terminal attempts are never resurrected.
 - Local rebuilds reproduce the existing hosted `service_role` CRUD baseline for `weekly_plans`, `tasks`, `task_resource_units`, and `task_progress`; proposal-table authority remains unchanged.
 - A confirmed proposal that expires before Apply atomically clears `confirmed_at` as it enters `expired`, preserving the strict confirmation-state constraint.
 - Verification: focused lifecycle/security/HTTP `26/26`, Planner V2 lifecycle DB integration `16/16`, all integration `132/132`, full non-integration `949/949`, workspace typecheck, Planner V2 safety checks, local PostgreSQL lint, and diff check PASS.
 - Production acceptance: preview PASS, exact confirmation PASS, and one meaningful atomic Apply PASS for lifecycle record `805be0cb-7d68-4b12-8df9-7b14f52a852e`. The transaction created one 22-minute canonical YouTube task on 2026-09-08, replaced zero tasks, advanced the weekly plan from `2662 / 2662 / 2640` generation 3 to `2662 / 2662 / 2662` generation 4, and preserved past, Today, and 41 protected manual future tasks.
 - Duplicate protection PASS: the exact canonical workload has one active task after Apply, not more than one. Study sessions were unchanged. Confirm and Apply were disabled immediately after the pilot and remain OFF; preview remains exact-profile-only.
-- Evre 6 AI Coach is the next macro phase after the bounded Evre 5 observation/closure. This sequencing is not production activation authority.
+- Final real-user observation PASS on 2026-09-08: the 22-minute canonical task appeared correctly on both Week and Today before start; database state remained `ready` with zero task progress/sessions, exact canonical linkage, duplicate count one, and plan `2662 / 2662 / 2662` generation 4. Natural work on three other Today tasks was fully explained by linked sessions; no future manual-task or observation-caused mutation occurred.
+- Final classification: `EVRE_5_PLANNER_V2_PLANNER_TRUTH_CLOSED`.
+
+### Evre 6 AI Coach
+
+- Phase: `NEXT_ACTIVE_MACRO_PHASE`.
+- Immediate scope: discovery/specification of user outcomes, evidence inputs, deterministic facts, explanation boundaries, evaluation criteria, authority limits, and release gates.
+- This status does not authorize implementation, deployment, production activation, or direct plan/task mutation.
 
 ## NEXT
 
-1. Complete the short bounded Evre 5 post-pilot observation/closure without widening Planner V2 authority
-2. Open Evre 6 AI Coach as the next macro-phase discovery/specification track under separate scope and approval
-3. Close `PLN-002` natural Extra Study authenticated real-user acceptance when real usage provides evidence
-4. Keep `PLN-004` production-authoritative activation gated while MAT-001/PLN-005 inputs mature
-5. Re-evaluate PLN-003 production-authoritative duration activation only after canonical learning-stage, material, and resource-role inputs exist
+1. Open Evre 6 AI Coach as the next active macro-phase discovery/specification track under separate scope and approval
+2. Close `PLN-002` natural Extra Study authenticated real-user acceptance when real usage provides evidence
+3. Keep `PLN-004` production-authoritative activation gated while MAT-001/PLN-005 inputs mature
+4. Re-evaluate PLN-003 production-authoritative duration activation only after canonical learning-stage, material, and resource-role inputs exist
 
 `NEXT` indicates intended sequence, not permission to deploy. Stage-dependent duration activation remains separately gated.
 ## Do not start
