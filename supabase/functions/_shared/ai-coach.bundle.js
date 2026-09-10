@@ -402,12 +402,655 @@ async function executeAiStudyMessageV1(request) {
     mapping: mapAiInterpretationToDomainEventV1(validation.value)
   });
 }
+
+// packages/domain/src/ai-coach/coach-context-v1.ts
+var COACH_CONTEXT_V1_VERSION = "coach-context-v1";
+var COACH_CONTEXT_V1_TRUTH_SOURCES = [
+  "authenticated_user",
+  "coach_context_builder_v1",
+  "request_context",
+  "server_clock",
+  "user_profiles",
+  "exam_profiles",
+  "subjects_catalog",
+  "weekly_plans",
+  "planning_task_state_v1",
+  "study_intent_ledger",
+  "capacity_projection_v1",
+  "canonical_material_truth_v1",
+  "canonical_workload_engine_v1",
+  "planner_v2_snapshot",
+  "planner_v2_lifecycle",
+  "deterministic_signal_input_v1"
+];
+var COACH_CONTEXT_V1_LIMITS = Object.freeze({
+  todayTasks: 24,
+  weekTasks: 64,
+  subjects: 24,
+  materials: 48,
+  recentTaskEvents: 32,
+  recentSessions: 24,
+  recentTransitions: 16,
+  signalInputs: 32,
+  provenanceRecordIdsPerFact: 64,
+  serializedBytes: 65536
+});
+function knownCoachContextV1Fact(value, options) {
+  return {
+    availability: "known",
+    value,
+    freshness: {
+      state: "fresh",
+      asOf: options.asOf,
+      expiresAt: options.expiresAt ?? null
+    },
+    confidence: options.confidence ?? "authoritative",
+    provenance: options.provenance,
+    unknownReason: null
+  };
+}
+function unknownCoachContextV1Fact(reason, sources) {
+  return {
+    availability: "unknown",
+    value: null,
+    freshness: { state: "unknown", asOf: null, expiresAt: null },
+    confidence: "none",
+    provenance: sources.map((source) => ({ source, recordIds: [], asOf: null })),
+    unknownReason: reason
+  };
+}
+function staleCoachContextV1Fact(value, reason, options) {
+  return {
+    availability: "stale",
+    value,
+    freshness: {
+      state: "stale",
+      asOf: options.asOf,
+      expiresAt: options.expiresAt ?? null
+    },
+    confidence: options.confidence ?? "none",
+    provenance: options.provenance,
+    unknownReason: reason
+  };
+}
+function blockedCoachContextV1Fact(reason, sources, asOf = null) {
+  return {
+    availability: "blocked",
+    value: null,
+    freshness: {
+      state: asOf === null ? "unknown" : "fresh",
+      asOf,
+      expiresAt: null
+    },
+    confidence: "none",
+    provenance: sources.map((source) => ({ source, recordIds: [], asOf })),
+    unknownReason: reason
+  };
+}
+function notApplicableCoachContextV1Fact(reason, sources) {
+  return {
+    availability: "not_applicable",
+    value: null,
+    freshness: { state: "not_applicable", asOf: null, expiresAt: null },
+    confidence: "none",
+    provenance: sources.map((source) => ({ source, recordIds: [], asOf: null })),
+    unknownReason: reason
+  };
+}
+function compareNullable(left, right) {
+  return (left ?? "~").localeCompare(right ?? "~");
+}
+function sortTasks(tasks) {
+  return [...tasks].sort((left, right) => compareNullable(left.plannedDate, right.plannedDate) || left.taskId.localeCompare(right.taskId));
+}
+function sortNumberRecord(record) {
+  return Object.fromEntries(Object.entries(record).sort(([left], [right]) => left.localeCompare(right)));
+}
+function normalizeProvenance(provenance) {
+  const normalized = [...provenance].map((item) => ({
+    ...item,
+    recordIds: [...new Set(item.recordIds)].sort()
+  })).sort((left, right) => left.source.localeCompare(right.source) || (left.asOf ?? "").localeCompare(right.asOf ?? "") || left.recordIds.join("|").localeCompare(right.recordIds.join("|")));
+  const unique = /* @__PURE__ */ new Map();
+  for (const item of normalized) {
+    unique.set(`${item.source}|${item.asOf ?? ""}|${item.recordIds.join("|")}`, item);
+  }
+  return [...unique.values()];
+}
+function normalizeFact(fact, mapValue) {
+  const copy = structuredClone(fact);
+  const value = copy.value !== null && mapValue ? mapValue(copy.value) : copy.value;
+  return {
+    ...copy,
+    value,
+    provenance: normalizeProvenance(copy.provenance)
+  };
+}
+function assertNonBlank(name, value) {
+  if (!value.trim()) throw new Error(`COACH_CONTEXT_V1_BLANK:${name}`);
+}
+function assertIsoDate(name, value) {
+  const parsed = /* @__PURE__ */ new Date(`${value}T12:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
+    throw new Error(`COACH_CONTEXT_V1_INVALID_DATE:${name}`);
+  }
+}
+function assertTimestamp(name, value) {
+  if (value !== null && Number.isNaN(new Date(value).getTime())) {
+    throw new Error(`COACH_CONTEXT_V1_INVALID_TIMESTAMP:${name}`);
+  }
+}
+function assertFact(path, fact) {
+  if (!fact.provenance.length) throw new Error(`COACH_CONTEXT_V1_PROVENANCE_REQUIRED:${path}`);
+  if (fact.provenance.some((item) => item.recordIds.length > COACH_CONTEXT_V1_LIMITS.provenanceRecordIdsPerFact)) {
+    throw new Error(`COACH_CONTEXT_V1_TOO_MANY_PROVENANCE_RECORDS:${path}`);
+  }
+  for (const item of fact.provenance) assertTimestamp(`${path}.provenance.asOf`, item.asOf);
+  assertTimestamp(`${path}.freshness.asOf`, fact.freshness.asOf);
+  assertTimestamp(`${path}.freshness.expiresAt`, fact.freshness.expiresAt);
+  if ((fact.availability === "unknown" || fact.availability === "stale" || fact.availability === "blocked" || fact.availability === "not_applicable") && !fact.unknownReason.trim()) {
+    throw new Error(`COACH_CONTEXT_V1_UNKNOWN_REASON_REQUIRED:${path}`);
+  }
+  if (fact.availability === "known" && fact.value === null) {
+    throw new Error(`COACH_CONTEXT_V1_KNOWN_VALUE_REQUIRED:${path}`);
+  }
+  if (fact.availability === "known" && (fact.freshness.asOf === null || fact.confidence === "none")) {
+    throw new Error(`COACH_CONTEXT_V1_KNOWN_METADATA_REQUIRED:${path}`);
+  }
+}
+function walkFacts(value, path, visit) {
+  if (!value || typeof value !== "object") return;
+  const object = value;
+  if (typeof object.availability === "string" && "freshness" in object && "provenance" in object && "unknownReason" in object) {
+    const fact = value;
+    visit(path, fact);
+    if (fact.value !== null) walkFacts(fact.value, `${path}.value`, visit);
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => walkFacts(item, `${path}[${index}]`, visit));
+    return;
+  }
+  for (const key of Object.keys(object).sort()) {
+    walkFacts(object[key], path ? `${path}.${key}` : key, visit);
+  }
+}
+function deepFreeze(value) {
+  if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const child of Object.values(value)) deepFreeze(child);
+  return value;
+}
+function assertCompact(input) {
+  const count = (fact) => fact.value?.length ?? 0;
+  if ((input.today.value?.tasks.length ?? 0) > COACH_CONTEXT_V1_LIMITS.todayTasks) throw new Error("COACH_CONTEXT_V1_TOO_MANY_TODAY_TASKS");
+  if ((input.week.value?.tasks.length ?? 0) > COACH_CONTEXT_V1_LIMITS.weekTasks) throw new Error("COACH_CONTEXT_V1_TOO_MANY_WEEK_TASKS");
+  if (input.subjects.length > COACH_CONTEXT_V1_LIMITS.subjects) throw new Error("COACH_CONTEXT_V1_TOO_MANY_SUBJECTS");
+  if (count(input.materials) > COACH_CONTEXT_V1_LIMITS.materials) throw new Error("COACH_CONTEXT_V1_TOO_MANY_MATERIALS");
+  if ((input.recentProgress.value?.taskEvents.length ?? 0) > COACH_CONTEXT_V1_LIMITS.recentTaskEvents) throw new Error("COACH_CONTEXT_V1_TOO_MANY_TASK_EVENTS");
+  if ((input.recentProgress.value?.sessions.length ?? 0) > COACH_CONTEXT_V1_LIMITS.recentSessions) throw new Error("COACH_CONTEXT_V1_TOO_MANY_SESSIONS");
+  if ((input.recentProgress.value?.transitions.length ?? 0) > COACH_CONTEXT_V1_LIMITS.recentTransitions) throw new Error("COACH_CONTEXT_V1_TOO_MANY_TRANSITIONS");
+  if (count(input.signalInputs) > COACH_CONTEXT_V1_LIMITS.signalInputs) throw new Error("COACH_CONTEXT_V1_TOO_MANY_SIGNAL_INPUTS");
+}
+function assertPln002Boundary(week) {
+  if (week.value !== null && week.value.studyIntentCoverage !== "sufficient" && week.value.progressPosition.availability === "known") {
+    throw new Error("COACH_CONTEXT_V1_PLN002_PROGRESS_POSITION_UNSUPPORTED");
+  }
+}
+function assertNoInventedWorkloadFallback(materials) {
+  for (const material of materials.value ?? []) {
+    if (material.workload.value !== null && !["exact", "calibrated", "unknown"].includes(material.workload.value.authority)) {
+      throw new Error("COACH_CONTEXT_V1_WORKLOAD_FALLBACK_FORBIDDEN");
+    }
+    if (material.workload.value?.authority === "unknown" && material.workload.value.estimatedMinutes !== null) {
+      throw new Error("COACH_CONTEXT_V1_UNKNOWN_WORKLOAD_MINUTES_FORBIDDEN");
+    }
+  }
+}
+function buildCoachContextV1(input) {
+  assertTimestamp("generatedAt", input.generatedAt);
+  assertNonBlank("requestId", input.requestId);
+  assertNonBlank("userId", input.userId);
+  assertNonBlank("examProfileId", input.examProfileId);
+  assertNonBlank("locale", input.locale);
+  assertNonBlank("timezone", input.timezone);
+  assertIsoDate("currentDate", input.currentDate);
+  const normalized = {
+    ...structuredClone(input),
+    identity: normalizeFact(input.identity),
+    today: normalizeFact(input.today, (today) => ({ ...today, tasks: sortTasks(today.tasks) })),
+    week: normalizeFact(input.week, (week) => ({
+      ...week,
+      tasks: sortTasks(week.tasks),
+      progressPosition: normalizeFact(week.progressPosition)
+    })),
+    subjects: [...input.subjects].map((subject) => ({
+      ...structuredClone(subject),
+      tasks: normalizeFact(subject.tasks),
+      study: normalizeFact(subject.study),
+      material: normalizeFact(subject.material)
+    })).sort((left, right) => left.subjectName.localeCompare(right.subjectName, "tr") || left.subjectId.localeCompare(right.subjectId)),
+    nextWork: normalizeFact(input.nextWork),
+    materials: normalizeFact(input.materials, (materials) => [...materials].map((material) => ({ ...material, workload: normalizeFact(material.workload) })).sort((left, right) => left.resourceId.localeCompare(right.resourceId) || left.materialViewId.localeCompare(right.materialViewId))),
+    workload: normalizeFact(input.workload, (workload) => ({
+      ...workload,
+      blockedByReason: sortNumberRecord(workload.blockedByReason),
+      minutesBySubject: sortNumberRecord(workload.minutesBySubject),
+      minutesByResource: sortNumberRecord(workload.minutesByResource)
+    })),
+    capacity: normalizeFact(input.capacity, (capacity) => ({
+      ...capacity,
+      days: [...capacity.days].map((day) => ({
+        ...day,
+        protectedMinutes: normalizeFact(day.protectedMinutes),
+        availableMinutes: normalizeFact(day.availableMinutes)
+      })).sort((left, right) => left.date.localeCompare(right.date))
+    })),
+    recentProgress: normalizeFact(input.recentProgress, (recent) => ({
+      ...recent,
+      taskEvents: [...recent.taskEvents].sort((left, right) => left.occurredAt.localeCompare(right.occurredAt) || left.taskId.localeCompare(right.taskId)),
+      sessions: [...recent.sessions].sort((left, right) => left.startedAt.localeCompare(right.startedAt) || left.sessionId.localeCompare(right.sessionId)),
+      transitions: [...recent.transitions].sort((left, right) => left.occurredAt.localeCompare(right.occurredAt) || left.transitionId.localeCompare(right.transitionId))
+    })),
+    planner: normalizeFact(input.planner, (planner) => ({
+      ...planner,
+      freshnessReasons: [...planner.freshnessReasons].sort(),
+      differences: {
+        createCanonicalWorkloadIdentities: [...planner.differences.createCanonicalWorkloadIdentities].sort(),
+        retainedTaskIds: [...planner.differences.retainedTaskIds].sort(),
+        replaceableTaskIds: [...planner.differences.replaceableTaskIds].sort(),
+        outsideScopeTaskIds: [...planner.differences.outsideScopeTaskIds].sort()
+      },
+      warnings: [...planner.warnings].sort(),
+      explanationFacts: [...planner.explanationFacts].sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)))
+    })),
+    signalInputs: normalizeFact(input.signalInputs, (signals) => [...signals].sort((left, right) => left.key.localeCompare(right.key) || left.sourceFactPath.localeCompare(right.sourceFactPath)))
+  };
+  assertCompact(normalized);
+  assertPln002Boundary(normalized.week);
+  assertNoInventedWorkloadFallback(normalized.materials);
+  const unknowns = [];
+  const provenance = [];
+  walkFacts(normalized, "", (path, fact) => {
+    assertFact(path, fact);
+    provenance.push(...fact.provenance);
+    if (fact.availability === "unknown" || fact.availability === "stale" || fact.availability === "blocked") {
+      unknowns.push({
+        path,
+        availability: fact.availability,
+        reason: fact.unknownReason,
+        sources: [...new Set(fact.provenance.map((item) => item.source))].sort()
+      });
+    }
+  });
+  const context = {
+    version: COACH_CONTEXT_V1_VERSION,
+    ...normalized,
+    authority: {
+      mode: "read_only",
+      llmCallsAllowed: false,
+      dbWritesAllowed: false,
+      planningCalculationsAllowed: false,
+      workloadRecalculationAllowed: false,
+      taskMutationAllowed: false,
+      capacityMutationAllowed: false,
+      plannerConfirmationAllowed: false,
+      plannerApplyAllowed: false
+    },
+    unknowns: unknowns.sort((left, right) => left.path.localeCompare(right.path)),
+    provenance: normalizeProvenance(provenance)
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(context)).byteLength;
+  if (bytes > COACH_CONTEXT_V1_LIMITS.serializedBytes) {
+    throw new Error(`COACH_CONTEXT_V1_TOO_LARGE:${bytes}`);
+  }
+  return deepFreeze(context);
+}
+
+// packages/domain/src/ai-coach/coach-context-v1-source-map.ts
+var COACH_CONTEXT_V1_SOURCE_MAP = Object.freeze([
+  {
+    fieldPattern: "version",
+    truthSources: ["coach_context_builder_v1"],
+    existingReaderOrContract: ["packages/domain/src/ai-coach/coach-context-v1.ts::COACH_CONTEXT_V1_VERSION"],
+    readiness: "reusable_now",
+    rule: "Builder-owned literal; callers cannot select another version."
+  },
+  {
+    fieldPattern: "generatedAt",
+    truthSources: ["server_clock"],
+    existingReaderOrContract: ["server runtime instant (Date)"],
+    readiness: "reusable_now",
+    rule: "Server-supplied ISO instant; never supplied by the model."
+  },
+  {
+    fieldPattern: "requestId, locale",
+    truthSources: ["request_context"],
+    existingReaderOrContract: ["authenticated HTTP request context"],
+    readiness: "reusable_now",
+    rule: "6B.2 adapter accepts authenticated request-scoped metadata only; no conversation-history authority."
+  },
+  {
+    fieldPattern: "userId",
+    truthSources: ["authenticated_user"],
+    existingReaderOrContract: ["supabase/functions/app-api/index.ts::client.auth.getUser"],
+    readiness: "reusable_now",
+    rule: "Authenticated server identity; never accepted from model output."
+  },
+  {
+    fieldPattern: "examProfileId, identity.value.examEditionId, identity.value.targetExamDate, identity.value.profileStatus",
+    truthSources: ["exam_profiles"],
+    existingReaderOrContract: [
+      "supabase/functions/app-api/index.ts::activeProfile",
+      "supabase/functions/_shared/canonical-planner-v2-readonly.ts::runCanonicalPlannerV2ReadOnlyShadow active-profile projection"
+    ],
+    readiness: "reusable_now",
+    rule: "6B.2 reads the user-owned active profile directly with a compact allowlist."
+  },
+  {
+    fieldPattern: "timezone, identity.value.displayName",
+    truthSources: ["user_profiles"],
+    existingReaderOrContract: [
+      "apps/web/src/auth/AuthContext.tsx::loadProfile",
+      "packages/domain/src/types.ts::UserProfile"
+    ],
+    readiness: "reusable_now",
+    rule: "6B.2 reads the server-side user profile; missing timezone fails closed rather than defaulting a fact."
+  },
+  {
+    fieldPattern: "currentDate",
+    truthSources: ["server_clock", "user_profiles"],
+    existingReaderOrContract: [
+      "packages/domain/src/time-boundaries.ts::DEFAULT_TIMEZONE/getZonedDayRange",
+      "supabase/functions/_shared/adaptive.ts::calendarToday"
+    ],
+    readiness: "reusable_now",
+    rule: "6B.2 resolves the date and bounded query windows server-side from the persisted timezone."
+  },
+  {
+    fieldPattern: "identity",
+    truthSources: ["authenticated_user", "user_profiles", "exam_profiles"],
+    existingReaderOrContract: ["packages/domain/src/types.ts::UserProfile/ExamProfile"],
+    readiness: "reusable_now",
+    rule: "6B.2 emits a compact identity projection; no raw auth, profile, or edition row."
+  },
+  {
+    fieldPattern: "today.value.weeklyPlanId, today.value.planGenerationVersion",
+    truthSources: ["weekly_plans"],
+    existingReaderOrContract: [
+      "packages/domain/src/planning-v2/db-snapshot-contract.ts::WeeklyPlanDbRowV1",
+      "supabase/functions/_shared/canonical-planner-v2-readonly.ts::runCanonicalPlannerV2ReadOnlyShadow active-plan query"
+    ],
+    readiness: "reusable_now",
+    rule: "Active current-week plan selected by ownership, date horizon, status, and latest generation."
+  },
+  {
+    fieldPattern: "today.value.tasks[*]",
+    truthSources: ["planning_task_state_v1"],
+    existingReaderOrContract: [
+      "packages/domain/src/planning-v2/db-snapshot-contract.ts::normalizePlanningSnapshotDbBundleV1",
+      "packages/domain/src/planning-v2/db-snapshot-contract.ts::mergePlanningTaskProgressV1"
+    ],
+    readiness: "reusable_now",
+    rule: "Filter the canonical normalized weekly task state by currentDate; lifecycle is tasks.status, never inferred from minutes."
+  },
+  {
+    fieldPattern: "today.value.summary",
+    truthSources: ["planning_task_state_v1"],
+    existingReaderOrContract: ["packages/domain/src/planning-v2/db-snapshot-contract.ts::NormalizedPlanningSnapshotDbBundleV1"],
+    readiness: "reusable_now",
+    rule: "6B.2 deterministically projects Today over normalized task state; no planning arithmetic."
+  },
+  {
+    fieldPattern: "today.value.study",
+    truthSources: ["study_intent_ledger"],
+    existingReaderOrContract: [
+      "packages/domain/src/study-intent.ts::buildStudyCapacityAccounting",
+      "supabase/functions/_shared/completed-study.ts::aggregateCompletedStudySessions/aggregatePlannedCreditByDate",
+      "study_sessions + current non-superseded study_session_allocations"
+    ],
+    readiness: "reusable_now",
+    rule: "6B.2 keeps actual, planned actual, planned credit, Extra Study, and unknown intent separate over timezone-bounded ledger reads."
+  },
+  {
+    fieldPattern: "week.value.weeklyPlanId, week.value.generationVersion, week.value.startDate, week.value.endDate, week.value.status",
+    truthSources: ["weekly_plans"],
+    existingReaderOrContract: ["packages/domain/src/planning-v2/db-snapshot-contract.ts::WeeklyPlanDbRowV1"],
+    readiness: "reusable_now",
+    rule: "Copied from the selected active canonical weekly-plan row."
+  },
+  {
+    fieldPattern: "week.value.tasks[*], week.value.summary",
+    truthSources: ["planning_task_state_v1"],
+    existingReaderOrContract: ["packages/domain/src/planning-v2/db-snapshot-contract.ts::normalizePlanningSnapshotDbBundleV1"],
+    readiness: "reusable_now",
+    rule: "Canonical normalized task/progress state only; no legacy recommendation ordering."
+  },
+  {
+    fieldPattern: "week.value.study, week.value.studyIntentCoverage",
+    truthSources: ["study_intent_ledger"],
+    existingReaderOrContract: [
+      "packages/domain/src/study-intent.ts::buildStudyCapacityAccounting",
+      "study_sessions + current non-superseded study_session_allocations"
+    ],
+    readiness: "reusable_now",
+    rule: "6B.2 reads current non-superseded allocations but holds coverage at partial while PLN-002 completeness is unresolved."
+  },
+  {
+    fieldPattern: "week.value.progressPosition",
+    truthSources: ["study_intent_ledger", "planning_task_state_v1"],
+    existingReaderOrContract: ["docs/product/specs/PLN-002_STUDY_INTENT_SEMANTICS.md"],
+    readiness: "truth_gap",
+    rule: "Must be unknown unless PLN-002 coverage for the window is sufficient; 6B.1 rejects a known ahead/on-track/behind value otherwise."
+  },
+  {
+    fieldPattern: "subjects[*].subjectId, subjects[*].subjectName, subjects[*].status",
+    truthSources: ["subjects_catalog"],
+    existingReaderOrContract: ["app-api weekly context: user_subjects joined to subjects"],
+    readiness: "reusable_now",
+    rule: "6B.2 reads user-profile subject selection joined to canonical subject identity."
+  },
+  {
+    fieldPattern: "subjects[*].tasks",
+    truthSources: ["planning_task_state_v1"],
+    existingReaderOrContract: ["packages/domain/src/planning-v2/db-snapshot-contract.ts::normalizePlanningSnapshotDbBundleV1"],
+    readiness: "reusable_now",
+    rule: "6B.2 deterministically groups normalized canonical tasks by subjectId."
+  },
+  {
+    fieldPattern: "subjects[*].study",
+    truthSources: ["study_intent_ledger"],
+    existingReaderOrContract: ["study_sessions + current non-superseded study_session_allocations subject_id"],
+    readiness: "reusable_now",
+    rule: "6B.2 groups current allocations by explicit subject identity; title inference is forbidden."
+  },
+  {
+    fieldPattern: "subjects[*].material",
+    truthSources: ["canonical_material_truth_v1", "canonical_workload_engine_v1"],
+    existingReaderOrContract: [
+      "supabase/functions/_shared/canonical-material-loader.ts::loadCanonicalMaterialUnits",
+      "supabase/functions/_shared/canonical-material-shadow.ts::loadCanonicalWorkloadReadiness"
+    ],
+    readiness: "reusable_now",
+    rule: "6B.2 groups canonical material/workload outputs through resource.subject_id; never by title or legacy top-three summaries."
+  },
+  {
+    fieldPattern: "nextWork",
+    truthSources: ["planning_task_state_v1", "canonical_material_truth_v1", "canonical_workload_engine_v1", "planner_v2_lifecycle"],
+    existingReaderOrContract: [
+      "packages/domain/src/planning/material-remaining-scope.ts::calculateRemainingMaterialScope (scoped material continuation only)",
+      "packages/domain/src/planning-v2/proposal-lifecycle.ts::PlannerV2Preview.days[*].items (preview only)"
+    ],
+    readiness: "truth_gap",
+    rule: "No global production-authoritative next-work selector exists. Known is allowed only for an exact approved-task binding, scoped canonical continuation, or exact Planner V2 preview item; otherwise unknown/not_applicable."
+  },
+  {
+    fieldPattern: "materials.value[*] except workload",
+    truthSources: ["canonical_material_truth_v1"],
+    existingReaderOrContract: [
+      "supabase/functions/_shared/canonical-material-loader.ts::loadCanonicalMaterialUnits",
+      "packages/domain/src/planning/material-unit-view.ts::MaterialUnitView"
+    ],
+    readiness: "reusable_now",
+    rule: "Canonical material identity, mapping, boundary, and progress only; no resource_progress percentage fallback."
+  },
+  {
+    fieldPattern: "materials.value[*].workload",
+    truthSources: ["canonical_workload_engine_v1"],
+    existingReaderOrContract: [
+      "supabase/functions/_shared/canonical-material-shadow.ts::loadCanonicalWorkloadReadiness.estimates",
+      "packages/domain/src/planning/canonical-workload.ts::MaterialWorkloadEstimate"
+    ],
+    readiness: "reusable_now",
+    rule: "Copy engine authority/confidence/reason. Unknown has null minutes; legacy or invented fallback is forbidden."
+  },
+  {
+    fieldPattern: "workload",
+    truthSources: ["canonical_workload_engine_v1"],
+    existingReaderOrContract: [
+      "supabase/functions/_shared/canonical-material-shadow.ts::loadCanonicalWorkloadReadiness.summary",
+      "packages/domain/src/planning/canonical-workload.ts::CanonicalWorkloadSummary"
+    ],
+    readiness: "reusable_now",
+    rule: "Copy the canonical engine summary; CoachContext never recalculates workload totals."
+  },
+  {
+    fieldPattern: "capacity",
+    truthSources: ["capacity_projection_v1"],
+    existingReaderOrContract: [
+      "packages/domain/src/capacity.ts::calculateDayAvailableMinutes/calculateWeeklyAvailableMinutes",
+      "supabase/functions/_shared/capacity-overrides.ts::loadP48DailyCapacityOverrides/grossCapacityForDate/planningCapacityForDate",
+      "weekly_availability + calendar_periods + schedule_exceptions + p48_daily_capacity_overrides"
+    ],
+    readiness: "reusable_now",
+    rule: "6B.2 extracts canonical-capacity-readonly with identical adaptive inputs; Coach does not import legacy target-capacity or mutate capacity."
+  },
+  {
+    fieldPattern: "recentProgress.value.taskEvents",
+    truthSources: ["planning_task_state_v1"],
+    existingReaderOrContract: ["tasks + task_progress canonical lifecycle projection"],
+    readiness: "reusable_now",
+    rule: "6B.2 emits a bounded deterministic compact event projection; no raw task rows."
+  },
+  {
+    fieldPattern: "recentProgress.value.sessions",
+    truthSources: ["study_intent_ledger"],
+    existingReaderOrContract: ["study_sessions + current non-superseded study_session_allocations"],
+    readiness: "reusable_now",
+    rule: "6B.2 emits bounded completed sessions with current allocation identity, explicit intent and recording channel; no notes or raw rows."
+  },
+  {
+    fieldPattern: "recentProgress.value.transitions",
+    truthSources: ["study_intent_ledger"],
+    existingReaderOrContract: ["study_substitutions + task_carryovers user-scoped lifecycle rows"],
+    readiness: "reusable_now",
+    rule: "6B.2 carries exact typed lifecycle/identity/minute/date rows only; no transition is inferred from task movement."
+  },
+  {
+    fieldPattern: "planner.value identity/lifecycle/freshness",
+    truthSources: ["planner_v2_snapshot", "planner_v2_lifecycle"],
+    existingReaderOrContract: [
+      "packages/domain/src/planning-v2/proposal-lifecycle.ts::PlannerV2Preview/validatePlannerV2Freshness",
+      "supabase/functions/_shared/planner-v2-persisted-readonly.ts::loadCurrentPlannerV2PersistedStateReadOnly"
+    ],
+    readiness: "reusable_now",
+    rule: "6B.2 reads the newest persisted lifecycle row and exact proposal identity only; no preview recomputation, confirmation, or Apply authority."
+  },
+  {
+    fieldPattern: "planner.value.explanationFacts",
+    truthSources: ["planner_v2_lifecycle"],
+    existingReaderOrContract: ["confirmed_action_proposals.display_payload persisted PlannerV2Preview facts"],
+    readiness: "reusable_now",
+    rule: "6B.2 copies and validates already-persisted structured preview facts; it never calls buildPlannerV2Preview."
+  },
+  {
+    fieldPattern: "signalInputs",
+    truthSources: ["deterministic_signal_input_v1"],
+    existingReaderOrContract: ["upstream known CoachContextV1 facts identified by sourceFactPath"],
+    readiness: "adapter_extraction_required",
+    rule: "Only deterministic scalar inputs are carried. No final insight, severity, ranking, cooldown, or AI prose is created in 6B.1."
+  },
+  {
+    fieldPattern: "unknowns",
+    truthSources: ["coach_context_builder_v1"],
+    existingReaderOrContract: ["packages/domain/src/ai-coach/coach-context-v1.ts::buildCoachContextV1"],
+    readiness: "reusable_now",
+    rule: "Deterministically collected from unknown/stale fact envelopes; not model-generated."
+  },
+  {
+    fieldPattern: "provenance",
+    truthSources: ["coach_context_builder_v1"],
+    existingReaderOrContract: ["packages/domain/src/ai-coach/coach-context-v1.ts::buildCoachContextV1"],
+    readiness: "reusable_now",
+    rule: "Deterministic compact union of field-level provenance supplied by source adapters."
+  },
+  {
+    fieldPattern: "authority",
+    truthSources: ["coach_context_builder_v1"],
+    existingReaderOrContract: ["packages/domain/src/ai-coach/coach-context-v1.ts::buildCoachContextV1"],
+    readiness: "reusable_now",
+    rule: "Builder-owned immutable false-authority flags; callers and models cannot elevate them."
+  }
+]);
+var COACH_CONTEXT_V1_LEGACY_EXCLUSIONS = Object.freeze([
+  {
+    legacySource: "supabase/functions/_shared/ai-coach/material-context.ts::loadAiCoachMaterialContext",
+    excludedFrom: ["materials", "workload", "nextWork"],
+    reason: "Top-three legacy projection is not canonical Material Truth and may hide unknown workload."
+  },
+  {
+    legacySource: "supabase/functions/_shared/material-workload.ts::loadMaterialWorkloads",
+    excludedFrom: ["materials", "workload", "nextWork"],
+    reason: "Legacy material/workload arithmetic is not the MAT-001 Canonical Workload Engine."
+  },
+  {
+    legacySource: "supabase/functions/_shared/ai-coach/target-capacity.ts::loadCurrentGrossCapacityForDate",
+    excludedFrom: ["capacity"],
+    reason: "Legacy Coach-specific capacity comparison is not a standalone canonical capacity read model."
+  },
+  {
+    legacySource: "supabase/functions/_shared/pilot.ts::loadDailyCoachContext/generateWeeklyReport",
+    excludedFrom: ["today", "week", "nextWork", "signalInputs"],
+    reason: "The legacy projection mixes task ranking, recommendation, default unit minutes, and older report semantics."
+  },
+  {
+    legacySource: "planning recommendation getNextBestTask / buildDailyPlanProjection",
+    excludedFrom: ["nextWork"],
+    reason: "No legacy ranking result is promoted to global canonical next-work truth."
+  },
+  {
+    legacySource: "supabase/functions/_shared/adaptive.ts::previewCurrentPlan/recalculateCurrentPlan/applyCurrentPlanRevision",
+    excludedFrom: ["planner", "nextWork"],
+    reason: "Older planner lifecycle cannot compete with canonical Planner V2 scenario/preview/confirm/apply."
+  },
+  {
+    legacySource: "supabase/functions/ai-coach-plan-preview",
+    excludedFrom: ["planner"],
+    reason: "Legacy Coach capacity-preview path is compatibility debt and is not an Evre 6 authority."
+  },
+  {
+    legacySource: "public.apply_confirmed_action_proposal",
+    excludedFrom: ["authority", "planner"],
+    reason: "Every future Coach planning mutation must converge on canonical Planner V2; 6B.1 has no mutation path."
+  }
+]);
 export {
   AI_COACH_INTENTS_V1,
   AI_EVIDENCE_TYPES_V1,
   AI_VALIDATION_STATUSES_V1,
+  COACH_CONTEXT_V1_LEGACY_EXCLUSIONS,
+  COACH_CONTEXT_V1_LIMITS,
+  COACH_CONTEXT_V1_SOURCE_MAP,
+  COACH_CONTEXT_V1_TRUTH_SOURCES,
+  COACH_CONTEXT_V1_VERSION,
+  blockedCoachContextV1Fact,
   buildAiCoachSystemPromptV1,
+  buildCoachContextV1,
   executeAiStudyMessageV1,
+  knownCoachContextV1Fact,
   mapAiInterpretationToDomainEventV1,
+  notApplicableCoachContextV1Fact,
+  staleCoachContextV1Fact,
+  unknownCoachContextV1Fact,
   validateAiInterpretationV1
 };

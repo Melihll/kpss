@@ -114,7 +114,6 @@ export interface CoachContextV1Task {
   readonly estimatedMinutes: number;
   readonly completedMinutes: number;
   readonly remainingMinutes: number;
-  readonly protected: boolean;
 }
 
 export interface CoachContextV1TaskSummary {
@@ -273,8 +272,10 @@ export interface CoachContextV1CapacityDay {
   readonly reserveMinutes: number;
   readonly planningMinutes: number;
   readonly alreadyStudiedMinutes: number;
-  readonly protectedMinutes: number;
-  readonly availableMinutes: number;
+  /** Only a persisted/current Planner V2 result may author this commitment calculation. */
+  readonly protectedMinutes: CoachContextV1Fact<number>;
+  /** Only a persisted/current Planner V2 result may author this post-commitment value. */
+  readonly availableMinutes: CoachContextV1Fact<number>;
 }
 
 export interface CoachContextV1Capacity {
@@ -292,6 +293,7 @@ export interface CoachContextV1TaskProgressEvent {
 
 export interface CoachContextV1SessionProgress {
   readonly sessionId: string;
+  readonly allocationId: string | null;
   readonly startedAt: string;
   readonly endedAt: string;
   readonly actualMinutes: number;
@@ -751,7 +753,13 @@ export function buildCoachContextV1(input: CoachContextV1Input): CoachContextV1 
     })),
     capacity: normalizeFact(input.capacity, (capacity) => ({
       ...capacity,
-      days: [...capacity.days].sort((left, right) => left.date.localeCompare(right.date)),
+      days: [...capacity.days]
+        .map((day) => ({
+          ...day,
+          protectedMinutes: normalizeFact(day.protectedMinutes),
+          availableMinutes: normalizeFact(day.availableMinutes),
+        }))
+        .sort((left, right) => left.date.localeCompare(right.date)),
     })),
     recentProgress: normalizeFact(input.recentProgress, (recent) => ({
       ...recent,

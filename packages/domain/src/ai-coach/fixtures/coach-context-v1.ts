@@ -69,7 +69,6 @@ const mondayCompleted: CoachContextV1Task = {
   estimatedMinutes: 60,
   completedMinutes: 60,
   remainingMinutes: 0,
-  protected: false,
 };
 
 const todayReady: CoachContextV1Task = {
@@ -84,7 +83,6 @@ const todayReady: CoachContextV1Task = {
   estimatedMinutes: 45,
   completedMinutes: 0,
   remainingMinutes: 45,
-  protected: true,
 };
 
 const fridayReady: CoachContextV1Task = {
@@ -99,7 +97,6 @@ const fridayReady: CoachContextV1Task = {
   estimatedMinutes: 50,
   completedMinutes: 0,
   remainingMinutes: 50,
-  protected: false,
 };
 
 const youtubeMaterial: CoachContextV1MaterialProgress = {
@@ -305,8 +302,8 @@ function baseInput(): CoachContextV1Input {
       horizonStart: "2026-09-07",
       horizonEnd: "2026-09-13",
       days: [
-        { date: "2026-09-11", grossMinutes: 120, reserveMinutes: 15, planningMinutes: 105, alreadyStudiedMinutes: 0, protectedMinutes: 0, availableMinutes: 105 },
-        { date: "2026-09-10", grossMinutes: 120, reserveMinutes: 15, planningMinutes: 105, alreadyStudiedMinutes: 0, protectedMinutes: 45, availableMinutes: 60 },
+        { date: "2026-09-11", grossMinutes: 120, reserveMinutes: 15, planningMinutes: 105, alreadyStudiedMinutes: 0, protectedMinutes: known(0, "planner_v2_snapshot", []), availableMinutes: known(105, "planner_v2_snapshot", []) },
+        { date: "2026-09-10", grossMinutes: 120, reserveMinutes: 15, planningMinutes: 105, alreadyStudiedMinutes: 0, protectedMinutes: known(45, "planner_v2_snapshot", [todayReady.taskId]), availableMinutes: known(60, "planner_v2_snapshot", [todayReady.taskId]) },
       ],
     }, "capacity_projection_v1", ["capacity:2026-09-10", "capacity:2026-09-11"]),
     recentProgress: known({
@@ -320,6 +317,7 @@ function baseInput(): CoachContextV1Input {
       }],
       sessions: [{
         sessionId: "session-monday",
+        allocationId: "allocation-monday",
         startedAt: "2026-09-07T16:00:00.000Z",
         endedAt: "2026-09-07T17:00:00.000Z",
         actualMinutes: 60,

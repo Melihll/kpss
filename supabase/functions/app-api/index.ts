@@ -31,13 +31,13 @@ import {
 } from "../_shared/physical-study-lifecycle.ts";
 import { runCanonicalPlannerV2ReadOnlyShadow } from "../_shared/canonical-planner-v2-readonly.ts";
 import { plannerV2ProposalCapabilities } from "../_shared/planner-v2-proposal-capability.ts";
+import { loadPlannerV2ProposalByIdentityReadOnly } from "../_shared/planner-v2-persisted-readonly.ts";
 import {
   assertAuthoritativePlannerV2Apply,
   assertAuthoritativePlannerV2Confirmation,
   assertExactPlannerV2ProposalPersistence,
   parseExactPlannerV2ProposalIdentity,
   plannerV2LifecycleErrorCode,
-  type PlannerV2ProposalIdentity,
 } from "../_shared/planner-v2-proposal-http.ts";
 import {
   buildPlannerV2ApplyPlanCandidate,
@@ -233,25 +233,6 @@ async function activeProfile(client: SupabaseClient, userId: string) {
     .maybeSingle();
   if (error) throw error;
   if (!data) throw new PlanningDomainError("NO_ACTIVE_EXAM_PROFILE");
-  return data;
-}
-
-async function loadPlannerV2Proposal(
-  client: SupabaseClient,
-  exact: PlannerV2ProposalIdentity,
-  userId: string,
-  examProfileId: string,
-) {
-  const { data, error } = await client
-    .from("confirmed_action_proposals")
-    .select("id,user_id,exam_profile_id,action_kind,status,confirmed_at,expires_at,planner_proposal_id,proposal_fingerprint,planner_snapshot_fingerprint,planner_version,component_fingerprints,weekly_plan_id,plan_generation_version")
-    .eq("id", exact.recordId)
-    .eq("user_id", userId)
-    .eq("exam_profile_id", examProfileId)
-    .eq("action_kind", "planner_v2_week")
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) throw new Error("PLANNER_V2_PROPOSAL_NOT_FOUND");
   return data;
 }
 
@@ -885,7 +866,7 @@ Deno.serve(async (request) => {
       if (!plannerV2ConfirmationEnabled) throw new Error("PLANNER_V2_CONFIRM_DISABLED");
       const body = await request.json().catch(() => null);
       const exact = parseExactPlannerV2ProposalIdentity(body);
-      const prior = await loadPlannerV2Proposal(client, exact, userId, profile.id);
+      const prior = await loadPlannerV2ProposalByIdentityReadOnly(client, exact, userId, profile.id);
       assertExactPlannerV2ProposalPersistence(prior, exact, "PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH");
       if (prior.status !== "previewed" && prior.status !== "confirmed") {
         throw new Error(plannerV2LifecycleErrorCode(prior.status));
@@ -898,7 +879,7 @@ Deno.serve(async (request) => {
         p_planner_version: exact.plannerVersion,
       });
       if (confirmed.error) throw confirmed.error;
-      const persisted = await loadPlannerV2Proposal(client, exact, userId, profile.id);
+      const persisted = await loadPlannerV2ProposalByIdentityReadOnly(client, exact, userId, profile.id);
       const confirmation = assertAuthoritativePlannerV2Confirmation(persisted, exact);
       return json({
         confirmation,
@@ -909,7 +890,7 @@ Deno.serve(async (request) => {
     if (request.method === "POST" && route === "/planner-v2/apply") {
       if (!plannerV2ApplyEnabled) throw new Error("PLANNER_V2_APPLY_DISABLED");
       const exact = parseExactPlannerV2ProposalIdentity(await request.json().catch(() => null));
-      const persisted = await loadPlannerV2Proposal(client, exact, userId, profile.id);
+      const persisted = await loadPlannerV2ProposalByIdentityReadOnly(client, exact, userId, profile.id);
       assertExactPlannerV2ProposalPersistence(persisted, exact, "PLANNER_V2_APPLY_IDENTITY_MISMATCH");
 
       if (persisted.status !== "applied") {

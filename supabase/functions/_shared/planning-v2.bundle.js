@@ -2650,6 +2650,7 @@ export {
   decidePlanningActionV2,
   evaluatePlanningV2ShadowDecision,
   fingerprintPlannerV2SnapshotComponents,
+  mergePlanningTaskProgressV1,
   stableCanonicalPlannerJson,
   toPlanningV2ProposalRow,
   toPlanningV2SnapshotRow,

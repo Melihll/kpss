@@ -2,32 +2,33 @@
 
 Last updated: 2026-09-10
 
-## Sprint 02 — Evre 6B.1 & Continuing Planning Foundations
+## Sprint 02 — Evre 6B & Continuing Planning Foundations
 
 Sprint status: `IN_PROGRESS`
 
-Sprint objective: Define and review the versioned CoachContextV1 contract and canonical source map before live database wiring, while continuing already-gated planning foundations without changing AI runtime behavior, production state, migrations, or gates.
+Sprint objective: Wire and verify the versioned CoachContextV1 canonical read-only adapter without changing AI runtime behavior, production state, migrations, or gates.
 
-Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed. Evre 6B is active under the approved 6B.1-only scope: the typed context, source map, legacy exclusions, truth gaps, and A–H fixtures/tests are local and review-pending; live database reads and the rest of 6B have not started. PLN-002 has been released to production; planned-study authenticated real-user acceptance passed on 2026-08-23, and the item remains `IN_PROGRESS` pending natural Extra Study acceptance evidence. PLN-003 duration-policy foundations are locally implemented and verified. The P48 planned-credit accounting correction has been deployed and is observing, while production-authoritative stage-based duration activation remains intentionally gated.
+Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1 is accepted at commit `acd16ffb2263b5285b14bd7329ff4357d7971e00`. Evre 6B.2 canonical read-only adapter acceptance is green against the real local Supabase database. AI runtime wiring, production, migrations, and gates remain unchanged. PLN-002 remains `IN_PROGRESS` pending natural Extra Study acceptance evidence.
 
 ## NOW
 
-### `AIC-002` / Evre 6B.1 — CoachContextV1 Contract + Canonical Source Map
+### `AIC-002` / Evre 6B — CoachContextV1
 
 - Priority: `P0`
-- Status: `IN_PROGRESS — REVIEW_PENDING`
-- Scope: typed domain contract and fixtures/tests only; no live database wiring, AI runtime integration, provider/model/prompt change, telemetry implementation, migration, deploy, gate change, or production access.
+- Status: `IN_PROGRESS — 6B.2 LOCAL_DB_ACCEPTED — 6B.3 NEXT`
+- Scope: unconnected server-side read adapters and tests only; no AI runtime integration, provider/model/prompt change, telemetry implementation, migration, deploy, gate change, or production access.
 - Authority state: read-only; Planner V2 Confirm OFF; Planner V2 Apply OFF.
 
-Current deliverable:
+Current deliverable/evidence:
 
 - [AI Coach — CoachContextV1 Contract and Canonical Source Map](specs/AI_COACH_CONTEXT_V1.md);
-- versioned immutable fact envelopes with freshness, provenance, confidence/authority, unknown/stale/not-applicable semantics;
-- compact Today, Week, subject, material, workload, capacity, recent-progress, Planner V2, and deterministic signal-input projections;
-- canonical Material Truth and Canonical Workload Engine only, with legacy-source exclusions;
-- fail-closed PLN-002 progress-position behavior;
-- explicit source readiness and unresolved truth gaps for 6B.2;
-- A–H fixture coverage plus determinism, compactness, source-map, and no-side-effect tests.
+- 6B.1 contract/source-map checkpoint `acd16ffb2263b5285b14bd7329ff4357d7971e00`;
+- local canonical profile/task/session/material/workload/capacity/persisted-Planner adapters;
+- explicit `canonical_selector_unavailable` and `pln002_completeness_unresolved` behavior;
+- Planner protected/post-commitment capacity remains field-level unknown without a current authoritative reader;
+- 30/30 focused tests; 42-task production-shaped internal canonical context = 52,716 bytes;
+- real local Supabase integration test `1/1` PASS with total mutable-row delta `0` and Planner lifecycle-row delta `0`;
+- 6B.3 must add a compact allowlisted LLM-facing projection with on-demand detail retrieval; it must not reduce or fabricate the internal canonical truth envelope.
 
 ### `AIC-001` / Evre 6A — Product / Authority / Cost Contract
 
@@ -113,9 +114,9 @@ The next active product-foundation task is `MAT-001`, which supplies the exact p
 
 ## NEXT
 
-1. Review and accept the local 6B.1 CoachContextV1 contract/source map and its verification evidence
-2. Scope 6B.2 live read-only adapters for the explicit extraction requirements/truth gaps; do not connect the AI runtime yet
-3. Continue later 6B work for centralized server-side router/pricing and AI usage/cost telemetry under a separate bounded scope
+1. Define and verify 6B.3 compact allowlisted LLM-facing projection and on-demand detail strategy without dropping internal canonical truth
+2. Continue later 6B work for centralized server-side router/pricing and AI usage/cost telemetry under a separate bounded scope
+3. Do not connect the AI runtime until the relevant 6B scope is separately approved and accepted
 4. Close `PLN-002` natural Extra Study authenticated real-user acceptance when real usage provides evidence
 5. Keep `PLN-004` production-authoritative activation gated while MAT-001/PLN-005 inputs mature
 6. Re-evaluate PLN-003 production-authoritative duration activation only after canonical learning-stage, material, and resource-role inputs exist
@@ -123,7 +124,7 @@ The next active product-foundation task is `MAT-001`, which supplies the exact p
 `NEXT` indicates intended sequence, not permission to deploy. Stage-dependent duration activation remains separately gated.
 ## Do not start
 
-- 6B.2 live reads or other 6B implementation outside the approved 6B.1-only scope;
+- AI runtime wiring before a separately approved 6B.3 projection/telemetry scope and its acceptance;
 - 6C–6G work before their documented entry conditions;
 - AI teacher, tutoring, quiz, mock, grading, or mastery features in Evre 6;
 - any Coach task/capacity/material/progress/stage mutation or non-canonical planning Apply path;
