@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-09-08
+Last updated: 2026-09-10
 
 ## Workflow
 
@@ -44,6 +44,131 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | `PLN-008` | `P1` | Planner Simulation Suite | `TODO` |
 | `PLN-009` | `P1` | Shadow Evaluation | `TODO` |
 | `PLN-010` | `P1` | Controlled Production Rollout | `TODO` |
+
+## Evre 6 AI Coach backlog
+
+| ID | Phase | Priority | Title | Status |
+| --- | --- | --- | --- | --- |
+| `AIC-001` | 6A | `P0` | Product / Authority / Cost Contract | `DONE` |
+| `AIC-002` | 6B | `P0` | CoachContextV1 | `READY` |
+| `AIC-003` | 6C | `P1` | Reactive Coach | `TODO` |
+| `AIC-004` | 6D | `P1` | Proactive Coach | `TODO` |
+| `AIC-005` | 6E | `P0` | Planner V2 Integration | `TODO` |
+| `AIC-006` | 6F | `P1` | Conversation Intelligence | `TODO` |
+| `AIC-007` | 6G | `P0` | Eval / Cost / Production Acceptance | `TODO` |
+
+The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, Authority & Cost Contract](specs/AI_COACH_EVRE_6_PRODUCT_AUTHORITY_COST_CONTRACT.md). AI teacher/tutoring/quiz/mastery features are outside every Evre 6 item. No backlog status grants runtime, deployment, migration, gate, Confirm, Apply, or production authority.
+
+## `AIC-001` / Evre 6A — Product / Authority / Cost Contract
+
+- Priority: `P0`
+- Status: `DONE`
+- Problem: AI Coach cannot safely expand while product outcomes, truth sources, LLM responsibility, planner authority, proactive triggers, user experience, and per-user model cost limits remain implicit.
+- Desired outcome: One final, reviewable contract constrains all later Evre 6 design and acceptance.
+- Acceptance criteria:
+  - Explain, Diagnose, Guide, Proactive Insight, Planner V2 proposal interpretation, daily/weekly analysis, and contextual conversation are defined.
+  - Deterministic truth/calculation responsibility and bounded LLM interpretation/wording responsibility are explicit.
+  - AI cannot create/move/cancel/apply tasks, calculate canonical workload/capacity, invent materials, mutate capacity/progress/stage, or bypass Planner V2.
+  - Every Coach-originated planning Apply converges on the canonical Planner V2 lifecycle.
+  - Twenty realistic Turkish scenarios define truth sources, responsibility, allowed/forbidden behavior, proposal eligibility, and expected UX.
+  - Proactive categories, eligibility, materiality, freshness, dedupe, cooldown, attention budget, user control, and no-auto-proposal rules are defined.
+  - AI usage/cost telemetry starts in 6B; centralized server-side routing/pricing and provider/versioned-TRY ledger semantics are defined; automatic hard-governor completion is a 6G exit criterion.
+  - Normal-user `≤ 150–200 TL/month`, heavy-user `≤ 250 TL/month`, and hard `300 TL/month` limits are contractual.
+  - T0–T3 routing, caching, cooldowns, deterministic fallback, and “no LLM for deterministic calculations” are defined.
+  - 6A–6G entry/exit and authority states plus the ten final architecture decisions are recorded.
+  - Product/architecture review decisions are incorporated and all 20 scenarios are revalidated.
+- Completion note (2026-09-10): the final contract is accepted and 6A is closed. Runtime code, migrations, deployments, gates, and production state are unchanged. Confirm and Apply remain OFF.
+
+## `AIC-002` / Evre 6B — CoachContextV1
+
+- Priority: `P0`
+- Status: `READY`
+- Dependency: closed `AIC-001`; starting work still requires a separate implementation scope.
+- Desired outcome: One immutable, minimal, user-scoped context envelope supplies canonical facts, provenance, freshness, confidence/authority, unknowns, and bounded conversation state while beginning centralized router/pricing and AI usage/cost telemetry.
+- Acceptance criteria:
+  - Context distinguishes plan, task, capacity, workload, material progress, stage, resource role, and study-intent semantics.
+  - Material facts use canonical Material Truth and the Canonical Workload Engine; legacy top-three material/workload projections are not truth sources or fallbacks.
+  - Daily/weekly totals preserve Planned Study, Extra Study, Substitution, Carryover, and ambiguity.
+  - Definitive ahead/behind fields are unknown when PLN-002 semantics are insufficient; other independently known facts remain available.
+  - Canonical Planner V2 proposal identity/lifecycle/fingerprint can be bound without transferring authority.
+  - Facts carry freshness, confidence/authority, provenance, and known/unknown/blocked/not-applicable semantics where applicable.
+  - Model routing and pricing configuration are centralized server-side and versioned.
+  - Every Evre 6 model call from 6B onward is recorded in a usage/cost ledger with provider cost and a versioned TRY estimate.
+  - Context minimization, user isolation, redaction, fingerprints, fixtures, and per-tier token estimates pass review.
+  - No provider call, proposal creation, confirmation, Apply, or production activation is introduced by the context contract itself.
+
+## `AIC-003` / Evre 6C — Reactive Coach
+
+- Priority: `P1`
+- Status: `TODO`
+- Dependency: accepted `AIC-002`, eval fixtures, cost ledger, and separate release scope.
+- Desired outcome: The user can ask the Coach to Explain, Diagnose, or Guide and receive grounded Turkish responses with deterministic fallbacks.
+- Acceptance criteria:
+  - Deterministic questions route to T0 with zero provider calls.
+  - LLM output is schema-validated, grounded to CoachContextV1, and cannot call mutation tools.
+  - Facts, hypotheses, unknowns, clarification, out-of-scope, provider failure, and cost-limited states are distinct.
+  - All relevant 20 contract scenarios pass, including prohibited-action assertions.
+  - Every call/retry/fallback is metered through the 6B ledger; the hard governor remains a 6G production-acceptance requirement.
+  - User-facing language uses durum analizi, ilerleme değerlendirmesi, ders dengesi, çalışma eğilimi, and plan riski rather than mastery/medical diagnosis.
+  - No broad production exposure occurs before 6G acceptance.
+
+## `AIC-004` / Evre 6D — Proactive Coach
+
+- Priority: `P1`
+- Status: `TODO`
+- Dependency: accepted reactive safety and approved trigger/attention policy.
+- Desired outcome: Deterministic, timely, actionable in-app insights reach the user without noise, manipulation, invented causes, outbound messaging, or automatic planning.
+- Acceptance criteria:
+  - Deterministic rules own trigger eligibility, priority, dedupe, hysteresis, cooldown, expiry, and suppression.
+  - Every launch trigger has a deterministic template and sufficient data-quality threshold.
+  - Same-fingerprint/category limits, daily attention budget, active-work protection, dismiss/snooze/disable, and audit facts are enforced.
+  - Proactive Coach is in-app only in Evre 6; Telegram, email, push, SMS, and other outbound channels are prohibited.
+  - Silence is a valid outcome when freshness, confidence, actionability, attention, or cost conditions are not met.
+  - Proactive insight generation never creates/persists a Planner proposal and does not use an LLM to decide whether to fire.
+  - Shadow precision/actionability, cost, in-app rendering, and silence acceptance pass before 6G.
+
+## `AIC-005` / Evre 6E — Planner V2 Integration
+
+- Priority: `P0`
+- Status: `TODO`
+- Dependency: accepted context/reactive boundaries; the 6A canonical-convergence decision is final.
+- Desired outcome: Coach-originated planning requests and explanations use one canonical Planner V2 lifecycle with no competing Apply authority.
+- Acceptance criteria:
+  - Natural-language intent remains an untrusted candidate; deterministic Planner V2 owns workload, feasibility, proposal, protection, and placement.
+  - AI states no real task/date/capacity/affected-count outcome until a deterministic Planner V2 scenario or canonical preview supplies it.
+  - Proposal interpretation is an exact rendering of immutable diff, reasons, warnings, blocked/unmet work, lifecycle, and expiry.
+  - Changed intent creates a new snapshot/proposal attempt; no proposal body or confirmation is reused.
+  - Chat text cannot confirm or apply; stale/expired proposals cannot proceed.
+  - New development does not use the legacy/generic Coach planning Apply path; every Coach planning mutation converges on canonical Planner V2.
+  - Preview, Confirm, and Apply remain independently gated. Confirm and Apply stay OFF until separate release approvals.
+
+## `AIC-006` / Evre 6F — Conversation Intelligence
+
+- Priority: `P1`
+- Status: `TODO`
+- Dependency: stable reactive Coach and canonical proposal binding.
+- Desired outcome: Short recent context plus compact structured conversation state/signals resolve references and corrections without long-term raw-history storage, stale facts, privacy leakage, or authority transfer.
+- Acceptance criteria:
+  - Referents bind to unique user-scoped IDs and current fingerprints; ambiguity asks one clarification.
+  - Corrections supersede conversational claims but never rewrite history or an immutable proposal.
+  - Raw long-term conversation history is not stored by default; structured state is minimized, retention/deletion/redaction are defined, and no cross-user/provider memory is trusted.
+  - Conversation summaries are metered, provenance-bearing, and non-authoritative.
+  - “Tamam/evet/uygula” prose never substitutes for canonical confirmation or Apply.
+
+## `AIC-007` / Evre 6G — Eval / Cost / Production Acceptance
+
+- Priority: `P0`
+- Status: `TODO`
+- Dependency: relevant 6B–6F exits and a separate production release brief.
+- Desired outcome: Safety, groundedness, UX, cost, observability, and rollback are proven before any controlled production expansion.
+- Acceptance criteria:
+  - P0 authority violations, cross-user leakage, invented workload/material, and false Apply-success claims are zero.
+  - Numeric and causal claims in the acceptance set are fully grounded in supplied deterministic facts.
+  - Turkish ambiguity, correction, injection, malformed provider output, refusal, timeout, retry, stale proposal, cache isolation, and cost exhaustion tests pass.
+  - Normal-user projected p90 is `≤ 200 TL/month`, heavy-user projected p90 is `≤ 250 TL/month`, and no path exceeds `300 TL/month`.
+  - Every model call is ledgered/reconciled with provider cost, provider-pricing version, versioned TRY estimate, and centralized server-side model-router version; deterministic-only cases produce zero model calls.
+  - The automatic pre-call budget governor enforces the hard `300 TL/month` per-user ceiling while deterministic/template product behavior remains available.
+  - Limited exact-profile production acceptance, disable/rollback, and any independent capability activation receive separate approval.
 
 ## `PLN-001` — Esra 7-day Planning Reality Audit
 

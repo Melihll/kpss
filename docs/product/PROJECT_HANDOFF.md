@@ -1,6 +1,6 @@
 # KPSS Koçu — Project Handoff
 
-Last updated: 2026-09-08
+Last updated: 2026-09-10
 
 ## Canonical source
 
@@ -31,6 +31,7 @@ The architecture is subject-agnostic across all KPSS subjects. Do not create Mat
 - P48 planned-credit accounting correction: deployed and observing.
 - `PLN-004`: `IMPLEMENTED_LOCAL_VERIFIED`; production-authoritative activation gated.
 - Planner V2 / Planner Truth Evre 5: `CLOSED`. Engineering, exact-profile production acceptance, and final Week/Today real-user observation are complete. Confirm and Apply are OFF.
+- Evre 6 AI Coach: 6A Product / Authority / Cost Contract is `CLOSED`; the final contract is accepted. 6B CoachContextV1 is next but not started pending a separate implementation scope. Runtime, migrations, deployments, gates, and production are unchanged.
 
 PLN-004 verification:
 - targeted domain tests `22/22` PASS;
@@ -51,11 +52,11 @@ PLN-004 verification:
 
 ## Active task
 
-`Evre 6 AI Coach — discovery/specification kickoff`
+`AIC-002 / Evre 6B — separate implementation-scope decision`
 
-Goal: define the AI Coach problem, user outcomes, evidence contract, safety boundaries, and phased acceptance plan without granting plan mutation authority or production activation.
+Goal: scope CoachContextV1 implementation from the closed [AI Coach Evre 6 — Product, Authority & Cost Contract](specs/AI_COACH_EVRE_6_PRODUCT_AUTHORITY_COST_CONTRACT.md). The scope must use canonical Material Truth and Canonical Workload Engine, define fact freshness/confidence/provenance/unknown semantics, and begin centralized server-side router/pricing plus AI usage/cost telemetry.
 
-Evre 6 AI Coach is the next active macro phase. It begins with discovery/specification only; this handoff does not authorize AI Coach implementation, deployment, plan mutation, or production activation.
+Evre 6 AI Coach is the active macro phase. 6A closure is documentation/product design only; it does not authorize AI Coach implementation, deployment, plan mutation, proposal creation, confirmation, Apply, gate changes, or production activation. 6B–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
 
 MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning foundations remain tracked work rather than being silently treated as closed by the Planner V2 pilot.
 
@@ -64,18 +65,49 @@ MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning founda
 - No silent Today-task removal.
 - Extra Study does not silently substitute for planned work.
 - AI has no direct plan/stage mutation authority.
+- AI has no direct task, capacity, workload, material, progress, learning-stage, or Apply authority.
+- All quantities, lifecycle states, proactive triggers, and feasibility decisions are deterministic; no LLM is used for deterministic calculations.
+- CoachContext material facts come only from canonical Material Truth and Canonical Workload Engine; legacy top-three projections are not truth sources.
+- Incomplete PLN-002 semantics make definitive ahead/behind claims unknown, but do not block other independently known Coach facts.
+- AI usage/cost telemetry starts in 6B. The automatic 300 TL per-user hard governor is completed in 6G before production acceptance.
+- Model routing/pricing and versioned TRY estimation are centralized server-side; the ledger carries provider cost and versioned TRY cost estimates.
+- New development must not use the legacy Coach planning Apply path. Every future Coach-originated planning mutation must converge on the canonical Planner V2 lifecycle.
+- Real-plan impact claims require a fresh deterministic Planner V2 scenario/preview.
+- Proactive Coach is in-app only with attention budget, category cooldown, dedupe, and valid silence.
+- Raw long-term conversation history is not stored by default; 6F uses short recent context plus compact structured state/signals.
+- User-facing analysis uses durum analizi, ilerleme değerlendirmesi, ders dengesi, çalışma eğilimi, and plan riski—not mastery or medical-style diagnosis.
+- Coach facts carry freshness, confidence/authority, provenance, and unknown semantics where applicable.
+- Conversation text cannot confirm or apply a proposal.
 - Missing canonical metadata degrades safely rather than being guessed.
 - No MAT-001 production migration/deployment without a separate release decision.
 
 ## NEXT EXACT STEP
 
-Prepare the Evre 6 AI Coach discovery/specification brief as the next active macro phase. Define evidence inputs, deterministic product facts, user-visible coaching boundaries, evaluation criteria, and explicit authority limits before implementation. Any implementation, authority, deployment, or production-data change requires a separate decision.
+Prepare a separate 6B implementation scope. It must treat the final 6A decisions as fixed inputs, start the telemetry ledger and centralized server-side router/pricing contract, and remain read-only with no proposal, confirmation, Apply, deployment, migration, gate, or production authority unless separately approved.
 
 Keep the accepted Evre 5 Planner V2 result intact. Do not widen preview access, re-enable Confirm/Apply, manufacture another proposal, or manually repair the accepted result. Production preview remains exact-profile-only; Confirm and Apply remain OFF.
 
 In parallel, continue passive observation of the next natural W2-eligible physical study lifecycle for the exact-profile pilot. Inspect it read-only if it occurs; do not manufacture activity, widen the allowlist, or alter accepted evidence.
 
 Telegram requires a separately reviewed service-role W2 wrapper plus authoritative page-boundary UX before it can enter an activation proposal. Do not activate canonical workload planning while production physical pace evidence remains insufficient.
+
+## 2026-09-10 Evre 6A final contract closure
+
+- Status: `EVRE_6A_CLOSED — FINAL_CONTRACT_ACCEPTED — DOCS_ONLY`.
+- The dedicated spec defines Explain, Diagnose, Guide, Proactive Insight, Planner V2 proposal interpretation, daily/weekly analysis, and contextual conversation.
+- AI teacher/tutoring/quiz/mastery capabilities are explicitly outside Evre 6.
+- Twenty Turkish scenarios bind each user message/event to required truth sources, deterministic-versus-LLM responsibility, allowed/forbidden behavior, Planner proposal eligibility, and expected UX.
+- AI cannot create/move/cancel/apply tasks, calculate canonical workload/capacity, invent materials, mutate capacity/progress/stage, or bypass Planner V2.
+- New development does not use the legacy Coach planning Apply path. Every future Coach planning mutation converges on the canonical Planner V2 lifecycle; natural-language “tamam/uygula” cannot confirm or apply.
+- CoachContextV1 uses canonical Material Truth and Canonical Workload Engine. Legacy top-three material/workload projections are not truth sources.
+- PLN-002-insufficient ahead/behind claims fail closed to unknown per field while other Coach capabilities remain available.
+- Proactive insight categories use deterministic in-app triggers, materiality/data-quality gates, fingerprint freshness, hysteresis, 72-hour same-fingerprint suppression, 24-hour category cooldown, daily attention limits, user controls, valid silence, and no automatic proposal creation.
+- AI usage/cost telemetry begins in 6B. Server-side centralized router/pricing and the cost ledger carry provider cost plus versioned TRY estimates. The 6G hard governor enforces the 300 TL monthly user ceiling before production acceptance; deterministic answers use no LLM.
+- Raw long-term conversation history is not stored by default; 6F uses short recent context plus compact structured state/signals.
+- Real plan impact is stated only from a fresh deterministic Planner V2 scenario/preview. User-facing analysis avoids mastery/medical diagnosis terminology. Coach facts expose freshness, confidence/authority, provenance, and unknown semantics where applicable.
+- Evre 6 phases are 6A contract, 6B CoachContextV1, 6C Reactive Coach, 6D Proactive Coach, 6E Planner V2 integration, 6F Conversation Intelligence, and 6G Eval/Cost/Production Acceptance.
+- All 20 Turkish acceptance scenarios were revalidated against the ten final decisions with no contract contradiction.
+- No runtime code, deployment, migration, gate, production data, or production capability changed. Planner V2 Confirm remains OFF. Planner V2 Apply remains OFF.
 
 ## 2026-09-07 Evre 5 production acceptance
 

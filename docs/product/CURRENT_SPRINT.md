@@ -1,16 +1,37 @@
 # Current Sprint
 
-Last updated: 2026-09-08
+Last updated: 2026-09-10
 
-## Sprint 02 — Planning Semantics & Duration Policy
+## Sprint 02 — Evre 6A & Continuing Planning Foundations
 
 Sprint status: `IN_PROGRESS`
 
-Sprint objective: Close PLN-002 natural Extra Study acceptance safely while specifying PLN-004 learning-stage and MAT-001 exact-material foundations, without activating unapproved production-authoritative stage-dependent planner behavior.
+Sprint objective: Establish the Evre 6 AI Coach product, authority, truth, scenario, proactive-insight, cost, and phased acceptance contract while continuing already-gated planning foundations, without changing runtime code, production state, migrations, or gates.
 
-Sprint 01 closed on 2026-08-22 with `PLN-001` complete. PLN-002 has been released to production; planned-study authenticated real-user acceptance passed on 2026-08-23, and the item remains `IN_PROGRESS` pending natural Extra Study acceptance evidence. PLN-003 duration-policy foundations are locally implemented and verified. The P48 planned-credit accounting correction has been deployed and is observing, while production-authoritative stage-based duration activation remains intentionally gated.
+Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is now closed with a final local documentation/product contract; 6B is next but not started pending a separate implementation scope. PLN-002 has been released to production; planned-study authenticated real-user acceptance passed on 2026-08-23, and the item remains `IN_PROGRESS` pending natural Extra Study acceptance evidence. PLN-003 duration-policy foundations are locally implemented and verified. The P48 planned-credit accounting correction has been deployed and is observing, while production-authoritative stage-based duration activation remains intentionally gated.
 
 ## NOW
+
+### `AIC-001` / Evre 6A — Product / Authority / Cost Contract
+
+- Priority: `P0`
+- Status: `DONE`
+- Phase: `EVRE_6A_CLOSED — FINAL_CONTRACT_ACCEPTED — DOCS_ONLY`
+- Runtime state: unchanged; no implementation, deployment, migration, gate change, or production access.
+- Authority state: Planner V2 Confirm OFF; Planner V2 Apply OFF.
+
+Current deliverable:
+
+- [AI Coach Evre 6 — Product, Authority & Cost Contract](specs/AI_COACH_EVRE_6_PRODUCT_AUTHORITY_COST_CONTRACT.md);
+- Explain, Diagnose, Guide, Proactive Insight, proposal interpretation, daily/weekly analysis, and contextual-conversation capability boundaries;
+- explicit deterministic-versus-LLM responsibility and non-authority invariants;
+- 20 Turkish product scenarios with truth sources, allowed/forbidden behavior, proposal eligibility, and expected UX;
+- deterministic proactive categories, eligibility, freshness, cooldown, dedupe, and attention-budget rules;
+- normal-user `≤ 150–200 TL/month`, heavy-user `≤ 250 TL/month`, and hard `300 TL/month` model-cost contract;
+- sub-phases 6A–6G with entry, exit, and authority states;
+- ten final architecture decisions and explicit later-phase implementation dependencies.
+
+The final review decisions are incorporated. All 20 scenarios were revalidated. New development cannot use the legacy Coach planning Apply path; CoachContext uses canonical Material Truth and Canonical Workload Engine; incomplete PLN-002 ahead/behind claims fail closed per field; telemetry begins in 6B and the hard governor completes in 6G; raw long-term conversation history is not stored by default; proactive behavior is in-app only and may stay silent; real plan effects require Planner V2 scenario/preview facts; router/pricing are centralized server-side; user-facing analysis avoids mastery/medical diagnosis; and Coach facts carry freshness/confidence/provenance/unknown semantics. AI teacher/tutoring/quiz/mastery features remain outside Evre 6.
 
 ### `PLN-002` — Separate Planned Study / Extra Study / Substitution / Carryover semantics
 
@@ -73,23 +94,21 @@ The next active product-foundation task is `MAT-001`, which supplies the exact p
 - Final real-user observation PASS on 2026-09-08: the 22-minute canonical task appeared correctly on both Week and Today before start; database state remained `ready` with zero task progress/sessions, exact canonical linkage, duplicate count one, and plan `2662 / 2662 / 2662` generation 4. Natural work on three other Today tasks was fully explained by linked sessions; no future manual-task or observation-caused mutation occurred.
 - Final classification: `EVRE_5_PLANNER_V2_PLANNER_TRUTH_CLOSED`.
 
-### Evre 6 AI Coach
-
-- Phase: `NEXT_ACTIVE_MACRO_PHASE`.
-- Immediate scope: discovery/specification of user outcomes, evidence inputs, deterministic facts, explanation boundaries, evaluation criteria, authority limits, and release gates.
-- This status does not authorize implementation, deployment, production activation, or direct plan/task mutation.
-
 ## NEXT
 
-1. Open Evre 6 AI Coach as the next active macro-phase discovery/specification track under separate scope and approval
-2. Close `PLN-002` natural Extra Study authenticated real-user acceptance when real usage provides evidence
-3. Keep `PLN-004` production-authoritative activation gated while MAT-001/PLN-005 inputs mature
-4. Re-evaluate PLN-003 production-authoritative duration activation only after canonical learning-stage, material, and resource-role inputs exist
+1. Define and approve a separate implementation scope for 6B CoachContextV1
+2. In 6B, use canonical Material Truth + Canonical Workload Engine, implement fact envelopes, and start centralized server-side router/pricing plus AI usage/cost telemetry
+3. Close `PLN-002` natural Extra Study authenticated real-user acceptance when real usage provides evidence
+4. Keep `PLN-004` production-authoritative activation gated while MAT-001/PLN-005 inputs mature
+5. Re-evaluate PLN-003 production-authoritative duration activation only after canonical learning-stage, material, and resource-role inputs exist
 
 `NEXT` indicates intended sequence, not permission to deploy. Stage-dependent duration activation remains separately gated.
 ## Do not start
 
-- unscoped AI Coach implementation or production activation before the Evre 6 brief and approval;
+- 6B implementation before a separate implementation scope;
+- 6C–6G work before their documented entry conditions;
+- AI teacher, tutoring, quiz, mock, grading, or mastery features in Evre 6;
+- any Coach task/capacity/material/progress/stage mutation or non-canonical planning Apply path;
 - gamification;
 - multi-user onboarding;
 - large visual redesigns;
@@ -104,6 +123,17 @@ The next active product-foundation task is `MAT-001`, which supplies the exact p
 - Preserve task identity/history for carryover and distinguish it from backlog.
 - Represent historical ambiguity explicitly rather than inventing intent.
 - Keep unapproved stage-dependent PLN-003 planner behavior out of production until canonical inputs exist and a separately approved release phase is completed.
+- Keep AI provider output untrusted and advisory; deterministic sources own all quantities, eligibility, lifecycle, and mutations.
+- Use no LLM for deterministic calculations or unambiguous scope routing.
+- Start metering every Evre 6 model call in 6B; complete automatic pre-call reservation and the `300 TL/month` per-user hard governor by the 6G exit.
+- Keep model routing, provider pricing, and versioned TRY estimation centralized server-side.
+- Use canonical Material Truth and Canonical Workload Engine in CoachContext; never fall back to legacy top-three material/workload projections.
+- Fail definitive ahead/behind claims closed to unknown when PLN-002 semantics are insufficient, while keeping independently known Coach facts available.
+- Keep proactive Coach in-app only with attention budget, category cooldown, dedupe, and valid silence.
+- Do not store raw long-term conversation history by default; use short recent context plus compact structured state/signals.
+- State real plan effects only from a fresh deterministic Planner V2 scenario/preview.
+- Route every future Coach planning Apply through the canonical Planner V2 lifecycle; conversation text never confirms or applies.
+- Keep Planner V2 Confirm and Apply OFF after 6A closure unless separately approved.
 - Stop and follow the [incident process](INCIDENT_PROCESS.md) if the audit exposes active data loss, accounting corruption, unsafe mutation, or another P0 condition.
 
 ## Previous sprint closure
