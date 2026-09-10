@@ -104,6 +104,8 @@ Evre 6B must define one immutable, user-scoped, time-bounded context envelope co
 
 The context builder performs no LLM call and no mutation. Missing or stale facts remain explicit; they are never filled by inference. Raw long-term conversation history is not stored by default.
 
+The 6B.1 typed shape, fact-envelope semantics, canonical field/source matrix, legacy exclusions, explicit truth gaps, and A–H fixture contract are defined in [AI Coach — CoachContextV1 Contract and Canonical Source Map](AI_COACH_CONTEXT_V1.md). That contract is a local read-only domain definition only; live database wiring, AI runtime integration, model calls, and telemetry remain outside 6B.1.
+
 ### 4.4 Responsibility split
 
 | Concern | Deterministic product responsibility | LLM responsibility |
@@ -597,4 +599,4 @@ Evre 6A is `CLOSED` because:
 9. Runtime code, deployments, migrations, gates, and production state remain unchanged.
 10. Planner V2 Confirm remains OFF and Planner V2 Apply remains OFF.
 
-6B is next but remains not started until a separate implementation scope is approved.
+6B is active under a separate bounded scope. 6B.1 defines the typed CoachContextV1 contract and canonical source map locally; it remains review-pending and does not wire live reads, start the AI runtime, or complete the router/pricing and telemetry obligations of 6B.

@@ -5,7 +5,9 @@ Last updated: 2026-09-10
 ## Canonical source
 
 - Repository: `https://github.com/Melihll/kpss.git`
-- Branch: `main`
+- Base branch: `main`
+- Local working branch: `evre6-ai-coach` (not pushed)
+- 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - Last verified product checkpoint before W5: `fa46fd2`
 - Repository code and `docs/product/` are authoritative over chat recollection.
 
@@ -31,7 +33,7 @@ The architecture is subject-agnostic across all KPSS subjects. Do not create Mat
 - P48 planned-credit accounting correction: deployed and observing.
 - `PLN-004`: `IMPLEMENTED_LOCAL_VERIFIED`; production-authoritative activation gated.
 - Planner V2 / Planner Truth Evre 5: `CLOSED`. Engineering, exact-profile production acceptance, and final Week/Today real-user observation are complete. Confirm and Apply are OFF.
-- Evre 6 AI Coach: 6A Product / Authority / Cost Contract is `CLOSED`; the final contract is accepted. 6B CoachContextV1 is next but not started pending a separate implementation scope. Runtime, migrations, deployments, gates, and production are unchanged.
+- Evre 6 AI Coach: 6A Product / Authority / Cost Contract is `CLOSED`; 6B is active. 6B.1 CoachContextV1 contract/source-map work is implemented locally and `REVIEW_PENDING`. Live database wiring and the rest of 6B are not started. Runtime, migrations, deployments, gates, and production are unchanged.
 
 PLN-004 verification:
 - targeted domain tests `22/22` PASS;
@@ -52,11 +54,11 @@ PLN-004 verification:
 
 ## Active task
 
-`AIC-002 / Evre 6B — separate implementation-scope decision`
+`AIC-002 / Evre 6B.1 — CoachContextV1 contract/source-map review`
 
-Goal: scope CoachContextV1 implementation from the closed [AI Coach Evre 6 — Product, Authority & Cost Contract](specs/AI_COACH_EVRE_6_PRODUCT_AUTHORITY_COST_CONTRACT.md). The scope must use canonical Material Truth and Canonical Workload Engine, define fact freshness/confidence/provenance/unknown semantics, and begin centralized server-side router/pricing plus AI usage/cost telemetry.
+Goal: review the local [CoachContextV1 Contract and Canonical Source Map](specs/AI_COACH_CONTEXT_V1.md), its typed pure builder, A–H fixtures/tests, legacy exclusions, and explicit 6B.2 truth gaps. Material/workload truth is restricted to canonical Material Truth and Canonical Workload Engine.
 
-Evre 6 AI Coach is the active macro phase. 6A closure is documentation/product design only; it does not authorize AI Coach implementation, deployment, plan mutation, proposal creation, confirmation, Apply, gate changes, or production activation. 6B–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
+Evre 6 AI Coach is the active macro phase. 6A is closed and 6B.1 is review-pending. The current implementation is a domain contract only and does not authorize live reads, AI runtime integration, deployment, plan mutation, proposal creation, confirmation, Apply, gate changes, or production activation. 6B.2 and 6C–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
 
 MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning foundations remain tracked work rather than being silently treated as closed by the Planner V2 pilot.
 
@@ -83,7 +85,7 @@ MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning founda
 
 ## NEXT EXACT STEP
 
-Prepare a separate 6B implementation scope. It must treat the final 6A decisions as fixed inputs, start the telemetry ledger and centralized server-side router/pricing contract, and remain read-only with no proposal, confirmation, Apply, deployment, migration, gate, or production authority unless separately approved.
+Review 6B.1. If accepted, prepare a separate 6B.2 scope for user-scoped live read-only adapters covering profile/timezone, task/session accounting, capacity, Planner V2 persisted state, and explicitly scoped next-work facts. Do not connect the current AI Coach runtime in 6B.2 unless separately authorized. Router/pricing and the telemetry ledger remain separate later 6B work.
 
 Keep the accepted Evre 5 Planner V2 result intact. Do not widen preview access, re-enable Confirm/Apply, manufacture another proposal, or manually repair the accepted result. Production preview remains exact-profile-only; Confirm and Apply remain OFF.
 

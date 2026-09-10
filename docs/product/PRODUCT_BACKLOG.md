@@ -50,7 +50,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | ID | Phase | Priority | Title | Status |
 | --- | --- | --- | --- | --- |
 | `AIC-001` | 6A | `P0` | Product / Authority / Cost Contract | `DONE` |
-| `AIC-002` | 6B | `P0` | CoachContextV1 | `READY` |
+| `AIC-002` | 6B | `P0` | CoachContextV1 | `IN_PROGRESS — 6B.1 REVIEW_PENDING` |
 | `AIC-003` | 6C | `P1` | Reactive Coach | `TODO` |
 | `AIC-004` | 6D | `P1` | Proactive Coach | `TODO` |
 | `AIC-005` | 6E | `P0` | Planner V2 Integration | `TODO` |
@@ -82,8 +82,8 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-002` / Evre 6B — CoachContextV1
 
 - Priority: `P0`
-- Status: `READY`
-- Dependency: closed `AIC-001`; starting work still requires a separate implementation scope.
+- Status: `IN_PROGRESS — 6B.1 REVIEW_PENDING`
+- Dependency: closed `AIC-001`; the approved current scope is 6B.1 contract/source-map work only.
 - Desired outcome: One immutable, minimal, user-scoped context envelope supplies canonical facts, provenance, freshness, confidence/authority, unknowns, and bounded conversation state while beginning centralized router/pricing and AI usage/cost telemetry.
 - Acceptance criteria:
   - Context distinguishes plan, task, capacity, workload, material progress, stage, resource role, and study-intent semantics.
@@ -96,6 +96,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
   - Every Evre 6 model call from 6B onward is recorded in a usage/cost ledger with provider cost and a versioned TRY estimate.
   - Context minimization, user isolation, redaction, fingerprints, fixtures, and per-tier token estimates pass review.
   - No provider call, proposal creation, confirmation, Apply, or production activation is introduced by the context contract itself.
+- 6B.1 note (2026-09-10): [CoachContextV1 Contract and Canonical Source Map](specs/AI_COACH_CONTEXT_V1.md) is implemented locally with a pure typed builder, executable field/source and legacy-exclusion registries, explicit 6B.2 truth gaps, compactness/authority guards, and A–H fixtures/tests. It is review-pending and does not complete live reads, router/pricing, telemetry, or 6B as a whole.
 
 ## `AIC-003` / Evre 6C — Reactive Coach
 
