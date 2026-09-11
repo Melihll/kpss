@@ -3,6 +3,16 @@ import { describe, expect, it } from "vitest";
 import { loadCoachContextV1ReadOnly } from "./coach-context-v1-readonly.ts";
 import { loadCanonicalCapacityReadOnly } from "./canonical-capacity-readonly.ts";
 import { loadCurrentPlannerV2PersistedStateReadOnly } from "./planner-v2-persisted-readonly.ts";
+import {
+  COACH_EVIDENCE_DETAIL_KINDS_V1,
+  COACH_EVIDENCE_DETAIL_REQUEST_V1_VERSION,
+  COACH_EVIDENCE_DETAIL_V1_LIMITS,
+  COACH_EVIDENCE_SCOPE_CAPABILITY_V1,
+  COACH_EVIDENCE_SCOPES_V1,
+  COACH_EVIDENCE_VIEW_V1_LIMITS,
+  projectCoachEvidenceViewV1,
+  resolveCoachEvidenceDetailV1,
+} from "../../../packages/domain/src/ai-coach/index.ts";
 
 const NOW = new Date("2026-09-10T09:00:00.000Z");
 const USER = "00000000-0000-0000-0000-000000000901";
@@ -135,6 +145,51 @@ describe("CoachContextV1 read-only adapter", () => {
     const serializedBytes = Buffer.byteLength(JSON.stringify(first), "utf8");
     expect(serializedBytes).toBeLessThan(65_536);
     console.info(`COACH_CONTEXT_V1_HIGH_VOLUME_BYTES=${serializedBytes}`);
+
+    for (const scope of COACH_EVIDENCE_SCOPES_V1) {
+      const view = projectCoachEvidenceViewV1(first, {
+        scope,
+        capability: COACH_EVIDENCE_SCOPE_CAPABILITY_V1[scope],
+        ...(scope === "subject_progress" ? { subjectId: SUBJECTS[0].id } : {}),
+      });
+      const bytes = Buffer.byteLength(JSON.stringify(view), "utf8");
+      const reductionPercent = Number(((1 - bytes / serializedBytes) * 100).toFixed(1));
+      expect(bytes).toBeLessThanOrEqual(COACH_EVIDENCE_VIEW_V1_LIMITS.serializedBytes);
+      expect(bytes).toBeLessThan(serializedBytes);
+      console.info(`COACH_EVIDENCE_VIEW_V1_SIZE scope=${scope} bytes=${bytes} reduction_percent=${reductionPercent}`);
+    }
+    expect(projectCoachEvidenceViewV1(first, {
+      scope: "today_explain",
+      capability: "explain",
+    }).evidence.canonicalWork?.next).toMatchObject({
+      availability: "unknown",
+      unknownReason: "canonical_selector_unavailable",
+    });
+    expect(projectCoachEvidenceViewV1(first, {
+      scope: "week_progress",
+      capability: "progress_analysis",
+    }).evidence.week?.value?.progressPosition).toMatchObject({
+      availability: "blocked",
+      unknownReason: "pln002_completeness_unresolved",
+    });
+
+    let largestDetail = { kind: "", bytes: 0 };
+    for (const kind of COACH_EVIDENCE_DETAIL_KINDS_V1) {
+      const detail = resolveCoachEvidenceDetailV1(first, {
+        version: COACH_EVIDENCE_DETAIL_REQUEST_V1_VERSION,
+        kind,
+        userId: first.userId,
+        examProfileId: first.examProfileId,
+        ...(["subject_tasks", "subject_material_progress"].includes(kind)
+          ? { subjectId: SUBJECTS[0].id }
+          : {}),
+      });
+      const bytes = Buffer.byteLength(JSON.stringify(detail), "utf8");
+      expect(bytes).toBeLessThanOrEqual(COACH_EVIDENCE_DETAIL_V1_LIMITS.serializedBytes);
+      if (bytes > largestDetail.bytes) largestDetail = { kind, bytes };
+      console.info(`COACH_EVIDENCE_DETAIL_V1_SIZE kind=${kind} bytes=${bytes}`);
+    }
+    console.info(`COACH_EVIDENCE_DETAIL_V1_LARGEST kind=${largestDetail.kind} bytes=${largestDetail.bytes}`);
   });
 
   it("keeps canonical next work and PLN-002 trajectory unavailable", async () => {
@@ -186,6 +241,36 @@ describe("CoachContextV1 read-only adapter", () => {
     const context = await loadCoachContextV1ReadOnly({ client: new ReadOnlyFakeClient(productionShapedTables()), userId: USER, requestId: "request-5", now: NOW, dependencies });
     expect(plannerReads).toBe(1);
     expect(context.planner).toMatchObject({ availability: "known", value: { lifecycleState: "previewed", proposalRecordId: "proposal-record", applyAvailable: false } });
+    const view = projectCoachEvidenceViewV1(context, {
+      scope: "planner_explanation",
+      capability: "planner_proposal_interpretation",
+    });
+    expect(Object.keys(view.evidence)).toEqual(["planner"]);
+    expect(view.evidence.planner).toMatchObject({
+      availability: "known",
+      value: {
+        lifecycleState: "previewed",
+        warnings: ["persisted-warning"],
+        explanationFacts: [{ kind: "day_capacity", date: "2026-09-11", availableMinutes: 70 }],
+        applyAvailable: false,
+      },
+    });
+    const detail = resolveCoachEvidenceDetailV1(context, {
+      version: COACH_EVIDENCE_DETAIL_REQUEST_V1_VERSION,
+      kind: "planner_explanation_detail",
+      userId: USER,
+      examProfileId: PROFILE,
+    });
+    expect(detail.payload).toMatchObject({
+      availability: "known",
+      value: {
+        proposalRecordId: "proposal-record",
+        differences: { createCanonicalWorkloadIdentities: ["physical:unit-1"] },
+        warnings: ["persisted-warning"],
+        applyAvailable: false,
+      },
+    });
+    expect(detail.collection).toMatchObject({ availableCount: 3, returnedCount: 3, truncated: false });
   });
 
   it("preserves the extracted canonical capacity calculation and P48 reserve semantics", async () => {

@@ -34,7 +34,7 @@ The architecture is subject-agnostic across all KPSS subjects. Do not create Mat
 - P48 planned-credit accounting correction: deployed and observing.
 - `PLN-004`: `IMPLEMENTED_LOCAL_VERIFIED`; production-authoritative activation gated.
 - Planner V2 / Planner Truth Evre 5: `CLOSED`. Engineering, exact-profile production acceptance, and final Week/Today real-user observation are complete. Confirm and Apply are OFF.
-- Evre 6 AI Coach: 6A is `CLOSED`; 6B.1 is accepted at `acd16ffb`. 6B.2 canonical read-only adapters pass focused and real local-Supabase acceptance with zero mutable-row and Planner lifecycle-row delta. Runtime integration, migrations, deployments, gates, and production are unchanged.
+- Evre 6 AI Coach: 6A is `CLOSED`; 6B.1, 6B.2, and 6B.3 are accepted. The compact evidence projection/bounded detail layer has real local-Supabase zero-mutation/profile-isolation evidence. Runtime integration, migrations, deployments, gates, and production are unchanged.
 
 PLN-004 verification:
 - targeted domain tests `22/22` PASS;
@@ -55,11 +55,11 @@ PLN-004 verification:
 
 ## Active task
 
-`AIC-002 / Evre 6B — 6B.2 accepted; 6B.3 next`
+`AIC-002 / Evre 6B — next bounded foundation slice not started`
 
-Goal: preserve the accepted [CoachContextV1 Contract and Canonical Source Map](specs/AI_COACH_CONTEXT_V1.md) and scope 6B.3 as a compact allowlisted LLM-facing projection with on-demand detail. Material/workload truth remains restricted to canonical Material Truth and Canonical Workload Engine.
+Goal: preserve the accepted unconnected `CoachEvidenceViewV1` eight-scope allowlist and six-kind bounded detail contract in [CoachContextV1 Contract and Canonical Source Map](specs/AI_COACH_CONTEXT_V1.md). The next separately bounded 6B work is centralized server-side router/pricing and AI usage/cost telemetry; it is not started here. Material/workload truth remains restricted to canonical Material Truth and Canonical Workload Engine.
 
-Evre 6 AI Coach is the active macro phase. 6A is closed; 6B.1 and 6B.2 are accepted locally. The unconnected adapter does not authorize AI runtime integration, deployment, plan mutation, proposal creation, Preview, Confirm, Apply, gate changes, or production activation. 6C–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
+Evre 6 AI Coach is the active macro phase. 6A is closed; 6B.1, 6B.2, and 6B.3 are accepted. The unconnected projection/detail layer does not authorize AI runtime integration, deployment, plan mutation, proposal creation, Preview, Confirm, Apply, gate changes, or production activation. 6C–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
 
 MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning foundations remain tracked work rather than being silently treated as closed by the Planner V2 pilot.
 
@@ -86,7 +86,7 @@ MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning founda
 
 ## NEXT EXACT STEP
 
-Prepare a separately bounded 6B.3 contract for a compact allowlisted LLM-facing projection and on-demand canonical detail. Preserve the 52,716-byte high-volume context as the internal canonical truth envelope; do not send it wholesale to a model and do not shrink it by deleting truth. Do not connect the current AI Coach runtime. Router/pricing and the telemetry ledger remain separate later 6B work.
+Define the next 6B router/pricing and telemetry-ledger slice under a separate authority/cost-bounded contract. Do not connect the current AI Coach runtime merely because 6B.3 is accepted.
 
 Keep the accepted Evre 5 Planner V2 result intact. Do not widen preview access, re-enable Confirm/Apply, manufacture another proposal, or manually repair the accepted result. Production preview remains exact-profile-only; Confirm and Apply remain OFF.
 

@@ -2,6 +2,11 @@ import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it } from "vitest";
 import { loadCoachContextV1ReadOnly } from "../../supabase/functions/_shared/coach-context-v1-readonly.ts";
+import {
+  COACH_EVIDENCE_DETAIL_REQUEST_V1_VERSION,
+  projectCoachEvidenceViewV1,
+  resolveCoachEvidenceDetailV1,
+} from "../../packages/domain/src/ai-coach/index.ts";
 
 const url = process.env.SUPABASE_URL;
 const anonKey = process.env.SUPABASE_ANON_KEY;
@@ -85,6 +90,38 @@ describe("CoachContextV1 local database read adapter", () => {
 
     const first = await loadCoachContextV1ReadOnly({ client: actor, userId: user.id, requestId: "integration-context", now: NOW });
     const second = await loadCoachContextV1ReadOnly({ client: actor, userId: user.id, requestId: "integration-context", now: NOW });
+    const firstView = projectCoachEvidenceViewV1(first, {
+      scope: "week_progress",
+      capability: "progress_analysis",
+    });
+    const secondView = projectCoachEvidenceViewV1(second, {
+      scope: "week_progress",
+      capability: "progress_analysis",
+    });
+    const firstDetail = resolveCoachEvidenceDetailV1(first, {
+      version: COACH_EVIDENCE_DETAIL_REQUEST_V1_VERSION,
+      kind: "week_tasks",
+      userId: user.id,
+      examProfileId: profileId,
+    });
+    const secondDetail = resolveCoachEvidenceDetailV1(second, {
+      version: COACH_EVIDENCE_DETAIL_REQUEST_V1_VERSION,
+      kind: "week_tasks",
+      userId: user.id,
+      examProfileId: profileId,
+    });
+    expect(() => resolveCoachEvidenceDetailV1(first, {
+      version: COACH_EVIDENCE_DETAIL_REQUEST_V1_VERSION,
+      kind: "week_tasks",
+      userId: randomUUID(),
+      examProfileId: profileId,
+    })).toThrow("COACH_EVIDENCE_DETAIL_USER_SCOPE_MISMATCH");
+    expect(() => resolveCoachEvidenceDetailV1(first, {
+      version: COACH_EVIDENCE_DETAIL_REQUEST_V1_VERSION,
+      kind: "week_tasks",
+      userId: user.id,
+      examProfileId: randomUUID(),
+    })).toThrow("COACH_EVIDENCE_DETAIL_PROFILE_SCOPE_MISMATCH");
 
     const afterTasks = await actor.from("tasks").select("id,status,planned_date,estimated_minutes").eq("user_id", user.id).eq("weekly_plan_id", planId).order("id");
     const afterProposals = await actor.from("confirmed_action_proposals").select("id,status").eq("user_id", user.id).eq("weekly_plan_id", planId).order("id");
@@ -97,6 +134,8 @@ describe("CoachContextV1 local database read adapter", () => {
       afterCounts.confirmed_action_proposals - beforeCounts.confirmed_action_proposals,
     );
     expect(second).toEqual(first);
+    expect(secondView).toEqual(firstView);
+    expect(secondDetail).toEqual(firstDetail);
     expect(afterCounts).toEqual(beforeCounts);
     expect(mutationDelta).toBe(0);
     expect(plannerLifecycleDelta).toBe(0);
