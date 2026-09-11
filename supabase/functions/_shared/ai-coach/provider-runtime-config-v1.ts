@@ -188,6 +188,9 @@ export function authorizeProductionProviderCostMaximumV1(
 ): AiProviderCostAuthorizationV1 {
   if (resolution.availability !== "available") throw new Error(`AI_PRODUCTION_RUNTIME_UNAVAILABLE:${resolution.reason}`);
   if (route.runtimeEnvironment !== "production" || route.disposition !== "model" || route.provider === null || route.modelId === null || route.catalogVersion !== resolution.config.routeCatalog.version || route.pricingVersion !== resolution.config.pricingCatalog.version) throw new Error("AI_PRODUCTION_COST_ROUTE_INVALID");
+  if (route.tier === "no_model") {
+    throw new Error("AI_PRODUCTION_COST_ROUTE_INVALID");
+  }
   const bound = resolution.config.billingBounds.find((item) => item.tier === route.tier && item.provider === route.provider && item.modelId === route.modelId);
   const price = resolution.config.pricingCatalog.entries.find((item) => item.provider === route.provider && item.modelId === route.modelId && Date.parse(item.effectiveFrom) <= Date.parse(resolution.evaluatedAt) && (item.effectiveTo === null || Date.parse(resolution.evaluatedAt) < Date.parse(item.effectiveTo)));
   if (!bound || !price) throw new Error("AI_PRODUCTION_COST_BOUND_UNAVAILABLE");
@@ -201,7 +204,7 @@ export function authorizeProductionProviderCostMaximumV1(
     runtimeEnvironment: "production",
     provider: route.provider,
     modelId: route.modelId,
-    modelTier: route.tier,
+    modelTier: route.tier as Exclude<AiModelTierV1, "no_model">,
     routeCatalogVersion: route.catalogVersion,
     pricingVersion: route.pricingVersion,
     fxPolicyVersion: resolution.config.fxSnapshot.policyVersion,
