@@ -50,7 +50,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | ID | Phase | Priority | Title | Status |
 | --- | --- | --- | --- | --- |
 | `AIC-001` | 6A | `P0` | Product / Authority / Cost Contract | `DONE` |
-| `AIC-002` | 6B | `P0` | CoachContextV1 | `IN_PROGRESS — 6B.5 ACCEPTED` |
+| `AIC-002` | 6B | `P0` | CoachContextV1 | `IN_PROGRESS — 6B.6A ACCEPTED` |
 | `AIC-003` | 6C | `P1` | Reactive Coach | `TODO` |
 | `AIC-004` | 6D | `P1` | Proactive Coach | `TODO` |
 | `AIC-005` | 6E | `P0` | Planner V2 Integration | `TODO` |
@@ -82,7 +82,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-002` / Evre 6B — CoachContextV1
 
 - Priority: `P0`
-- Status: `IN_PROGRESS — 6B.1–6B.5 ACCEPTED — 6B.6 PREREQUISITES_NEXT`
+- Status: `IN_PROGRESS — 6B.1–6B.6A ACCEPTED — RUNTIME ACTIVATION BLOCKED`
 - Dependency: closed `AIC-001`; accepted 6B.1 checkpoint `acd16ffb2263b5285b14bd7329ff4357d7971e00`.
 - Desired outcome: One immutable, minimal, user-scoped context envelope supplies canonical facts, provenance, freshness, confidence/authority, unknowns, and bounded conversation state while beginning centralized router/pricing and AI usage/cost telemetry.
 - Acceptance criteria:
@@ -102,6 +102,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 - 6B.3 local note (2026-09-11): `CoachEvidenceViewV1` implements eight explicit scope/capability pairs and six bounded detail kinds over the immutable canonical context. High-volume scope reductions are 56.9–97.8%; the largest detail is 10,103 bytes. A–H, limits, availability/provenance preservation, no-leak, profile isolation, local-DB zero-mutation, and static no-preview/no-legacy/no-LLM/no-query proofs are locally accepted. No runtime wiring or production action occurred.
 - 6B.4 local acceptance (2026-09-11): centralized `CoachSignalCandidateV1` registry evaluates only known/fresh facts or emits explicit data-quality candidates for unavailable facts. Fifteen signal classes, source-owned freshness policy, deterministic dedupe/cooldown/attention metadata, five bounded evidence-scope integrations, A–J tests, and high-volume size evidence are accepted locally. No prose, LLM/provider call, proposal, runtime wiring, or production action occurs.
 - 6B.5 local acceptance (2026-09-11): [Central Router, Pricing, FX and Usage Ledger V1](specs/AI_COACH_ROUTER_COST_TELEMETRY_V1.md) defines capability routing, production-fail-closed fixture-only versioned pricing/FX, `AiUsageEventV1`, Europe/Istanbul monthly accounting, deterministic preflight, and a service-owned append-only ledger. The migration is applied only to loopback local Supabase for RLS/idempotency/immutability tests. Atomic persistent user-month reservation, authoritative production pricing/FX, production migration, provider metering, and runtime wiring remain hard prerequisites/open work for 6B.6.
+- 6B.6A local acceptance (2026-09-11): [Provider Runtime and Atomic Budget Safety V1](specs/AI_COACH_PROVIDER_RUNTIME_BUDGET_V1.md) adds a production-authoritative configuration boundary that defaults to unavailable, complete billable-token-bound gating, defensive provider-attempt observation, atomic user-wide Istanbul-month worst-case reservation, service-only lifecycle RPCs, transactional ledger settlement, reconciliation states, and read-only operational views. Exact `290 + 10` / `290 + 10.01` and concurrent saturation tests pass. Current production route/pricing/FX/billable-bound facts and update mechanisms remain absent; no provider or user-facing runtime is wired, the migration is local-only, and 6B remains in progress.
 
 ## `AIC-003` / Evre 6C — Reactive Coach
 

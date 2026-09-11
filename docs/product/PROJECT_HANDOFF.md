@@ -6,7 +6,7 @@ Last updated: 2026-09-11
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Base branch: `main`
-- Local working branch: `evre6-ai-coach` (remote checkpoint at `cec8d3ce6d2b94b38c6dd1586e323d2592fcc2ea`; 6B.5 accepted locally and pending commit, not pushed)
+- Local working branch: `evre6-ai-coach` (remote checkpoint remains `108a8830e69734722f4803249879b851a2cc516c`; 6B.6A is accepted locally and not pushed)
 - 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - 6B.1 accepted checkpoint: `acd16ffb2263b5285b14bd7329ff4357d7971e00`
 - Last verified product checkpoint before W5: `fa46fd2`
@@ -34,7 +34,7 @@ The architecture is subject-agnostic across all KPSS subjects. Do not create Mat
 - P48 planned-credit accounting correction: deployed and observing.
 - `PLN-004`: `IMPLEMENTED_LOCAL_VERIFIED`; production-authoritative activation gated.
 - Planner V2 / Planner Truth Evre 5: `CLOSED`. Engineering, exact-profile production acceptance, and final Week/Today real-user observation are complete. Confirm and Apply are OFF.
-- Evre 6 AI Coach: 6A is `CLOSED`; 6B.1–6B.5 are accepted locally. 6B.5 central router/pricing/FX/usage-ledger foundation fails closed when production-authoritative pricing or FX is absent. The new migration has been exercised only on loopback local Supabase; runtime, deployment, gates, and production are unchanged.
+- Evre 6 AI Coach: 6A is `CLOSED`; 6B.1–6B.6A are accepted locally. Production route/pricing/FX/billable-bound resolution defaults to unavailable, provider usage parsing is defensive, and service-only atomic user-month worst-case reservation/settlement passed exact and concurrent ceiling tests. Both AI migrations remain local-only; runtime, deployment, gates, and production are unchanged.
 
 PLN-004 verification:
 - targeted domain tests `22/22` PASS;
@@ -55,11 +55,11 @@ PLN-004 verification:
 
 ## Active task
 
-`AIC-002 / Evre 6B.6 prerequisites — production economics and atomic reservation`
+`AIC-002 / Evre 6B — gated provider-runtime prerequisites`
 
-Goal: define authoritative production route/pricing/FX configuration and persistent atomic user-month budget reservation before any real-provider or concurrent 6B.6 runtime activation.
+Goal: supply approved current production route/pricing/FX/billable-bound configuration and define a separately approved runtime orchestrator without weakening the accepted 6B.6A hard-ceiling boundary.
 
-Evre 6 AI Coach is the active macro phase. 6A is closed and 6B.1–6B.5 are accepted locally. The unconnected context/signal/evidence/economics layers do not authorize AI runtime integration, deployment, production migration, plan mutation, proposal creation, Preview, Confirm, Apply, gate changes, or production activation. 6C–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
+Evre 6 AI Coach is the active macro phase. 6A is closed and 6B.1–6B.6A are accepted locally. The unconnected context/signal/evidence/economics/reservation layers do not authorize AI runtime integration, provider calls, deployment, production migration, plan mutation, proposal creation, Preview, Confirm, Apply, gate changes, or production activation. 6C–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
 
 MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning foundations remain tracked work rather than being silently treated as closed by the Planner V2 pilot.
 
@@ -86,7 +86,7 @@ MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning founda
 
 ## NEXT EXACT STEP
 
-Before 6B.6 provider activation, supply authoritative production route/pricing/FX configuration and implement persistent atomic reservation against the user-wide Europe/Istanbul monthly budget. Official values must not be inferred from fixtures; runtime metering and production migration remain separate work requiring explicit approval.
+Review [Provider Runtime and Atomic Budget Safety V1](specs/AI_COACH_PROVIDER_RUNTIME_BUDGET_V1.md). Before any later provider activation, supply approved current production route/pricing/FX configuration plus update ownership; then separately approve and verify an orchestrator that makes reservation, gateway metering, ledger settlement, and reconciliation impossible to bypass. Official values must not be inferred from fixtures; production migration and runtime activation remain separate work requiring explicit approval.
 
 Keep the accepted Evre 5 Planner V2 result intact. Do not widen preview access, re-enable Confirm/Apply, manufacture another proposal, or manually repair the accepted result. Production preview remains exact-profile-only; Confirm and Apply remain OFF.
 

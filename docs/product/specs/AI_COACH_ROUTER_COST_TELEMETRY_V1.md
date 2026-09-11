@@ -175,3 +175,5 @@ Local evidence on 2026-09-11:
 - generated `ai-coach.bundle.js` is deterministic at SHA-256 `BAEF5AA348F9A26248DE458EEE69646FF20DBAE6538F7D7047990A605A954DCB`.
 
 The migration is local-only and remains unapplied to production. 6B is not complete while authoritative production route/pricing/FX config, persistent atomic reservation, actual gateway metering, runtime integration, observability/reconciliation, and 6G enforcement remain open. Persistent reservation is mandatory before 6B.6 provider activation, not an optional later design choice.
+
+6B.6A follow-on: [Provider Runtime and Atomic Budget Safety V1](AI_COACH_PROVIDER_RUNTIME_BUDGET_V1.md) locally implements complete billable-token-bound gating, persistent worst-case reservation, defensive observation, transactional settlement, reconciliation, and production-configuration fail-closed boundaries. It does not supply current authoritative production route/pricing/FX/billable-bound facts, wire a provider runtime, apply a production migration, or complete 6B.

@@ -2,6 +2,11 @@ import {
   buildAiCoachSystemPromptV1,
 } from "../ai-coach.bundle.js";
 
+export {
+  extractOpenAiProviderAttemptObservationV1,
+  AI_PROVIDER_ATTEMPT_OBSERVATION_V1_VERSION,
+} from "./provider-attempt-v1.ts";
+
 export const OPENAI_AI_COACH_MODEL = "gpt-5.4-nano";
 export const OPENAI_AI_COACH_TIMEOUT_MS = 12_000;
 export const OPENAI_AI_COACH_MAX_OUTPUT_TOKENS = 800;

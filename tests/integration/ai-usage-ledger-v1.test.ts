@@ -75,7 +75,7 @@ function providerEvent(userId: string, profileId: string, attemptId: string, ret
     feature: { capability: "today_analysis", requestId: randomUUID(), correlationId: randomUUID() },
     route,
     usage: { availability: "reported", inputTokens: 1_000, cachedInputTokens: 200, outputTokens: 300, totalTokens: 1_300, source: "provider_response" },
-    execution: { startedAt: STARTED_AT, completedAt: COMPLETED_AT, status: "succeeded", retryNumber, fallbackFromAttemptId, errorCategory: "none" },
+    execution: { providerRequestId: `provider-${attemptId}`, providerRequestIdSource: "response_body", startedAt: STARTED_AT, completedAt: COMPLETED_AT, status: "succeeded", retryNumber, fallbackFromAttemptId, errorCategory: "none" },
     pricingCatalog: AI_PRICING_CATALOG_V1_TEST_FIXTURE,
     fxSnapshot: AI_FX_SNAPSHOT_V1_TEST_FIXTURE,
   });
@@ -187,6 +187,6 @@ describe("AiUsageEventV1 local append-only ledger", () => {
     expect(result.error).toBeNull();
     const keys = Object.keys(result.data!);
     for (const forbidden of ["prompt", "message", "conversation", "coach_context", "api_key", "secret"]) expect(keys).not.toContain(forbidden);
-    expect(result.data).toMatchObject({ pricing_version: "ai-pricing-test-fixture-v1", fx_snapshot_version: "usd-try-test-fixture-2026-09-01", try_estimated_cost: 0.246 });
+    expect(result.data).toMatchObject({ provider_request_id: `provider-${initial.providerAttemptId}`, provider_request_id_source: "response_body", pricing_version: "ai-pricing-test-fixture-v1", fx_snapshot_version: "usd-try-test-fixture-2026-09-01", fx_loaded_at: "2026-09-01T00:00:00+00:00", fx_max_age_seconds: 2678400, try_estimated_cost: 0.246 });
   });
 });

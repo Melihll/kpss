@@ -2169,7 +2169,9 @@ var AI_FX_SNAPSHOT_V1_TEST_FIXTURE = deepFreeze4({
   baseCurrency: "USD",
   quoteCurrency: "TRY",
   rate: 40,
-  effectiveAt: "2026-09-01T00:00:00.000Z"
+  effectiveAt: "2026-09-01T00:00:00.000Z",
+  loadedAt: "2026-09-01T00:00:00.000Z",
+  maxAgeSeconds: 2678400
 });
 var CAPABILITY_DEFAULT_TIER = Object.freeze({
   deterministic_signal_evaluation: "no_model",
@@ -2323,8 +2325,8 @@ function validateUsage(usage) {
   assertIntegerNonNegative(usage.outputTokens, "AI_USAGE_OUTPUT_TOKENS_INVALID");
   assertIntegerNonNegative(usage.totalTokens, "AI_USAGE_TOTAL_TOKENS_INVALID");
   if (usage.availability === "reported") {
-    if (usage.inputTokens === null || usage.cachedInputTokens === null || usage.outputTokens === null || usage.totalTokens === null) throw new Error("AI_USAGE_REPORTED_VALUES_REQUIRED");
-    if (usage.cachedInputTokens > usage.inputTokens || usage.totalTokens !== usage.inputTokens + usage.outputTokens || usage.source !== "provider_response") throw new Error("AI_USAGE_REPORTED_VALUES_INCONSISTENT");
+    if (usage.inputTokens === null || usage.outputTokens === null || usage.totalTokens === null) throw new Error("AI_USAGE_REPORTED_VALUES_REQUIRED");
+    if (usage.cachedInputTokens !== null && usage.cachedInputTokens > usage.inputTokens || usage.totalTokens !== usage.inputTokens + usage.outputTokens || usage.source !== "provider_response") throw new Error("AI_USAGE_REPORTED_VALUES_INCONSISTENT");
   } else if ([usage.inputTokens, usage.cachedInputTokens, usage.outputTokens, usage.totalTokens].some((value) => value !== null) || usage.source !== "provider_usage_unavailable") {
     throw new Error("AI_USAGE_UNAVAILABLE_MUST_BE_NULL");
   }
@@ -2342,21 +2344,25 @@ function calculateAiNativeCostV1(route, usage, catalog, occurredAt) {
   assertFiniteNonNegative(entry.inputPerMillionTokens, "AI_PRICING_INPUT_INVALID");
   assertFiniteNonNegative(entry.outputPerMillionTokens, "AI_PRICING_OUTPUT_INVALID");
   if (entry.cachedInputPerMillionTokens !== null) assertFiniteNonNegative(entry.cachedInputPerMillionTokens, "AI_PRICING_CACHED_INPUT_INVALID");
-  if (usage.cachedInputTokens > 0 && entry.cachedInputPerMillionTokens === null) return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: entry.billingCurrency, reason: "cached_input_price_unavailable" };
-  const uncachedTokens = usage.inputTokens - usage.cachedInputTokens;
+  if ((usage.cachedInputTokens ?? 0) > 0 && entry.cachedInputPerMillionTokens === null) return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: entry.billingCurrency, reason: "cached_input_price_unavailable" };
+  const cachedTokens = usage.cachedInputTokens ?? 0;
+  const uncachedTokens = usage.inputTokens - cachedTokens;
   const uncachedInput = round(uncachedTokens * entry.inputPerMillionTokens / 1e6);
-  const cachedInput = round(usage.cachedInputTokens * (entry.cachedInputPerMillionTokens ?? 0) / 1e6);
+  const cachedInput = round(cachedTokens * (entry.cachedInputPerMillionTokens ?? 0) / 1e6);
   const output = round(usage.outputTokens * entry.outputPerMillionTokens / 1e6);
   return { state: "known", pricingVersion: catalog.version, nativeAmount: round(uncachedInput + cachedInput + output), nativeCurrency: entry.billingCurrency, components: { uncachedInput, cachedInput, output } };
 }
-function convertAiCostToTryV1(nativeCost, fx, runtimeEnvironment) {
+function convertAiCostToTryV1(nativeCost, fx, runtimeEnvironment, evaluatedAt) {
   assertRuntimeEnvironment(runtimeEnvironment);
+  if (!isIsoInstant(evaluatedAt)) throw new Error("AI_FX_EVALUATED_AT_INVALID");
   if (nativeCost.state === "not_applicable") return { state: "not_applicable", amount: 0, currency: "TRY", reason: "no_model_route", fx: null };
   if (nativeCost.state === "unpriced") return { state: "unknown", amount: null, currency: "TRY", reason: "native_cost_unpriced", fx };
   if (runtimeEnvironment === "production" && (fx === null || fx.sourceKind !== "authoritative_config")) return { state: "unknown", amount: null, currency: "TRY", reason: "authoritative_production_fx_unavailable", fx };
   if (fx === null) return { state: "unknown", amount: null, currency: "TRY", reason: "fx_snapshot_unavailable", fx: null };
   assertFiniteNonNegative(fx.rate, "AI_FX_RATE_INVALID");
   if (fx.rate === 0) throw new Error("AI_FX_RATE_INVALID");
+  if (!isIsoInstant(fx.effectiveAt) || !isIsoInstant(fx.loadedAt) || !Number.isInteger(fx.maxAgeSeconds) || fx.maxAgeSeconds <= 0 || Date.parse(fx.loadedAt) < Date.parse(fx.effectiveAt)) throw new Error("AI_FX_SNAPSHOT_INVALID");
+  if (runtimeEnvironment === "production" && (Date.parse(evaluatedAt) < Date.parse(fx.effectiveAt) || Date.parse(evaluatedAt) - Date.parse(fx.effectiveAt) > fx.maxAgeSeconds * 1e3)) return { state: "unknown", amount: null, currency: "TRY", reason: "fx_snapshot_stale", fx };
   if (fx.baseCurrency !== nativeCost.nativeCurrency || fx.quoteCurrency !== "TRY") return { state: "unknown", amount: null, currency: "TRY", reason: "fx_currency_mismatch", fx };
   return { state: "known", amount: round(nativeCost.nativeAmount * fx.rate, 6), currency: "TRY", fx: structuredClone(fx) };
 }
@@ -2370,19 +2376,22 @@ function createAiUsageEventV1(input) {
   assertExactKeys(input, ["providerAttemptId", "identity", "feature", "route", "usage", "execution", "pricingCatalog", "fxSnapshot"], "AI_USAGE_EVENT_INPUT_UNKNOWN_FIELD");
   assertExactKeys(input.identity, ["userId", "examProfileId"], "AI_USAGE_IDENTITY_UNKNOWN_FIELD");
   assertExactKeys(input.feature, ["capability", "requestId", "correlationId"], "AI_USAGE_FEATURE_UNKNOWN_FIELD");
-  assertExactKeys(input.execution, ["startedAt", "completedAt", "status", "retryNumber", "fallbackFromAttemptId", "errorCategory"], "AI_USAGE_EXECUTION_UNKNOWN_FIELD");
+  assertExactKeys(input.execution, ["providerRequestId", "providerRequestIdSource", "startedAt", "completedAt", "status", "retryNumber", "fallbackFromAttemptId", "errorCategory"], "AI_USAGE_EXECUTION_UNKNOWN_FIELD");
   if (input.route.disposition !== "model" || input.route.provider === null || input.route.modelId === null || input.route.tier === "no_model") throw new Error("AI_USAGE_EVENT_REQUIRES_PROVIDER_ATTEMPT");
   if (input.feature.capability !== input.route.capability) throw new Error("AI_USAGE_EVENT_CAPABILITY_ROUTE_MISMATCH");
   for (const value of [input.providerAttemptId, input.identity.userId, input.feature.requestId, input.feature.correlationId]) if (!value.trim()) throw new Error("AI_USAGE_EVENT_ID_REQUIRED");
   if (!isIsoInstant(input.execution.startedAt) || !isIsoInstant(input.execution.completedAt) || Date.parse(input.execution.completedAt) < Date.parse(input.execution.startedAt)) throw new Error("AI_USAGE_EXECUTION_TIME_INVALID");
   if (!Number.isInteger(input.execution.retryNumber) || input.execution.retryNumber < 0) throw new Error("AI_USAGE_RETRY_INVALID");
+  if (input.execution.providerRequestId === null !== (input.execution.providerRequestIdSource === "unavailable") || input.execution.providerRequestId !== null && !input.execution.providerRequestId.trim()) throw new Error("AI_USAGE_PROVIDER_REQUEST_ID_INVALID");
   if (input.execution.fallbackFromAttemptId === input.providerAttemptId) throw new Error("AI_USAGE_FALLBACK_SELF_REFERENCE");
   if (input.execution.status === "succeeded" !== (input.execution.errorCategory === "none")) throw new Error("AI_USAGE_STATUS_ERROR_MISMATCH");
   const nativeCost = calculateAiNativeCostV1(input.route, input.usage, input.pricingCatalog, input.execution.completedAt);
-  const tryCost = convertAiCostToTryV1(nativeCost, input.fxSnapshot, input.route.runtimeEnvironment);
+  const tryCost = convertAiCostToTryV1(nativeCost, input.fxSnapshot, input.route.runtimeEnvironment, input.execution.completedAt);
   return deepFreeze4({
     version: AI_USAGE_EVENT_V1_VERSION,
     providerAttemptId: input.providerAttemptId,
+    providerRequestId: input.execution.providerRequestId,
+    providerRequestIdSource: input.execution.providerRequestIdSource,
     userId: input.identity.userId,
     examProfileId: input.identity.examProfileId,
     capability: input.feature.capability,
@@ -2483,7 +2492,7 @@ function preflightAiCostV1(input) {
   const inputTokens = evidence.estimatedInputTokens + input.operationalOverheadTokens;
   const estimatedUsage = { availability: "reported", inputTokens, cachedInputTokens: 0, outputTokens: route.maxOutputTokens, totalTokens: inputTokens + route.maxOutputTokens, source: "provider_response" };
   const nativeCost = calculateAiNativeCostV1(route, estimatedUsage, input.pricingCatalog, input.estimatedAt);
-  const tryCost = convertAiCostToTryV1(nativeCost, input.fxSnapshot, route.runtimeEnvironment);
+  const tryCost = convertAiCostToTryV1(nativeCost, input.fxSnapshot, route.runtimeEnvironment, input.estimatedAt);
   let reasonCode = "within_budget";
   if (budget.availability === "unknown") reasonCode = "budget_unknown";
   else if (tryCost.state !== "known") reasonCode = "cost_unknown";

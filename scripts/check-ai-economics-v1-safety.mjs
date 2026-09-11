@@ -7,6 +7,12 @@ const read = (path) => readFileSync(resolve(root, path), "utf8");
 const domain = read("packages/domain/src/ai-coach/ai-economics-v1.ts");
 const adapter = read("supabase/functions/_shared/ai-coach/ai-usage-ledger-v1.ts");
 const migration = read("supabase/migrations/20260911150000_ai_usage_ledger_v1.sql");
+const reservationAdapter = read("supabase/functions/_shared/ai-coach/ai-budget-reservation-v1.ts");
+const providerBoundary = [
+  read("supabase/functions/_shared/ai-coach/provider-runtime-config-v1.ts"),
+  read("supabase/functions/_shared/ai-coach/provider-attempt-v1.ts"),
+].join("\n");
+const reservationMigration = read("supabase/migrations/20260911170000_ai_provider_runtime_reservations_v1.sql");
 const runtime = [
   read("supabase/functions/ai-coach-interpret/index.ts"),
   read("supabase/functions/ai-coach-plan-preview/index.ts"),
@@ -18,6 +24,9 @@ const counts = {
   DOMAIN_PLANNER_CALLS: domain.match(/\b(buildPlannerV2Preview|previewCurrentPlan|apply_confirmed|create_confirmed)\b/g)?.length ?? 0,
   LEDGER_RPC_CALLS: adapter.match(/\.rpc\(AI_USAGE_LEDGER_V1_RPC/g)?.length ?? 0,
   LEDGER_ARBITRARY_TABLE_WRITES: adapter.match(/\.(insert|update|upsert|delete)\s*\(/g)?.length ?? 0,
+  RESERVATION_RPC_GATEWAYS: reservationAdapter.match(/\.rpc\(name,/g)?.length ?? 0,
+  RESERVATION_ARBITRARY_TABLE_WRITES: reservationAdapter.match(/\.(insert|update|upsert|delete)\s*\(/g)?.length ?? 0,
+  PROVIDER_BOUNDARY_NETWORK_CALLS: providerBoundary.match(/\bfetch\s*\(/g)?.length ?? 0,
   RUNTIME_ROUTER_WIRING: runtime.match(/(routeAiCapabilityV1|AiUsageEventV1|recordAiUsageEventV1)/g)?.length ?? 0,
 };
 
@@ -26,7 +35,7 @@ for (const [name, count] of Object.entries(counts)) {
   console.log(`${name}=${count}`);
 }
 if (counts.DOMAIN_PROVIDER_CALLS !== 0 || counts.DOMAIN_DB_CALLS !== 0 || counts.DOMAIN_PLANNER_CALLS !== 0) failed = true;
-if (counts.LEDGER_RPC_CALLS !== 1 || counts.LEDGER_ARBITRARY_TABLE_WRITES !== 0 || counts.RUNTIME_ROUTER_WIRING !== 0) failed = true;
+if (counts.LEDGER_RPC_CALLS !== 1 || counts.LEDGER_ARBITRARY_TABLE_WRITES !== 0 || counts.RESERVATION_RPC_GATEWAYS !== 1 || counts.RESERVATION_ARBITRARY_TABLE_WRITES !== 0 || counts.PROVIDER_BOUNDARY_NETWORK_CALLS !== 0 || counts.RUNTIME_ROUTER_WIRING !== 0) failed = true;
 
 const forbiddenStorageColumns = ["prompt", "message", "conversation", "coach_context", "api_key", "secret"];
 const createTable = migration.match(/create table public\.ai_usage_events \(([\s\S]*?)\n\);/)?.[1] ?? "";
@@ -34,6 +43,15 @@ for (const column of forbiddenStorageColumns) {
   const found = new RegExp(`^\\s*${column}\\s+`, "im").test(createTable);
   console.log(`FORBIDDEN_LEDGER_COLUMN_${column.toUpperCase()}=${found ? 1 : 0}`);
   if (found) failed = true;
+}
+
+for (const table of ["ai_budget_reservations", "ai_budget_reservation_events"]) {
+  const definition = reservationMigration.match(new RegExp(`create table public\\.${table} \\(([\\s\\S]*?)\\n\\);`))?.[1] ?? "";
+  for (const column of forbiddenStorageColumns) {
+    const found = new RegExp(`^\\s*${column}\\s+`, "im").test(definition);
+    console.log(`FORBIDDEN_${table.toUpperCase()}_COLUMN_${column.toUpperCase()}=${found ? 1 : 0}`);
+    if (found) failed = true;
+  }
 }
 
 const requiredSecurity = [
@@ -48,6 +66,33 @@ const requiredSecurity = [
 for (const marker of requiredSecurity) {
   if (!migration.includes(marker)) {
     console.error(`MISSING_SECURITY_MARKER=${marker}`);
+    failed = true;
+  }
+}
+
+const reservationSecurity = [
+  "pg_advisory_xact_lock",
+  "status in ('reserved','reconciliation_required')",
+  "record_ai_usage_and_settle_reservation_v1",
+  "revoke all on public.ai_budget_reservations from public,anon,authenticated,service_role",
+  "grant select on public.ai_budget_reservations to authenticated,service_role",
+  "revoke all on function public.reserve_ai_budget_v1(jsonb)",
+  "grant execute on function public.reserve_ai_budget_v1(jsonb)",
+  "AI_BUDGET_SETTLEMENT_SCOPE_MISMATCH",
+  "cost_bound_invariant_violation",
+  "billing_bound_version",
+  "Europe/Istanbul",
+];
+for (const marker of reservationSecurity) {
+  if (!reservationMigration.includes(marker)) {
+    console.error(`MISSING_RESERVATION_SECURITY_MARKER=${marker}`);
+    failed = true;
+  }
+}
+
+for (const marker of ["requestPayloadCoverage", "server_rejects_above_bound", "providerOutputLimitEnforced", "uncoveredBillableTokenClasses", "authorizeProductionProviderCostMaximumV1"]) {
+  if (!providerBoundary.includes(marker)) {
+    console.error(`MISSING_PROVIDER_BOUND_MARKER=${marker}`);
     failed = true;
   }
 }

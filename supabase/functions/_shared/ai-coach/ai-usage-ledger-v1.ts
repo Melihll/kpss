@@ -22,13 +22,13 @@ export interface AiUsageLedgerMonthV1 {
 }
 
 const AI_USAGE_LEDGER_SELECT_V1 = [
-  "event_version", "provider_attempt_id", "user_id", "exam_profile_id", "capability", "request_id", "correlation_id",
+  "event_version", "provider_attempt_id", "provider_request_id", "provider_request_id_source", "user_id", "exam_profile_id", "capability", "request_id", "correlation_id",
   "route_version", "route_catalog_version", "route_reason_code", "provider", "model_id", "model_tier", "pricing_version",
   "usage_availability", "input_tokens", "cached_input_tokens", "output_tokens", "total_tokens", "usage_source",
   "started_at", "completed_at", "latency_ms", "status", "retry_number", "fallback_from_attempt_id", "error_category",
   "native_cost_state", "native_cost_amount", "native_currency", "native_cost_reason", "uncached_input_cost", "cached_input_cost", "output_cost",
   "try_cost_state", "try_estimated_cost", "try_cost_reason", "fx_policy_version", "fx_snapshot_version", "fx_source", "fx_source_kind",
-  "fx_base_currency", "fx_quote_currency", "fx_rate", "fx_effective_at", "accounting_month",
+  "fx_base_currency", "fx_quote_currency", "fx_rate", "fx_effective_at", "fx_loaded_at", "fx_max_age_seconds", "accounting_month",
 ].join(",");
 
 function numberOrNull(value: unknown): number | null {
@@ -68,6 +68,8 @@ function eventFromRow(row: Record<string, unknown>): AiUsageEventV1 {
     quoteCurrency: "TRY" as const,
     rate: numberOrNull(row.fx_rate)!,
     effectiveAt: String(row.fx_effective_at),
+    loadedAt: String(row.fx_loaded_at),
+    maxAgeSeconds: numberOrNull(row.fx_max_age_seconds)!,
   } : null;
   const tryCost: AiTryCostV1 = row.try_cost_state === "known"
     ? { state: "known", amount: numberOrNull(row.try_estimated_cost)!, currency: "TRY", fx: fx! }
@@ -75,6 +77,8 @@ function eventFromRow(row: Record<string, unknown>): AiUsageEventV1 {
   return Object.freeze({
     version: "ai-usage-event-v1",
     providerAttemptId: String(row.provider_attempt_id),
+    providerRequestId: row.provider_request_id === null ? null : String(row.provider_request_id),
+    providerRequestIdSource: String(row.provider_request_id_source) as AiUsageEventV1["providerRequestIdSource"],
     userId: String(row.user_id),
     examProfileId: row.exam_profile_id === null ? null : String(row.exam_profile_id),
     capability: String(row.capability) as AiUsageEventV1["capability"],
@@ -115,6 +119,8 @@ export function aiUsageEventToLedgerPayloadV1(event: AiUsageEventV1): Readonly<R
   const payload = {
     event_version: event.version,
     provider_attempt_id: event.providerAttemptId,
+    provider_request_id: event.providerRequestId,
+    provider_request_id_source: event.providerRequestIdSource,
     user_id: event.userId,
     exam_profile_id: event.examProfileId,
     capability: event.capability,
@@ -158,6 +164,8 @@ export function aiUsageEventToLedgerPayloadV1(event: AiUsageEventV1): Readonly<R
     fx_quote_currency: event.tryCost.fx?.quoteCurrency ?? null,
     fx_rate: event.tryCost.fx?.rate ?? null,
     fx_effective_at: event.tryCost.fx?.effectiveAt ?? null,
+    fx_loaded_at: event.tryCost.fx?.loadedAt ?? null,
+    fx_max_age_seconds: event.tryCost.fx?.maxAgeSeconds ?? null,
     accounting_month: event.accountingMonth,
   } as const;
   const serialized = JSON.stringify(payload);

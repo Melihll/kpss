@@ -66,6 +66,8 @@ function event(overrides: {
     route: route(),
     usage: usage(),
     execution: {
+      providerRequestId: `provider-${overrides.attempt ?? "attempt-1"}`,
+      providerRequestIdSource: "response_body",
       startedAt: STARTED_AT,
       completedAt: COMPLETED_AT,
       status: "succeeded",
@@ -132,17 +134,23 @@ describe("Evre 6B.5 centralized AI economics foundation", () => {
     expect(native).toEqual({ state: "unpriced", pricingVersion: "ai-pricing-test-fixture-v1", nativeAmount: null, nativeCurrency: null, reason: "authoritative_production_pricing_unavailable" });
 
     const knownNative = calculateAiNativeCostV1(route(), usage(), AI_PRICING_CATALOG_V1_TEST_FIXTURE, COMPLETED_AT);
-    expect(convertAiCostToTryV1(knownNative, null, "production")).toEqual({ state: "unknown", amount: null, currency: "TRY", reason: "authoritative_production_fx_unavailable", fx: null });
-    expect(convertAiCostToTryV1(knownNative, AI_FX_SNAPSHOT_V1_TEST_FIXTURE, "production")).toMatchObject({ state: "unknown", amount: null, reason: "authoritative_production_fx_unavailable" });
+    expect(convertAiCostToTryV1(knownNative, null, "production", COMPLETED_AT)).toEqual({ state: "unknown", amount: null, currency: "TRY", reason: "authoritative_production_fx_unavailable", fx: null });
+    expect(convertAiCostToTryV1(knownNative, AI_FX_SNAPSHOT_V1_TEST_FIXTURE, "production", COMPLETED_AT)).toMatchObject({ state: "unknown", amount: null, reason: "authoritative_production_fx_unavailable" });
+    expect(convertAiCostToTryV1(knownNative, { ...AI_FX_SNAPSHOT_V1_TEST_FIXTURE, sourceKind: "authoritative_config", effectiveAt: "2026-09-01T00:00:00.000Z", loadedAt: "2026-09-01T00:01:00.000Z", maxAgeSeconds: 60 }, "production", COMPLETED_AT)).toMatchObject({ state: "unknown", amount: null, reason: "fx_snapshot_stale" });
 
     const { runtimeEnvironment: _environment, ...environmentlessRoute } = route();
     expect(() => calculateAiNativeCostV1(environmentlessRoute as AiModelRouteDecisionV1, usage(), AI_PRICING_CATALOG_V1_TEST_FIXTURE, COMPLETED_AT)).toThrow("AI_RUNTIME_ENVIRONMENT_REQUIRED");
-    expect(() => convertAiCostToTryV1(knownNative, AI_FX_SNAPSHOT_V1_TEST_FIXTURE, undefined as never)).toThrow("AI_RUNTIME_ENVIRONMENT_REQUIRED");
+    expect(() => convertAiCostToTryV1(knownNative, AI_FX_SNAPSHOT_V1_TEST_FIXTURE, undefined as never, COMPLETED_AT)).toThrow("AI_RUNTIME_ENVIRONMENT_REQUIRED");
   });
 
   it("F. charges cached input at the separately versioned cached-token price", () => {
     const cost = calculateAiNativeCostV1(route(), usage(), AI_PRICING_CATALOG_V1_TEST_FIXTURE, COMPLETED_AT);
     expect(cost).toMatchObject({ state: "known", pricingVersion: "ai-pricing-test-fixture-v1", nativeCurrency: "USD", components: { uncachedInput: 0.0024, cachedInput: 0.00015, output: 0.0036 }, nativeAmount: 0.00615 });
+  });
+
+  it("F2. preserves missing cached-token detail as unknown while conservatively pricing all input normally", () => {
+    const cost = calculateAiNativeCostV1(route(), usage({ cachedInputTokens: null }), AI_PRICING_CATALOG_V1_TEST_FIXTURE, COMPLETED_AT);
+    expect(cost).toMatchObject({ state: "known", components: { uncachedInput: 0.003, cachedInput: 0, output: 0.0036 }, nativeAmount: 0.0066 });
   });
 
   it("G/H. records retry and fallback as separate attempt events", () => {
@@ -169,7 +177,7 @@ describe("Evre 6B.5 centralized AI economics foundation", () => {
       identity: { userId: USER_A, examProfileId: PROFILE_A },
       feature: { capability: "today_analysis", requestId: "request-2", correlationId: "correlation-2" },
       route: route(), usage: usage(),
-      execution: { startedAt: STARTED_AT, completedAt: COMPLETED_AT, status: "succeeded", retryNumber: 0, fallbackFromAttemptId: null, errorCategory: "none" },
+      execution: { providerRequestId: "provider-request-new-fx", providerRequestIdSource: "response_body", startedAt: STARTED_AT, completedAt: COMPLETED_AT, status: "succeeded", retryNumber: 0, fallbackFromAttemptId: null, errorCategory: "none" },
       pricingCatalog: AI_PRICING_CATALOG_V1_TEST_FIXTURE,
       fxSnapshot: { ...AI_FX_SNAPSHOT_V1_TEST_FIXTURE, snapshotVersion: "new-fixture", rate: 50 },
     });
@@ -189,7 +197,7 @@ describe("Evre 6B.5 centralized AI economics foundation", () => {
     const newer = createAiUsageEventV1({
       providerAttemptId: "attempt-v2", identity: { userId: USER_A, examProfileId: PROFILE_A },
       feature: { capability: "today_analysis", requestId: "request-v2", correlationId: "correlation-v2" }, route: nextRoute, usage: usage(),
-      execution: { startedAt: STARTED_AT, completedAt: COMPLETED_AT, status: "succeeded", retryNumber: 0, fallbackFromAttemptId: null, errorCategory: "none" },
+      execution: { providerRequestId: "provider-request-v2", providerRequestIdSource: "response_body", startedAt: STARTED_AT, completedAt: COMPLETED_AT, status: "succeeded", retryNumber: 0, fallbackFromAttemptId: null, errorCategory: "none" },
       pricingCatalog: nextPricing, fxSnapshot: AI_FX_SNAPSHOT_V1_TEST_FIXTURE,
     });
     expect(old.pricingVersion).toBe("ai-pricing-test-fixture-v1");
@@ -249,7 +257,7 @@ describe("Evre 6B.5 centralized AI economics foundation", () => {
 
   it("P. rejects client-style model/cost/usage overrides", () => {
     expect(() => routeAiCapabilityV1({ ...({ runtimeEnvironment: "test", capability: "today_analysis", evidence: estimateAiEvidenceV1(100), expectedResponse: "short", budgetState: "normal", provider: "forged", modelId: "forged" } as any) }, AI_ROUTE_CATALOG_V1_TEST_FIXTURE)).toThrow("AI_ROUTE_INPUT_UNKNOWN_FIELD");
-    expect(() => createAiUsageEventV1({ ...({ providerAttemptId: "attempt-forged", identity: { userId: USER_A, examProfileId: PROFILE_A }, feature: { capability: "today_analysis", requestId: "request", correlationId: "correlation" }, route: route(), usage: { ...usage(), nativeCost: 0 }, execution: { startedAt: STARTED_AT, completedAt: COMPLETED_AT, status: "succeeded", retryNumber: 0, fallbackFromAttemptId: null, errorCategory: "none" }, pricingCatalog: AI_PRICING_CATALOG_V1_TEST_FIXTURE, fxSnapshot: AI_FX_SNAPSHOT_V1_TEST_FIXTURE } as any) })).toThrow("AI_USAGE_UNKNOWN_FIELD");
+    expect(() => createAiUsageEventV1({ ...({ providerAttemptId: "attempt-forged", identity: { userId: USER_A, examProfileId: PROFILE_A }, feature: { capability: "today_analysis", requestId: "request", correlationId: "correlation" }, route: route(), usage: { ...usage(), nativeCost: 0 }, execution: { providerRequestId: null, providerRequestIdSource: "unavailable", startedAt: STARTED_AT, completedAt: COMPLETED_AT, status: "succeeded", retryNumber: 0, fallbackFromAttemptId: null, errorCategory: "none" }, pricingCatalog: AI_PRICING_CATALOG_V1_TEST_FIXTURE, fxSnapshot: AI_FX_SNAPSHOT_V1_TEST_FIXTURE } as any) })).toThrow("AI_USAGE_UNKNOWN_FIELD");
   });
 
   it("Q. stores no raw prompt, conversation, CoachContext, or secret", () => {
