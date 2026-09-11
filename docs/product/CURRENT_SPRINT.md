@@ -1,6 +1,6 @@
 # Current Sprint
 
-Last updated: 2026-09-10
+Last updated: 2026-09-11
 
 ## Sprint 02 — Evre 6B & Continuing Planning Foundations
 
@@ -15,7 +15,7 @@ Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1 is accep
 ### `AIC-002` / Evre 6B — CoachContextV1
 
 - Priority: `P0`
-- Status: `IN_PROGRESS — 6B.3 LOCAL_ACCEPTED — LATER 6B NEXT`
+- Status: `IN_PROGRESS — 6B.4 LOCAL_ACCEPTED — LATER 6B NEXT`
 - Scope: unconnected server-side read adapters and tests only; no AI runtime integration, provider/model/prompt change, telemetry implementation, migration, deploy, gate change, or production access.
 - Authority state: read-only; Planner V2 Confirm OFF; Planner V2 Apply OFF.
 
@@ -30,6 +30,8 @@ Current deliverable/evidence:
 - real local Supabase integration test `1/1` PASS with total mutable-row delta `0` and Planner lifecycle-row delta `0`;
 - 6B.3 adds an unconnected `CoachEvidenceViewV1` plus six-kind bounded detail resolver; all eight scopes are 56.9–97.8% smaller than the 52,716-byte internal context without deleting canonical truth;
 - 6B.3 local Supabase acceptance is zero-mutation and profile-isolated; the compact evidence/detail contract is locally accepted.
+- 6B.4 locally accepts an unconnected deterministic `CoachSignalCandidateV1` registry and source-owned freshness policy; it emits no prose, makes no model call, and creates no planning authority;
+- high-volume signal set = 8 candidates / 13,598 bytes; `proactive_candidate` grows by 1,212 bytes to 22,501 bytes and remains 57.3% below the internal context.
 
 ### `AIC-001` / Evre 6A — Product / Authority / Cost Contract
 
@@ -115,17 +117,16 @@ The next active product-foundation task is `MAT-001`, which supplies the exact p
 
 ## NEXT
 
-1. Define the next bounded 6B slice for centralized server-side router/pricing and AI usage/cost telemetry
-2. Continue later 6B work for centralized server-side router/pricing and AI usage/cost telemetry under a separate bounded scope
-3. Do not connect the AI runtime until the relevant later 6B scope is separately approved and accepted
-4. Close `PLN-002` natural Extra Study authenticated real-user acceptance when real usage provides evidence
-5. Keep `PLN-004` production-authoritative activation gated while MAT-001/PLN-005 inputs mature
-6. Re-evaluate PLN-003 production-authoritative duration activation only after canonical learning-stage, material, and resource-role inputs exist
+1. Continue later 6B work for centralized server-side router/pricing and AI usage/cost telemetry under a separate bounded scope
+2. Do not connect the AI runtime until the relevant later 6B scope is separately approved and accepted
+3. Close `PLN-002` natural Extra Study authenticated real-user acceptance when real usage provides evidence
+4. Keep `PLN-004` production-authoritative activation gated while MAT-001/PLN-005 inputs mature
+5. Re-evaluate PLN-003 production-authoritative duration activation only after canonical learning-stage, material, and resource-role inputs exist
 
 `NEXT` indicates intended sequence, not permission to deploy. Stage-dependent duration activation remains separately gated.
 ## Do not start
 
-- AI runtime wiring before a separately approved later implementation scope and its acceptance; 6B.3 itself authorizes no wiring;
+- AI runtime wiring before a separately approved later implementation scope and its acceptance; 6B.3/6B.4 authorize no wiring;
 - 6C–6G work before their documented entry conditions;
 - AI teacher, tutoring, quiz, mock, grading, or mastery features in Evre 6;
 - any Coach task/capacity/material/progress/stage mutation or non-canonical planning Apply path;

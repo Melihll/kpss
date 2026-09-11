@@ -1,6 +1,6 @@
 # AI Coach — CoachContextV1 Contract and Canonical Source Map
 
-Status: `EVRE_6B.1_ACCEPTED — EVRE_6B.2_LOCAL_DB_ACCEPTED — EVRE_6B.3_LOCAL_ACCEPTED — NO_RUNTIME_WIRING — CONFIRM_OFF — APPLY_OFF`
+Status: `EVRE_6B.1_ACCEPTED — EVRE_6B.2_LOCAL_DB_ACCEPTED — EVRE_6B.3_LOCAL_ACCEPTED — EVRE_6B.4_LOCAL_ACCEPTED — NO_RUNTIME_WIRING — CONFIRM_OFF — APPLY_OFF`
 
 Contract version: `coach-context-v1`
 
@@ -153,7 +153,7 @@ The suite also checks output determinism under reversed input order, input non-m
 1. No global canonical next-work selector exists. `nextWork` is always `unknown(canonical_selector_unavailable)` in ordinary 6B.2 construction. A future planner/material domain owner—not Coach—must supply it.
 2. No current authoritative reader exposes task-level protected classification or post-commitment available capacity outside a persisted Planner scenario. Those capacity sub-facts remain explicit unknowns; persisted proposal data is not merged into current plan truth.
 3. PLN-002 does not yet supply accepted universal completeness/evaluation for exact ahead/on-track/behind. Coverage remains `partial` and trajectory remains `blocked(pln002_completeness_unresolved)`.
-4. No centralized deterministic Coach signal-input registry exists. `signalInputs` remains explicit unknown; proactive eligibility, attention/cooldown/dedupe, and prose remain 6D.
+4. 6B.4 supplies the centralized deterministic signal registry. Runtime `signalInputs` may still be explicit unknown; signal types that require a source-owned precomputed input suppress rather than invent it. Delivery-time attention budgets, cooldown state, dedupe persistence, and prose remain 6D.
 5. Router/pricing and usage/cost telemetry remain later 6B work. 6B.2 makes no model call and adds no migration/provider change.
 6. The high-volume internal canonical context remains 52,716 bytes. 6B.3 retains that truth internally and supplies a separate compact allowlisted evidence projection plus bounded detail strategy.
 
@@ -226,14 +226,14 @@ The versioned view carries:
 
 | Scope | Fixed capability | Allowed CoachContext truth | Explicitly excluded | View collection limits | Available bounded details |
 | --- | --- | --- | --- | --- | --- |
-| `today_explain` | `explain` | identity; Today summary/study; up to 8 Today tasks; minimal Week summary/study/PLN-002 position; canonical next-work fact | Week task list, subjects, material/workload payload, capacity, recent history, Planner, signals | Today tasks `8` | `today_tasks`, `recent_sessions` |
-| `week_progress` | `progress_analysis` | Week summary/study/PLN-002 position; subject factual summaries; capacity; bounded recent events/sessions/transitions | identity, Today/Week task payloads, canonical work/material payload, Planner, signals | subjects `12`; capacity days `7`; task events `8`; sessions `6`; transitions `4` | `week_tasks`, `subject_tasks`, `recent_sessions` |
-| `subject_progress` | `progress_analysis` | selected owned subject summary; Week summary; subject-filtered canonical materials/workload minutes; subject-filtered recent progress; relevant or unresolved next-work fact | identity, Today/Week task payloads, cross-subject material, resource workload map, capacity, Planner, signals | subjects `1`; materials `6`; task events `6`; sessions `6`; transitions `4` | `subject_tasks`, `recent_sessions`, `subject_material_progress` |
+| `today_explain` | `explain` | identity; Today summary/study; up to 8 Today tasks; minimal Week summary/study/PLN-002 position; canonical next-work fact; up to 6 Today signal candidates | Week task list, subjects, material/workload payload, capacity, recent history, Planner, non-Today signals | Today tasks `8`; signals `6` | `today_tasks`, `recent_sessions` |
+| `week_progress` | `progress_analysis` | Week summary/study/PLN-002 position; subject factual summaries; capacity; bounded recent events/sessions/transitions; up to 6 Week-relevant signals | identity, Today/Week task payloads, canonical work/material payload, Planner | subjects `12`; capacity days `7`; task events `8`; sessions `6`; transitions `4`; signals `6` | `week_tasks`, `subject_tasks`, `recent_sessions` |
+| `subject_progress` | `progress_analysis` | selected owned subject summary; Week summary; subject-filtered canonical materials/workload minutes; subject-filtered recent progress; relevant or unresolved next-work fact; up to 4 selected-subject signals | identity, Today/Week task payloads, cross-subject material/signals, resource workload map, capacity, Planner | subjects `1`; materials `6`; task events `6`; sessions `6`; transitions `4`; signals `4` | `subject_tasks`, `recent_sessions`, `subject_material_progress` |
 | `canonical_work` | `guide` | canonical next-work fact; canonical workload summary; up to 8 canonical material facts | identity, Today, Week, subject summaries, capacity, recent progress, Planner, signals | materials `8` | `subject_material_progress` |
 | `capacity_status` | `status_analysis` | Today/Week summary and study accounting; canonical capacity days including nested protected/available unknowns | task lists, subjects, canonical work/material/workload, recent progress, Planner, signals | Today tasks `0`; capacity days `7` | `today_tasks`, `week_tasks` |
 | `planner_explanation` | `planner_proposal_interpretation` | persisted authoritative Planner lifecycle/summary/warnings/explanation facts only | identity, Today, Week, task lists, subjects, canonical work/material/workload, capacity, recent progress, signals | warnings `8`; explanation facts `12` | `planner_explanation_detail` |
-| `general_status` | `status_analysis` | identity; Today/Week summaries; subject summaries; canonical next-work/workload summary; capacity | task lists, materials, recent progress, Planner, signals | Today tasks `0`; subjects `8`; capacity days `7` | `today_tasks`, `week_tasks`, `subject_tasks`, `recent_sessions`, `subject_material_progress` |
-| `proactive_candidate` | `proactive_insight_candidate` | Today/Week summaries; subject summaries; workload summary; capacity; deterministic signal-input fact | identity, task lists, next work, materials, recent progress, Planner | Today tasks `0`; subjects `8`; capacity days `7`; signals `12` | `today_tasks`, `week_tasks`, `subject_tasks`, `recent_sessions`, `subject_material_progress` |
+| `general_status` | `status_analysis` | identity; Today/Week summaries; subject summaries; canonical next-work/workload summary; capacity; up to 4 importance-ordered signals | task lists, materials, recent progress, Planner | Today tasks `0`; subjects `8`; capacity days `7`; signals `4` | `today_tasks`, `week_tasks`, `subject_tasks`, `recent_sessions`, `subject_material_progress` |
+| `proactive_candidate` | `proactive_insight_candidate` | Today/Week summaries; subject summaries; workload summary; capacity; up to 4 proactive-eligible validated signals | identity, task lists, next work, materials, recent progress, Planner, raw signal inputs | Today tasks `0`; subjects `8`; capacity days `7`; signals `4` | `today_tasks`, `week_tasks`, `subject_tasks`, `recent_sessions`, `subject_material_progress` |
 
 The executable source of this matrix is `COACH_EVIDENCE_SCOPE_RULES_V1`. A mismatched scope/capability pair, a missing subject for `subject_progress`, or a subject outside the context profile fails closed. Scope selection does not parse user language.
 
@@ -291,3 +291,96 @@ All scopes are materially smaller than the internal context and stay below the 3
 The A–H suite covers every scope deterministically. The high-volume fixture proves size reduction and collection limits. The local-Supabase test constructs the canonical context, projects evidence, resolves detail twice, rejects mismatched user/profile detail requests, and observes mutable-row delta `0` plus Planner lifecycle-row delta `0`. Static safety reports preview recomputation `0`, legacy truth-loader calls `0`, LLM/provider calls `0`, DB mutation calls `0`, and arbitrary DB-query surfaces `0`.
 
 6B.3 is locally accepted. It does not authorize natural-language routing, prompt/model/provider changes, current Coach runtime wiring, proactive prose, proposals, Preview, Confirm, Apply, migrations, deployment, or production access.
+
+## 17. 6B.4 deterministic signal boundary
+
+6B.4 adds a pure domain layer between the canonical context and the evidence projector:
+
+```text
+CoachContextV1 facts
+  -> centralized deterministic Coach Signal Registry V1
+  -> CoachSignalSetV1 / CoachSignalCandidateV1
+  -> scope-bounded CoachEvidenceViewV1.signalCandidates
+  -> later reactive/proactive runtime (not part of 6B.4)
+```
+
+`CoachSignalCandidateV1` contains no user-facing prose. It contains a version, closed signal type, severity/importance, optional subject/date scope, deterministic `reasonCode`, source fact paths, `asOf`, freshness, completeness-based confidence, scalar evidence values, provenance references, dedupe key, reactive/proactive eligibility, attention category, cooldown class, valid-silence flag, and immutable non-authority flags. `CoachSignalSetV1` is deterministic, deep-frozen, limited to 32 candidates and 24,576 serialized bytes, and reports available/returned/truncated counts.
+
+Behavioral candidates require `known` facts with source-declared `fresh` state, a non-expired source expiry when present, and the additional calendar/lifecycle checks in the freshness policy. `unknown`, `blocked`, or stale facts never become behavioral conclusions. They are either suppressed or copied into `important_truth_unknown` / `context_data_stale` data-quality candidates with the original reason, freshness, source path, and provenance.
+
+The layer performs no workload formula, task/date/capacity inference, trajectory classification, Planner preview, proposal mutation, database query/write, natural-language routing, prose generation, or LLM/provider call. `overall_ahead`, `overall_behind`, `subject_ahead`, and `subject_behind` are not signal types.
+
+## 18. Central signal registry
+
+The executable registry is `COACH_SIGNAL_REGISTRY_V1`; all evaluators are centralized in `coach-signal-v1.ts` rather than UI/components.
+
+| Signal type | Exact input | Deterministic emission | Suppression / unavailable behavior | Proactive / attention / cooldown |
+| --- | --- | --- | --- | --- |
+| `today_remaining_work` | known/fresh current-date `today.summary` | open count and remaining minutes are positive | suppress if unavailable/stale/date mismatch/zero | no / progress / same snapshot |
+| `today_completed_as_planned` | known/fresh `today.summary` + planned credit | non-empty; all tasks completed; zero remaining; planned credit covers planned minutes | suppress otherwise | yes / progress / daily |
+| `today_partial_completion` | known/fresh `today.summary` | partial count is positive | suppress otherwise | yes / progress / state change |
+| `repeated_task_miss` | known/fresh distinct recent task events | same task has at least two distinct `missed` events | stale/unavailable suppresses behavior and may emit data quality | yes / consistency / weekly |
+| `subject_recent_completion_drop` | allowlisted `signalInputs[key=subject_recent_completion_drop:<subjectId>]` | positive numeric canonical input; owned subject; `subjects...` source path | suppress missing/stale/invalid/non-positive input | yes / progress / weekly |
+| `subject_workload_progress_available` | known/fresh canonical workload + subject material fact | subject has material, zero unknown workload views, and canonical subject minutes entry | incomplete inputs emit the paired unknown candidate | no / material / state change |
+| `subject_workload_progress_unknown` | canonical workload + subject material fact | required subject workload/material fact unavailable or incomplete | suppress for no material or complete workload | no / data quality / state change |
+| `schedule_capacity_change` | allowlisted `signalInputs[key=schedule_capacity_change:<date>]` | non-zero canonical delta with `capacity...` source path | suppress missing/stale/invalid/zero input | yes / capacity / state change |
+| `weekly_completion_pattern` | known/fresh current `week.summary` | non-empty week; copy counts/minutes only | unavailable/stale/out-of-range suppresses and may emit data quality | no / progress / weekly |
+| `recent_study_consistency` | allowlisted `signalInputs[key=recent_study_consistency_days]` | non-negative canonical count with `recentProgress...` source path | suppress missing/stale/invalid input | no / consistency / weekly |
+| `recent_recovery` | known/fresh distinct recent task events | latest event for a task is completed after an earlier miss | stale/unavailable/no sequence suppresses behavior | yes / consistency / state change |
+| `planner_warning_present` | known/fresh non-expired persisted Planner lifecycle | stored warning count is positive; warning prose is not copied into the signal | suppress unavailable/stale/expired/empty | yes / planner / state change |
+| `material_progress_stalled` | allowlisted `signalInputs[key=material_progress_stalled:<materialViewId>]` | canonical boolean true; material exists; `materials...` source path | suppress missing/stale/invalid/false input | yes / material / weekly |
+| `context_data_stale` | important context facts | fact is stale, source expiry elapsed, or category policy rejects scope | suppress when no stale fact | no / data quality / state change |
+| `important_truth_unknown` | important context facts | fact is explicitly `unknown` or `blocked` | `known` and `not_applicable` do not emit | no / data quality / state change |
+
+Candidates are deduplicated by signal type, subject/date/entity, reason, and source path, then ordered deterministically by declared importance, type, and dedupe key. Limits are explicit selection metadata. Silence remains allowed even for proactive-eligible candidates; delivery, attention-budget enforcement, category cooldown state, dedupe persistence, and prose remain later phases.
+
+## 19. Freshness policy
+
+6B.4 deliberately defines no Coach-owned numeric TTL. The current canonical fact envelope and its owning source expiry remain authoritative; where an owner has no safe independent TTL, that limitation is explicit rather than replaced with an invented duration.
+
+| Category | Acceptance rule | Additional hardening | Explicit limitation |
+| --- | --- | --- | --- |
+| Today/Week/task | source-declared fresh | Today date must equal context date; context date must fall inside Week | no independent task TTL authority |
+| Persisted Planner lifecycle | source-declared fresh | fact expiry and persisted proposal expiry must not have elapsed | persisted lifecycle expiry is authoritative |
+| Capacity | source-declared fresh | current date must fall inside capacity horizon | no Coach-owned capacity TTL |
+| Material/workload | source-declared fresh | canonical owner availability/expiry copied as-is | canonical owners publish no independent Coach TTL |
+| Recent progress | source-declared fresh with declared window | window is evidence context only, never trajectory authority | no independent recent-progress TTL |
+| Deterministic signal input | source-declared fresh | key pattern and source fact path must be allowlisted | missing registry input suppresses dependent signal |
+| Important mixed context | apply the owning category policy per fact | stale/unknown/blocked becomes data-quality evidence only | no cross-domain Coach TTL |
+
+## 20. Evidence-view integration and bounds
+
+Only five evidence scopes expose candidates:
+
+| Evidence scope | Candidate allowlist | Maximum candidates |
+| --- | --- | ---: |
+| `today_explain` | three Today factual types | 6 |
+| `week_progress` | repeated miss, drop, capacity change, Week pattern, consistency, recovery, stale/unknown quality | 6 |
+| `subject_progress` | selected-subject drop/workload/recovery/stall only | 4 |
+| `general_status` | all registered types, importance-first bounded selection | 4 |
+| `proactive_candidate` | only registry candidates with `proactiveCandidate = true` | 4 |
+
+`canonical_work`, `capacity_status`, and `planner_explanation` do not receive signal payloads. Raw `signalInputs` are no longer copied into the proactive view; only validated candidates are exposed. Candidate provenance is included in the evidence-view provenance union. Every resulting view remains under the existing 32,768-byte ceiling.
+
+## 21. 6B.4 high-volume acceptance
+
+The internal 42-task `CoachContextV1` remains 52,716 bytes. The signal set contains 8 candidates, serializes to 13,598 bytes, and remains below its 32-candidate / 24,576-byte limits. Evidence-view results are:
+
+| Scope | 6B.4 bytes | Reduction from full context |
+| --- | ---: | ---: |
+| `today_explain` | 12,252 | 76.8% |
+| `week_progress` | 27,820 | 47.2% |
+| `subject_progress` | 16,491 | 68.7% |
+| `canonical_work` | 10,899 | 79.3% |
+| `capacity_status` | 13,553 | 74.3% |
+| `planner_explanation` | 1,158 | 97.8% |
+| `general_status` | 28,553 | 45.8% |
+| `proactive_candidate` | 22,501 | 57.3% |
+
+The accepted pre-signal `proactive_candidate` view was 21,289 bytes; validated signal integration adds 1,212 bytes. It does not materially undo 6B.3 savings. `week_progress` and `general_status` remain under the hard ceiling but are the largest normal views and stay explicit runtime cost-watch items. The largest bounded detail remains `week_tasks` at 10,103 bytes.
+
+## 22. 6B.4 local acceptance state
+
+A–J fixtures cover healthy silence/no-warning, Today partial completion, repeated miss, stale-pattern suppression, missing workload, PLN-002 blocking, recovery, capacity change, dedupe, and an empty signal set. Additional tests cover registered-input source-path validation, Planner warning count without prose, registry completeness, provenance/freshness preservation, evidence-scope allowlists, deterministic byte equality, and size/count limits.
+
+6B.4 is locally accepted. It does not authorize AI runtime wiring, proactive UI/prose, prompt/model/provider changes, proposal creation, Preview, Confirm, Apply, migrations, deployment, gate changes, or production access.

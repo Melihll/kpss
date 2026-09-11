@@ -1035,6 +1035,493 @@ var COACH_CONTEXT_V1_LEGACY_EXCLUSIONS = Object.freeze([
   }
 ]);
 
+// packages/domain/src/ai-coach/coach-signal-v1.ts
+var COACH_SIGNAL_CANDIDATE_V1_VERSION = "coach-signal-candidate-v1";
+var COACH_SIGNAL_SET_V1_VERSION = "coach-signal-set-v1";
+var COACH_SIGNAL_TYPES_V1 = [
+  "today_remaining_work",
+  "today_completed_as_planned",
+  "today_partial_completion",
+  "repeated_task_miss",
+  "subject_recent_completion_drop",
+  "subject_workload_progress_available",
+  "subject_workload_progress_unknown",
+  "schedule_capacity_change",
+  "weekly_completion_pattern",
+  "recent_study_consistency",
+  "recent_recovery",
+  "planner_warning_present",
+  "material_progress_stalled",
+  "context_data_stale",
+  "important_truth_unknown"
+];
+var COACH_SIGNAL_FRESHNESS_POLICY_V1 = Object.freeze({
+  today_week_task: {
+    factPaths: ["today", "week", "subjects[*].tasks"],
+    acceptance: "source_declared_fresh_and_current_calendar_scope",
+    sourceExpiryEnforced: true,
+    independentMaxAgeMs: null,
+    limitation: "no_independent_task_ttl_authority"
+  },
+  planner_lifecycle: {
+    factPaths: ["planner"],
+    acceptance: "source_declared_fresh_and_persisted_proposal_not_expired",
+    sourceExpiryEnforced: true,
+    independentMaxAgeMs: null,
+    limitation: "persisted_lifecycle_expiry_is_authoritative"
+  },
+  capacity: {
+    factPaths: ["capacity"],
+    acceptance: "source_declared_fresh_and_current_date_in_horizon",
+    sourceExpiryEnforced: true,
+    independentMaxAgeMs: null,
+    limitation: "no_coach_owned_capacity_ttl"
+  },
+  material_workload: {
+    factPaths: ["materials", "workload", "subjects[*].material"],
+    acceptance: "source_declared_fresh",
+    sourceExpiryEnforced: true,
+    independentMaxAgeMs: null,
+    limitation: "canonical_owners_do_not_publish_independent_ttl"
+  },
+  recent_progress: {
+    factPaths: ["recentProgress"],
+    acceptance: "source_declared_fresh_with_declared_window",
+    sourceExpiryEnforced: true,
+    independentMaxAgeMs: null,
+    limitation: "window_is_context_not_trajectory_authority"
+  },
+  deterministic_signal_input: {
+    factPaths: ["signalInputs"],
+    acceptance: "source_declared_fresh_and_allowlisted_key_and_source_path",
+    sourceExpiryEnforced: true,
+    independentMaxAgeMs: null,
+    limitation: "missing_registry_input_suppresses_dependent_signal"
+  },
+  important_context: {
+    factPaths: ["today", "week", "materials", "workload", "capacity", "recentProgress", "nextWork", "week.value.progressPosition", "planner"],
+    acceptance: "category_policy_for_each_important_fact",
+    sourceExpiryEnforced: true,
+    independentMaxAgeMs: null,
+    limitation: "no_cross_domain_coach_owned_ttl"
+  }
+});
+var registry = [
+  ["today_remaining_work", "today_week_task", ["today.value.summary"], "today_known_fresh_and_open_count_and_remaining_minutes_positive", ["today_unavailable", "today_stale_or_expired", "today_date_mismatch", "no_remaining_work"], "suppress", "progress", "same_snapshot", true, false],
+  ["today_completed_as_planned", "today_week_task", ["today.value.summary", "today.value.study.plannedCreditMinutes"], "all_today_tasks_completed_and_remaining_zero_and_planned_credit_covers_planned_minutes", ["today_unavailable", "today_stale_or_expired", "today_date_mismatch", "empty_today", "planned_credit_incomplete"], "suppress", "progress", "daily", true, true],
+  ["today_partial_completion", "today_week_task", ["today.value.summary.partiallyCompletedTaskCount"], "partial_task_count_positive", ["today_unavailable", "today_stale_or_expired", "today_date_mismatch", "no_partial_task"], "suppress", "progress", "state_change", true, true],
+  ["repeated_task_miss", "recent_progress", ["recentProgress.value.taskEvents"], "same_task_has_two_or_more_distinct_missed_events", ["recent_progress_unavailable", "recent_progress_stale_or_expired", "fewer_than_two_distinct_misses"], "emit_data_quality_signal", "consistency", "weekly", true, true],
+  ["subject_recent_completion_drop", "deterministic_signal_input", ["signalInputs[key=subject_recent_completion_drop:<subjectId>]"], "allowlisted_positive_canonical_drop_input", ["signal_inputs_unavailable", "signal_inputs_stale_or_expired", "invalid_key_or_source_path", "non_positive_value"], "suppress", "progress", "weekly", true, true],
+  ["subject_workload_progress_available", "material_workload", ["workload", "subjects[*].material"], "subject_material_known_and_no_unknown_workload_and_subject_minutes_present", ["workload_unavailable", "material_unavailable", "unknown_workload_present", "subject_minutes_absent"], "emit_data_quality_signal", "material", "state_change", true, false],
+  ["subject_workload_progress_unknown", "material_workload", ["workload", "subjects[*].material"], "required_subject_workload_fact_is_unavailable_or_incomplete", ["subject_has_no_material", "canonical_subject_workload_complete"], "suppress", "data_quality", "state_change", true, false],
+  ["schedule_capacity_change", "deterministic_signal_input", ["signalInputs[key=schedule_capacity_change:<date>]"], "allowlisted_non_zero_canonical_capacity_delta_input", ["signal_inputs_unavailable", "signal_inputs_stale_or_expired", "invalid_key_or_source_path", "zero_delta"], "suppress", "capacity", "state_change", true, true],
+  ["weekly_completion_pattern", "today_week_task", ["week.value.summary"], "current_week_known_fresh_and_non_empty", ["week_unavailable", "week_stale_or_expired", "week_outside_calendar_scope", "empty_week"], "emit_data_quality_signal", "progress", "weekly", true, false],
+  ["recent_study_consistency", "deterministic_signal_input", ["signalInputs[key=recent_study_consistency_days]"], "allowlisted_non_negative_canonical_consistency_input", ["signal_inputs_unavailable", "signal_inputs_stale_or_expired", "invalid_source_path", "invalid_value"], "suppress", "consistency", "weekly", true, false],
+  ["recent_recovery", "recent_progress", ["recentProgress.value.taskEvents"], "same_task_has_completed_event_after_distinct_missed_event", ["recent_progress_unavailable", "recent_progress_stale_or_expired", "no_miss_then_complete_sequence"], "emit_data_quality_signal", "consistency", "state_change", true, true],
+  ["planner_warning_present", "planner_lifecycle", ["planner.value.warnings"], "persisted_current_planner_has_warning_count", ["planner_unavailable", "planner_stale_or_expired", "no_warning"], "emit_data_quality_signal", "planner", "state_change", true, true],
+  ["material_progress_stalled", "deterministic_signal_input", ["signalInputs[key=material_progress_stalled:<materialViewId>]"], "allowlisted_true_canonical_stall_input", ["signal_inputs_unavailable", "signal_inputs_stale_or_expired", "invalid_key_or_source_path", "false_value", "material_not_in_context"], "suppress", "material", "weekly", true, true],
+  ["context_data_stale", "important_context", ["important_context_facts"], "important_fact_stale_or_freshness_policy_rejected", ["no_stale_important_fact"], "suppress", "data_quality", "state_change", true, false],
+  ["important_truth_unknown", "important_context", ["important_context_facts"], "important_fact_unknown_or_blocked", ["fact_known_or_not_applicable"], "suppress", "data_quality", "state_change", true, false]
+];
+var COACH_SIGNAL_REGISTRY_V1 = Object.freeze(
+  registry.map(([signalType, freshnessCategory, exactInputFactPaths, emissionConditionCode, suppressionConditionCodes, unavailableBehavior, attentionCategory, cooldownClass, reactiveExplanation, proactiveCandidate]) => ({
+    signalType,
+    freshnessCategory,
+    exactInputFactPaths,
+    emissionConditionCode,
+    suppressionConditionCodes,
+    unavailableBehavior,
+    dedupeIdentityFields: ["signalType", "subjectId", "date", "entityId", "reasonCode", "sourceFactPath"],
+    attentionCategory,
+    cooldownClass,
+    reactiveExplanation,
+    proactiveCandidate
+  }))
+);
+var COACH_SIGNAL_V1_LIMITS = Object.freeze({
+  candidates: 32,
+  sourceFactPathsPerCandidate: 8,
+  evidenceValuesPerCandidate: 12,
+  provenanceRecordsPerCandidate: 64,
+  serializedBytes: 24576
+});
+function registryEntry(signalType) {
+  return COACH_SIGNAL_REGISTRY_V1.find((entry) => entry.signalType === signalType);
+}
+function isExpired(expiresAt, generatedAt) {
+  return expiresAt !== null && Date.parse(generatedAt) >= Date.parse(expiresAt);
+}
+function isKnownFresh(fact, generatedAt) {
+  return fact.availability === "known" && fact.freshness.state === "fresh" && !isExpired(fact.freshness.expiresAt, generatedAt);
+}
+function confidenceFromFacts(facts) {
+  const values = facts.map((fact) => fact.confidence);
+  if (values.includes("none") || values.includes("low")) return "low";
+  if (values.includes("medium")) return "medium";
+  return "high";
+}
+function freshnessFromFacts(facts, generatedAt) {
+  const stale = facts.find((fact) => fact.availability === "stale" || isExpired(fact.freshness.expiresAt, generatedAt));
+  if (stale) return { ...stale.freshness, state: "stale" };
+  const unknown = facts.find((fact) => fact.availability === "unknown" || fact.availability === "blocked");
+  if (unknown) return structuredClone(unknown.freshness);
+  return structuredClone(facts[0]?.freshness ?? { state: "unknown", asOf: null, expiresAt: null });
+}
+function normalizeProvenance2(facts) {
+  const unique = /* @__PURE__ */ new Map();
+  for (const fact of facts) {
+    for (const item of fact.provenance) {
+      const normalized = { source: item.source, recordIds: [...new Set(item.recordIds)].sort(), asOf: item.asOf };
+      unique.set(`${normalized.source}|${normalized.asOf ?? ""}|${normalized.recordIds.join("|")}`, normalized);
+    }
+  }
+  return [...unique.values()].sort((left, right) => left.source.localeCompare(right.source) || (left.asOf ?? "").localeCompare(right.asOf ?? "") || left.recordIds.join("|").localeCompare(right.recordIds.join("|")));
+}
+function sortedEvidence(evidence) {
+  return Object.fromEntries(Object.entries(evidence).sort(([left], [right]) => left.localeCompare(right)));
+}
+function authority() {
+  return {
+    mode: "factual_signal_only_read_only",
+    createsProductTruth: false,
+    generatesProse: false,
+    dbWritesAllowed: false,
+    workloadCalculationAllowed: false,
+    plannerPreviewAllowed: false,
+    plannerProposalAllowed: false,
+    plannerConfirmationAllowed: false,
+    plannerApplyAllowed: false,
+    llmCallsAllowed: false,
+    providerCallsAllowed: false
+  };
+}
+function materialize(context, draft) {
+  const entry = registryEntry(draft.signalType);
+  const sourceFactPaths = [...new Set(draft.sourceFactPaths)].sort();
+  if (sourceFactPaths.length > COACH_SIGNAL_V1_LIMITS.sourceFactPathsPerCandidate) throw new Error("COACH_SIGNAL_TOO_MANY_SOURCE_PATHS");
+  const evidence = sortedEvidence(draft.evidence);
+  if (Object.keys(evidence).length > COACH_SIGNAL_V1_LIMITS.evidenceValuesPerCandidate) throw new Error("COACH_SIGNAL_TOO_MANY_EVIDENCE_VALUES");
+  const provenance = normalizeProvenance2(draft.facts);
+  if (provenance.some((item) => item.recordIds.length > COACH_SIGNAL_V1_LIMITS.provenanceRecordsPerCandidate)) throw new Error("COACH_SIGNAL_TOO_MANY_PROVENANCE_RECORDS");
+  const subjectId = draft.subjectId ?? null;
+  const date = draft.date ?? null;
+  const entityId = draft.entityId ?? null;
+  const dedupeKey = [draft.signalType, subjectId ?? "global", date ?? "any-date", entityId ?? "no-entity", draft.reasonCode, sourceFactPaths.join("+")].join(":");
+  const freshness = draft.freshnessOverride ?? freshnessFromFacts(draft.facts, context.generatedAt);
+  return {
+    version: COACH_SIGNAL_CANDIDATE_V1_VERSION,
+    signalType: draft.signalType,
+    severity: draft.severity,
+    importance: draft.importance,
+    subjectId,
+    date,
+    reasonCode: draft.reasonCode,
+    sourceFactPaths,
+    asOf: freshness.asOf ?? context.generatedAt,
+    freshness,
+    confidence: draft.confidenceOverride ?? confidenceFromFacts(draft.facts),
+    evidence,
+    provenance,
+    dedupeKey,
+    eligibility: {
+      reactiveExplanation: entry.reactiveExplanation,
+      proactiveCandidate: entry.proactiveCandidate,
+      attentionCategory: entry.attentionCategory,
+      cooldownClass: entry.cooldownClass,
+      silenceAllowed: true
+    },
+    authority: authority()
+  };
+}
+function deepFreeze2(value) {
+  if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const child of Object.values(value)) deepFreeze2(child);
+  return value;
+}
+function validSignalSourcePath(path, prefix) {
+  return path === prefix || path.startsWith(`${prefix}.`) || path.startsWith(`${prefix}[`);
+}
+function usableSignalInputs(context) {
+  const signalInputs = context.signalInputs;
+  return isKnownFresh(signalInputs, context.generatedAt) ? signalInputs.value : [];
+}
+function addTodaySignals(context, drafts) {
+  const today = context.today;
+  if (!isKnownFresh(today, context.generatedAt) || today.value.date !== context.currentDate) return;
+  const { summary, study } = today.value;
+  const fact = today;
+  if (summary.openTaskCount > 0 && summary.remainingMinutes > 0) drafts.push({
+    signalType: "today_remaining_work",
+    severity: "info",
+    importance: "low",
+    date: context.currentDate,
+    reasonCode: "today_open_minutes_present",
+    sourceFactPaths: ["today.value.summary.openTaskCount", "today.value.summary.remainingMinutes"],
+    facts: [fact],
+    evidence: { openTaskCount: summary.openTaskCount, remainingMinutes: summary.remainingMinutes }
+  });
+  if (summary.totalTaskCount > 0 && summary.completedTaskCount === summary.totalTaskCount && summary.openTaskCount === 0 && summary.remainingMinutes === 0 && study.plannedCreditMinutes >= summary.plannedMinutes) drafts.push({
+    signalType: "today_completed_as_planned",
+    severity: "info",
+    importance: "medium",
+    date: context.currentDate,
+    reasonCode: "today_all_tasks_completed_with_planned_credit",
+    sourceFactPaths: ["today.value.summary", "today.value.study.plannedCreditMinutes"],
+    facts: [fact],
+    evidence: { completedTaskCount: summary.completedTaskCount, plannedMinutes: summary.plannedMinutes, plannedCreditMinutes: study.plannedCreditMinutes }
+  });
+  if (summary.partiallyCompletedTaskCount > 0) drafts.push({
+    signalType: "today_partial_completion",
+    severity: "notice",
+    importance: "medium",
+    date: context.currentDate,
+    reasonCode: "today_partial_task_count_present",
+    sourceFactPaths: ["today.value.summary.partiallyCompletedTaskCount", "today.value.summary.remainingMinutes"],
+    facts: [fact],
+    evidence: { partiallyCompletedTaskCount: summary.partiallyCompletedTaskCount, remainingMinutes: summary.remainingMinutes }
+  });
+}
+function taskSubject(context, taskId) {
+  return context.week.value?.tasks.find((task) => task.taskId === taskId)?.subjectId ?? null;
+}
+function addRecentProgressSignals(context, drafts) {
+  const recentProgress = context.recentProgress;
+  if (!isKnownFresh(recentProgress, context.generatedAt)) return;
+  const fact = recentProgress;
+  const unique = /* @__PURE__ */ new Map();
+  for (const event of recentProgress.value.taskEvents) unique.set(`${event.taskId}|${event.occurredAt}|${event.status}|${event.completedMinutes}`, event);
+  const events = [...unique.values()].sort((left, right) => left.occurredAt.localeCompare(right.occurredAt) || left.taskId.localeCompare(right.taskId));
+  const byTask = /* @__PURE__ */ new Map();
+  for (const event of events) byTask.set(event.taskId, [...byTask.get(event.taskId) ?? [], event]);
+  for (const [taskId, taskEvents] of [...byTask.entries()].sort(([left], [right]) => left.localeCompare(right))) {
+    const misses = taskEvents.filter((event) => event.status === "missed");
+    if (misses.length >= 2) drafts.push({
+      signalType: "repeated_task_miss",
+      severity: "warning",
+      importance: "high",
+      subjectId: taskSubject(context, taskId),
+      entityId: taskId,
+      reasonCode: "same_task_missed_multiple_times_in_recent_window",
+      sourceFactPaths: [`recentProgress.value.taskEvents[taskId=${taskId}]`],
+      facts: [fact],
+      evidence: { distinctMissCount: misses.length, taskId, windowEnd: recentProgress.value.windowEnd, windowStart: recentProgress.value.windowStart }
+    });
+    const recovery = taskEvents.at(-1)?.status === "completed" ? taskEvents.at(-1) : void 0;
+    const lastMissBeforeRecovery = recovery ? [...misses].reverse().find((event) => event.occurredAt < recovery.occurredAt) : void 0;
+    if (lastMissBeforeRecovery && recovery) drafts.push({
+      signalType: "recent_recovery",
+      severity: "info",
+      importance: "medium",
+      subjectId: taskSubject(context, taskId),
+      entityId: taskId,
+      reasonCode: "completed_after_recent_miss",
+      sourceFactPaths: [`recentProgress.value.taskEvents[taskId=${taskId}]`],
+      facts: [fact],
+      evidence: { completedAt: recovery.occurredAt, missedAt: lastMissBeforeRecovery.occurredAt, taskId }
+    });
+  }
+}
+function addSubjectWorkloadSignals(context, drafts) {
+  const workload = context.workload;
+  for (const subject of [...context.subjects].sort((left, right) => left.subjectId.localeCompare(right.subjectId))) {
+    const material = subject.material;
+    const facts = [workload, material];
+    const materialKnown = isKnownFresh(material, context.generatedAt);
+    const workloadKnown = isKnownFresh(workload, context.generatedAt);
+    const totalMaterialViews = material.value?.totalMaterialViews ?? 0;
+    if (totalMaterialViews === 0 && materialKnown) continue;
+    const minutesPresent = workloadKnown && Object.prototype.hasOwnProperty.call(workload.value.minutesBySubject, subject.subjectId);
+    const complete = materialKnown && workloadKnown && material.value.unknownWorkloadViews === 0 && minutesPresent;
+    if (complete) {
+      drafts.push({
+        signalType: "subject_workload_progress_available",
+        severity: "info",
+        importance: "low",
+        subjectId: subject.subjectId,
+        reasonCode: "canonical_subject_workload_is_available",
+        sourceFactPaths: ["workload.value.minutesBySubject", `subjects[subjectId=${subject.subjectId}].material`],
+        facts,
+        evidence: { completedMaterialViews: material.value.completedMaterialViews, remainingWorkloadMinutes: workload.value.minutesBySubject[subject.subjectId], subjectId: subject.subjectId, totalMaterialViews }
+      });
+    } else {
+      drafts.push({
+        signalType: "subject_workload_progress_unknown",
+        severity: "notice",
+        importance: "medium",
+        subjectId: subject.subjectId,
+        reasonCode: "canonical_subject_workload_is_incomplete",
+        sourceFactPaths: ["workload", `subjects[subjectId=${subject.subjectId}].material`],
+        facts,
+        evidence: { subjectId: subject.subjectId, workloadAvailability: context.workload.availability, materialAvailability: subject.material.availability, unknownWorkloadViews: subject.material.value?.unknownWorkloadViews ?? null },
+        confidenceOverride: "low"
+      });
+    }
+  }
+}
+function addWeekSignal(context, drafts) {
+  const week = context.week;
+  if (!isKnownFresh(week, context.generatedAt) || context.currentDate < week.value.startDate || context.currentDate > week.value.endDate || week.value.summary.totalTaskCount === 0) return;
+  const summary = week.value.summary;
+  drafts.push({
+    signalType: "weekly_completion_pattern",
+    severity: "info",
+    importance: "low",
+    reasonCode: "current_week_task_counts_available",
+    sourceFactPaths: ["week.value.summary"],
+    facts: [context.week],
+    evidence: { completedTaskCount: summary.completedTaskCount, openTaskCount: summary.openTaskCount, partiallyCompletedTaskCount: summary.partiallyCompletedTaskCount, remainingMinutes: summary.remainingMinutes, totalTaskCount: summary.totalTaskCount }
+  });
+}
+function addPlannerSignal(context, drafts) {
+  const planner = context.planner;
+  if (!isKnownFresh(planner, context.generatedAt) || Date.parse(context.generatedAt) >= Date.parse(planner.value.expiresAt) || planner.value.warnings.length === 0) return;
+  drafts.push({
+    signalType: "planner_warning_present",
+    severity: "warning",
+    importance: "high",
+    reasonCode: "persisted_planner_warning_count_present",
+    sourceFactPaths: ["planner.value.warnings", "planner.value.lifecycleState"],
+    facts: [context.planner],
+    evidence: { lifecycleState: planner.value.lifecycleState, warningCount: planner.value.warnings.length }
+  });
+}
+function addRegisteredInputSignals(context, drafts) {
+  const fact = context.signalInputs;
+  const inputs = usableSignalInputs(context);
+  for (const input of [...inputs].sort((left, right) => left.key.localeCompare(right.key) || left.sourceFactPath.localeCompare(right.sourceFactPath))) {
+    const completionMatch = /^subject_recent_completion_drop:(.+)$/.exec(input.key);
+    const completionSubject = completionMatch ? context.subjects.find((subject) => subject.subjectId === completionMatch[1]) : void 0;
+    if (completionMatch && completionSubject && isKnownFresh(completionSubject.tasks, context.generatedAt) && input.category === "progress" && (input.unit === "count" || input.unit === "ratio") && typeof input.value === "number" && input.value > 0 && validSignalSourcePath(input.sourceFactPath, "subjects")) drafts.push({
+      signalType: "subject_recent_completion_drop",
+      severity: "warning",
+      importance: "high",
+      subjectId: completionMatch[1],
+      entityId: input.key,
+      reasonCode: "canonical_completion_drop_input_present",
+      sourceFactPaths: [input.sourceFactPath, `signalInputs[key=${input.key}]`],
+      facts: [fact, completionSubject.tasks],
+      evidence: { dropValue: input.value, subjectId: completionMatch[1] }
+    });
+    const capacityMatch = /^schedule_capacity_change:(\d{4}-\d{2}-\d{2})$/.exec(input.key);
+    const capacity = context.capacity;
+    const capacityDatePresent = capacityMatch && isKnownFresh(capacity, context.generatedAt) && capacity.value.days.some((day) => day.date === capacityMatch[1]);
+    if (capacityMatch && capacityDatePresent && input.category === "capacity" && input.unit === "minutes" && typeof input.value === "number" && input.value !== 0 && validSignalSourcePath(input.sourceFactPath, "capacity")) drafts.push({
+      signalType: "schedule_capacity_change",
+      severity: "notice",
+      importance: "medium",
+      date: capacityMatch[1],
+      entityId: input.key,
+      reasonCode: "canonical_capacity_change_input_present",
+      sourceFactPaths: [input.sourceFactPath, `signalInputs[key=${input.key}]`],
+      facts: [fact, capacity],
+      evidence: { capacityDeltaMinutes: input.value, date: capacityMatch[1] }
+    });
+    const recentProgress = context.recentProgress;
+    if (input.key === "recent_study_consistency_days" && isKnownFresh(recentProgress, context.generatedAt) && input.category === "consistency" && input.unit === "count" && typeof input.value === "number" && input.value >= 0 && validSignalSourcePath(input.sourceFactPath, "recentProgress")) drafts.push({
+      signalType: "recent_study_consistency",
+      severity: "info",
+      importance: "low",
+      entityId: input.key,
+      reasonCode: "canonical_consistency_input_present",
+      sourceFactPaths: [input.sourceFactPath, `signalInputs[key=${input.key}]`],
+      facts: [fact, recentProgress],
+      evidence: { studyDayCount: input.value }
+    });
+    const stalledMatch = /^material_progress_stalled:(.+)$/.exec(input.key);
+    const materials = context.materials;
+    const material = stalledMatch && isKnownFresh(materials, context.generatedAt) ? materials.value.find((item) => item.materialViewId === stalledMatch[1]) : void 0;
+    if (stalledMatch && material && input.category === "material" && input.unit === "boolean" && input.value === true && validSignalSourcePath(input.sourceFactPath, "materials")) drafts.push({
+      signalType: "material_progress_stalled",
+      severity: "warning",
+      importance: "high",
+      subjectId: material.subjectId,
+      entityId: stalledMatch[1],
+      reasonCode: "canonical_material_stall_input_present",
+      sourceFactPaths: [input.sourceFactPath, `signalInputs[key=${input.key}]`],
+      facts: [fact, materials],
+      evidence: { materialViewId: stalledMatch[1], progressState: material.progressState }
+    });
+  }
+}
+function importantFacts(context) {
+  return [
+    { path: "today", fact: context.today, freshnessCategory: "today_week_task", policyValid: context.today.value === null || context.today.value.date === context.currentDate },
+    { path: "week", fact: context.week, freshnessCategory: "today_week_task", policyValid: context.week.value === null || context.currentDate >= context.week.value.startDate && context.currentDate <= context.week.value.endDate },
+    { path: "materials", fact: context.materials, freshnessCategory: "material_workload" },
+    { path: "workload", fact: context.workload, freshnessCategory: "material_workload" },
+    { path: "capacity", fact: context.capacity, freshnessCategory: "capacity", policyValid: context.capacity.value === null || context.currentDate >= context.capacity.value.horizonStart && context.currentDate <= context.capacity.value.horizonEnd },
+    { path: "recentProgress", fact: context.recentProgress, freshnessCategory: "recent_progress" },
+    { path: "nextWork", fact: context.nextWork, freshnessCategory: "material_workload" },
+    ...context.week.value ? [{ path: "week.value.progressPosition", fact: context.week.value.progressPosition, freshnessCategory: "today_week_task" }] : [],
+    ...context.planner.availability !== "not_applicable" ? [{ path: "planner", fact: context.planner, freshnessCategory: "planner_lifecycle", policyValid: context.planner.value === null || Date.parse(context.generatedAt) < Date.parse(context.planner.value.expiresAt) }] : []
+  ];
+}
+function addDataQualitySignals(context, drafts) {
+  for (const item of importantFacts(context)) {
+    const expired = isExpired(item.fact.freshness.expiresAt, context.generatedAt);
+    if (item.fact.availability === "stale" || expired || item.policyValid === false) {
+      drafts.push({
+        signalType: "context_data_stale",
+        severity: "warning",
+        importance: "high",
+        entityId: item.path,
+        reasonCode: item.policyValid === false ? "freshness_policy_rejected" : "source_fact_stale",
+        sourceFactPaths: [item.path],
+        facts: [item.fact],
+        evidence: { availability: item.fact.availability, freshnessCategory: item.freshnessCategory, sourceFactPath: item.path, unknownReason: item.fact.unknownReason },
+        freshnessOverride: { ...item.fact.freshness, state: "stale" },
+        confidenceOverride: "low"
+      });
+    } else if (item.fact.availability === "unknown" || item.fact.availability === "blocked") {
+      drafts.push({
+        signalType: "important_truth_unknown",
+        severity: "notice",
+        importance: "medium",
+        entityId: item.path,
+        reasonCode: "required_truth_unavailable",
+        sourceFactPaths: [item.path],
+        facts: [item.fact],
+        evidence: { availability: item.fact.availability, sourceFactPath: item.path, unknownReason: item.fact.unknownReason },
+        confidenceOverride: "low"
+      });
+    }
+  }
+}
+function buildCoachSignalSetV1(context, selection = {}) {
+  if (selection.signalTypes?.some((type) => !COACH_SIGNAL_TYPES_V1.includes(type))) throw new Error("COACH_SIGNAL_TYPE_UNSUPPORTED");
+  if (selection.subjectId !== void 0 && !context.subjects.some((subject) => subject.subjectId === selection.subjectId)) throw new Error("COACH_SIGNAL_SUBJECT_OUT_OF_PROFILE");
+  const drafts = [];
+  addTodaySignals(context, drafts);
+  addRecentProgressSignals(context, drafts);
+  addSubjectWorkloadSignals(context, drafts);
+  addWeekSignal(context, drafts);
+  addPlannerSignal(context, drafts);
+  addRegisteredInputSignals(context, drafts);
+  addDataQualitySignals(context, drafts);
+  const unique = /* @__PURE__ */ new Map();
+  for (const draft of drafts) {
+    const candidate = materialize(context, draft);
+    if (!unique.has(candidate.dedupeKey)) unique.set(candidate.dedupeKey, candidate);
+  }
+  const selectedTypes = selection.signalTypes ? new Set(selection.signalTypes) : null;
+  const importanceOrder = { high: 0, medium: 1, low: 2 };
+  const all = [...unique.values()].filter((candidate) => selectedTypes === null || selectedTypes.has(candidate.signalType)).filter((candidate) => selection.subjectId === void 0 || candidate.subjectId === selection.subjectId).filter((candidate) => selection.proactiveOnly !== true || candidate.eligibility.proactiveCandidate).sort((left, right) => importanceOrder[left.importance] - importanceOrder[right.importance] || left.signalType.localeCompare(right.signalType) || left.dedupeKey.localeCompare(right.dedupeKey));
+  const candidates = all.slice(0, COACH_SIGNAL_V1_LIMITS.candidates);
+  const result = {
+    version: COACH_SIGNAL_SET_V1_VERSION,
+    sourceContext: { version: context.version, requestId: context.requestId },
+    asOf: context.generatedAt,
+    candidates,
+    collection: { availableCount: all.length, returnedCount: candidates.length, limit: COACH_SIGNAL_V1_LIMITS.candidates, truncated: candidates.length < all.length },
+    silenceEligible: true,
+    authority: authority()
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(result)).byteLength;
+  if (bytes > COACH_SIGNAL_V1_LIMITS.serializedBytes) throw new Error(`COACH_SIGNAL_SET_V1_TOO_LARGE:${bytes}`);
+  return deepFreeze2(result);
+}
+
 // packages/domain/src/ai-coach/coach-evidence-view-v1.ts
 var COACH_EVIDENCE_VIEW_V1_VERSION = "coach-evidence-view-v1";
 var COACH_EVIDENCE_DETAIL_REQUEST_V1_VERSION = "coach-evidence-detail-request-v1";
@@ -1078,58 +1565,58 @@ var COACH_EVIDENCE_SCOPE_CAPABILITY_V1 = Object.freeze({
 var COACH_EVIDENCE_SCOPE_RULES_V1 = Object.freeze({
   today_explain: {
     capability: "explain",
-    allowedContextPaths: ["identity", "today", "week.summary", "week.study", "week.studyIntentCoverage", "week.progressPosition", "nextWork"],
+    allowedContextPaths: ["identity", "today", "week.summary", "week.study", "week.studyIntentCoverage", "week.progressPosition", "nextWork", "signalCandidates"],
     excludedContextPaths: ["week.tasks", "subjects", "materials", "workload", "capacity", "recentProgress", "planner", "signalInputs"],
-    collectionLimits: { "today.tasks": 8 },
+    collectionLimits: { "today.tasks": 8, signalCandidates: 6 },
     detailKinds: ["today_tasks", "recent_sessions"]
   },
   week_progress: {
     capability: "progress_analysis",
-    allowedContextPaths: ["week", "subjects", "capacity", "recentProgress"],
+    allowedContextPaths: ["week", "subjects", "capacity", "recentProgress", "signalCandidates"],
     excludedContextPaths: ["identity", "today.tasks", "week.tasks", "nextWork", "materials", "workload", "planner", "signalInputs"],
-    collectionLimits: { subjects: 12, "capacity.days": 7, "recentProgress.taskEvents": 8, "recentProgress.sessions": 6, "recentProgress.transitions": 4 },
+    collectionLimits: { subjects: 12, "capacity.days": 7, "recentProgress.taskEvents": 8, "recentProgress.sessions": 6, "recentProgress.transitions": 4, signalCandidates: 6 },
     detailKinds: ["week_tasks", "subject_tasks", "recent_sessions"]
   },
   subject_progress: {
     capability: "progress_analysis",
-    allowedContextPaths: ["subjects[selected]", "week", "materials[selected]", "recentProgress[selected]", "nextWork[selected]"],
+    allowedContextPaths: ["subjects[selected]", "week", "materials[selected]", "recentProgress[selected]", "nextWork[selected]", "signalCandidates[selected]"],
     excludedContextPaths: ["identity", "today.tasks", "week.tasks", "workload.minutesByResource", "capacity", "planner", "signalInputs"],
-    collectionLimits: { subjects: 1, "canonicalWork.materials": 6, "recentProgress.taskEvents": 6, "recentProgress.sessions": 6, "recentProgress.transitions": 4 },
+    collectionLimits: { subjects: 1, "canonicalWork.materials": 6, "recentProgress.taskEvents": 6, "recentProgress.sessions": 6, "recentProgress.transitions": 4, signalCandidates: 4 },
     detailKinds: ["subject_tasks", "recent_sessions", "subject_material_progress"]
   },
   canonical_work: {
     capability: "guide",
     allowedContextPaths: ["nextWork", "workload", "materials"],
-    excludedContextPaths: ["identity", "today", "week", "subjects", "capacity", "recentProgress", "planner", "signalInputs"],
+    excludedContextPaths: ["identity", "today", "week", "subjects", "capacity", "recentProgress", "planner", "signalInputs", "signalCandidates"],
     collectionLimits: { "canonicalWork.materials": 8 },
     detailKinds: ["subject_material_progress"]
   },
   capacity_status: {
     capability: "status_analysis",
     allowedContextPaths: ["today.summary", "today.study", "week.summary", "capacity"],
-    excludedContextPaths: ["identity", "today.tasks", "week.tasks", "subjects", "nextWork", "materials", "workload", "recentProgress", "planner", "signalInputs"],
+    excludedContextPaths: ["identity", "today.tasks", "week.tasks", "subjects", "nextWork", "materials", "workload", "recentProgress", "planner", "signalInputs", "signalCandidates"],
     collectionLimits: { "capacity.days": 7 },
     detailKinds: ["today_tasks", "week_tasks"]
   },
   planner_explanation: {
     capability: "planner_proposal_interpretation",
     allowedContextPaths: ["planner"],
-    excludedContextPaths: ["identity", "today", "week", "subjects", "nextWork", "materials", "workload", "capacity", "recentProgress", "signalInputs"],
+    excludedContextPaths: ["identity", "today", "week", "subjects", "nextWork", "materials", "workload", "capacity", "recentProgress", "signalInputs", "signalCandidates"],
     collectionLimits: { "planner.warnings": 8, "planner.explanationFacts": 12 },
     detailKinds: ["planner_explanation_detail"]
   },
   general_status: {
     capability: "status_analysis",
-    allowedContextPaths: ["identity", "today.summary", "today.study", "week", "subjects", "nextWork", "workload", "capacity"],
+    allowedContextPaths: ["identity", "today.summary", "today.study", "week", "subjects", "nextWork", "workload", "capacity", "signalCandidates"],
     excludedContextPaths: ["today.tasks", "week.tasks", "materials", "recentProgress", "planner", "signalInputs"],
-    collectionLimits: { subjects: 8, "capacity.days": 7 },
+    collectionLimits: { subjects: 8, "capacity.days": 7, signalCandidates: 4 },
     detailKinds: ["today_tasks", "week_tasks", "subject_tasks", "recent_sessions", "subject_material_progress"]
   },
   proactive_candidate: {
     capability: "proactive_insight_candidate",
-    allowedContextPaths: ["today.summary", "week", "subjects", "workload", "capacity", "signalInputs"],
-    excludedContextPaths: ["identity", "today.tasks", "week.tasks", "nextWork", "materials", "recentProgress", "planner"],
-    collectionLimits: { subjects: 8, "capacity.days": 7, signalInputs: 12 },
+    allowedContextPaths: ["today.summary", "week", "subjects", "workload", "capacity", "signalCandidates"],
+    excludedContextPaths: ["identity", "today.tasks", "week.tasks", "nextWork", "materials", "recentProgress", "planner", "signalInputs"],
+    collectionLimits: { subjects: 8, "capacity.days": 7, signalCandidates: 4 },
     detailKinds: ["today_tasks", "week_tasks", "subject_tasks", "recent_sessions", "subject_material_progress"]
   }
 });
@@ -1147,6 +1634,13 @@ var COACH_EVIDENCE_DETAIL_V1_LIMITS = Object.freeze({
   subject_material_progress: 16,
   planner_explanation_detail: 24,
   serializedBytes: 16384
+});
+var COACH_EVIDENCE_SIGNAL_TYPES_V1 = Object.freeze({
+  today_explain: ["today_remaining_work", "today_completed_as_planned", "today_partial_completion"],
+  week_progress: ["repeated_task_miss", "subject_recent_completion_drop", "schedule_capacity_change", "weekly_completion_pattern", "recent_study_consistency", "recent_recovery", "context_data_stale", "important_truth_unknown"],
+  subject_progress: ["subject_recent_completion_drop", "subject_workload_progress_available", "subject_workload_progress_unknown", "recent_recovery", "material_progress_stalled"],
+  general_status: COACH_SIGNAL_TYPES_V1,
+  proactive_candidate: COACH_SIGNAL_TYPES_V1
 });
 function mapFact(fact, mapValue) {
   const cloned = structuredClone(fact);
@@ -1246,7 +1740,15 @@ function projectPlanner(context, warningLimit, explanationLimit, collections) {
     applyAvailable: false
   }));
 }
-function normalizeProvenance2(items) {
+function projectSignalCandidates(context, scope, limit, collections, subjectId = null) {
+  const candidates = buildCoachSignalSetV1(context, {
+    signalTypes: COACH_EVIDENCE_SIGNAL_TYPES_V1[scope],
+    ...scope === "subject_progress" && subjectId !== null ? { subjectId } : {},
+    ...scope === "proactive_candidate" ? { proactiveOnly: true } : {}
+  }).candidates;
+  return limitCollection(candidates, "signalCandidates", limit, collections);
+}
+function normalizeProvenance3(items) {
   const unique = /* @__PURE__ */ new Map();
   for (const item of items) {
     const normalized = {
@@ -1287,13 +1789,13 @@ function collectFactMetadata(value) {
   walk(value, "evidence");
   return {
     unknowns: unknowns.sort((left, right) => left.path.localeCompare(right.path)),
-    provenance: [...normalizeProvenance2(provenance)]
+    provenance: [...normalizeProvenance3(provenance)]
   };
 }
-function deepFreeze2(value) {
+function deepFreeze3(value) {
   if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
   Object.freeze(value);
-  for (const child of Object.values(value)) deepFreeze2(child);
+  for (const child of Object.values(value)) deepFreeze3(child);
   return value;
 }
 function assertSubjectSelection(context, selection) {
@@ -1324,7 +1826,8 @@ function projectCoachEvidenceViewV1(context, selection) {
         week: projectWeek(context),
         canonicalWork: {
           next: structuredClone(context.nextWork)
-        }
+        },
+        signalCandidates: projectSignalCandidates(context, "today_explain", rule.collectionLimits.signalCandidates, collections)
       };
       break;
     case "week_progress":
@@ -1336,7 +1839,8 @@ function projectCoachEvidenceViewV1(context, selection) {
           taskEvents: rule.collectionLimits["recentProgress.taskEvents"],
           sessions: rule.collectionLimits["recentProgress.sessions"],
           transitions: rule.collectionLimits["recentProgress.transitions"]
-        }, collections)
+        }, collections),
+        signalCandidates: projectSignalCandidates(context, "week_progress", rule.collectionLimits.signalCandidates, collections)
       };
       break;
     case "subject_progress": {
@@ -1356,7 +1860,8 @@ function projectCoachEvidenceViewV1(context, selection) {
           taskEvents: rule.collectionLimits["recentProgress.taskEvents"],
           sessions: rule.collectionLimits["recentProgress.sessions"],
           transitions: rule.collectionLimits["recentProgress.transitions"]
-        }, collections, subjectId)
+        }, collections, subjectId),
+        signalCandidates: projectSignalCandidates(context, "subject_progress", rule.collectionLimits.signalCandidates, collections, subjectId)
       };
       break;
     }
@@ -1391,7 +1896,8 @@ function projectCoachEvidenceViewV1(context, selection) {
           next: structuredClone(context.nextWork),
           workload: projectWorkload(context)
         },
-        capacity: projectCapacity(context, rule.collectionLimits["capacity.days"], collections)
+        capacity: projectCapacity(context, rule.collectionLimits["capacity.days"], collections),
+        signalCandidates: projectSignalCandidates(context, "general_status", rule.collectionLimits.signalCandidates, collections)
       };
       break;
     case "proactive_candidate":
@@ -1403,11 +1909,12 @@ function projectCoachEvidenceViewV1(context, selection) {
           workload: projectWorkload(context)
         },
         capacity: projectCapacity(context, rule.collectionLimits["capacity.days"], collections),
-        signalInputs: mapFact(context.signalInputs, (signals) => limitCollection(signals, "signalInputs", rule.collectionLimits.signalInputs, collections))
+        signalCandidates: projectSignalCandidates(context, "proactive_candidate", rule.collectionLimits.signalCandidates, collections)
       };
       break;
   }
   const metadata = collectFactMetadata(evidence);
+  const signalProvenance = evidence.signalCandidates?.flatMap((candidate) => candidate.provenance) ?? [];
   if (collections.length > COACH_EVIDENCE_VIEW_V1_LIMITS.collections) {
     throw new Error("COACH_EVIDENCE_TOO_MANY_COLLECTIONS");
   }
@@ -1429,7 +1936,7 @@ function projectCoachEvidenceViewV1(context, selection) {
     evidence,
     collections: collections.sort((left, right) => left.path.localeCompare(right.path)),
     unknowns: metadata.unknowns,
-    provenance: metadata.provenance,
+    provenance: normalizeProvenance3([...metadata.provenance, ...signalProvenance]),
     availableDetails: rule.detailKinds.map((kind) => ({
       kind,
       subjectIdRequired: kind === "subject_tasks" || kind === "subject_material_progress"
@@ -1453,7 +1960,7 @@ function projectCoachEvidenceViewV1(context, selection) {
   if (bytes > COACH_EVIDENCE_VIEW_V1_LIMITS.serializedBytes) {
     throw new Error(`COACH_EVIDENCE_VIEW_V1_TOO_LARGE:${bytes}`);
   }
-  return deepFreeze2(view);
+  return deepFreeze3(view);
 }
 function assertDetailScope(context, request) {
   if (request.version !== COACH_EVIDENCE_DETAIL_REQUEST_V1_VERSION) throw new Error("COACH_EVIDENCE_DETAIL_VERSION_UNSUPPORTED");
@@ -1570,7 +2077,7 @@ function resolveCoachEvidenceDetailV1(context, request) {
       limit,
       truncated: returnedCount < availableCount
     },
-    provenance: normalizeProvenance2(payload.provenance),
+    provenance: normalizeProvenance3(payload.provenance),
     authority: {
       mode: "evidence_only_read_only",
       dbWritesAllowed: false,
@@ -1590,7 +2097,7 @@ function resolveCoachEvidenceDetailV1(context, request) {
   if (bytes > COACH_EVIDENCE_DETAIL_V1_LIMITS.serializedBytes) {
     throw new Error(`COACH_EVIDENCE_DETAIL_V1_TOO_LARGE:${bytes}`);
   }
-  return deepFreeze2(response);
+  return deepFreeze3(response);
 }
 export {
   AI_COACH_INTENTS_V1,
@@ -1609,11 +2116,19 @@ export {
   COACH_EVIDENCE_SCOPES_V1,
   COACH_EVIDENCE_SCOPE_CAPABILITY_V1,
   COACH_EVIDENCE_SCOPE_RULES_V1,
+  COACH_EVIDENCE_SIGNAL_TYPES_V1,
   COACH_EVIDENCE_VIEW_V1_LIMITS,
   COACH_EVIDENCE_VIEW_V1_VERSION,
+  COACH_SIGNAL_CANDIDATE_V1_VERSION,
+  COACH_SIGNAL_FRESHNESS_POLICY_V1,
+  COACH_SIGNAL_REGISTRY_V1,
+  COACH_SIGNAL_SET_V1_VERSION,
+  COACH_SIGNAL_TYPES_V1,
+  COACH_SIGNAL_V1_LIMITS,
   blockedCoachContextV1Fact,
   buildAiCoachSystemPromptV1,
   buildCoachContextV1,
+  buildCoachSignalSetV1,
   executeAiStudyMessageV1,
   knownCoachContextV1Fact,
   mapAiInterpretationToDomainEventV1,

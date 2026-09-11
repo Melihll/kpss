@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-09-10
+Last updated: 2026-09-11
 
 ## Roadmap rules
 
@@ -68,7 +68,7 @@ M1 is complete only when:
 - `CLOSED`: Evre 5 Planner V2 / Planner Truth engineering, exact-profile production acceptance, and final Week/Today real-user observation.
 - `ACTIVE MACRO PHASE`: Evre 6 AI Coach.
 - `CLOSED SUB-PHASE`: 6A Product / Authority / Cost Contract; final decisions accepted, docs only, runtime unchanged, production Confirm OFF, Apply OFF.
-- `ACTIVE SUB-PHASE`: 6B CoachContextV1. 6B.1, 6B.2, and the compact AI evidence projection/bounded detail work in 6B.3 are accepted; router/pricing and usage/cost telemetry remain.
+- `ACTIVE SUB-PHASE`: 6B CoachContextV1. 6B.1–6B.4 are accepted locally; later 6B router/pricing, usage/cost telemetry, and separately approved runtime wiring remain.
 - `CONTINUING FOUNDATIONS`: natural `PLN-002` Extra Study acceptance and gated `PLN-003`/`PLN-004`/`MAT-001`/`PLN-005` maturity work.
 
 ## Evre 6 — AI Coach
@@ -99,7 +99,7 @@ The normative product, truth, authority, scenario, proactive, cost, and phase co
 | Sequence | Sub-phase | Status | Outcome |
 | --- | --- | --- | --- |
 | 6A | Product / Authority / Cost Contract | `CLOSED` | Final product outcomes, truth sources, non-authority, 20 scenarios, proactive triggers, cost envelope, and phase gates accepted. |
-| 6B | CoachContextV1 | `ACTIVE — 6B.3 ACCEPTED — LATER 6B REMAINS` | 6B.1 contract, 6B.2 adapters, and 6B.3 eight-scope evidence/six-kind bounded detail are accepted. Runtime wiring, router/pricing, and usage/cost telemetry remain. |
+| 6B | CoachContextV1 | `ACTIVE — 6B.4 ACCEPTED` | 6B.1–6B.4 are accepted locally. Deterministic factual signal candidates, freshness hardening, and bounded evidence integration are established; runtime wiring, router/pricing, and usage/cost telemetry remain. |
 | 6C | Reactive Coach | `NOT_STARTED` | Deliver user-initiated Explain / Diagnose / Guide with grounding, fallbacks, and metering. |
 | 6D | Proactive Coach | `NOT_STARTED` | Add deterministic in-app triggers, cooldowns, dedupe, attention controls, and valid silence. |
 | 6E | Planner V2 integration | `NOT_STARTED` | Route every Coach planning mutation to the one canonical Planner V2 lifecycle. |

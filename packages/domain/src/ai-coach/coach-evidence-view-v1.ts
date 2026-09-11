@@ -13,7 +13,6 @@ import type {
   CoachContextV1ProgressPosition,
   CoachContextV1RecentProgress,
   CoachContextV1SessionProgress,
-  CoachContextV1SignalInput,
   CoachContextV1StudyAccounting,
   CoachContextV1SubjectSummary,
   CoachContextV1Task,
@@ -22,6 +21,12 @@ import type {
   CoachContextV1TruthSource,
   CoachContextV1Unknown,
 } from "./coach-context-v1";
+import {
+  COACH_SIGNAL_TYPES_V1,
+  buildCoachSignalSetV1,
+  type CoachSignalCandidateV1,
+  type CoachSignalTypeV1,
+} from "./coach-signal-v1";
 
 export const COACH_EVIDENCE_VIEW_V1_VERSION = "coach-evidence-view-v1" as const;
 export const COACH_EVIDENCE_DETAIL_REQUEST_V1_VERSION = "coach-evidence-detail-request-v1" as const;
@@ -85,7 +90,7 @@ type CoachEvidenceCollectionKeyV1 =
   | "recentProgress.transitions"
   | "planner.warnings"
   | "planner.explanationFacts"
-  | "signalInputs";
+  | "signalCandidates";
 
 interface CoachEvidenceScopeRuleV1 {
   readonly capability: CoachEvidenceCapabilityV1;
@@ -98,58 +103,58 @@ interface CoachEvidenceScopeRuleV1 {
 export const COACH_EVIDENCE_SCOPE_RULES_V1 = Object.freeze({
   today_explain: {
     capability: "explain",
-    allowedContextPaths: ["identity", "today", "week.summary", "week.study", "week.studyIntentCoverage", "week.progressPosition", "nextWork"],
+    allowedContextPaths: ["identity", "today", "week.summary", "week.study", "week.studyIntentCoverage", "week.progressPosition", "nextWork", "signalCandidates"],
     excludedContextPaths: ["week.tasks", "subjects", "materials", "workload", "capacity", "recentProgress", "planner", "signalInputs"],
-    collectionLimits: { "today.tasks": 8 },
+    collectionLimits: { "today.tasks": 8, signalCandidates: 6 },
     detailKinds: ["today_tasks", "recent_sessions"],
   },
   week_progress: {
     capability: "progress_analysis",
-    allowedContextPaths: ["week", "subjects", "capacity", "recentProgress"],
+    allowedContextPaths: ["week", "subjects", "capacity", "recentProgress", "signalCandidates"],
     excludedContextPaths: ["identity", "today.tasks", "week.tasks", "nextWork", "materials", "workload", "planner", "signalInputs"],
-    collectionLimits: { subjects: 12, "capacity.days": 7, "recentProgress.taskEvents": 8, "recentProgress.sessions": 6, "recentProgress.transitions": 4 },
+    collectionLimits: { subjects: 12, "capacity.days": 7, "recentProgress.taskEvents": 8, "recentProgress.sessions": 6, "recentProgress.transitions": 4, signalCandidates: 6 },
     detailKinds: ["week_tasks", "subject_tasks", "recent_sessions"],
   },
   subject_progress: {
     capability: "progress_analysis",
-    allowedContextPaths: ["subjects[selected]", "week", "materials[selected]", "recentProgress[selected]", "nextWork[selected]"],
+    allowedContextPaths: ["subjects[selected]", "week", "materials[selected]", "recentProgress[selected]", "nextWork[selected]", "signalCandidates[selected]"],
     excludedContextPaths: ["identity", "today.tasks", "week.tasks", "workload.minutesByResource", "capacity", "planner", "signalInputs"],
-    collectionLimits: { subjects: 1, "canonicalWork.materials": 6, "recentProgress.taskEvents": 6, "recentProgress.sessions": 6, "recentProgress.transitions": 4 },
+    collectionLimits: { subjects: 1, "canonicalWork.materials": 6, "recentProgress.taskEvents": 6, "recentProgress.sessions": 6, "recentProgress.transitions": 4, signalCandidates: 4 },
     detailKinds: ["subject_tasks", "recent_sessions", "subject_material_progress"],
   },
   canonical_work: {
     capability: "guide",
     allowedContextPaths: ["nextWork", "workload", "materials"],
-    excludedContextPaths: ["identity", "today", "week", "subjects", "capacity", "recentProgress", "planner", "signalInputs"],
+    excludedContextPaths: ["identity", "today", "week", "subjects", "capacity", "recentProgress", "planner", "signalInputs", "signalCandidates"],
     collectionLimits: { "canonicalWork.materials": 8 },
     detailKinds: ["subject_material_progress"],
   },
   capacity_status: {
     capability: "status_analysis",
     allowedContextPaths: ["today.summary", "today.study", "week.summary", "capacity"],
-    excludedContextPaths: ["identity", "today.tasks", "week.tasks", "subjects", "nextWork", "materials", "workload", "recentProgress", "planner", "signalInputs"],
+    excludedContextPaths: ["identity", "today.tasks", "week.tasks", "subjects", "nextWork", "materials", "workload", "recentProgress", "planner", "signalInputs", "signalCandidates"],
     collectionLimits: { "capacity.days": 7 },
     detailKinds: ["today_tasks", "week_tasks"],
   },
   planner_explanation: {
     capability: "planner_proposal_interpretation",
     allowedContextPaths: ["planner"],
-    excludedContextPaths: ["identity", "today", "week", "subjects", "nextWork", "materials", "workload", "capacity", "recentProgress", "signalInputs"],
+    excludedContextPaths: ["identity", "today", "week", "subjects", "nextWork", "materials", "workload", "capacity", "recentProgress", "signalInputs", "signalCandidates"],
     collectionLimits: { "planner.warnings": 8, "planner.explanationFacts": 12 },
     detailKinds: ["planner_explanation_detail"],
   },
   general_status: {
     capability: "status_analysis",
-    allowedContextPaths: ["identity", "today.summary", "today.study", "week", "subjects", "nextWork", "workload", "capacity"],
+    allowedContextPaths: ["identity", "today.summary", "today.study", "week", "subjects", "nextWork", "workload", "capacity", "signalCandidates"],
     excludedContextPaths: ["today.tasks", "week.tasks", "materials", "recentProgress", "planner", "signalInputs"],
-    collectionLimits: { subjects: 8, "capacity.days": 7 },
+    collectionLimits: { subjects: 8, "capacity.days": 7, signalCandidates: 4 },
     detailKinds: ["today_tasks", "week_tasks", "subject_tasks", "recent_sessions", "subject_material_progress"],
   },
   proactive_candidate: {
     capability: "proactive_insight_candidate",
-    allowedContextPaths: ["today.summary", "week", "subjects", "workload", "capacity", "signalInputs"],
-    excludedContextPaths: ["identity", "today.tasks", "week.tasks", "nextWork", "materials", "recentProgress", "planner"],
-    collectionLimits: { subjects: 8, "capacity.days": 7, signalInputs: 12 },
+    allowedContextPaths: ["today.summary", "week", "subjects", "workload", "capacity", "signalCandidates"],
+    excludedContextPaths: ["identity", "today.tasks", "week.tasks", "nextWork", "materials", "recentProgress", "planner", "signalInputs"],
+    collectionLimits: { subjects: 8, "capacity.days": 7, signalCandidates: 4 },
     detailKinds: ["today_tasks", "week_tasks", "subject_tasks", "recent_sessions", "subject_material_progress"],
   },
 } satisfies Readonly<Record<CoachEvidenceScopeV1, CoachEvidenceScopeRuleV1>>);
@@ -260,8 +265,16 @@ export interface CoachEvidenceSectionsV1 {
   readonly capacity?: CoachContextV1Fact<CoachContextV1Capacity>;
   readonly recentProgress?: CoachContextV1Fact<CoachContextV1RecentProgress>;
   readonly planner?: CoachContextV1Fact<CoachEvidencePlannerV1>;
-  readonly signalInputs?: CoachContextV1Fact<readonly CoachContextV1SignalInput[]>;
+  readonly signalCandidates?: readonly CoachSignalCandidateV1[];
 }
+
+export const COACH_EVIDENCE_SIGNAL_TYPES_V1 = Object.freeze({
+  today_explain: ["today_remaining_work", "today_completed_as_planned", "today_partial_completion"],
+  week_progress: ["repeated_task_miss", "subject_recent_completion_drop", "schedule_capacity_change", "weekly_completion_pattern", "recent_study_consistency", "recent_recovery", "context_data_stale", "important_truth_unknown"],
+  subject_progress: ["subject_recent_completion_drop", "subject_workload_progress_available", "subject_workload_progress_unknown", "recent_recovery", "material_progress_stalled"],
+  general_status: COACH_SIGNAL_TYPES_V1,
+  proactive_candidate: COACH_SIGNAL_TYPES_V1,
+} satisfies Readonly<Record<"today_explain" | "week_progress" | "subject_progress" | "general_status" | "proactive_candidate", readonly CoachSignalTypeV1[]>>);
 
 export interface CoachEvidenceViewV1 {
   readonly version: typeof COACH_EVIDENCE_VIEW_V1_VERSION;
@@ -427,6 +440,21 @@ function projectPlanner(
   }));
 }
 
+function projectSignalCandidates(
+  context: CoachContextV1,
+  scope: "today_explain" | "week_progress" | "subject_progress" | "general_status" | "proactive_candidate",
+  limit: number,
+  collections: CoachEvidenceCollectionStateV1[],
+  subjectId: string | null = null,
+): readonly CoachSignalCandidateV1[] {
+  const candidates = buildCoachSignalSetV1(context, {
+    signalTypes: COACH_EVIDENCE_SIGNAL_TYPES_V1[scope],
+    ...(scope === "subject_progress" && subjectId !== null ? { subjectId } : {}),
+    ...(scope === "proactive_candidate" ? { proactiveOnly: true } : {}),
+  }).candidates;
+  return limitCollection(candidates, "signalCandidates", limit, collections);
+}
+
 function normalizeProvenance(items: readonly CoachContextV1Provenance[]): readonly CoachContextV1Provenance[] {
   const unique = new Map<string, CoachContextV1Provenance>();
   for (const item of items) {
@@ -520,6 +548,7 @@ export function projectCoachEvidenceViewV1(
         canonicalWork: {
           next: structuredClone(context.nextWork),
         },
+        signalCandidates: projectSignalCandidates(context, "today_explain", rule.collectionLimits.signalCandidates!, collections),
       };
       break;
     case "week_progress":
@@ -532,6 +561,7 @@ export function projectCoachEvidenceViewV1(
           sessions: rule.collectionLimits["recentProgress.sessions"]!,
           transitions: rule.collectionLimits["recentProgress.transitions"]!,
         }, collections),
+        signalCandidates: projectSignalCandidates(context, "week_progress", rule.collectionLimits.signalCandidates!, collections),
       };
       break;
     case "subject_progress": {
@@ -554,6 +584,7 @@ export function projectCoachEvidenceViewV1(
           sessions: rule.collectionLimits["recentProgress.sessions"]!,
           transitions: rule.collectionLimits["recentProgress.transitions"]!,
         }, collections, subjectId),
+        signalCandidates: projectSignalCandidates(context, "subject_progress", rule.collectionLimits.signalCandidates!, collections, subjectId),
       };
       break;
     }
@@ -589,6 +620,7 @@ export function projectCoachEvidenceViewV1(
           workload: projectWorkload(context),
         },
         capacity: projectCapacity(context, rule.collectionLimits["capacity.days"]!, collections),
+        signalCandidates: projectSignalCandidates(context, "general_status", rule.collectionLimits.signalCandidates!, collections),
       };
       break;
     case "proactive_candidate":
@@ -600,12 +632,13 @@ export function projectCoachEvidenceViewV1(
           workload: projectWorkload(context),
         },
         capacity: projectCapacity(context, rule.collectionLimits["capacity.days"]!, collections),
-        signalInputs: mapFact(context.signalInputs, (signals) => limitCollection(signals, "signalInputs", rule.collectionLimits.signalInputs!, collections)),
+        signalCandidates: projectSignalCandidates(context, "proactive_candidate", rule.collectionLimits.signalCandidates!, collections),
       };
       break;
   }
 
   const metadata = collectFactMetadata(evidence);
+  const signalProvenance = evidence.signalCandidates?.flatMap((candidate) => candidate.provenance) ?? [];
   if (collections.length > COACH_EVIDENCE_VIEW_V1_LIMITS.collections) {
     throw new Error("COACH_EVIDENCE_TOO_MANY_COLLECTIONS");
   }
@@ -627,7 +660,7 @@ export function projectCoachEvidenceViewV1(
     evidence,
     collections: collections.sort((left, right) => left.path.localeCompare(right.path)),
     unknowns: metadata.unknowns,
-    provenance: metadata.provenance,
+    provenance: normalizeProvenance([...metadata.provenance, ...signalProvenance]),
     availableDetails: rule.detailKinds.map((kind) => ({
       kind,
       subjectIdRequired: kind === "subject_tasks" || kind === "subject_material_progress",

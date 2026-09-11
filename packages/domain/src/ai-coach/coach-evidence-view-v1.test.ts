@@ -59,14 +59,14 @@ describe("CoachEvidenceViewV1 6B.3 contract", () => {
   it("allows only the documented top-level evidence sections for each scope", () => {
     const context = buildCoachContextV1(coachContextV1Fixture("healthy_normal_week"));
     const expected = {
-      today_explain: ["canonicalWork", "identity", "today", "week"],
-      week_progress: ["capacity", "recentProgress", "subjects", "week"],
-      subject_progress: ["canonicalWork", "recentProgress", "subjects", "week"],
+      today_explain: ["canonicalWork", "identity", "signalCandidates", "today", "week"],
+      week_progress: ["capacity", "recentProgress", "signalCandidates", "subjects", "week"],
+      subject_progress: ["canonicalWork", "recentProgress", "signalCandidates", "subjects", "week"],
       canonical_work: ["canonicalWork"],
       capacity_status: ["capacity", "today", "week"],
       planner_explanation: ["planner"],
-      general_status: ["canonicalWork", "capacity", "identity", "subjects", "today", "week"],
-      proactive_candidate: ["canonicalWork", "capacity", "signalInputs", "subjects", "today", "week"],
+      general_status: ["canonicalWork", "capacity", "identity", "signalCandidates", "subjects", "today", "week"],
+      proactive_candidate: ["canonicalWork", "capacity", "signalCandidates", "subjects", "today", "week"],
     } satisfies Record<CoachEvidenceScopeV1, readonly string[]>;
 
     for (const scope of COACH_EVIDENCE_SCOPES_V1) {
@@ -85,6 +85,23 @@ describe("CoachEvidenceViewV1 6B.3 contract", () => {
     const subject = projectCoachEvidenceViewV1(context, selection("subject_progress"));
     expect(subject.evidence.canonicalWork?.workload?.value).toEqual({ minutesBySubject: { "subject-law": 30 } });
     expect(JSON.stringify(subject)).not.toContain("subject-finance");
+  });
+
+  it("exposes only bounded scope-appropriate signal candidates", () => {
+    const context = buildCoachContextV1(coachContextV1Fixture("healthy_normal_week"));
+    const today = projectCoachEvidenceViewV1(context, selection("today_explain"));
+    expect(today.evidence.signalCandidates?.every((candidate) => candidate.signalType.startsWith("today_"))).toBe(true);
+    expect(today.collections.find((item) => item.path === "signalCandidates")?.limit).toBe(6);
+
+    const subject = projectCoachEvidenceViewV1(context, selection("subject_progress"));
+    expect(subject.evidence.signalCandidates?.every((candidate) => candidate.subjectId === SUBJECT_ID)).toBe(true);
+    const proactive = projectCoachEvidenceViewV1(context, selection("proactive_candidate"));
+    expect(proactive.evidence.signalCandidates?.every((candidate) => candidate.eligibility.proactiveCandidate)).toBe(true);
+    expect(proactive.evidence).not.toHaveProperty("signalInputs");
+
+    for (const scope of ["canonical_work", "capacity_status", "planner_explanation"] as const) {
+      expect(projectCoachEvidenceViewV1(context, selection(scope)).evidence).not.toHaveProperty("signalCandidates");
+    }
   });
 
   it("preserves unknown, stale and PLN-002 uncertainty without upgrading facts", () => {

@@ -7,10 +7,15 @@ const adapterFiles = [
   "supabase/functions/_shared/canonical-capacity-readonly.ts",
   "supabase/functions/_shared/planner-v2-persisted-readonly.ts",
   "packages/domain/src/ai-coach/coach-evidence-view-v1.ts",
+  "packages/domain/src/ai-coach/coach-signal-v1.ts",
 ];
 const source = adapterFiles.map((file) => readFileSync(resolve(root, file), "utf8")).join("\n");
 const evidenceSource = readFileSync(
   resolve(root, "packages/domain/src/ai-coach/coach-evidence-view-v1.ts"),
+  "utf8",
+);
+const signalSource = readFileSync(
+  resolve(root, "packages/domain/src/ai-coach/coach-signal-v1.ts"),
   "utf8",
 );
 
@@ -31,6 +36,10 @@ for (const [label, pattern] of checks) {
 const arbitraryQuerySurfaceCount = evidenceSource.match(/\.(from|rpc)\s*\(/g)?.length ?? 0;
 console.log(`ARBITRARY_DB_QUERY_SURFACES=${arbitraryQuerySurfaceCount}`);
 if (arbitraryQuerySurfaceCount !== 0) failed = true;
+
+const signalProseSurfaceCount = signalSource.match(/\b(message|headline|body|naturalLanguage|prompt)\s*:/g)?.length ?? 0;
+console.log(`SIGNAL_PROSE_SURFACES=${signalProseSurfaceCount}`);
+if (signalProseSurfaceCount !== 0) failed = true;
 
 if (!source.includes('unknownCoachContextV1Fact("canonical_selector_unavailable"')) {
   console.error("CANONICAL_NEXT_WORK_UNKNOWN_MISSING");

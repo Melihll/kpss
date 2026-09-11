@@ -10,6 +10,8 @@ import {
   COACH_EVIDENCE_SCOPE_CAPABILITY_V1,
   COACH_EVIDENCE_SCOPES_V1,
   COACH_EVIDENCE_VIEW_V1_LIMITS,
+  COACH_SIGNAL_V1_LIMITS,
+  buildCoachSignalSetV1,
   projectCoachEvidenceViewV1,
   resolveCoachEvidenceDetailV1,
 } from "../../../packages/domain/src/ai-coach/index.ts";
@@ -146,6 +148,12 @@ describe("CoachContextV1 read-only adapter", () => {
     expect(serializedBytes).toBeLessThan(65_536);
     console.info(`COACH_CONTEXT_V1_HIGH_VOLUME_BYTES=${serializedBytes}`);
 
+    const signalSet = buildCoachSignalSetV1(first);
+    const signalBytes = Buffer.byteLength(JSON.stringify(signalSet), "utf8");
+    expect(signalSet.candidates.length).toBeLessThanOrEqual(COACH_SIGNAL_V1_LIMITS.candidates);
+    expect(signalBytes).toBeLessThanOrEqual(COACH_SIGNAL_V1_LIMITS.serializedBytes);
+    console.info(`COACH_SIGNAL_V1_HIGH_VOLUME count=${signalSet.candidates.length} bytes=${signalBytes} max_count=${COACH_SIGNAL_V1_LIMITS.candidates}`);
+
     for (const scope of COACH_EVIDENCE_SCOPES_V1) {
       const view = projectCoachEvidenceViewV1(first, {
         scope,
@@ -157,6 +165,11 @@ describe("CoachContextV1 read-only adapter", () => {
       expect(bytes).toBeLessThanOrEqual(COACH_EVIDENCE_VIEW_V1_LIMITS.serializedBytes);
       expect(bytes).toBeLessThan(serializedBytes);
       console.info(`COACH_EVIDENCE_VIEW_V1_SIZE scope=${scope} bytes=${bytes} reduction_percent=${reductionPercent}`);
+      if (scope === "proactive_candidate") {
+        const acceptedBeforeSignalsBytes = 21_289;
+        console.info(`COACH_PROACTIVE_SIGNAL_SIZE_IMPACT before=${acceptedBeforeSignalsBytes} after=${bytes} delta=${bytes - acceptedBeforeSignalsBytes}`);
+        expect(bytes - acceptedBeforeSignalsBytes).toBeLessThanOrEqual(8_192);
+      }
     }
     expect(projectCoachEvidenceViewV1(first, {
       scope: "today_explain",

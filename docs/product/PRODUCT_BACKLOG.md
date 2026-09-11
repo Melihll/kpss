@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-09-10
+Last updated: 2026-09-11
 
 ## Workflow
 
@@ -50,7 +50,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | ID | Phase | Priority | Title | Status |
 | --- | --- | --- | --- | --- |
 | `AIC-001` | 6A | `P0` | Product / Authority / Cost Contract | `DONE` |
-| `AIC-002` | 6B | `P0` | CoachContextV1 | `IN_PROGRESS — 6B.3 ACCEPTED — LATER 6B REMAINS` |
+| `AIC-002` | 6B | `P0` | CoachContextV1 | `IN_PROGRESS — 6B.4 ACCEPTED — LATER 6B REMAINS` |
 | `AIC-003` | 6C | `P1` | Reactive Coach | `TODO` |
 | `AIC-004` | 6D | `P1` | Proactive Coach | `TODO` |
 | `AIC-005` | 6E | `P0` | Planner V2 Integration | `TODO` |
@@ -82,7 +82,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-002` / Evre 6B — CoachContextV1
 
 - Priority: `P0`
-- Status: `IN_PROGRESS — 6B.1 ACCEPTED — 6B.2 ACCEPTED — 6B.3 ACCEPTED`
+- Status: `IN_PROGRESS — 6B.1 ACCEPTED — 6B.2 ACCEPTED — 6B.3 ACCEPTED — 6B.4 ACCEPTED`
 - Dependency: closed `AIC-001`; accepted 6B.1 checkpoint `acd16ffb2263b5285b14bd7329ff4357d7971e00`.
 - Desired outcome: One immutable, minimal, user-scoped context envelope supplies canonical facts, provenance, freshness, confidence/authority, unknowns, and bounded conversation state while beginning centralized router/pricing and AI usage/cost telemetry.
 - Acceptance criteria:
@@ -100,6 +100,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 - 6B.2 note (2026-09-10): canonical read-only adapters and focused proofs are implemented locally (30/30; 42-task internal canonical context 52,716 bytes). The targeted real local-Supabase integration test passes `1/1` with mutable-row delta `0` and Planner lifecycle-row delta `0`; static safety proves zero preview recomputation and zero legacy Coach truth-loader calls. No runtime wiring, production access, migration, Preview, Confirm, or Apply occurred.
 - 6B.3 requirement: retain the complete internal canonical context and introduce a separate compact allowlisted LLM-facing projection plus on-demand detail strategy. The 52,716-byte high-volume fixture must not be sent wholesale to a model or “optimized” by deleting canonical truth from the internal contract.
 - 6B.3 local note (2026-09-11): `CoachEvidenceViewV1` implements eight explicit scope/capability pairs and six bounded detail kinds over the immutable canonical context. High-volume scope reductions are 56.9–97.8%; the largest detail is 10,103 bytes. A–H, limits, availability/provenance preservation, no-leak, profile isolation, local-DB zero-mutation, and static no-preview/no-legacy/no-LLM/no-query proofs are locally accepted. No runtime wiring or production action occurred.
+- 6B.4 local acceptance (2026-09-11): centralized `CoachSignalCandidateV1` registry evaluates only known/fresh facts or emits explicit data-quality candidates for unavailable facts. Fifteen signal classes, source-owned freshness policy, deterministic dedupe/cooldown/attention metadata, five bounded evidence-scope integrations, A–J tests, and high-volume size evidence are accepted locally. No prose, LLM/provider call, proposal, runtime wiring, or production action occurs.
 
 ## `AIC-003` / Evre 6C — Reactive Coach
 
