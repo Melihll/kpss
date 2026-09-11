@@ -154,7 +154,7 @@ The suite also checks output determinism under reversed input order, input non-m
 2. No current authoritative reader exposes task-level protected classification or post-commitment available capacity outside a persisted Planner scenario. Those capacity sub-facts remain explicit unknowns; persisted proposal data is not merged into current plan truth.
 3. PLN-002 does not yet supply accepted universal completeness/evaluation for exact ahead/on-track/behind. Coverage remains `partial` and trajectory remains `blocked(pln002_completeness_unresolved)`.
 4. 6B.4 supplies the centralized deterministic signal registry. Runtime `signalInputs` may still be explicit unknown; signal types that require a source-owned precomputed input suppress rather than invent it. Delivery-time attention budgets, cooldown state, dedupe persistence, and prose remain 6D.
-5. Router/pricing and usage/cost telemetry remain later 6B work. 6B.2 makes no model call and adds no migration/provider change.
+5. 6B.5 implements the unconnected router/pricing/FX/usage-ledger foundation in [Central Router, Pricing, FX and Usage Ledger V1](AI_COACH_ROUTER_COST_TELEMETRY_V1.md). 6B.2 context construction still makes no model call and performs no ledger write.
 6. The high-volume internal canonical context remains 52,716 bytes. 6B.3 retains that truth internally and supplies a separate compact allowlisted evidence projection plus bounded detail strategy.
 
 ## 8. 6B.1 exit criteria

@@ -599,4 +599,4 @@ Evre 6A is `CLOSED` because:
 9. Runtime code, deployments, migrations, gates, and production state remain unchanged.
 10. Planner V2 Confirm remains OFF and Planner V2 Apply remains OFF.
 
-6B is active under a separate bounded scope. 6B.1 defines the typed CoachContextV1 contract and canonical source map locally; it remains review-pending and does not wire live reads, start the AI runtime, or complete the router/pricing and telemetry obligations of 6B.
+6B is active under separate bounded scopes. 6B.1–6B.5 are accepted locally, including the unconnected canonical context/evidence/signal and economics foundations; they do not activate the AI runtime, apply the ledger migration to production, or complete 6B. Atomic budget reservation and authoritative production economics remain prerequisites before 6B.6 provider activation.

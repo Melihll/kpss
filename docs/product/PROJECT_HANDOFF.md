@@ -6,7 +6,7 @@ Last updated: 2026-09-11
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Base branch: `main`
-- Local working branch: `evre6-ai-coach` (remote checkpoint at `3abbf52869038373b01c8ced9b06eded67af342e`; 6B.4 commit not pushed)
+- Local working branch: `evre6-ai-coach` (remote checkpoint at `cec8d3ce6d2b94b38c6dd1586e323d2592fcc2ea`; 6B.5 accepted locally and pending commit, not pushed)
 - 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - 6B.1 accepted checkpoint: `acd16ffb2263b5285b14bd7329ff4357d7971e00`
 - Last verified product checkpoint before W5: `fa46fd2`
@@ -34,7 +34,7 @@ The architecture is subject-agnostic across all KPSS subjects. Do not create Mat
 - P48 planned-credit accounting correction: deployed and observing.
 - `PLN-004`: `IMPLEMENTED_LOCAL_VERIFIED`; production-authoritative activation gated.
 - Planner V2 / Planner Truth Evre 5: `CLOSED`. Engineering, exact-profile production acceptance, and final Week/Today real-user observation are complete. Confirm and Apply are OFF.
-- Evre 6 AI Coach: 6A is `CLOSED`; 6B.1–6B.4 are accepted locally. The deterministic signal/freshness foundation remains disconnected from runtime. Migrations, deployments, gates, and production are unchanged.
+- Evre 6 AI Coach: 6A is `CLOSED`; 6B.1–6B.5 are accepted locally. 6B.5 central router/pricing/FX/usage-ledger foundation fails closed when production-authoritative pricing or FX is absent. The new migration has been exercised only on loopback local Supabase; runtime, deployment, gates, and production are unchanged.
 
 PLN-004 verification:
 - targeted domain tests `22/22` PASS;
@@ -55,11 +55,11 @@ PLN-004 verification:
 
 ## Active task
 
-`AIC-002 / later Evre 6B — router, pricing, and usage/cost telemetry contract`
+`AIC-002 / Evre 6B.6 prerequisites — production economics and atomic reservation`
 
-Goal: define the next bounded contract for centralized server-side router/pricing and the usage/cost telemetry ledger. Material/workload truth remains restricted to canonical Material Truth and Canonical Workload Engine.
+Goal: define authoritative production route/pricing/FX configuration and persistent atomic user-month budget reservation before any real-provider or concurrent 6B.6 runtime activation.
 
-Evre 6 AI Coach is the active macro phase. 6A is closed and 6B.1–6B.4 are accepted locally. The unconnected signal/projection/detail layers do not authorize AI runtime integration, deployment, plan mutation, proposal creation, Preview, Confirm, Apply, gate changes, or production activation. 6C–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
+Evre 6 AI Coach is the active macro phase. 6A is closed and 6B.1–6B.5 are accepted locally. The unconnected context/signal/evidence/economics layers do not authorize AI runtime integration, deployment, production migration, plan mutation, proposal creation, Preview, Confirm, Apply, gate changes, or production activation. 6C–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
 
 MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning foundations remain tracked work rather than being silently treated as closed by the Planner V2 pilot.
 
@@ -86,7 +86,7 @@ MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning founda
 
 ## NEXT EXACT STEP
 
-Define the next bounded 6B scope for centralized server-side router/pricing and the usage/cost telemetry ledger. Runtime wiring remains separate later work and requires explicit approval.
+Before 6B.6 provider activation, supply authoritative production route/pricing/FX configuration and implement persistent atomic reservation against the user-wide Europe/Istanbul monthly budget. Official values must not be inferred from fixtures; runtime metering and production migration remain separate work requiring explicit approval.
 
 Keep the accepted Evre 5 Planner V2 result intact. Do not widen preview access, re-enable Confirm/Apply, manufacture another proposal, or manually repair the accepted result. Production preview remains exact-profile-only; Confirm and Apply remain OFF.
 

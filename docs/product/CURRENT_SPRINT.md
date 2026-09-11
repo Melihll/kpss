@@ -6,17 +6,17 @@ Last updated: 2026-09-11
 
 Sprint status: `IN_PROGRESS`
 
-Sprint objective: Wire and verify the versioned CoachContextV1 canonical read-only adapter without changing AI runtime behavior, production state, migrations, or gates.
+Sprint objective: Build and verify the versioned CoachContextV1 and its unconnected AI economics foundation without changing AI runtime behavior, production state/schema, or gates.
 
-Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1 is accepted at commit `acd16ffb2263b5285b14bd7329ff4357d7971e00`. Evre 6B.2 canonical read-only adapter acceptance is green against the real local Supabase database. AI runtime wiring, production, migrations, and gates remain unchanged. PLN-002 remains `IN_PROGRESS` pending natural Extra Study acceptance evidence.
+Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1 is accepted at commit `acd16ffb2263b5285b14bd7329ff4357d7971e00`. Evre 6B.2 canonical read-only adapter acceptance is green against the real local Supabase database. AI runtime wiring, production schema/data, deployments, and gates remain unchanged. PLN-002 remains `IN_PROGRESS` pending natural Extra Study acceptance evidence.
 
 ## NOW
 
 ### `AIC-002` / Evre 6B — CoachContextV1
 
 - Priority: `P0`
-- Status: `IN_PROGRESS — 6B.4 LOCAL_ACCEPTED — LATER 6B NEXT`
-- Scope: unconnected server-side read adapters and tests only; no AI runtime integration, provider/model/prompt change, telemetry implementation, migration, deploy, gate change, or production access.
+- Status: `IN_PROGRESS — 6B.5 LOCAL_ACCEPTED — 6B.6 PREREQUISITES_NEXT`
+- Scope: unconnected server-side router/pricing/FX/usage-ledger foundation and local-only migration tests; no AI runtime integration, provider/model/prompt behavior change, deploy, gate change, or production access.
 - Authority state: read-only; Planner V2 Confirm OFF; Planner V2 Apply OFF.
 
 Current deliverable/evidence:
@@ -32,6 +32,8 @@ Current deliverable/evidence:
 - 6B.3 local Supabase acceptance is zero-mutation and profile-isolated; the compact evidence/detail contract is locally accepted.
 - 6B.4 locally accepts an unconnected deterministic `CoachSignalCandidateV1` registry and source-owned freshness policy; it emits no prose, makes no model call, and creates no planning authority;
 - high-volume signal set = 8 candidates / 13,598 bytes; `proactive_candidate` grows by 1,212 bytes to 22,501 bytes and remains 57.3% below the internal context.
+- 6B.5 adds the unconnected central route, explicit fixture-only pricing/FX, immutable provider-attempt event, deterministic monthly accounting/preflight, and append-only local ledger contracts in [AI Coach — Central Router, Pricing, FX and Usage Ledger V1](specs/AI_COACH_ROUTER_COST_TELEMETRY_V1.md);
+- the ledger migration is authored and tested only against loopback local Supabase; production remains untouched and official provider pricing is intentionally absent.
 
 ### `AIC-001` / Evre 6A — Product / Authority / Cost Contract
 
@@ -117,8 +119,8 @@ The next active product-foundation task is `MAT-001`, which supplies the exact p
 
 ## NEXT
 
-1. Continue later 6B work for centralized server-side router/pricing and AI usage/cost telemetry under a separate bounded scope
-2. Do not connect the AI runtime until the relevant later 6B scope is separately approved and accepted
+1. Define authoritative production route/pricing/FX configuration and atomic persistent user-month reservation before any 6B.6 provider activation
+2. Do not connect the AI runtime until a later scope is separately approved and accepted
 3. Close `PLN-002` natural Extra Study authenticated real-user acceptance when real usage provides evidence
 4. Keep `PLN-004` production-authoritative activation gated while MAT-001/PLN-005 inputs mature
 5. Re-evaluate PLN-003 production-authoritative duration activation only after canonical learning-stage, material, and resource-role inputs exist
@@ -126,7 +128,7 @@ The next active product-foundation task is `MAT-001`, which supplies the exact p
 `NEXT` indicates intended sequence, not permission to deploy. Stage-dependent duration activation remains separately gated.
 ## Do not start
 
-- AI runtime wiring before a separately approved later implementation scope and its acceptance; 6B.3/6B.4 authorize no wiring;
+- AI runtime wiring before a separately approved later implementation scope and its acceptance; 6B.3–6B.5 authorize no wiring;
 - 6C–6G work before their documented entry conditions;
 - AI teacher, tutoring, quiz, mock, grading, or mastery features in Evre 6;
 - any Coach task/capacity/material/progress/stage mutation or non-canonical planning Apply path;

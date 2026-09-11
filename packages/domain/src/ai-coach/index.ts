@@ -7,3 +7,4 @@ export * from "./coach-context-v1";
 export * from "./coach-context-v1-source-map";
 export * from "./coach-signal-v1";
 export * from "./coach-evidence-view-v1";
+export * from "./ai-economics-v1";

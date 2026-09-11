@@ -2099,9 +2099,424 @@ function resolveCoachEvidenceDetailV1(context, request) {
   }
   return deepFreeze3(response);
 }
+
+// packages/domain/src/ai-coach/ai-economics-v1.ts
+var AI_MODEL_ROUTER_V1_VERSION = "ai-model-router-v1";
+var AI_EVIDENCE_ESTIMATE_V1_VERSION = "ai-evidence-estimate-v1";
+var AI_PRICING_CATALOG_V1_CONTRACT_VERSION = "ai-pricing-catalog-v1";
+var AI_FX_POLICY_V1_VERSION = "ai-fx-policy-v1";
+var AI_USAGE_EVENT_V1_VERSION = "ai-usage-event-v1";
+var AI_MONTHLY_BUDGET_POLICY_V1_VERSION = "ai-monthly-budget-policy-v1";
+var AI_COST_PREFLIGHT_V1_VERSION = "ai-cost-preflight-v1";
+var AI_COACH_CAPABILITIES_V1 = [
+  "deterministic_signal_evaluation",
+  "intent_extraction",
+  "short_explanation",
+  "today_analysis",
+  "week_analysis",
+  "subject_analysis",
+  "planner_explanation",
+  "proactive_explanation",
+  "conversation_summary",
+  "complex_status_analysis"
+];
+var AI_EVIDENCE_SIZE_LIMITS_V1 = Object.freeze({
+  smallMaxBytes: 16384,
+  mediumMaxBytes: 32768,
+  largeMaxBytes: 65536,
+  costWatchBytes: 24576
+});
+var AI_MONTHLY_BUDGET_POLICY_V1 = Object.freeze({
+  version: AI_MONTHLY_BUDGET_POLICY_V1_VERSION,
+  currency: "TRY",
+  accountingTimezone: "Europe/Istanbul",
+  thresholds: Object.freeze({
+    normalTargetTry: 150,
+    watchStartsTry: 150,
+    constrainedStartsTry: 200,
+    heavyTargetTry: 250,
+    hardLimitTry: 300
+  })
+});
+var AI_ROUTE_CATALOG_V1_TEST_FIXTURE = deepFreeze4({
+  version: "ai-route-catalog-test-fixture-v1",
+  contractVersion: AI_MODEL_ROUTER_V1_VERSION,
+  effectiveFrom: "2026-09-01T00:00:00.000Z",
+  pricingVersion: "ai-pricing-test-fixture-v1",
+  environment: "test_fixture",
+  routes: [
+    { tier: "economy", provider: "fixture-provider", modelId: "fixture-economy-v1", maxOutputTokens: 500, timeoutMs: 8e3, retryPolicy: { maxAttempts: 2, retryableCategories: ["timeout", "rate_limit", "provider_unavailable"] }, fallbackTier: null },
+    { tier: "standard", provider: "fixture-provider", modelId: "fixture-standard-v1", maxOutputTokens: 900, timeoutMs: 12e3, retryPolicy: { maxAttempts: 2, retryableCategories: ["timeout", "rate_limit", "provider_unavailable"] }, fallbackTier: "economy" },
+    { tier: "strong", provider: "fixture-provider", modelId: "fixture-strong-v1", maxOutputTokens: 1400, timeoutMs: 18e3, retryPolicy: { maxAttempts: 2, retryableCategories: ["timeout", "rate_limit", "provider_unavailable"] }, fallbackTier: "standard" }
+  ]
+});
+var AI_PRICING_CATALOG_V1_TEST_FIXTURE = deepFreeze4({
+  contractVersion: AI_PRICING_CATALOG_V1_CONTRACT_VERSION,
+  version: "ai-pricing-test-fixture-v1",
+  effectiveFrom: "2026-09-01T00:00:00.000Z",
+  environment: "test_fixture",
+  entries: [
+    { provider: "fixture-provider", modelId: "fixture-economy-v1", effectiveFrom: "2026-09-01T00:00:00.000Z", effectiveTo: null, billingCurrency: "USD", inputPerMillionTokens: 1, cachedInputPerMillionTokens: 0.25, outputPerMillionTokens: 4, sourceKind: "test_fixture" },
+    { provider: "fixture-provider", modelId: "fixture-standard-v1", effectiveFrom: "2026-09-01T00:00:00.000Z", effectiveTo: null, billingCurrency: "USD", inputPerMillionTokens: 3, cachedInputPerMillionTokens: 0.75, outputPerMillionTokens: 12, sourceKind: "test_fixture" },
+    { provider: "fixture-provider", modelId: "fixture-strong-v1", effectiveFrom: "2026-09-01T00:00:00.000Z", effectiveTo: null, billingCurrency: "USD", inputPerMillionTokens: 10, cachedInputPerMillionTokens: 2.5, outputPerMillionTokens: 40, sourceKind: "test_fixture" }
+  ]
+});
+var AI_FX_SNAPSHOT_V1_TEST_FIXTURE = deepFreeze4({
+  policyVersion: AI_FX_POLICY_V1_VERSION,
+  snapshotVersion: "usd-try-test-fixture-2026-09-01",
+  source: "test-fixture-only",
+  sourceKind: "test_fixture",
+  baseCurrency: "USD",
+  quoteCurrency: "TRY",
+  rate: 40,
+  effectiveAt: "2026-09-01T00:00:00.000Z"
+});
+var CAPABILITY_DEFAULT_TIER = Object.freeze({
+  deterministic_signal_evaluation: "no_model",
+  intent_extraction: "economy",
+  short_explanation: "economy",
+  today_analysis: "standard",
+  week_analysis: "strong",
+  subject_analysis: "standard",
+  planner_explanation: "standard",
+  proactive_explanation: "economy",
+  conversation_summary: "economy",
+  complex_status_analysis: "strong"
+});
+function deepFreeze4(value) {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const item of Object.values(value)) deepFreeze4(item);
+  }
+  return value;
+}
+function assertFiniteNonNegative(value, code) {
+  if (!Number.isFinite(value) || value < 0) throw new Error(code);
+}
+function assertIntegerNonNegative(value, code) {
+  if (value !== null && (!Number.isInteger(value) || value < 0)) throw new Error(code);
+}
+function assertExactKeys(value, keys, code) {
+  const allowed = new Set(keys);
+  if (Object.keys(value).some((key) => !allowed.has(key))) throw new Error(code);
+}
+function isIsoInstant(value) {
+  return Number.isFinite(Date.parse(value)) && value.includes("T");
+}
+function assertRuntimeEnvironment(value) {
+  if (value !== "test" && value !== "local" && value !== "production") throw new Error("AI_RUNTIME_ENVIRONMENT_REQUIRED");
+}
+function round(value, digits = 9) {
+  const scale = 10 ** digits;
+  return Math.round((value + Number.EPSILON) * scale) / scale;
+}
+function tierRank(tier) {
+  return { economy: 0, standard: 1, strong: 2 }[tier];
+}
+function tierAtRank(rank) {
+  return ["economy", "standard", "strong"][Math.max(0, Math.min(2, rank))];
+}
+function estimateAiEvidenceV1(bytes) {
+  if (!Number.isInteger(bytes) || bytes < 0 || bytes > AI_EVIDENCE_SIZE_LIMITS_V1.largeMaxBytes) throw new Error("AI_EVIDENCE_BYTES_OUT_OF_RANGE");
+  const sizeClass = bytes <= AI_EVIDENCE_SIZE_LIMITS_V1.smallMaxBytes ? "small" : bytes <= AI_EVIDENCE_SIZE_LIMITS_V1.mediumMaxBytes ? "medium" : "large";
+  return deepFreeze4({
+    version: AI_EVIDENCE_ESTIMATE_V1_VERSION,
+    bytes,
+    sizeClass,
+    estimatedInputTokens: bytes,
+    method: "utf8_byte_count_upper_bound",
+    providerTokenizerUsed: false,
+    conservativeEstimate: true,
+    costWatch: bytes >= AI_EVIDENCE_SIZE_LIMITS_V1.costWatchBytes
+  });
+}
+function routeAiCapabilityV1(input, catalog) {
+  assertExactKeys(input, ["runtimeEnvironment", "capability", "evidence", "expectedResponse", "budgetState", "complexity"], "AI_ROUTE_INPUT_UNKNOWN_FIELD");
+  assertRuntimeEnvironment(input.runtimeEnvironment);
+  if (!["test_fixture", "local", "production"].includes(catalog.environment)) throw new Error("AI_ROUTE_CATALOG_INVALID");
+  if (input.runtimeEnvironment === "production" && catalog.environment !== "production") throw new Error("AI_ROUTE_PRODUCTION_CATALOG_UNAVAILABLE");
+  if (!AI_COACH_CAPABILITIES_V1.includes(input.capability)) throw new Error("AI_ROUTE_CAPABILITY_UNSUPPORTED");
+  const classified = estimateAiEvidenceV1(input.evidence.bytes);
+  if (JSON.stringify(classified) !== JSON.stringify(input.evidence)) throw new Error("AI_ROUTE_EVIDENCE_CLASSIFICATION_MISMATCH");
+  if (catalog.contractVersion !== AI_MODEL_ROUTER_V1_VERSION || catalog.routes.length === 0) throw new Error("AI_ROUTE_CATALOG_INVALID");
+  if (!isIsoInstant(catalog.effectiveFrom) || new Set(catalog.routes.map((item) => item.tier)).size !== catalog.routes.length) throw new Error("AI_ROUTE_CATALOG_INVALID");
+  if (catalog.routes.some((item) => !item.provider.trim() || !item.modelId.trim() || !Number.isInteger(item.maxOutputTokens) || item.maxOutputTokens <= 0 || !Number.isInteger(item.timeoutMs) || item.timeoutMs <= 0 || !Number.isInteger(item.retryPolicy.maxAttempts) || item.retryPolicy.maxAttempts < 1)) throw new Error("AI_ROUTE_CATALOG_INVALID");
+  const base = CAPABILITY_DEFAULT_TIER[input.capability];
+  const noRetry = { maxAttempts: 0, retryableCategories: [] };
+  const authority2 = { serverOwnedSelection: true, clientOverrideAllowed: false, rawUserTextUsed: false, providerCallMade: false };
+  if (base === "no_model") return deepFreeze4({
+    version: AI_MODEL_ROUTER_V1_VERSION,
+    runtimeEnvironment: input.runtimeEnvironment,
+    catalogEnvironment: catalog.environment,
+    catalogVersion: catalog.version,
+    pricingVersion: catalog.pricingVersion,
+    capability: input.capability,
+    disposition: "no_model",
+    provider: null,
+    modelId: null,
+    tier: "no_model",
+    maxOutputTokens: 0,
+    timeoutMs: 0,
+    retryPolicy: noRetry,
+    fallbackTier: null,
+    reasonCode: "deterministic_capability_no_model",
+    authority: authority2
+  });
+  if (input.budgetState === "unknown" || input.budgetState === "hard_limit") return deepFreeze4({
+    version: AI_MODEL_ROUTER_V1_VERSION,
+    runtimeEnvironment: input.runtimeEnvironment,
+    catalogEnvironment: catalog.environment,
+    catalogVersion: catalog.version,
+    pricingVersion: catalog.pricingVersion,
+    capability: input.capability,
+    disposition: "blocked",
+    provider: null,
+    modelId: null,
+    tier: "no_model",
+    maxOutputTokens: 0,
+    timeoutMs: 0,
+    retryPolicy: noRetry,
+    fallbackTier: null,
+    reasonCode: input.budgetState === "unknown" ? "budget_unknown_fail_closed" : "budget_hard_limit_blocked",
+    authority: authority2
+  });
+  let rank = tierRank(base);
+  let reasonCode = "capability_default_route";
+  if (input.evidence.sizeClass === "large" || input.expectedResponse === "long" || input.complexity === "high") {
+    rank = Math.min(2, rank + 1);
+    reasonCode = "evidence_or_complexity_escalation";
+  }
+  if (input.budgetState === "watch" && rank > 1) {
+    rank = 1;
+    reasonCode = "budget_watch_route_cap";
+  }
+  if (input.budgetState === "constrained") {
+    rank = 0;
+    reasonCode = "budget_constrained_economy_only";
+  }
+  const tier = tierAtRank(rank);
+  const route = catalog.routes.find((item) => item.tier === tier);
+  if (!route) throw new Error("AI_ROUTE_TIER_UNAVAILABLE");
+  return deepFreeze4({
+    version: AI_MODEL_ROUTER_V1_VERSION,
+    runtimeEnvironment: input.runtimeEnvironment,
+    catalogEnvironment: catalog.environment,
+    catalogVersion: catalog.version,
+    pricingVersion: catalog.pricingVersion,
+    capability: input.capability,
+    disposition: "model",
+    provider: route.provider,
+    modelId: route.modelId,
+    tier,
+    maxOutputTokens: route.maxOutputTokens,
+    timeoutMs: route.timeoutMs,
+    retryPolicy: structuredClone(route.retryPolicy),
+    fallbackTier: route.fallbackTier,
+    reasonCode,
+    authority: authority2
+  });
+}
+function validateUsage(usage) {
+  assertExactKeys(usage, ["availability", "inputTokens", "cachedInputTokens", "outputTokens", "totalTokens", "source"], "AI_USAGE_UNKNOWN_FIELD");
+  assertIntegerNonNegative(usage.inputTokens, "AI_USAGE_INPUT_TOKENS_INVALID");
+  assertIntegerNonNegative(usage.cachedInputTokens, "AI_USAGE_CACHED_TOKENS_INVALID");
+  assertIntegerNonNegative(usage.outputTokens, "AI_USAGE_OUTPUT_TOKENS_INVALID");
+  assertIntegerNonNegative(usage.totalTokens, "AI_USAGE_TOTAL_TOKENS_INVALID");
+  if (usage.availability === "reported") {
+    if (usage.inputTokens === null || usage.cachedInputTokens === null || usage.outputTokens === null || usage.totalTokens === null) throw new Error("AI_USAGE_REPORTED_VALUES_REQUIRED");
+    if (usage.cachedInputTokens > usage.inputTokens || usage.totalTokens !== usage.inputTokens + usage.outputTokens || usage.source !== "provider_response") throw new Error("AI_USAGE_REPORTED_VALUES_INCONSISTENT");
+  } else if ([usage.inputTokens, usage.cachedInputTokens, usage.outputTokens, usage.totalTokens].some((value) => value !== null) || usage.source !== "provider_usage_unavailable") {
+    throw new Error("AI_USAGE_UNAVAILABLE_MUST_BE_NULL");
+  }
+}
+function calculateAiNativeCostV1(route, usage, catalog, occurredAt) {
+  validateUsage(usage);
+  assertRuntimeEnvironment(route.runtimeEnvironment);
+  if (route.disposition !== "model" || route.provider === null || route.modelId === null) return { state: "not_applicable", pricingVersion: catalog.version, nativeAmount: 0, nativeCurrency: null, reason: "no_model_route" };
+  if (usage.availability === "unavailable") return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: null, reason: "usage_unavailable" };
+  if (route.runtimeEnvironment === "production" && catalog.environment !== "production") return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: null, reason: "authoritative_production_pricing_unavailable" };
+  const at = Date.parse(occurredAt);
+  const entry = catalog.entries.find((item) => item.provider === route.provider && item.modelId === route.modelId && Date.parse(item.effectiveFrom) <= at && (item.effectiveTo === null || at < Date.parse(item.effectiveTo)));
+  if (!entry || catalog.version !== route.pricingVersion) return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: null, reason: "pricing_entry_unavailable" };
+  if (route.runtimeEnvironment === "production" && entry.sourceKind !== "authoritative_config") return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: entry.billingCurrency, reason: "authoritative_production_pricing_unavailable" };
+  assertFiniteNonNegative(entry.inputPerMillionTokens, "AI_PRICING_INPUT_INVALID");
+  assertFiniteNonNegative(entry.outputPerMillionTokens, "AI_PRICING_OUTPUT_INVALID");
+  if (entry.cachedInputPerMillionTokens !== null) assertFiniteNonNegative(entry.cachedInputPerMillionTokens, "AI_PRICING_CACHED_INPUT_INVALID");
+  if (usage.cachedInputTokens > 0 && entry.cachedInputPerMillionTokens === null) return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: entry.billingCurrency, reason: "cached_input_price_unavailable" };
+  const uncachedTokens = usage.inputTokens - usage.cachedInputTokens;
+  const uncachedInput = round(uncachedTokens * entry.inputPerMillionTokens / 1e6);
+  const cachedInput = round(usage.cachedInputTokens * (entry.cachedInputPerMillionTokens ?? 0) / 1e6);
+  const output = round(usage.outputTokens * entry.outputPerMillionTokens / 1e6);
+  return { state: "known", pricingVersion: catalog.version, nativeAmount: round(uncachedInput + cachedInput + output), nativeCurrency: entry.billingCurrency, components: { uncachedInput, cachedInput, output } };
+}
+function convertAiCostToTryV1(nativeCost, fx, runtimeEnvironment) {
+  assertRuntimeEnvironment(runtimeEnvironment);
+  if (nativeCost.state === "not_applicable") return { state: "not_applicable", amount: 0, currency: "TRY", reason: "no_model_route", fx: null };
+  if (nativeCost.state === "unpriced") return { state: "unknown", amount: null, currency: "TRY", reason: "native_cost_unpriced", fx };
+  if (runtimeEnvironment === "production" && (fx === null || fx.sourceKind !== "authoritative_config")) return { state: "unknown", amount: null, currency: "TRY", reason: "authoritative_production_fx_unavailable", fx };
+  if (fx === null) return { state: "unknown", amount: null, currency: "TRY", reason: "fx_snapshot_unavailable", fx: null };
+  assertFiniteNonNegative(fx.rate, "AI_FX_RATE_INVALID");
+  if (fx.rate === 0) throw new Error("AI_FX_RATE_INVALID");
+  if (fx.baseCurrency !== nativeCost.nativeCurrency || fx.quoteCurrency !== "TRY") return { state: "unknown", amount: null, currency: "TRY", reason: "fx_currency_mismatch", fx };
+  return { state: "known", amount: round(nativeCost.nativeAmount * fx.rate, 6), currency: "TRY", fx: structuredClone(fx) };
+}
+function aiAccountingMonthV1(iso) {
+  if (!isIsoInstant(iso)) throw new Error("AI_USAGE_TIMESTAMP_INVALID");
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: AI_MONTHLY_BUDGET_POLICY_V1.accountingTimezone, year: "numeric", month: "2-digit" }).formatToParts(new Date(iso));
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}`;
+}
+function createAiUsageEventV1(input) {
+  assertExactKeys(input, ["providerAttemptId", "identity", "feature", "route", "usage", "execution", "pricingCatalog", "fxSnapshot"], "AI_USAGE_EVENT_INPUT_UNKNOWN_FIELD");
+  assertExactKeys(input.identity, ["userId", "examProfileId"], "AI_USAGE_IDENTITY_UNKNOWN_FIELD");
+  assertExactKeys(input.feature, ["capability", "requestId", "correlationId"], "AI_USAGE_FEATURE_UNKNOWN_FIELD");
+  assertExactKeys(input.execution, ["startedAt", "completedAt", "status", "retryNumber", "fallbackFromAttemptId", "errorCategory"], "AI_USAGE_EXECUTION_UNKNOWN_FIELD");
+  if (input.route.disposition !== "model" || input.route.provider === null || input.route.modelId === null || input.route.tier === "no_model") throw new Error("AI_USAGE_EVENT_REQUIRES_PROVIDER_ATTEMPT");
+  if (input.feature.capability !== input.route.capability) throw new Error("AI_USAGE_EVENT_CAPABILITY_ROUTE_MISMATCH");
+  for (const value of [input.providerAttemptId, input.identity.userId, input.feature.requestId, input.feature.correlationId]) if (!value.trim()) throw new Error("AI_USAGE_EVENT_ID_REQUIRED");
+  if (!isIsoInstant(input.execution.startedAt) || !isIsoInstant(input.execution.completedAt) || Date.parse(input.execution.completedAt) < Date.parse(input.execution.startedAt)) throw new Error("AI_USAGE_EXECUTION_TIME_INVALID");
+  if (!Number.isInteger(input.execution.retryNumber) || input.execution.retryNumber < 0) throw new Error("AI_USAGE_RETRY_INVALID");
+  if (input.execution.fallbackFromAttemptId === input.providerAttemptId) throw new Error("AI_USAGE_FALLBACK_SELF_REFERENCE");
+  if (input.execution.status === "succeeded" !== (input.execution.errorCategory === "none")) throw new Error("AI_USAGE_STATUS_ERROR_MISMATCH");
+  const nativeCost = calculateAiNativeCostV1(input.route, input.usage, input.pricingCatalog, input.execution.completedAt);
+  const tryCost = convertAiCostToTryV1(nativeCost, input.fxSnapshot, input.route.runtimeEnvironment);
+  return deepFreeze4({
+    version: AI_USAGE_EVENT_V1_VERSION,
+    providerAttemptId: input.providerAttemptId,
+    userId: input.identity.userId,
+    examProfileId: input.identity.examProfileId,
+    capability: input.feature.capability,
+    requestId: input.feature.requestId,
+    correlationId: input.feature.correlationId,
+    routeVersion: input.route.version,
+    routeCatalogVersion: input.route.catalogVersion,
+    provider: input.route.provider,
+    modelId: input.route.modelId,
+    tier: input.route.tier,
+    routeReasonCode: input.route.reasonCode,
+    pricingVersion: input.pricingCatalog.version,
+    usage: structuredClone(input.usage),
+    startedAt: input.execution.startedAt,
+    completedAt: input.execution.completedAt,
+    latencyMs: Date.parse(input.execution.completedAt) - Date.parse(input.execution.startedAt),
+    status: input.execution.status,
+    retryNumber: input.execution.retryNumber,
+    fallbackFromAttemptId: input.execution.fallbackFromAttemptId,
+    errorCategory: input.execution.errorCategory,
+    nativeCost,
+    tryCost,
+    accountingMonth: aiAccountingMonthV1(input.execution.completedAt),
+    privacy: { rawPromptStored: false, rawConversationStored: false, fullCoachContextStored: false }
+  });
+}
+function budgetState(committedTry) {
+  const { watchStartsTry, constrainedStartsTry, hardLimitTry } = AI_MONTHLY_BUDGET_POLICY_V1.thresholds;
+  if (committedTry >= hardLimitTry) return "hard_limit";
+  if (committedTry >= constrainedStartsTry) return "constrained";
+  if (committedTry >= watchStartsTry) return "watch";
+  return "normal";
+}
+function aggregateMonthlyAiUsageV1(input) {
+  if (!/^\d{4}-\d{2}$/.test(input.accountingMonth)) throw new Error("AI_BUDGET_MONTH_INVALID");
+  const scopedEvents = input.events.filter((item) => item.userId === input.userId && (input.examProfileId === null || item.examProfileId === input.examProfileId) && item.accountingMonth === input.accountingMonth);
+  if (scopedEvents.some((event) => aiAccountingMonthV1(event.completedAt) !== event.accountingMonth)) throw new Error("AI_USAGE_ACCOUNTING_MONTH_MISMATCH");
+  const unique = /* @__PURE__ */ new Map();
+  let duplicateAttemptCount = 0;
+  for (const event of scopedEvents) {
+    const existing = unique.get(event.providerAttemptId);
+    if (existing && JSON.stringify(existing) !== JSON.stringify(event)) throw new Error("AI_USAGE_ATTEMPT_CONFLICT");
+    if (existing) duplicateAttemptCount += 1;
+    else unique.set(event.providerAttemptId, event);
+  }
+  const values = [...unique.values()];
+  const unpricedAttemptCount = values.filter((event) => event.tryCost.state !== "known").length;
+  const activeReservations = (input.reservations ?? []).filter((item) => item.userId === input.userId && (input.examProfileId === null || item.examProfileId === input.examProfileId) && item.accountingMonth === input.accountingMonth && item.state === "active");
+  if (activeReservations.some((item) => !Number.isFinite(item.tryAmount) || item.tryAmount < 0)) throw new Error("AI_BUDGET_RESERVATION_AMOUNT_INVALID");
+  const reservedTry = round(activeReservations.reduce((sum, item) => sum + item.tryAmount, 0), 6);
+  if (unpricedAttemptCount > 0) return deepFreeze4({
+    version: AI_MONTHLY_BUDGET_POLICY_V1_VERSION,
+    scope: input.examProfileId === null ? "user" : "profile",
+    userId: input.userId,
+    examProfileId: input.examProfileId,
+    accountingMonth: input.accountingMonth,
+    availability: "unknown",
+    unknownReason: "unpriced_usage_present",
+    spentTry: null,
+    reservedTry,
+    committedTry: null,
+    remainingTry: null,
+    utilizationPercent: null,
+    budgetState: null,
+    uniqueAttemptCount: values.length,
+    unpricedAttemptCount,
+    duplicateAttemptCount,
+    thresholds: AI_MONTHLY_BUDGET_POLICY_V1.thresholds
+  });
+  const spentTry = round(values.reduce((sum, event) => sum + (event.tryCost.state === "known" ? event.tryCost.amount : 0), 0), 6);
+  const committedTry = round(spentTry + reservedTry, 6);
+  const hard = AI_MONTHLY_BUDGET_POLICY_V1.thresholds.hardLimitTry;
+  return deepFreeze4({
+    version: AI_MONTHLY_BUDGET_POLICY_V1_VERSION,
+    scope: input.examProfileId === null ? "user" : "profile",
+    userId: input.userId,
+    examProfileId: input.examProfileId,
+    accountingMonth: input.accountingMonth,
+    availability: "known",
+    unknownReason: null,
+    spentTry,
+    reservedTry,
+    committedTry,
+    remainingTry: round(Math.max(0, hard - committedTry), 6),
+    utilizationPercent: round(committedTry / hard * 100, 4),
+    budgetState: budgetState(committedTry),
+    uniqueAttemptCount: values.length,
+    unpricedAttemptCount: 0,
+    duplicateAttemptCount,
+    thresholds: AI_MONTHLY_BUDGET_POLICY_V1.thresholds
+  });
+}
+function preflightAiCostV1(input) {
+  const { route, evidence, budget } = input;
+  if (input.reservationIdentity.userId !== budget.userId || budget.examProfileId !== null && input.reservationIdentity.examProfileId !== budget.examProfileId) throw new Error("AI_COST_PREFLIGHT_SCOPE_MISMATCH");
+  if (route.disposition !== "model") return deepFreeze4({ version: AI_COST_PREFLIGHT_V1_VERSION, route, evidence, estimateKind: "upper_bound_not_actual_billing", estimatedUsage: { availability: "unavailable", inputTokens: null, cachedInputTokens: null, outputTokens: null, totalTokens: null, source: "provider_usage_unavailable" }, estimatedNativeCost: { state: "not_applicable", pricingVersion: route.pricingVersion, nativeAmount: 0, nativeCurrency: null, reason: "no_model_route" }, estimatedTryCost: { state: "not_applicable", amount: 0, currency: "TRY", reason: "no_model_route", fx: null }, allowed: false, reasonCode: "route_blocked", reservationProposal: null, reservationPersistence: "not_implemented_in_6b5", providerCallMade: false });
+  if (!Number.isInteger(input.operationalOverheadTokens) || input.operationalOverheadTokens < 0) throw new Error("AI_PREFLIGHT_OVERHEAD_INVALID");
+  const inputTokens = evidence.estimatedInputTokens + input.operationalOverheadTokens;
+  const estimatedUsage = { availability: "reported", inputTokens, cachedInputTokens: 0, outputTokens: route.maxOutputTokens, totalTokens: inputTokens + route.maxOutputTokens, source: "provider_response" };
+  const nativeCost = calculateAiNativeCostV1(route, estimatedUsage, input.pricingCatalog, input.estimatedAt);
+  const tryCost = convertAiCostToTryV1(nativeCost, input.fxSnapshot, route.runtimeEnvironment);
+  let reasonCode = "within_budget";
+  if (budget.availability === "unknown") reasonCode = "budget_unknown";
+  else if (tryCost.state !== "known") reasonCode = "cost_unknown";
+  else if (budget.budgetState === "hard_limit") reasonCode = "hard_limit";
+  else if (tryCost.amount > budget.remainingTry) reasonCode = "estimated_cost_exceeds_remaining";
+  const allowed = reasonCode === "within_budget";
+  const reservationProposal = allowed && tryCost.state === "known" ? {
+    reservationId: input.reservationIdentity.reservationId,
+    userId: input.reservationIdentity.userId,
+    examProfileId: input.reservationIdentity.examProfileId,
+    accountingMonth: budget.accountingMonth,
+    tryAmount: tryCost.amount,
+    state: "active",
+    expiresAt: input.reservationIdentity.expiresAt
+  } : null;
+  return deepFreeze4({ version: AI_COST_PREFLIGHT_V1_VERSION, route, evidence, estimateKind: "upper_bound_not_actual_billing", estimatedUsage, estimatedNativeCost: nativeCost, estimatedTryCost: tryCost, allowed, reasonCode, reservationProposal, reservationPersistence: "not_implemented_in_6b5", providerCallMade: false });
+}
 export {
+  AI_COACH_CAPABILITIES_V1,
   AI_COACH_INTENTS_V1,
+  AI_COST_PREFLIGHT_V1_VERSION,
+  AI_EVIDENCE_ESTIMATE_V1_VERSION,
+  AI_EVIDENCE_SIZE_LIMITS_V1,
   AI_EVIDENCE_TYPES_V1,
+  AI_FX_POLICY_V1_VERSION,
+  AI_FX_SNAPSHOT_V1_TEST_FIXTURE,
+  AI_MODEL_ROUTER_V1_VERSION,
+  AI_MONTHLY_BUDGET_POLICY_V1,
+  AI_MONTHLY_BUDGET_POLICY_V1_VERSION,
+  AI_PRICING_CATALOG_V1_CONTRACT_VERSION,
+  AI_PRICING_CATALOG_V1_TEST_FIXTURE,
+  AI_ROUTE_CATALOG_V1_TEST_FIXTURE,
+  AI_USAGE_EVENT_V1_VERSION,
   AI_VALIDATION_STATUSES_V1,
   COACH_CONTEXT_V1_LEGACY_EXCLUSIONS,
   COACH_CONTEXT_V1_LIMITS,
@@ -2125,16 +2540,24 @@ export {
   COACH_SIGNAL_SET_V1_VERSION,
   COACH_SIGNAL_TYPES_V1,
   COACH_SIGNAL_V1_LIMITS,
+  aggregateMonthlyAiUsageV1,
+  aiAccountingMonthV1,
   blockedCoachContextV1Fact,
   buildAiCoachSystemPromptV1,
   buildCoachContextV1,
   buildCoachSignalSetV1,
+  calculateAiNativeCostV1,
+  convertAiCostToTryV1,
+  createAiUsageEventV1,
+  estimateAiEvidenceV1,
   executeAiStudyMessageV1,
   knownCoachContextV1Fact,
   mapAiInterpretationToDomainEventV1,
   notApplicableCoachContextV1Fact,
+  preflightAiCostV1,
   projectCoachEvidenceViewV1,
   resolveCoachEvidenceDetailV1,
+  routeAiCapabilityV1,
   staleCoachContextV1Fact,
   unknownCoachContextV1Fact,
   validateAiInterpretationV1
