@@ -1,5 +1,21 @@
 # KPSS Koçu Product Backlog
 
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_1_2026_09_12**
+>
+> - The first explicitly authorized real controlled-DEV smoke attempt is consumed.
+> - Real OpenAI input-token calls in attempt 1: `1`.
+> - The input-token request returned HTTP `400` and failed closed as `count_http_error`.
+> - Provider request id: `req_ee35d869741f444c8de988f93b0f9bec`.
+> - Real generation calls in attempt 1: `0`.
+> - Reservation / mark-started / settlement / release / reconciliation: `0 / 0 / 0 / 0 / 0`.
+> - Database calls, Planner calls, task mutations, production access, deploys, and migrations caused by the smoke: `0`.
+> - The offline provider-contract repair is focused-GREEN. The strict provider schema surface was reduced while stronger deterministic local validation remains enforced.
+> - Safe provider error `type/code/param` diagnostics are now implemented locally; provider message text is not surfaced.
+> - A second real provider smoke is **NOT AUTHORIZED**.
+> - Production provider activation remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This current-state block supersedes older pre-smoke wording later in this document.
+
+
 Status: Active
 
 Last updated: 2026-09-12
@@ -50,7 +66,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | ID | Phase | Priority | Title | Status |
 | --- | --- | --- | --- | --- |
 | `AIC-001` | 6A | `P0` | Product / Authority / Cost Contract | `DONE` |
-| `AIC-002` | 6B | `P0` | CoachContextV1 | `IN_PROGRESS — 6B.6B.2 LOCAL_ACCEPTANCE_GREEN / READY_FOR_EXPLICIT_DEV_SMOKE_AUTHORIZATION` |
+| `AIC-002` | 6B | `P0` | CoachContextV1 | `IN_PROGRESS — 6B.6B.2 LOCAL_ACCEPTANCE_GREEN / SECOND_REAL_SMOKE_NOT_AUTHORIZED` |
 | `AIC-003` | 6C | `P1` | Reactive Coach | `TODO` |
 | `AIC-004` | 6D | `P1` | Proactive Coach | `TODO` |
 | `AIC-005` | 6E | `P0` | Planner V2 Integration | `TODO` |
@@ -82,7 +98,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-002` / Evre 6B — CoachContextV1
 
 - Priority: `P0`
-- Status: `IN_PROGRESS — 6B.1–6B.6B.1 ACCEPTED — 6B.6B.2 LOCAL_ACCEPTANCE_GREEN / READY_FOR_EXPLICIT_DEV_SMOKE_AUTHORIZATION — REAL_SMOKE_NOT_EXECUTED — PRODUCTION ACTIVATION BLOCKED`
+- Status: `IN_PROGRESS — 6B.1–6B.6B.1 ACCEPTED — 6B.6B.2 LOCAL_ACCEPTANCE_GREEN / SECOND_REAL_SMOKE_NOT_AUTHORIZED — REAL_SMOKE_ATTEMPT_1_COUNT_HTTP_400 — PRODUCTION ACTIVATION BLOCKED`
 - Dependency: closed `AIC-001`; accepted 6B.1 checkpoint `acd16ffb2263b5285b14bd7329ff4357d7971e00`.
 - Desired outcome: One immutable, minimal, user-scoped context envelope supplies canonical facts, provenance, freshness, confidence/authority, unknowns, and bounded conversation state while beginning centralized router/pricing and AI usage/cost telemetry.
 - Acceptance criteria:

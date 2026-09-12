@@ -32,24 +32,21 @@ export const OPENAI_COACH_RESPONSE_SCHEMA_V1 = Object.freeze({
     "staleOrBlockedWarnings",
   ],
   properties: {
-    answer: { type: "string", minLength: 1, maxLength: 4_000 },
+    answer: { type: "string" },
     sourceFactPaths: {
       type: "array",
       maxItems: 32,
-      uniqueItems: true,
-      items: { type: "string", minLength: 1, maxLength: 512 },
+      items: { type: "string" },
     },
     acknowledgedUnknowns: {
       type: "array",
       maxItems: 32,
-      uniqueItems: true,
-      items: { type: "string", minLength: 1, maxLength: 512 },
+      items: { type: "string" },
     },
     staleOrBlockedWarnings: {
       type: "array",
       maxItems: 32,
-      uniqueItems: true,
-      items: { type: "string", minLength: 1, maxLength: 512 },
+      items: { type: "string" },
     },
   },
 } as const);
@@ -318,7 +315,7 @@ export function suppliedCoachEvidenceFactPathsV1(evidence: CoachEvidenceViewV1):
 }
 
 function stringArray(value: unknown, error: string): readonly string[] {
-  if (!Array.isArray(value) || value.length > 32 || value.some((item) => typeof item !== "string" || !item.trim())) {
+  if (!Array.isArray(value) || value.length > 32 || value.some((item) => typeof item !== "string" || !item.trim() || item.length > 512)) {
     throw new Error(error);
   }
   const normalized = value.map((item) => String(item));

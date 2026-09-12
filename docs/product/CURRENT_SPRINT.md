@@ -1,5 +1,21 @@
 # Current Sprint
 
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_1_2026_09_12**
+>
+> - The first explicitly authorized real controlled-DEV smoke attempt is consumed.
+> - Real OpenAI input-token calls in attempt 1: `1`.
+> - The input-token request returned HTTP `400` and failed closed as `count_http_error`.
+> - Provider request id: `req_ee35d869741f444c8de988f93b0f9bec`.
+> - Real generation calls in attempt 1: `0`.
+> - Reservation / mark-started / settlement / release / reconciliation: `0 / 0 / 0 / 0 / 0`.
+> - Database calls, Planner calls, task mutations, production access, deploys, and migrations caused by the smoke: `0`.
+> - The offline provider-contract repair is focused-GREEN. The strict provider schema surface was reduced while stronger deterministic local validation remains enforced.
+> - Safe provider error `type/code/param` diagnostics are now implemented locally; provider message text is not surfaced.
+> - A second real provider smoke is **NOT AUTHORIZED**.
+> - Production provider activation remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This current-state block supersedes older pre-smoke wording later in this document.
+
+
 Last updated: 2026-09-12
 
 ## Sprint 02 — Evre 6B & Continuing Planning Foundations
@@ -15,7 +31,7 @@ Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.
 ### `AIC-002` / Evre 6B — CoachContextV1
 
 - Priority: `P0`
-- Status: `IN_PROGRESS — 6B.6B.2 LOCAL_ACCEPTANCE_GREEN — READY_FOR_EXPLICIT_DEV_SMOKE_AUTHORIZATION — REAL_SMOKE_NOT_EXECUTED — PRODUCTION ACTIVATION BLOCKED`
+- Status: `IN_PROGRESS — 6B.6B.2 LOCAL_ACCEPTANCE_GREEN — SECOND_REAL_SMOKE_NOT_AUTHORIZED — REAL_SMOKE_ATTEMPT_1_COUNT_HTTP_400 — PRODUCTION ACTIVATION BLOCKED`
 - Scope: disconnected read-only orchestration plus fail-closed DEV-only activation/secret/gateway, exact request and usage identity, deterministic TCMB acquisition, and reconciliation/smoke policy; no live AI runtime integration, real provider call, deploy, gate change, or production access.
 - Authority state: read-only; Planner V2 Confirm OFF; Planner V2 Apply OFF.
 

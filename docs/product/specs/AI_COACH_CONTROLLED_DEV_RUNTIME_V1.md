@@ -1,6 +1,22 @@
 # AI Coach — Controlled DEV Runtime Pre-Smoke Foundation V1
 
-Status: `EVRE_6B.6B.2_LOCAL_ACCEPTANCE_GREEN — INPUT_COUNT_BILLING_UNRESOLVED — READY_FOR_EXPLICIT_DEV_SMOKE_AUTHORIZATION — REAL_SMOKE_NOT_EXECUTED — PRODUCTION_DISABLED — CONFIRM_OFF — APPLY_OFF`
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_1_2026_09_12**
+>
+> - The first explicitly authorized real controlled-DEV smoke attempt is consumed.
+> - Real OpenAI input-token calls in attempt 1: `1`.
+> - The input-token request returned HTTP `400` and failed closed as `count_http_error`.
+> - Provider request id: `req_ee35d869741f444c8de988f93b0f9bec`.
+> - Real generation calls in attempt 1: `0`.
+> - Reservation / mark-started / settlement / release / reconciliation: `0 / 0 / 0 / 0 / 0`.
+> - Database calls, Planner calls, task mutations, production access, deploys, and migrations caused by the smoke: `0`.
+> - The offline provider-contract repair is focused-GREEN. The strict provider schema surface was reduced while stronger deterministic local validation remains enforced.
+> - Safe provider error `type/code/param` diagnostics are now implemented locally; provider message text is not surfaced.
+> - A second real provider smoke is **NOT AUTHORIZED**.
+> - Production provider activation remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This current-state block supersedes older pre-smoke wording later in this document.
+
+
+Status: `EVRE_6B.6B.2_LOCAL_ACCEPTANCE_GREEN — INPUT_COUNT_BILLING_UNRESOLVED — SECOND_REAL_SMOKE_NOT_AUTHORIZED — REAL_SMOKE_ATTEMPT_1_COUNT_HTTP_400 — PRODUCTION_DISABLED — CONFIRM_OFF — APPLY_OFF`
 
 Contract versions: `ai-provider-runtime-activation-v1`, `openai-server-secret-v1`, `openai-dev-gateway-v1`, `ai-openai-billing-audit-v1-2026-09-12`, `ai-tcmb-fx-acquisition-v1`, `ai-provider-reconciliation-policy-v1`, and `ai-coach-dev-smoke-policy-v1`.
 
@@ -116,7 +132,7 @@ The generation-cost reservation proof remains complete for the modeled Responses
 
 The defined but unexecuted candidate is exactly one authenticated local-DEV `today_analysis` using `today_explain`, the centrally required `standard` route, at most 16,384 evidence bytes, at most 200,000 exact complete input tokens, and exactly 900 combined output/reasoning tokens. It requires the central kill switch, exact allowlist, server key, fresh authoritative TCMB snapshot, exact count, atomic reservation, one provider attempt, no fallback, no automatic retry, no mutations, no Planner action, no production data, and post-attempt ledger/reservation inspection.
 
-Current status is `READY_FOR_EXPLICIT_DEV_SMOKE_AUTHORIZATION`: local technical acceptance and full mocked A→Z execution are green, but no real provider call has occurred. The remaining gate is a separate explicit real-smoke authorization plus real TCMB/server-secret/operator preflight. Production is independently ineligible and would still require approved migration/deployment/runtime/gate scope after any DEV evidence.
+Current status is `SECOND_REAL_SMOKE_NOT_AUTHORIZED`: local technical acceptance and full mocked A→Z execution are green, but no real provider call has occurred. The remaining gate is a separate explicit real-smoke authorization plus real TCMB/server-secret/operator preflight. Production is independently ineligible and would still require approved migration/deployment/runtime/gate scope after any DEV evidence.
 
 ## 10. Authority state
 

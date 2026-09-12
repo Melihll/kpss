@@ -1,5 +1,21 @@
 # KPSS Koçu Product Roadmap
 
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_1_2026_09_12**
+>
+> - The first explicitly authorized real controlled-DEV smoke attempt is consumed.
+> - Real OpenAI input-token calls in attempt 1: `1`.
+> - The input-token request returned HTTP `400` and failed closed as `count_http_error`.
+> - Provider request id: `req_ee35d869741f444c8de988f93b0f9bec`.
+> - Real generation calls in attempt 1: `0`.
+> - Reservation / mark-started / settlement / release / reconciliation: `0 / 0 / 0 / 0 / 0`.
+> - Database calls, Planner calls, task mutations, production access, deploys, and migrations caused by the smoke: `0`.
+> - The offline provider-contract repair is focused-GREEN. The strict provider schema surface was reduced while stronger deterministic local validation remains enforced.
+> - Safe provider error `type/code/param` diagnostics are now implemented locally; provider message text is not surfaced.
+> - A second real provider smoke is **NOT AUTHORIZED**.
+> - Production provider activation remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This current-state block supersedes older pre-smoke wording later in this document.
+
+
 Status: Active
 
 Last updated: 2026-09-12
@@ -99,7 +115,7 @@ The normative product, truth, authority, scenario, proactive, cost, and phase co
 | Sequence | Sub-phase | Status | Outcome |
 | --- | --- | --- | --- |
 | 6A | Product / Authority / Cost Contract | `CLOSED` | Final product outcomes, truth sources, non-authority, 20 scenarios, proactive triggers, cost envelope, and phase gates accepted. |
-| 6B | CoachContextV1 | `ACTIVE — 6B.6B.2 LOCAL_ACCEPTANCE_GREEN / READY_FOR_EXPLICIT_DEV_SMOKE_AUTHORIZATION` | 6B.1–6B.6B.1 are accepted locally. 6B.6B.2 now verifies the controlled local-DEV gateway/activation/secret boundary, transport authority separation, exact count identity, controlled-DEV cost authorization, authoritative local route/pricing, TCMB freshness, and full A→Z mocked smoke. `/responses/input_tokens` billing remains officially unresolved, but `TEMP_DEV_COST_POLICY_2026_09_12` allows one separately approved observed-cost local-DEV smoke. No real provider call has occurred; production remains prohibited. |
+| 6B | CoachContextV1 | `ACTIVE — 6B.6B.2 LOCAL_ACCEPTANCE_GREEN / SECOND_REAL_SMOKE_NOT_AUTHORIZED` | 6B.1–6B.6B.1 are accepted locally. 6B.6B.2 now verifies the controlled local-DEV gateway/activation/secret boundary, transport authority separation, exact count identity, controlled-DEV cost authorization, authoritative local route/pricing, TCMB freshness, and full A→Z mocked smoke. `/responses/input_tokens` billing remains officially unresolved, but `TEMP_DEV_COST_POLICY_2026_09_12` allows one separately approved observed-cost local-DEV smoke. No real provider call has occurred; production remains prohibited. |
 | 6C | Reactive Coach | `NOT_STARTED` | Deliver user-initiated Explain / Diagnose / Guide with grounding, fallbacks, and metering. |
 | 6D | Proactive Coach | `NOT_STARTED` | Add deterministic in-app triggers, cooldowns, dedupe, attention controls, and valid silence. |
 | 6E | Planner V2 integration | `NOT_STARTED` | Route every Coach planning mutation to the one canonical Planner V2 lifecycle. |

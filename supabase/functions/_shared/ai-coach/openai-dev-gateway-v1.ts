@@ -26,12 +26,18 @@ export class OpenAiDevGatewayErrorV1 extends Error {
   readonly providerOutcome: "not_started" | "known" | "unknown";
   readonly httpStatus: number | null;
   readonly providerRequestId: string | null;
+  readonly providerErrorType: string | null;
+  readonly providerErrorCode: string | null;
+  readonly providerErrorParam: string | null;
 
   constructor(input: {
     readonly code: OpenAiDevGatewayErrorCodeV1;
     readonly providerOutcome: "not_started" | "known" | "unknown";
     readonly httpStatus?: number | null;
     readonly providerRequestId?: string | null;
+    readonly providerErrorType?: string | null;
+    readonly providerErrorCode?: string | null;
+    readonly providerErrorParam?: string | null;
   }) {
     super(`OPENAI_DEV_GATEWAY:${input.code}`);
     this.name = "OpenAiDevGatewayErrorV1";
@@ -39,6 +45,9 @@ export class OpenAiDevGatewayErrorV1 extends Error {
     this.providerOutcome = input.providerOutcome;
     this.httpStatus = input.httpStatus ?? null;
     this.providerRequestId = input.providerRequestId ?? null;
+    this.providerErrorType = input.providerErrorType ?? null;
+    this.providerErrorCode = input.providerErrorCode ?? null;
+    this.providerErrorParam = input.providerErrorParam ?? null;
   }
 }
 
@@ -94,6 +103,38 @@ async function parseJson(response: Response): Promise<unknown> {
   } catch {
     return null;
   }
+}
+
+function safeProviderErrorField(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > 256) return null;
+  if (!/^[\x20-\x7E]+$/.test(trimmed)) return null;
+  return trimmed;
+}
+
+function providerErrorMetadata(payload: unknown): {
+  readonly type: string | null;
+  readonly code: string | null;
+  readonly param: string | null;
+} {
+  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
+    return { type: null, code: null, param: null };
+  }
+
+  const error = (payload as Record<string, unknown>).error;
+
+  if (typeof error !== "object" || error === null || Array.isArray(error)) {
+    return { type: null, code: null, param: null };
+  }
+
+  const record = error as Record<string, unknown>;
+
+  return {
+    type: safeProviderErrorField(record.type),
+    code: safeProviderErrorField(record.code),
+    param: safeProviderErrorField(record.param),
+  };
 }
 
 function isAbort(error: unknown): boolean {
@@ -211,7 +252,16 @@ export function createOpenAiDevGatewayV1(input: {
       const requestId = providerRequestId(response.headers);
       const payload = await parseJson(response);
       if (!response.ok) {
-        throw new OpenAiDevGatewayErrorV1({ code: "count_http_error", providerOutcome: "known", httpStatus: response.status, providerRequestId: requestId });
+        const providerError = providerErrorMetadata(payload);
+        throw new OpenAiDevGatewayErrorV1({
+          code: "count_http_error",
+          providerOutcome: "known",
+          httpStatus: response.status,
+          providerRequestId: requestId,
+          providerErrorType: providerError.type,
+          providerErrorCode: providerError.code,
+          providerErrorParam: providerError.param,
+        });
       }
       if (
         typeof payload !== "object" || payload === null || Array.isArray(payload)

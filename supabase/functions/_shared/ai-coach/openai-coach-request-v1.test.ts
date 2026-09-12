@@ -12,6 +12,7 @@ import {
 } from "../../../../packages/domain/src/ai-coach/coach-context-v1.ts";
 import { AI_OPENAI_ROUTE_CATALOG_V1 } from "./provider-runtime-catalog-v1.ts";
 import {
+  OPENAI_COACH_RESPONSE_SCHEMA_V1,
   buildOpenAiCoachRequestV1,
   fingerprintOpenAiCoachRequestV1,
   stableCanonicalJsonV1,
@@ -76,6 +77,26 @@ describe("immutable OpenAI Coach request V1", () => {
       truncation: "disabled",
     }));
     expect(value.authority).toMatchObject({ toolsAllowed: false, mutationAllowed: false, storedByProvider: false });
+  });
+
+  it("keeps provider schema minimal while preserving local response bounds", () => {
+    const schema = JSON.stringify(OPENAI_COACH_RESPONSE_SCHEMA_V1);
+
+    expect(schema).not.toContain('"minLength"');
+    expect(schema).not.toContain('"maxLength"');
+    expect(schema).not.toContain('"uniqueItems"');
+    expect(schema).toContain('"maxItems":32');
+
+    expect(() => validateGroundedCoachResponseV1({
+      capability: "today_analysis",
+      evidence: evidence(),
+      providerValue: {
+        answer: "Local validator item length sinirini korur.",
+        sourceFactPaths: ["x".repeat(513)],
+        acknowledgedUnknowns: [],
+        staleOrBlockedWarnings: [],
+      },
+    })).toThrow("GROUNDED_COACH_RESPONSE_FACT_REFS_INVALID");
   });
 
   it("canonicalizes object keys deterministically without reordering arrays", () => {

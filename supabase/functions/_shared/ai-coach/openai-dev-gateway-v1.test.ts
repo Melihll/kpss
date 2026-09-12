@@ -129,8 +129,8 @@ describe("6B.6B.2 direct OpenAI DEV gateway with mocked HTTP", () => {
     const { request, fingerprint } = await immutableRequest();
     const malformed = createOpenAiDevGatewayV1({ activation: activation(), credential: credential(), fetchImpl: async () => new Response(JSON.stringify({ object: "response.input_tokens", input_tokens: -1 }), { status: 200 }) });
     await expect(malformed.countInputTokens({ request, fingerprint, clientRequestId: "count:request-1" })).rejects.toThrow("count_response_invalid");
-    const httpError = createOpenAiDevGatewayV1({ activation: activation(), credential: credential(), fetchImpl: async () => new Response("{}", { status: 429, headers: { "x-request-id": "req_429" } }) });
-    await expect(httpError.countInputTokens({ request, fingerprint, clientRequestId: "count:request-2" })).rejects.toMatchObject({ code: "count_http_error", httpStatus: 429, providerRequestId: "req_429" });
+    const httpError = createOpenAiDevGatewayV1({ activation: activation(), credential: credential(), fetchImpl: async () => new Response(JSON.stringify({ error: { message: "must-not-surface", type: "invalid_request_error", code: "invalid_json_schema", param: "text.format.schema" } }), { status: 429, headers: { "x-request-id": "req_429" } }) });
+    await expect(httpError.countInputTokens({ request, fingerprint, clientRequestId: "count:request-2" })).rejects.toMatchObject({ code: "count_http_error", httpStatus: 429, providerRequestId: "req_429", providerErrorType: "invalid_request_error", providerErrorCode: "invalid_json_schema", providerErrorParam: "text.format.schema" });
   });
 
   it("returns a known generation HTTP outcome so usage and request identity reach reconciliation", async () => {
