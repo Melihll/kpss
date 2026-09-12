@@ -1,5 +1,20 @@
 # AI Coach — Controlled DEV Runtime Pre-Smoke Foundation V1
 
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_2_HARNESS_DISCOVERY_FAILURE_2026_09_12**
+>
+> - Attempt 2 received explicit operator authorization, but the temporary Vitest harness was created under `scripts/`, which is outside the repository's configured Vitest include paths.
+> - Vitest stopped with `No test files found` before the test body executed.
+> - Attempt 2 real TCMB calls: `0`.
+> - Attempt 2 real OpenAI input-token count calls: `0`.
+> - Attempt 2 real OpenAI generation calls: `0`.
+> - Database calls, Planner calls, task mutations, production access, deploys, and migrations: `0`.
+> - Attempt 2 therefore did **not** test the repaired provider contract and did **not** create a new real provider attempt.
+> - The Attempt 2 operational authorization is consumed under the no-automatic-rerun rule.
+> - Any next real provider execution requires a new explicit authorization and must use a Vitest-discoverable temporary harness under `supabase/functions/_shared/ai-coach/**/*.test.ts`.
+> - Provider repair remains locally GREEN and committed. Production provider remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This block supersedes older current-state wording below it.
+
+
 > **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_1_2026_09_12**
 >
 > - The first explicitly authorized real controlled-DEV smoke attempt is consumed.
