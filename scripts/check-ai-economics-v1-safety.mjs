@@ -16,7 +16,14 @@ const providerBoundary = [
   read("supabase/functions/_shared/ai-coach/provider-openai-billing-bound-v1.ts"),
   read("supabase/functions/_shared/ai-coach/openai-input-token-count-v1.ts"),
   read("supabase/functions/_shared/ai-coach/openai-coach-request-v1.ts"),
+  read("supabase/functions/_shared/ai-coach/provider-openai-billing-audit-v1.ts"),
+  read("supabase/functions/_shared/ai-coach/provider-runtime-activation-v1.ts"),
+  read("supabase/functions/_shared/ai-coach/openai-server-secret-v1.ts"),
+  read("supabase/functions/_shared/ai-coach/provider-fx-acquisition-v1.ts"),
+  read("supabase/functions/_shared/ai-coach/provider-reconciliation-policy-v1.ts"),
+  read("supabase/functions/_shared/ai-coach/dev-smoke-policy-v1.ts"),
 ].join("\n");
+const devGateway = read("supabase/functions/_shared/ai-coach/openai-dev-gateway-v1.ts");
 const readOnlyOrchestrator = read("supabase/functions/_shared/ai-coach/read-only-coach-orchestrator-v1.ts");
 const reservationMigration = read("supabase/migrations/20260911170000_ai_provider_runtime_reservations_v1.sql");
 const runtime = [
@@ -33,12 +40,15 @@ const counts = {
   RESERVATION_RPC_GATEWAYS: reservationAdapter.match(/\.rpc\(name,/g)?.length ?? 0,
   RESERVATION_ARBITRARY_TABLE_WRITES: reservationAdapter.match(/\.(insert|update|upsert|delete)\s*\(/g)?.length ?? 0,
   PROVIDER_BOUNDARY_NETWORK_CALLS: providerBoundary.match(/\bfetch\s*\(/g)?.length ?? 0,
+  DEV_GATEWAY_INJECTED_HTTP_CALLS: devGateway.match(/\binput\.fetchImpl\s*\(/g)?.length ?? 0,
+  DEV_GATEWAY_GLOBAL_FETCH_CALLS: devGateway.match(/\bglobalThis\.fetch\s*\(|\bfetch\s*\(/g)?.length ?? 0,
   ORCHESTRATOR_NETWORK_CALLS: readOnlyOrchestrator.match(/\b(fetch|responses\.create|chat\.completions)\s*\(/g)?.length ?? 0,
   ORCHESTRATOR_DIRECT_DB_WRITES: readOnlyOrchestrator.match(/\.(insert|update|upsert|delete)\s*\(/g)?.length ?? 0,
   ORCHESTRATOR_PLANNER_PREVIEW_CALLS: readOnlyOrchestrator.match(/\b(buildPlannerV2Preview|previewCurrentPlan|create_confirmed|apply_confirmed)\b/g)?.length ?? 0,
   ORCHESTRATOR_LEGACY_COACH_LOADERS: readOnlyOrchestrator.match(/\b(loadCoachContext|loadMaterialContext|buildCoachSystemPrompt)\b/g)?.length ?? 0,
   ORCHESTRATOR_INJECTED_PROVIDER_CALLS: readOnlyOrchestrator.match(/generationTransport\.execute\s*\(/g)?.length ?? 0,
   RUNTIME_ROUTER_WIRING: runtime.match(/(routeAiCapabilityV1|AiUsageEventV1|recordAiUsageEventV1)/g)?.length ?? 0,
+  RUNTIME_DEV_GATEWAY_WIRING: runtime.match(/(openai-dev-gateway-v1|resolveAiProviderRuntimeActivationV1|createOpenAiDevGatewayV1)/g)?.length ?? 0,
 };
 
 let failed = false;
@@ -46,7 +56,7 @@ for (const [name, count] of Object.entries(counts)) {
   console.log(`${name}=${count}`);
 }
 if (counts.DOMAIN_PROVIDER_CALLS !== 0 || counts.DOMAIN_DB_CALLS !== 0 || counts.DOMAIN_PLANNER_CALLS !== 0) failed = true;
-if (counts.LEDGER_RPC_CALLS !== 1 || counts.LEDGER_ARBITRARY_TABLE_WRITES !== 0 || counts.RESERVATION_RPC_GATEWAYS !== 1 || counts.RESERVATION_ARBITRARY_TABLE_WRITES !== 0 || counts.PROVIDER_BOUNDARY_NETWORK_CALLS !== 0 || counts.ORCHESTRATOR_NETWORK_CALLS !== 0 || counts.ORCHESTRATOR_DIRECT_DB_WRITES !== 0 || counts.ORCHESTRATOR_PLANNER_PREVIEW_CALLS !== 0 || counts.ORCHESTRATOR_LEGACY_COACH_LOADERS !== 0 || counts.ORCHESTRATOR_INJECTED_PROVIDER_CALLS !== 1 || counts.RUNTIME_ROUTER_WIRING !== 0) failed = true;
+if (counts.LEDGER_RPC_CALLS !== 1 || counts.LEDGER_ARBITRARY_TABLE_WRITES !== 0 || counts.RESERVATION_RPC_GATEWAYS !== 1 || counts.RESERVATION_ARBITRARY_TABLE_WRITES !== 0 || counts.PROVIDER_BOUNDARY_NETWORK_CALLS !== 0 || counts.DEV_GATEWAY_INJECTED_HTTP_CALLS !== 1 || counts.DEV_GATEWAY_GLOBAL_FETCH_CALLS !== 0 || counts.ORCHESTRATOR_NETWORK_CALLS !== 0 || counts.ORCHESTRATOR_DIRECT_DB_WRITES !== 0 || counts.ORCHESTRATOR_PLANNER_PREVIEW_CALLS !== 0 || counts.ORCHESTRATOR_LEGACY_COACH_LOADERS !== 0 || counts.ORCHESTRATOR_INJECTED_PROVIDER_CALLS !== 1 || counts.RUNTIME_ROUTER_WIRING !== 0 || counts.RUNTIME_DEV_GATEWAY_WIRING !== 0) failed = true;
 
 const forbiddenStorageColumns = ["prompt", "message", "conversation", "coach_context", "api_key", "secret"];
 const createTable = migration.match(/create table public\.ai_usage_events \(([\s\S]*?)\n\);/)?.[1] ?? "";
@@ -104,6 +114,20 @@ for (const marker of reservationSecurity) {
 for (const marker of ["requestPayloadCoverage", "server_rejects_above_bound", "providerOutputLimitEnforced", "uncoveredBillableTokenClasses", "authorizeProductionProviderCostMaximumV1", "openai_responses_input_tokens_exact", "complete_generation_request", "inputCountBillingTreatment", "cacheWriteBillingTreatment", "stableCanonicalJsonV1", "SHA-256"]) {
   if (!providerBoundary.includes(marker)) {
     console.error(`MISSING_PROVIDER_BOUND_MARKER=${marker}`);
+    failed = true;
+  }
+}
+
+for (const marker of ["production_prohibited", "runtime_switch_off", "billing_gate_unavailable", "OPENAI_API_KEY", "server_secret", "requestTimeNetworkFetchAllowed", "server_side_scheduled_config_acquisition", "realDevSmokeBillingEligible: false", "readyForDevSmoke: false"]) {
+  if (!providerBoundary.includes(marker)) {
+    console.error(`MISSING_DEV_RUNTIME_SAFETY_MARKER=${marker}`);
+    failed = true;
+  }
+}
+
+for (const marker of ["https://api.openai.com", "/v1/responses/input_tokens", "/v1/responses", "X-Client-Request-Id", "x-request-id", "automaticRetryCount: 0", "AbortController", "redirect: \"error\""]) {
+  if (!devGateway.includes(marker)) {
+    console.error(`MISSING_DEV_GATEWAY_MARKER=${marker}`);
     failed = true;
   }
 }

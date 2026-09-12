@@ -1,6 +1,6 @@
 # AI Coach — Provider Runtime and Atomic Budget Safety V1
 
-Status: `EVRE_6B.6A_LOCAL_ACCEPTED — PRODUCTION_CONFIG_UNAVAILABLE — NO_RUNTIME_WIRING — NO_PRODUCTION_MIGRATION — CONFIRM_OFF — APPLY_OFF`
+Status: `EVRE_6B.6A_LOCAL_ACCEPTED — 6B.6B.2_PRE_SMOKE_ACTIVE — PRODUCTION_CONFIG_UNAVAILABLE — NO_RUNTIME_WIRING — NO_PRODUCTION_MIGRATION — CONFIRM_OFF — APPLY_OFF`
 
 Contract versions:
 
@@ -39,7 +39,7 @@ Every callable production route must additionally have one authoritative billabl
 
 The later 6B.6B.1 audit adds a pinned, server-owned OpenAI route/pricing candidate from current official model documentation. `null`, fixture, non-production, incomplete, future-effective, unverified, or billing-unbounded input still resolves unavailable. Feature code and clients cannot select provider, model, tier, pricing version, retry, fallback, or reservation amount. The current user-facing Coach runtime does not use this resolver.
 
-The catalog alone is insufficient: token-count endpoint billing and cache-write billing remain unresolved, authoritative live FX acquisition/current snapshot and update ownership are absent, and production billing bounds remain empty. Provider-call eligibility therefore remains false. See [Read-Only Provider Orchestrator V1](AI_COACH_READ_ONLY_PROVIDER_ORCHESTRATOR_V1.md).
+The catalog alone is insufficient. 6B.6B.2 resolves the selected GPT-5.4 cache-write treatment as no additional charge, adds a network-free-tested official TCMB XML acquisition boundary and server update ownership, and implements a disconnected direct HTTP gateway plus central kill switch. The input-count endpoint's cost/no-cost treatment remains unresolved; no current snapshot is acquired or deployed, production billing bounds remain empty, and provider-call eligibility therefore remains false. See [Controlled DEV Runtime Pre-Smoke Foundation V1](AI_COACH_CONTROLLED_DEV_RUNTIME_V1.md).
 
 ## 3. Pricing and FX authority
 
@@ -47,7 +47,7 @@ Every production route must have a matching effective pricing entry marked `auth
 
 The FX boundary requires provider currency to TRY, a positive rate, snapshot/source/version identity, effective time, load time, and a positive maximum age. Production accepts only `authoritative_config` snapshots that are effective, loaded no earlier than their effective time, not future-loaded, and fresh at evaluation time. Missing, fixture, invalid, or stale FX fails closed. Provider requests do not fetch FX from the internet.
 
-The later 6B.6B.1 audit includes a versioned pricing candidate verified against official model pages, but no FX acquisition/update mechanism is included. The operator must later provide refresh ownership, alerting, and rotation policy for pricing and FX. Historical ledger rows retain the exact pricing and FX facts used for each attempt.
+At the 6B.6B.1 checkpoint, the versioned pricing candidate was verified against official model pages but no FX acquisition/update mechanism was included. 6B.6B.2 now defines a disconnected, network-injected TCMB acquisition/parser boundary and server-side update ownership; it does not deploy a refresher or create a current production snapshot. Historical ledger rows retain the exact pricing and FX facts used for each attempt.
 
 ## 4. Persistent user-wide reservation
 
@@ -164,12 +164,11 @@ Accepted local evidence on 2026-09-11:
 
 6B.6A plus the disconnected 6B.6B.1 orchestrator are not sufficient to make a real provider call. Before a later separately approved DEV smoke may do so, all of the following remain mandatory:
 
-1. explicit official/contractual billing treatment for `POST /responses/input_tokens`;
-2. explicit selected-route cache-write billing treatment, or a provider request contract that proves the class cannot be billed;
-3. approved FX acquisition, refresh/staleness monitoring, current snapshot, and update ownership;
-4. a real non-production gateway that sends the exact counted immutable request and preserves provider request-ID/usage fidelity;
-5. operational reconciliation/alerting and failure-runbook acceptance;
-6. separately approved secrets and one-DEV-smoke scope with kill/rollback controls;
-7. independently approved production migration, deployment, current Coach wiring, and limited-release verification.
+1. explicit official/contractual billing treatment for `POST /responses/input_tokens`, or a separately approved pre-call worst-case reservation model;
+2. separately approved execution of the one-DEV-smoke checklist after the count-billing gate closes;
+3. an actually acquired fresh DEV TCMB snapshot and DEV-only server secret/config at execution time;
+4. independently approved production migration, scheduler/alert integration, deployment, current Coach wiring, and limited-release verification.
+
+The cache-write decision, acquisition/parser boundary, update ownership, direct injected-fetch gateway, request-ID/usage hardening, central default-OFF kill switch, server-only secret boundary, and reconciliation runbook are implemented locally in 6B.6B.2. They are not live and do not authorize the remaining items.
 
 The 6B.6B.1 orchestrator enforces route → price/FX → exact count → reserve → mocked attempt → ledger → settle/reconcile locally, but explicitly rejects production. Until all remaining gates close, provider production eligibility remains false and the user-facing runtime remains unchanged.

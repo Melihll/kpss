@@ -61,7 +61,7 @@ export const AI_OPENAI_PRICING_GUARDRAILS_V1 = Object.freeze({
   regionalProcessingAllowed: false as const,
   gpt54LongContextThresholdTokens: 272_000,
   gpt54LongContextAllowed: false as const,
-  cacheWriteBillingTreatment: "unverified_must_be_zero" as const,
+  cacheWriteBillingTreatment: "gpt54_documented_no_additional_charge" as const,
   inputTokenCountEndpointBilling: "unresolved" as const,
 });
 

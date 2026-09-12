@@ -220,7 +220,7 @@ export function createOpenAiRequestBillingBoundV1(
     reasoningTokensPricedAs: "output",
     endpointClass: proof.authority === "test_fixture" ? "test_fixture" : "global_standard",
     serviceTier: proof.authority === "test_fixture" ? "test_fixture" : "default",
-    cacheWriteBillingTreatment: proof.authority === "test_fixture" ? "test_fixture" : "unresolved",
+    cacheWriteBillingTreatment: proof.authority === "test_fixture" ? "test_fixture" : "documented_no_additional_charge",
 
     coveredBillableTokenClasses: ["input", "cached_input", "output", "reasoning_output"] as const,
     uncoveredBillableTokenClasses: [] as const,

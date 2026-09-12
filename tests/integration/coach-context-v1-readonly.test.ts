@@ -223,7 +223,7 @@ describe("CoachContextV1 local database read adapter", () => {
       fxSnapshot: LOCAL_FX,
       dependencies: {
         inputCountTransport: {
-          count: async ({ fingerprint }) => {
+          count: async ({ fingerprint, clientRequestId }) => {
             countCalls += 1;
             return {
               object: "response.input_tokens",
@@ -231,17 +231,20 @@ describe("CoachContextV1 local database read adapter", () => {
               countedAt: NOW.toISOString(),
               requestFingerprint: fingerprint.value,
               modelId: fingerprint.modelId,
+              clientRequestId,
               providerRequestId: "local-count-fixture",
             };
           },
         },
         generationTransport: {
-          execute: async ({ fingerprint }) => {
+          execute: async ({ fingerprint, clientRequestId }) => {
             providerCalls += 1;
             return {
               outcome: "known",
               requestFingerprint: fingerprint.value,
               modelId: fingerprint.modelId,
+              clientRequestId,
+              providerRequestId: null,
               payload: {
                 id: "local-response-fixture",
                 status: "completed",

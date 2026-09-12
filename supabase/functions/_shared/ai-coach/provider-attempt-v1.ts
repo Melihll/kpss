@@ -5,8 +5,9 @@ export const AI_PROVIDER_ATTEMPT_OBSERVATION_V1_VERSION = "ai-provider-attempt-o
 export interface AiProviderAttemptObservationV1 {
   readonly version: typeof AI_PROVIDER_ATTEMPT_OBSERVATION_V1_VERSION;
   readonly provider: "openai";
+  readonly providerResponseId: string | null;
   readonly providerRequestId: string | null;
-  readonly providerRequestIdSource: "response_body" | "response_header" | "unavailable";
+  readonly providerRequestIdSource: "response_header" | "unavailable";
   readonly providerStatus: "completed" | "failed" | "incomplete" | "cancelled" | "unknown";
   readonly httpStatus: number;
   readonly usage: AiReportedUsageV1;
@@ -40,11 +41,13 @@ function headerValue(headers: Headers | Readonly<Record<string, string>> | null,
   return entry?.[1] ?? null;
 }
 
-function extractRequestId(payload: unknown, headers: Headers | Readonly<Record<string, string>> | null): Pick<AiProviderAttemptObservationV1, "providerRequestId" | "providerRequestIdSource"> {
-  if (isRecord(payload) && typeof payload.id === "string" && payload.id.trim()) return { providerRequestId: payload.id.trim(), providerRequestIdSource: "response_body" };
-  const fromHeader = headerValue(headers, "x-request-id") ?? headerValue(headers, "request-id");
-  if (fromHeader?.trim()) return { providerRequestId: fromHeader.trim(), providerRequestIdSource: "response_header" };
-  return { providerRequestId: null, providerRequestIdSource: "unavailable" };
+function extractProviderIdentity(payload: unknown, headers: Headers | Readonly<Record<string, string>> | null): Pick<AiProviderAttemptObservationV1, "providerResponseId" | "providerRequestId" | "providerRequestIdSource"> {
+  const providerResponseId = isRecord(payload) && typeof payload.id === "string" && payload.id.trim()
+    ? payload.id.trim()
+    : null;
+  const fromHeader = headerValue(headers, "x-request-id");
+  if (fromHeader?.trim()) return { providerResponseId, providerRequestId: fromHeader.trim(), providerRequestIdSource: "response_header" };
+  return { providerResponseId, providerRequestId: null, providerRequestIdSource: "unavailable" };
 }
 
 function unavailableUsage(): AiReportedUsageV1 {
@@ -67,12 +70,21 @@ function extractUsage(payload: unknown): {
   const cacheWriteTokens = inputDetails && Object.prototype.hasOwnProperty.call(inputDetails, "cache_write_tokens") ? integerOrNull(inputDetails.cache_write_tokens) : null;
   const reasoningOutputTokens = outputDetails && Object.prototype.hasOwnProperty.call(outputDetails, "reasoning_tokens") ? integerOrNull(outputDetails.reasoning_tokens) : null;
   const usageDetails = { cachedInputTokens, cacheWriteTokens, reasoningOutputTokens } as const;
-  const unmodeled = cacheWriteTokens !== null && cacheWriteTokens > 0 ? ["cache_write"] as const : [];
+  const allowedUsageKeys = new Set(["input_tokens", "input_tokens_details", "output_tokens", "output_tokens_details", "total_tokens"]);
+  const allowedInputDetailKeys = new Set(["cached_tokens", "cache_write_tokens"]);
+  const allowedOutputDetailKeys = new Set(["reasoning_tokens"]);
+  const unmodeled = [
+    ...(cacheWriteTokens !== null && cacheWriteTokens > 0 ? ["cache_write"] : []),
+    ...Object.keys(payload.usage).filter((key) => !allowedUsageKeys.has(key)).map((key) => `usage.${key}`),
+    ...Object.keys(inputDetails ?? {}).filter((key) => !allowedInputDetailKeys.has(key)).map((key) => `input_tokens_details.${key}`),
+    ...Object.keys(outputDetails ?? {}).filter((key) => !allowedOutputDetailKeys.has(key)).map((key) => `output_tokens_details.${key}`),
+  ];
   if (
     inputTokens === null || outputTokens === null || totalTokens === null || totalTokens !== inputTokens + outputTokens
-    || (inputDetails && Object.prototype.hasOwnProperty.call(inputDetails, "cached_tokens") && cachedInputTokens === null)
-    || (inputDetails && Object.prototype.hasOwnProperty.call(inputDetails, "cache_write_tokens") && cacheWriteTokens === null)
-    || (outputDetails && Object.prototype.hasOwnProperty.call(outputDetails, "reasoning_tokens") && reasoningOutputTokens === null)
+    || inputDetails === null || outputDetails === null
+    || !Object.prototype.hasOwnProperty.call(inputDetails, "cached_tokens") || cachedInputTokens === null
+    || (Object.prototype.hasOwnProperty.call(inputDetails, "cache_write_tokens") && cacheWriteTokens === null)
+    || !Object.prototype.hasOwnProperty.call(outputDetails, "reasoning_tokens") || reasoningOutputTokens === null
     || (cachedInputTokens !== null && cachedInputTokens > inputTokens)
     || (reasoningOutputTokens !== null && reasoningOutputTokens > outputTokens)
     || unmodeled.length > 0
@@ -104,7 +116,7 @@ export function extractOpenAiProviderAttemptObservationV1(input: {
   if (!Number.isFinite(started) || !Number.isFinite(completed) || completed < started) throw new Error("AI_PROVIDER_ATTEMPT_TIME_INVALID");
   if (!Number.isInteger(input.httpStatus) || input.httpStatus < 100 || input.httpStatus > 599) throw new Error("AI_PROVIDER_ATTEMPT_HTTP_STATUS_INVALID");
   if (!Number.isInteger(input.attemptNumber) || input.attemptNumber < 1 || !Number.isInteger(input.retryNumber) || input.retryNumber < 0) throw new Error("AI_PROVIDER_ATTEMPT_NUMBER_INVALID");
-  const requestId = extractRequestId(input.payload, input.headers);
+  const requestId = extractProviderIdentity(input.payload, input.headers);
   const usage = extractUsage(input.payload);
   return Object.freeze({
     version: AI_PROVIDER_ATTEMPT_OBSERVATION_V1_VERSION,

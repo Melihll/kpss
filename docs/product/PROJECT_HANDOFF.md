@@ -6,7 +6,7 @@ Last updated: 2026-09-12
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Base branch: `main`
-- Local working branch: `evre6-ai-coach` (HEAD/remote checkpoint before the current uncommitted 6B.6B.1 work is `71af3a96efdb5aa222cb5f297b149182d0495f1c`; do not push or commit yet)
+- Local working branch: `evre6-ai-coach` (HEAD/remote checkpoint is `9efd0640e97091535fda9d8887763d7a41c9bc3f`; current 6B.6B.2 pre-smoke work is uncommitted; do not push or commit yet)
 - 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - 6B.1 accepted checkpoint: `acd16ffb2263b5285b14bd7329ff4357d7971e00`
 - Last verified product checkpoint before W5: `fa46fd2`
@@ -34,7 +34,7 @@ The architecture is subject-agnostic across all KPSS subjects. Do not create Mat
 - P48 planned-credit accounting correction: deployed and observing.
 - `PLN-004`: `IMPLEMENTED_LOCAL_VERIFIED`; production-authoritative activation gated.
 - Planner V2 / Planner Truth Evre 5: `CLOSED`. Engineering, exact-profile production acceptance, and final Week/Today real-user observation are complete. Confirm and Apply are OFF.
-- Evre 6 AI Coach: 6A is `CLOSED`; 6B.1–6B.6B.1 are accepted locally. The internal read-only orchestrator now proves the canonical context/evidence/signal → central route → immutable request/fingerprint → exact mocked count → worst-case cost → real local reservation/ledger → mocked provider → grounded response chain. It explicitly rejects production and is not connected to current Coach. Both AI migrations remain local-only; runtime, deployment, gates, and production are unchanged.
+- Evre 6 AI Coach: 6A is `CLOSED`; 6B.1–6B.6B.1 are accepted locally; 6B.6B.2 is active and uncommitted. The disconnected pre-smoke foundation adds a central default-OFF/prod-prohibited switch, server-only credential boundary, fixed-origin injected-fetch OpenAI gateway, strict usage/request identity, deterministic official-source TCMB acquisition, and reconciliation/smoke runbooks. Official `/responses/input_tokens` billing is unresolved, so real DEV smoke and production provider traffic remain blocked. Both AI migrations remain local-only; runtime, deployment, gates, and production are unchanged.
 
 PLN-004 verification:
 - targeted domain tests `22/22` PASS;
@@ -55,11 +55,11 @@ PLN-004 verification:
 
 ## Active task
 
-`AIC-002 / Evre 6B — gated provider-runtime prerequisites`
+`AIC-002 / Evre 6B — 6B.6B.2 controlled DEV pre-smoke foundation`
 
-Goal: review the locally accepted 6B.6B.1 read-only orchestrator, then resolve the separately gated prerequisites for one real DEV provider smoke without weakening the hard-ceiling boundary.
+Goal: finish local acceptance of the disconnected DEV-only gateway, activation/secret authority, usage/request identity, TCMB acquisition, and reconciliation policy without performing the live call or weakening the hard-ceiling boundary.
 
-Evre 6 AI Coach is the active macro phase. 6A is closed and 6B.1–6B.6B.1 are accepted locally. The orchestrator is an internal non-production composition with mocked count/generation transports; it does not authorize a live provider call, current Coach integration, deployment, production migration, plan mutation, proposal creation, Preview, Confirm, Apply, gate changes, or production activation. 6C–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
+Evre 6 AI Coach is the active macro phase. 6A is closed, 6B.1–6B.6B.1 are accepted locally, and 6B.6B.2 is active/uncommitted. The added gateway remains capability-gated and cannot become available while the official count-endpoint billing gate is unresolved. This work does not authorize a live provider call, current Coach integration, deployment, production migration, plan mutation, proposal creation, Preview, Confirm, Apply, gate changes, or production activation. 6C–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
 
 MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning foundations remain tracked work rather than being silently treated as closed by the Planner V2 pilot.
 
@@ -86,7 +86,7 @@ MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning founda
 
 ## NEXT EXACT STEP
 
-Review [Provider Runtime and Atomic Budget Safety V1](specs/AI_COACH_PROVIDER_RUNTIME_BUDGET_V1.md) and [Read-Only Provider Orchestrator V1](specs/AI_COACH_READ_ONLY_PROVIDER_ORCHESTRATOR_V1.md). Before one real DEV provider smoke, resolve the official billing treatment of `/responses/input_tokens` and cache-write tokens, add approved FX acquisition/current snapshot and update ownership, implement the real non-production gateway with request-ID/usage fidelity, and accept reconciliation/alerting. Production migration and runtime activation remain separate work requiring explicit approval.
+Complete local review of [Controlled DEV Runtime Pre-Smoke Foundation V1](specs/AI_COACH_CONTROLLED_DEV_RUNTIME_V1.md) and the [DEV Smoke/Reconciliation Runbook](specs/AI_COACH_DEV_SMOKE_RUNBOOK.md). Before one real DEV provider smoke, obtain an explicit official no-charge decision for `/responses/input_tokens` or separately approve a pre-reservable worst-case count-call model, then satisfy every smoke checklist item under a new explicit authorization. The current work must not execute the call. Production migration, runtime activation, deployment, and live Coach wiring remain separate work requiring explicit approval.
 
 Keep the accepted Evre 5 Planner V2 result intact. Do not widen preview access, re-enable Confirm/Apply, manufacture another proposal, or manually repair the accepted result. Production preview remains exact-profile-only; Confirm and Apply remain OFF.
 

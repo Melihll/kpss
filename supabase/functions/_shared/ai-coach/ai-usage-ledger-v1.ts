@@ -109,7 +109,11 @@ function eventFromRow(row: Record<string, unknown>): AiUsageEventV1 {
     nativeCost,
     tryCost,
     accountingMonth: String(row.accounting_month),
-    privacy: { rawPromptStored: false, rawConversationStored: false, fullCoachContextStored: false },
+    privacy: {
+      rawPromptStored: false as const,
+      rawConversationStored: false as const,
+      fullCoachContextStored: false as const,
+    },
   });
 }
 

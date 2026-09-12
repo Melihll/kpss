@@ -87,6 +87,7 @@ function harness(options: {
   countError?: Error;
   countFingerprint?: string;
   countModel?: string;
+  countClientRequestId?: string;
   reserveAllowed?: boolean;
   settlementStatus?: string;
   markError?: Error;
@@ -96,26 +97,28 @@ function harness(options: {
   providerUsage?: Record<string, unknown>;
   sentFingerprint?: string;
   sentModel?: string;
+  sentClientRequestId?: string;
+  sentProviderRequestId?: string;
   forceRuntimeUnknowns?: boolean;
 } = {}) {
   const counters: Counters = { count: 0, reserve: 0, mark: 0, provider: 0, settle: 0, release: 0, reconcile: 0, events: [], reservations: [] };
   const inputCountTransport: OpenAiInputCountTransportV1 = {
-    count: async ({ fingerprint }) => {
+    count: async ({ fingerprint, clientRequestId }) => {
       counters.count += 1;
       if (options.countError) throw options.countError;
-      return { object: "response.input_tokens", inputTokens: 1_000, countedAt: AT, requestFingerprint: options.countFingerprint ?? fingerprint.value, modelId: options.countModel ?? fingerprint.modelId, providerRequestId: "count_mock_1" };
+      return { object: "response.input_tokens", inputTokens: 1_000, countedAt: AT, requestFingerprint: options.countFingerprint ?? fingerprint.value, modelId: options.countModel ?? fingerprint.modelId, clientRequestId: options.countClientRequestId ?? clientRequestId, providerRequestId: "count_mock_1" };
     },
   };
   const generationTransport: OpenAiGenerationTransportV1 = {
-    execute: async ({ request, fingerprint }) => {
+    execute: async ({ request, fingerprint, clientRequestId }) => {
       counters.provider += 1;
       if (options.providerError) throw options.providerError;
-      if (options.outcomeUnknown) return { outcome: "unknown", startedAt: AT, observedAt: "2026-09-10T09:00:02.000Z", reason: "timeout_billing_unknown" };
+      if (options.outcomeUnknown) return { outcome: "unknown", startedAt: AT, observedAt: "2026-09-10T09:00:02.000Z", clientRequestId, reason: "timeout_billing_unknown" };
       const defaultFactPath = request.capability === "today_analysis" ? "evidence.today" : "evidence.week";
       const providerValue = options.providerValue ?? { answer: "Sağlanan kanıta göre kısa durum analizi.", sourceFactPaths: [defaultFactPath], acknowledgedUnknowns: [], staleOrBlockedWarnings: [] };
       const payload = providerPayload(1_000, providerValue);
       if (options.providerUsage) payload.usage = options.providerUsage as any;
-      return { outcome: "known", requestFingerprint: options.sentFingerprint ?? fingerprint.value, modelId: options.sentModel ?? fingerprint.modelId, payload, headers: null, httpStatus: 200, startedAt: AT, completedAt: "2026-09-10T09:00:01.000Z" };
+      return { outcome: "known", requestFingerprint: options.sentFingerprint ?? fingerprint.value, modelId: options.sentModel ?? fingerprint.modelId, clientRequestId: options.sentClientRequestId ?? clientRequestId, providerRequestId: options.sentProviderRequestId ?? "req_mock_1", payload, headers: { "x-request-id": "req_mock_1" }, httpStatus: 200, startedAt: AT, completedAt: "2026-09-10T09:00:01.000Z" };
     },
   };
   const input: any = {
@@ -307,5 +310,23 @@ describe("6B.6B.1 mocked read-only Coach orchestration A-Z", () => {
     const test = harness({ providerError: new Error("connection lost") });
     await expect(runReadOnlyCoachCapabilityV1(test.input)).rejects.toThrow("connection lost");
     expect(test.counters).toMatchObject({ provider: 1, settle: 0, reconcile: 1 });
+  });
+
+  it("rejects cross-request count identity before reservation", async () => {
+    const test = harness({ countClientRequestId: "count:another-request" });
+    await expect(runReadOnlyCoachCapabilityV1(test.input)).rejects.toThrow("INPUT_COUNT_RESPONSE_INVALID");
+    expect(test.counters).toMatchObject({ reserve: 0, provider: 0 });
+  });
+
+  it("rejects cross-attempt generation identity into reconciliation", async () => {
+    const test = harness({ sentClientRequestId: "attempt:another-attempt" });
+    await expect(runReadOnlyCoachCapabilityV1(test.input)).rejects.toThrow("SENT_REQUEST_MISMATCH");
+    expect(test.counters).toMatchObject({ settle: 0, reconcile: 1 });
+  });
+
+  it("rejects provider request-id mismatch into reconciliation", async () => {
+    const test = harness({ sentProviderRequestId: "req_different" });
+    await expect(runReadOnlyCoachCapabilityV1(test.input)).rejects.toThrow("PROVIDER_REQUEST_ID_MISMATCH");
+    expect(test.counters).toMatchObject({ settle: 0, reconcile: 1 });
   });
 });

@@ -12,6 +12,7 @@ import type {
   AiPricingCatalogV1,
   AiRouteCatalogV1,
   AiRuntimeEnvironmentV1,
+  AiUsageEventV1,
 } from "../../../../packages/domain/src/ai-coach/ai-economics-v1.ts";
 import type { CoachContextV1 } from "../../../../packages/domain/src/ai-coach/coach-context-v1.ts";
 import type { CoachEvidenceViewV1 } from "../../../../packages/domain/src/ai-coach/coach-evidence-view-v1.ts";
@@ -65,12 +66,14 @@ export interface OpenAiInputCountTransportV1 {
   readonly count: (input: {
     readonly request: OpenAiCoachRequestV1;
     readonly fingerprint: OpenAiCoachRequestFingerprintV1;
+    readonly clientRequestId: string;
   }) => Promise<{
     readonly object: "response.input_tokens";
     readonly inputTokens: number;
     readonly countedAt: string;
     readonly requestFingerprint: string;
     readonly modelId: string;
+    readonly clientRequestId: string;
     readonly providerRequestId: string | null;
   }>;
 }
@@ -80,11 +83,14 @@ export interface OpenAiGenerationTransportV1 {
     readonly request: OpenAiCoachRequestV1;
     readonly fingerprint: OpenAiCoachRequestFingerprintV1;
     readonly providerAttemptId: string;
+    readonly clientRequestId: string;
   }) => Promise<
     | {
         readonly outcome: "known";
         readonly requestFingerprint: string;
         readonly modelId: string;
+        readonly clientRequestId: string;
+        readonly providerRequestId: string | null;
         readonly payload: unknown;
         readonly headers: Headers | Readonly<Record<string, string>> | null;
         readonly httpStatus: number;
@@ -95,6 +101,7 @@ export interface OpenAiGenerationTransportV1 {
         readonly outcome: "unknown";
         readonly startedAt: string;
         readonly observedAt: string;
+        readonly clientRequestId: string;
         readonly reason: "timeout_billing_unknown" | "connection_outcome_unknown";
       }
   >;
@@ -153,6 +160,17 @@ export interface ReadOnlyCoachCapabilityResultV1 {
     readonly routeTier: string;
     readonly modelId: string;
     readonly requestFingerprint: string;
+    readonly countClientRequestId: string;
+    readonly countProviderRequestId: string | null;
+    readonly reservationId: string;
+    readonly providerAttemptId: string;
+    readonly providerClientRequestId: string;
+    readonly providerRequestId: string | null;
+    readonly providerResponseId: string | null;
+    readonly routeCatalogVersion: string;
+    readonly pricingVersion: string;
+    readonly fxPolicyVersion: string;
+    readonly fxSnapshotVersion: string;
   }>;
   readonly noMutationPerformed: true;
 }
@@ -238,9 +256,11 @@ export async function runReadOnlyCoachCapabilityV1(
   }, input.routeCatalog);
   const request = buildOpenAiCoachRequestV1({ route, capability: input.capability, evidence, locale: context.locale });
   const fingerprint = await fingerprintOpenAiCoachRequestV1(request);
+  const countClientRequestId = `count:${input.requestId}`;
+  const providerClientRequestId = `attempt:${input.providerAttemptId}`;
 
-  const counted = await input.dependencies.inputCountTransport.count({ request, fingerprint });
-  if (counted.object !== "response.input_tokens") throw new Error("OPENAI_INPUT_COUNT_RESPONSE_INVALID");
+  const counted = await input.dependencies.inputCountTransport.count({ request, fingerprint, clientRequestId: countClientRequestId });
+  if (counted.object !== "response.input_tokens" || counted.clientRequestId !== countClientRequestId) throw new Error("OPENAI_INPUT_COUNT_RESPONSE_INVALID");
   const countResult: AiOpenAiInputTokenCountResultV1 = createOpenAiInputTokenCountResultV1({
     request: { requestFingerprint: counted.requestFingerprint, modelId: counted.modelId, coverage: "complete_generation_request" },
     inputTokens: counted.inputTokens,
@@ -305,7 +325,7 @@ export async function runReadOnlyCoachCapabilityV1(
   await assertRequestStillIdentical(request, fingerprint);
   let execution: Awaited<ReturnType<OpenAiGenerationTransportV1["execute"]>>;
   try {
-    execution = await input.dependencies.generationTransport.execute({ request, fingerprint, providerAttemptId: input.providerAttemptId });
+    execution = await input.dependencies.generationTransport.execute({ request, fingerprint, providerAttemptId: input.providerAttemptId, clientRequestId: providerClientRequestId });
   } catch (error) {
     await accounting.reconcile({
       serviceClient: input.serviceClient,
@@ -324,7 +344,11 @@ export async function runReadOnlyCoachCapabilityV1(
     });
     throw new Error(`READ_ONLY_COACH_PROVIDER_OUTCOME_UNKNOWN:${execution.reason}`);
   }
-  if (execution.requestFingerprint !== fingerprint.value || execution.modelId !== fingerprint.modelId) {
+  if (
+    execution.requestFingerprint !== fingerprint.value
+    || execution.modelId !== fingerprint.modelId
+    || execution.clientRequestId !== providerClientRequestId
+  ) {
     await accounting.reconcile({
       serviceClient: input.serviceClient,
       reservationId: input.reservationId,
@@ -335,6 +359,7 @@ export async function runReadOnlyCoachCapabilityV1(
   }
 
   let settlement: Awaited<ReturnType<ReadOnlyCoachAccountingGatewayV1["settle"]>>;
+  let providerResponseId: string | null = null;
   try {
     const observation = extractOpenAiProviderAttemptObservationV1({
       payload: execution.payload,
@@ -346,6 +371,10 @@ export async function runReadOnlyCoachCapabilityV1(
       retryNumber: input.retryNumber ?? 0,
       fallbackFromAttemptId: input.fallbackFromAttemptId ?? null,
     });
+    if (observation.providerRequestId !== execution.providerRequestId) {
+      throw new Error("OPENAI_COACH_PROVIDER_REQUEST_ID_MISMATCH");
+    }
+    providerResponseId = observation.providerResponseId;
     const attempt = providerObservationToUsageEventAttemptV1(observation);
     const inputBoundViolated = attempt.usage.availability === "reported"
       && attempt.usage.inputTokens !== bound.inputTokenUpperBound;
@@ -384,7 +413,11 @@ export async function runReadOnlyCoachCapabilityV1(
   return Object.freeze({
     version: READ_ONLY_COACH_ORCHESTRATOR_V1_VERSION,
     response,
-    accounting: { reservationId: input.reservationId, reservationStatus: "settled", usageEventRecorded: true },
+    accounting: {
+      reservationId: input.reservationId,
+      reservationStatus: "settled" as const,
+      usageEventRecorded: true as const,
+    },
     observability: {
       requestId: input.requestId,
       correlationId: input.correlationId,
@@ -392,6 +425,17 @@ export async function runReadOnlyCoachCapabilityV1(
       routeTier: route.tier,
       modelId: route.modelId,
       requestFingerprint: fingerprint.value,
+      countClientRequestId,
+      countProviderRequestId: counted.providerRequestId,
+      reservationId: input.reservationId,
+      providerAttemptId: input.providerAttemptId,
+      providerClientRequestId,
+      providerRequestId: execution.providerRequestId,
+      providerResponseId,
+      routeCatalogVersion: route.catalogVersion,
+      pricingVersion: route.pricingVersion,
+      fxPolicyVersion: input.fxSnapshot.policyVersion,
+      fxSnapshotVersion: input.fxSnapshot.snapshotVersion,
     },
     noMutationPerformed: true,
   });

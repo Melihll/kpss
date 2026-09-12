@@ -159,7 +159,7 @@ describe("OpenAI production runtime catalog V1", () => {
       serviceTier: "default",
       regionalProcessingAllowed: false,
       gpt54LongContextAllowed: false,
-      cacheWriteBillingTreatment: "unverified_must_be_zero",
+      cacheWriteBillingTreatment: "gpt54_documented_no_additional_charge",
       inputTokenCountEndpointBilling: "unresolved",
     });
   });

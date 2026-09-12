@@ -1,6 +1,6 @@
 # AI Coach — Read-Only Provider Orchestrator V1
 
-Status: `EVRE_6B.6B.1_LOCAL_ENGINEERING_ACCEPTANCE — PRODUCTION_DISABLED — LIVE_COACH_UNCHANGED — CONFIRM_OFF — APPLY_OFF`
+Status: `EVRE_6B.6B.1_LOCAL_ENGINEERING_ACCEPTANCE — 6B.6B.2_PRE_SMOKE_ACTIVE — PRODUCTION_DISABLED — LIVE_COACH_UNCHANGED — CONFIRM_OFF — APPLY_OFF`
 
 Contract versions:
 
@@ -52,13 +52,13 @@ Corrections and hardening:
 
 Official facts verified on 2026-09-12:
 
-- OpenAI documents `POST /responses/input_tokens` and its request shape: <https://developers.openai.com/api/reference/typescript/resources/responses/subresources/input_tokens/methods/count>;
-- Responses `max_output_tokens` includes visible output and reasoning tokens, and usage can include cached/cache-write input details plus reasoning output details: <https://developers.openai.com/api/reference/cli/resources/responses/methods/retrieve>;
+- OpenAI documents `POST /responses/input_tokens` and its request shape: <https://developers.openai.com/api/reference/typescript/resources/responses/subresources/input_tokens>;
+- Responses `max_output_tokens` includes visible output and reasoning tokens, and usage can include cached/cache-write input details plus reasoning output details: <https://developers.openai.com/api/reference/cli/resources/responses/methods/create>;
 - GPT-5.4 is documented with a 1,050,000-token context window, `$2.50` input, `$0.25` cached input, and `$15.00` output per million tokens: <https://developers.openai.com/api/docs/models/gpt-5.4>;
 - GPT-5.4 mini is documented with a 400,000-token context window and `$0.75 / $0.075 / $4.50` rates: <https://developers.openai.com/api/docs/models/gpt-5.4-mini>;
 - GPT-5.4 nano is documented with a 400,000-token context window and `$0.20 / $0.02 / $1.25` rates: <https://developers.openai.com/api/docs/models/gpt-5.4-nano>.
 
-These facts make the checked-in server catalog production-shaped; they do not make a provider call eligible. Pricing/version review ownership, live FX acquisition, token-count endpoint billing, cache-write billing, operational controls, production migration, secrets, deployment, and runtime activation remain separate gates.
+These facts make the checked-in server catalog production-shaped; they do not make a provider call eligible. 6B.6B.2 has since verified that GPT-5.4 has no separate cache-write charge, added the TCMB acquisition/parser and update-owner boundary, a direct injected-fetch non-production gateway, strict usage/request-ID fidelity, a central default-OFF kill switch, server-secret boundary, and reconciliation/smoke runbook. The count endpoint's billing treatment remains unresolved and keeps both the real DEV smoke and production blocked.
 
 ## 3. TCMB FX review
 
@@ -118,6 +118,6 @@ Loopback integration runs the same orchestrator against real local Coach rows an
 
 Accepted local evidence on 2026-09-12 is: focused context/evidence/signal/economics/provider/orchestrator `139/139`; full loopback integration/RLS `157/157`; full non-integration `1,096/1,096`; workspace typecheck PASS; local DB lint PASS; AI economics, Coach, preview, and canonical Planner read-only safety PASS; generated AI Coach bundle byte-identical before/after canonical rebuild; docs consistency and diff check PASS. The real local orchestrator path reported domain mutation delta `0`, Planner lifecycle/proposal delta `0`, and real provider network calls `0`.
 
-6B.6B.1 is locally closed as an engineering foundation. Closure does not authorize one real DEV call. That requires a separately approved scope resolving count-endpoint billing, cache-write billing, FX acquisition/current snapshot, configuration update ownership, a real gateway with timeout/request-ID/usage fidelity, operational reconciliation/alerting, secrets, production migration/deployment, and kill/rollback controls.
+6B.6B.1 is locally closed as an engineering foundation. 6B.6B.2 pre-smoke work is documented in [Controlled DEV Runtime Pre-Smoke Foundation V1](AI_COACH_CONTROLLED_DEV_RUNTIME_V1.md) and [DEV Smoke Runbook](AI_COACH_DEV_SMOKE_RUNBOOK.md). One real DEV call is still not authorized: the count-endpoint billing fact is unresolved and no fresh runtime snapshot/secret/switch is being activated. Production additionally requires independent migration, deployment, current-Coach wiring, and limited-release approval.
 
 Production remains untouched. The current Coach runtime is unchanged. Provider production eligibility is false. Planner Confirm and Apply remain OFF.

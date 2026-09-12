@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-09-11
+Last updated: 2026-09-12
 
 ## Workflow
 
@@ -50,7 +50,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | ID | Phase | Priority | Title | Status |
 | --- | --- | --- | --- | --- |
 | `AIC-001` | 6A | `P0` | Product / Authority / Cost Contract | `DONE` |
-| `AIC-002` | 6B | `P0` | CoachContextV1 | `IN_PROGRESS — 6B.6B.1 ACCEPTED` |
+| `AIC-002` | 6B | `P0` | CoachContextV1 | `IN_PROGRESS — 6B.6B.2 ACTIVE / NOT_READY_FOR_DEV_SMOKE` |
 | `AIC-003` | 6C | `P1` | Reactive Coach | `TODO` |
 | `AIC-004` | 6D | `P1` | Proactive Coach | `TODO` |
 | `AIC-005` | 6E | `P0` | Planner V2 Integration | `TODO` |
@@ -82,7 +82,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-002` / Evre 6B — CoachContextV1
 
 - Priority: `P0`
-- Status: `IN_PROGRESS — 6B.1–6B.6B.1 ACCEPTED — PRODUCTION ACTIVATION BLOCKED`
+- Status: `IN_PROGRESS — 6B.1–6B.6B.1 ACCEPTED — 6B.6B.2 ACTIVE / NOT_READY_FOR_DEV_SMOKE — PRODUCTION ACTIVATION BLOCKED`
 - Dependency: closed `AIC-001`; accepted 6B.1 checkpoint `acd16ffb2263b5285b14bd7329ff4357d7971e00`.
 - Desired outcome: One immutable, minimal, user-scoped context envelope supplies canonical facts, provenance, freshness, confidence/authority, unknowns, and bounded conversation state while beginning centralized router/pricing and AI usage/cost telemetry.
 - Acceptance criteria:
@@ -104,6 +104,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 - 6B.5 local acceptance (2026-09-11): [Central Router, Pricing, FX and Usage Ledger V1](specs/AI_COACH_ROUTER_COST_TELEMETRY_V1.md) defines capability routing, production-fail-closed fixture-only versioned pricing/FX, `AiUsageEventV1`, Europe/Istanbul monthly accounting, deterministic preflight, and a service-owned append-only ledger. The migration is applied only to loopback local Supabase for RLS/idempotency/immutability tests. Atomic persistent user-month reservation, authoritative production pricing/FX, production migration, provider metering, and runtime wiring remain hard prerequisites/open work for 6B.6.
 - 6B.6A local acceptance (2026-09-11): [Provider Runtime and Atomic Budget Safety V1](specs/AI_COACH_PROVIDER_RUNTIME_BUDGET_V1.md) adds a production-authoritative configuration boundary that defaults to unavailable, complete billable-token-bound gating, defensive provider-attempt observation, atomic user-wide Istanbul-month worst-case reservation, service-only lifecycle RPCs, transactional ledger settlement, reconciliation states, and read-only operational views. Exact `290 + 10` / `290 + 10.01` and concurrent saturation tests pass. At that checkpoint production route/pricing/FX/billable-bound facts and update mechanisms were absent; no provider or user-facing runtime was wired, the migration was local-only, and 6B remained in progress.
 - 6B.6B.1 local acceptance (2026-09-12): [Read-Only Provider Orchestrator V1](specs/AI_COACH_READ_ONLY_PROVIDER_ORCHESTRATOR_V1.md) audits the manual provider foundation, pins current official GPT-5.4 snapshot/pricing facts, blocks regional/long-context/unmodeled billing, and connects canonical context/evidence/signals through immutable request identity, exact mocked input count, worst-case TRY authorization, real local atomic reservation/ledger, mocked provider observation, and grounded response validation. It is disconnected from live Coach and rejects production. Count-endpoint/cache-write billing, acquired FX, operations, real gateway, production migration/deployment, and activation remain blockers; 6B remains in progress.
+- 6B.6B.2 active local work (2026-09-12): [Controlled DEV Runtime Pre-Smoke Foundation V1](specs/AI_COACH_CONTROLLED_DEV_RUNTIME_V1.md) and the [DEV Smoke/Reconciliation Runbook](specs/AI_COACH_DEV_SMOKE_RUNBOOK.md) define a central default-OFF, production-prohibited, server-only allowlisted activation contract; closure-held API-key authority; a fixed-origin injected-fetch gateway; strict usage/request-identity parsing; deterministic official-source TCMB acquisition and update ownership; and critical fail-closed reconciliation. No real provider call or runtime wiring occurs. Selected GPT-5.4 cache-write treatment is resolved as no additional charge, but official `/responses/input_tokens` billing remains unresolved; therefore the future single DEV smoke and all production provider traffic remain blocked.
 
 ## `AIC-003` / Evre 6C — Reactive Coach
 
