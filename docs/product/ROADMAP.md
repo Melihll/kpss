@@ -68,7 +68,7 @@ M1 is complete only when:
 - `CLOSED`: Evre 5 Planner V2 / Planner Truth engineering, exact-profile production acceptance, and final Week/Today real-user observation.
 - `ACTIVE MACRO PHASE`: Evre 6 AI Coach.
 - `CLOSED SUB-PHASE`: 6A Product / Authority / Cost Contract; final decisions accepted, docs only, runtime unchanged, production Confirm OFF, Apply OFF.
-- `ACTIVE SUB-PHASE`: 6B CoachContextV1. 6B.1–6B.6A are accepted locally. Atomic worst-case reservation exists only in local migration evidence, production route/pricing/FX/billable-bound configuration remains unavailable, and runtime wiring remains separate.
+- `ACTIVE SUB-PHASE`: 6B CoachContextV1. 6B.1–6B.6B.1 are accepted locally. The read-only orchestrator uses real local reservation/ledger authority with mocked transports, remains disconnected from live Coach, and rejects production; provider production eligibility remains false.
 - `CONTINUING FOUNDATIONS`: natural `PLN-002` Extra Study acceptance and gated `PLN-003`/`PLN-004`/`MAT-001`/`PLN-005` maturity work.
 
 ## Evre 6 — AI Coach
@@ -99,7 +99,7 @@ The normative product, truth, authority, scenario, proactive, cost, and phase co
 | Sequence | Sub-phase | Status | Outcome |
 | --- | --- | --- | --- |
 | 6A | Product / Authority / Cost Contract | `CLOSED` | Final product outcomes, truth sources, non-authority, 20 scenarios, proactive triggers, cost envelope, and phase gates accepted. |
-| 6B | CoachContextV1 | `ACTIVE — 6B.6A ACCEPTED` | 6B.1–6B.6A are accepted locally. 6B.6A implements production-config and billable-bound fail-closed gates, defensive provider usage observation, service-only atomic Istanbul-month worst-case reservation, transactional ledger settlement, reconciliation, and operational views. Approved current production route/pricing/FX/billable-bound data, runtime orchestration, production migration, and activation remain absent. |
+| 6B | CoachContextV1 | `ACTIVE — 6B.6B.1 ACCEPTED` | 6B.1–6B.6B.1 are accepted locally. The disconnected read-only orchestrator composes canonical context/evidence/signals, centralized routing, an immutable fingerprinted request, exact mocked count, billing proof, worst-case TRY authorization, atomic Istanbul-month reservation, mocked attempt, ledger settlement/reconciliation, and grounded output. Live runtime wiring, real provider transport, authoritative acquired FX, unresolved billing treatment, production migration/deployment, and activation remain absent. |
 | 6C | Reactive Coach | `NOT_STARTED` | Deliver user-initiated Explain / Diagnose / Guide with grounding, fallbacks, and metering. |
 | 6D | Proactive Coach | `NOT_STARTED` | Add deterministic in-app triggers, cooldowns, dedupe, attention controls, and valid silence. |
 | 6E | Planner V2 integration | `NOT_STARTED` | Route every Coach planning mutation to the one canonical Planner V2 lifecycle. |

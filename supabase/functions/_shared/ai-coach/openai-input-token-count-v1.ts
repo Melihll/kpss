@@ -13,12 +13,12 @@ export interface AiOpenAiCompleteRequestIdentityV1 {
    * model, instructions, input/messages, tools/schema and every other
    * field that can affect provider input tokenization.
    */
-  readonly coverage: "complete_provider_counted_payload";
+  readonly coverage: "complete_generation_request";
 }
 
 export interface AiOpenAiInputTokenCountResultV1 {
   readonly version: typeof AI_OPENAI_INPUT_TOKEN_COUNT_V1_VERSION;
-  readonly authority: "openai_responses_input_token_count";
+  readonly authority: "openai_responses_input_token_count" | "test_fixture";
   readonly endpoint: typeof AI_OPENAI_INPUT_TOKEN_COUNT_ENDPOINT_V1;
 
   readonly requestFingerprint: string;
@@ -36,7 +36,8 @@ export interface AiOpenAiInputTokenCountResultV1 {
    * treatment before treating it as cost-free infrastructure.
    */
   readonly billingTreatment:
-    "production_billing_status_unverified";
+    | "production_billing_status_unverified"
+    | "test_fixture_no_charge";
 }
 
 function isInstant(value: string): boolean {
@@ -48,9 +49,20 @@ export function createOpenAiInputTokenCountResultV1(input: {
   readonly inputTokens: number;
   readonly countedAt: string;
   readonly providerRequestId: string | null;
+  readonly authority?: AiOpenAiInputTokenCountResultV1["authority"];
+  readonly billingTreatment?: AiOpenAiInputTokenCountResultV1["billingTreatment"];
 }): AiOpenAiInputTokenCountResultV1 {
+  const authority = input.authority ?? "openai_responses_input_token_count";
+  const billingTreatment = input.billingTreatment ?? "production_billing_status_unverified";
   if (
-    input.request.coverage !== "complete_provider_counted_payload"
+    (authority === "test_fixture" && billingTreatment !== "test_fixture_no_charge")
+    || (authority === "openai_responses_input_token_count" && billingTreatment !== "production_billing_status_unverified")
+  ) {
+    throw new Error("AI_OPENAI_INPUT_COUNT_AUTHORITY_BILLING_MISMATCH");
+  }
+
+  if (
+    input.request.coverage !== "complete_generation_request"
     || !input.request.requestFingerprint.trim()
     || !input.request.modelId.trim()
   ) {
@@ -74,7 +86,7 @@ export function createOpenAiInputTokenCountResultV1(input: {
 
   return Object.freeze({
     version: AI_OPENAI_INPUT_TOKEN_COUNT_V1_VERSION,
-    authority: "openai_responses_input_token_count",
+    authority,
     endpoint: AI_OPENAI_INPUT_TOKEN_COUNT_ENDPOINT_V1,
 
     requestFingerprint: input.request.requestFingerprint,
@@ -86,7 +98,7 @@ export function createOpenAiInputTokenCountResultV1(input: {
 
     providerRequestId: input.providerRequestId,
 
-    billingTreatment: "production_billing_status_unverified",
+    billingTreatment,
   });
 }
 
@@ -95,7 +107,7 @@ export function assertOpenAiInputCountMatchesProviderRequestV1(
   request: AiOpenAiCompleteRequestIdentityV1,
 ): number {
   if (
-    request.coverage !== "complete_provider_counted_payload"
+    request.coverage !== "complete_generation_request"
     || count.requestFingerprint !== request.requestFingerprint
     || count.modelId !== request.modelId
   ) {

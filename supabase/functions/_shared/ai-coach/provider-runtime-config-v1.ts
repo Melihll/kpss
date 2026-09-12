@@ -31,10 +31,17 @@ export interface AiProviderBillableBoundV1 {
   readonly source: AiAuthoritativeConfigSourceV1;
   readonly inputTokenUpperBound: number;
   readonly outputTokenUpperBound: number;
+  readonly requestFingerprint: string;
+  readonly inputBoundMethod: "openai_responses_input_tokens_exact" | "approved_static_test_bound";
+  readonly inputCountVersion: string;
+  readonly inputCountBillingTreatment: "documented_no_charge" | "unresolved" | "test_fixture_no_charge";
   readonly requestPayloadCoverage: "complete";
   readonly inputBoundEnforcement: "server_rejects_above_bound";
   readonly providerOutputLimitEnforced: true;
   readonly reasoningTokensPricedAs: "output";
+  readonly endpointClass: "global_standard" | "test_fixture";
+  readonly serviceTier: "default" | "test_fixture";
+  readonly cacheWriteBillingTreatment: "documented_no_additional_charge" | "unresolved" | "test_fixture";
   readonly coveredBillableTokenClasses: readonly ["input", "cached_input", "output", "reasoning_output"];
   readonly uncoveredBillableTokenClasses: readonly string[];
 }
@@ -51,6 +58,8 @@ export interface AiProviderCostAuthorizationV1 {
   readonly fxPolicyVersion: string;
   readonly fxSnapshotVersion: string;
   readonly billingBoundVersion: string;
+  readonly providerRequestFingerprint: string;
+  readonly inputCountVersion: string;
   readonly inputTokenUpperBound: number;
   readonly outputTokenUpperBound: number;
   readonly tryMaximum: number;
@@ -140,12 +149,21 @@ function billingBoundIsComplete(value: AiProviderBillableBoundV1, route: AiRoute
     && sourceIsAuthoritative(value.source, evaluatedAt)
     && Number.isInteger(value.inputTokenUpperBound)
     && value.inputTokenUpperBound > 0
+    && typeof value.requestFingerprint === "string"
+    && Boolean(value.requestFingerprint.trim())
+    && typeof value.inputCountVersion === "string"
+    && Boolean(value.inputCountVersion.trim())
+    && value.inputCountBillingTreatment === "documented_no_charge"
+    && (value.inputBoundMethod === "openai_responses_input_tokens_exact" || value.inputBoundMethod === "approved_static_test_bound")
     && Number.isInteger(value.outputTokenUpperBound)
     && value.outputTokenUpperBound === route.maxOutputTokens
     && value.requestPayloadCoverage === "complete"
     && value.inputBoundEnforcement === "server_rejects_above_bound"
     && value.providerOutputLimitEnforced === true
     && value.reasoningTokensPricedAs === "output"
+    && (value.endpointClass === "global_standard" || value.endpointClass === "test_fixture")
+    && (value.serviceTier === "default" || value.serviceTier === "test_fixture")
+    && value.cacheWriteBillingTreatment === "documented_no_additional_charge"
     && JSON.stringify(value.coveredBillableTokenClasses) === JSON.stringify(["input", "cached_input", "output", "reasoning_output"])
     && Array.isArray(value.uncoveredBillableTokenClasses)
     && value.uncoveredBillableTokenClasses.length === 0;
@@ -194,9 +212,15 @@ export function authorizeProductionProviderCostMaximumV1(
   const bound = resolution.config.billingBounds.find((item) => item.tier === route.tier && item.provider === route.provider && item.modelId === route.modelId);
   const price = resolution.config.pricingCatalog.entries.find((item) => item.provider === route.provider && item.modelId === route.modelId && Date.parse(item.effectiveFrom) <= Date.parse(resolution.evaluatedAt) && (item.effectiveTo === null || Date.parse(resolution.evaluatedAt) < Date.parse(item.effectiveTo)));
   if (!bound || !price) throw new Error("AI_PRODUCTION_COST_BOUND_UNAVAILABLE");
+  if (bound.inputCountBillingTreatment !== "documented_no_charge") {
+    throw new Error("AI_PRODUCTION_INPUT_COUNT_BILLING_UNRESOLVED");
+  }
+  if (bound.cacheWriteBillingTreatment !== "documented_no_additional_charge") {
+    throw new Error("AI_PRODUCTION_CACHE_WRITE_BILLING_UNRESOLVED");
+  }
   const maximumInputRate = Math.max(price.inputPerMillionTokens, price.cachedInputPerMillionTokens ?? price.inputPerMillionTokens);
   const nativeMaximum = bound.inputTokenUpperBound * maximumInputRate / 1_000_000 + bound.outputTokenUpperBound * price.outputPerMillionTokens / 1_000_000;
-  const tryMaximum = Math.round(nativeMaximum * resolution.config.fxSnapshot.rate * 1_000_000) / 1_000_000;
+  const tryMaximum = Math.ceil(nativeMaximum * resolution.config.fxSnapshot.rate * 1_000_000) / 1_000_000;
   if (!Number.isFinite(tryMaximum) || tryMaximum <= 0 || tryMaximum > 300) throw new Error("AI_PRODUCTION_COST_MAXIMUM_NOT_RESERVABLE");
   return Object.freeze({
     version: AI_PROVIDER_COST_AUTHORIZATION_V1_VERSION,
@@ -210,6 +234,88 @@ export function authorizeProductionProviderCostMaximumV1(
     fxPolicyVersion: resolution.config.fxSnapshot.policyVersion,
     fxSnapshotVersion: resolution.config.fxSnapshot.snapshotVersion,
     billingBoundVersion: bound.version,
+    providerRequestFingerprint: bound.requestFingerprint,
+    inputCountVersion: bound.inputCountVersion,
+    inputTokenUpperBound: bound.inputTokenUpperBound,
+    outputTokenUpperBound: bound.outputTokenUpperBound,
+    tryMaximum,
+  });
+}
+
+export function authorizeRequestProviderCostMaximumV1(input: {
+  readonly route: AiModelRouteDecisionV1;
+  readonly bound: AiProviderBillableBoundV1;
+  readonly pricingCatalog: AiPricingCatalogV1;
+  readonly fxSnapshot: AiFxSnapshotV1;
+  readonly evaluatedAt: string;
+}): AiProviderCostAuthorizationV1 {
+  const { route, bound, pricingCatalog, fxSnapshot } = input;
+  if (!isInstant(input.evaluatedAt)) throw new Error("AI_REQUEST_COST_EVALUATED_AT_INVALID");
+  if (
+    route.disposition !== "model" || route.provider === null || route.modelId === null || route.tier === "no_model"
+    || bound.provider !== route.provider || bound.modelId !== route.modelId || bound.tier !== route.tier
+    || bound.pricingVersion !== route.pricingVersion || pricingCatalog.version !== route.pricingVersion
+    || bound.outputTokenUpperBound !== route.maxOutputTokens || bound.uncoveredBillableTokenClasses.length > 0
+    || !bound.requestFingerprint.trim() || bound.inputBoundMethod !== "openai_responses_input_tokens_exact"
+  ) throw new Error("AI_REQUEST_COST_BOUND_INVALID");
+  if (route.runtimeEnvironment === "production" && bound.inputCountBillingTreatment !== "documented_no_charge") {
+    throw new Error("AI_PRODUCTION_INPUT_COUNT_BILLING_UNRESOLVED");
+  }
+  if (route.runtimeEnvironment === "production" && bound.cacheWriteBillingTreatment !== "documented_no_additional_charge") {
+    throw new Error("AI_PRODUCTION_CACHE_WRITE_BILLING_UNRESOLVED");
+  }
+  if (route.runtimeEnvironment !== "production" && bound.inputCountBillingTreatment !== "test_fixture_no_charge") {
+    throw new Error("AI_REQUEST_INPUT_COUNT_BILLING_INVALID");
+  }
+  const price = pricingCatalog.entries.find((entry) =>
+    entry.provider === route.provider && entry.modelId === route.modelId
+    && Date.parse(entry.effectiveFrom) <= Date.parse(input.evaluatedAt)
+    && (entry.effectiveTo === null || Date.parse(input.evaluatedAt) < Date.parse(entry.effectiveTo))
+  );
+  if (!price || price.billingCurrency !== fxSnapshot.baseCurrency || fxSnapshot.quoteCurrency !== "TRY") {
+    throw new Error("AI_REQUEST_COST_PRICE_OR_FX_UNAVAILABLE");
+  }
+  if (route.runtimeEnvironment === "production" && (pricingCatalog.environment !== "production" || price.sourceKind !== "authoritative_config" || fxSnapshot.sourceKind !== "authoritative_config")) {
+    throw new Error("AI_REQUEST_COST_AUTHORITY_INVALID");
+  }
+  if (route.runtimeEnvironment !== "production" && pricingCatalog.environment === "production") {
+    throw new Error("AI_REQUEST_COST_AUTHORITY_INVALID");
+  }
+  if (
+    !Number.isFinite(fxSnapshot.rate) || fxSnapshot.rate <= 0
+    || !Number.isInteger(fxSnapshot.maxAgeSeconds) || fxSnapshot.maxAgeSeconds <= 0
+    || Date.parse(fxSnapshot.loadedAt) < Date.parse(fxSnapshot.effectiveAt)
+    || Date.parse(fxSnapshot.loadedAt) > Date.parse(input.evaluatedAt)
+    || Date.parse(input.evaluatedAt) < Date.parse(fxSnapshot.effectiveAt)
+    || Date.parse(input.evaluatedAt) - Date.parse(fxSnapshot.effectiveAt) > fxSnapshot.maxAgeSeconds * 1_000
+  ) {
+    throw new Error("AI_REQUEST_COST_FX_UNAVAILABLE");
+  }
+  // Cache hits are never assumed. Every counted input token is reserved at
+  // the more expensive of cached/non-cached input rates; for selected OpenAI
+  // routes this is the ordinary non-cached rate. max_output_tokens covers
+  // visible+reasoning output.
+  const maximumInputRate = Math.max(price.inputPerMillionTokens, price.cachedInputPerMillionTokens ?? price.inputPerMillionTokens);
+  const nativeMaximum = bound.inputTokenUpperBound * maximumInputRate / 1_000_000
+    + bound.outputTokenUpperBound * price.outputPerMillionTokens / 1_000_000;
+  const tryMaximum = Math.ceil(nativeMaximum * fxSnapshot.rate * 1_000_000) / 1_000_000;
+  if (!Number.isFinite(tryMaximum) || tryMaximum <= 0 || tryMaximum > 300) {
+    throw new Error("AI_REQUEST_COST_MAXIMUM_NOT_RESERVABLE");
+  }
+  return Object.freeze({
+    version: AI_PROVIDER_COST_AUTHORIZATION_V1_VERSION,
+    authority: route.runtimeEnvironment === "production" ? "production_runtime_config" : "test_fixture",
+    runtimeEnvironment: route.runtimeEnvironment,
+    provider: route.provider,
+    modelId: route.modelId,
+    modelTier: route.tier,
+    routeCatalogVersion: route.catalogVersion,
+    pricingVersion: route.pricingVersion,
+    fxPolicyVersion: fxSnapshot.policyVersion,
+    fxSnapshotVersion: fxSnapshot.snapshotVersion,
+    billingBoundVersion: bound.version,
+    providerRequestFingerprint: bound.requestFingerprint,
+    inputCountVersion: bound.inputCountVersion,
     inputTokenUpperBound: bound.inputTokenUpperBound,
     outputTokenUpperBound: bound.outputTokenUpperBound,
     tryMaximum,

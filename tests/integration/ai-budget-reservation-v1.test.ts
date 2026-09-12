@@ -69,6 +69,8 @@ function reservationInput(service: SupabaseClient, userId: string, profileId: st
     fxPolicyVersion: AI_FX_SNAPSHOT_V1_TEST_FIXTURE.policyVersion,
     fxSnapshotVersion: AI_FX_SNAPSHOT_V1_TEST_FIXTURE.snapshotVersion,
     billingBoundVersion: AI_PROVIDER_BILLABLE_BOUND_V1_VERSION,
+    providerRequestFingerprint: "sha256:test-reservation-request",
+    inputCountVersion: "test-input-count-v1",
     inputTokenUpperBound: 50_000,
     outputTokenUpperBound: route.maxOutputTokens,
     tryMaximum: amount,

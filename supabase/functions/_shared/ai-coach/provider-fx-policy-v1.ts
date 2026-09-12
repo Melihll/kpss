@@ -7,7 +7,7 @@ export const AI_T_C_M_B_USD_TRY_FX_POLICY_V1_VERSION =
   "ai-tcmb-usd-try-fx-policy-v1" as const;
 
 export const AI_T_C_M_B_USD_TRY_SOURCE_V1 =
-  "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB%2BTR/Main%2BMenu/Istatistikler/Doviz%2BKurlari" as const;
+  "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB%2BTR/Main%2BMenu/Temel%2BFaaliyetler/Doviz%2BEfektif/Doviz%2Bve%2BEfektif%2BPiyasalari/Gosterge%2BNiteligindeki%2BKurlar" as const;
 
 export const AI_T_C_M_B_USD_TRY_SOURCE_ID_V1 =
   "tcmb-indicative-usd-try-selling-rate" as const;
@@ -15,9 +15,11 @@ export const AI_T_C_M_B_USD_TRY_SOURCE_ID_V1 =
 /**
  * Maximum runtime age of an approved FX snapshot.
  *
- * 96 hours permits ordinary weekend continuity while remaining bounded.
- * If no approved TCMB snapshot is refreshed within this window,
- * production AI cost authorization must fail closed.
+ * 96 hours permits an ordinary weekend only. TCMB does not determine an
+ * indicative rate on weekends, public holidays, or half working-days. A
+ * longer holiday can therefore make AI cost authorization unavailable; the
+ * policy deliberately fails closed instead of guessing a holiday calendar or
+ * carrying an older rate indefinitely.
  */
 export const AI_T_C_M_B_USD_TRY_MAX_AGE_SECONDS_V1 =
   96 * 60 * 60;
@@ -39,6 +41,12 @@ export const AI_T_C_M_B_USD_TRY_FX_POLICY_V1 = Object.freeze({
    * buying side for TRY cost authorization.
    */
   rateBasis: "indicative_selling" as const,
+
+  rateNature: "indicative_non_binding" as const,
+
+  effectiveAtSemantics: "official_publication_instant" as const,
+
+  loadedAtSemantics: "server_acquisition_and_approval_instant" as const,
 
   maxAgeSeconds: AI_T_C_M_B_USD_TRY_MAX_AGE_SECONDS_V1,
 
@@ -63,13 +71,13 @@ export interface CreateApprovedTcmbUsdTrySnapshotInputV1 {
   readonly rate: number;
 
   /**
-   * Instant representing the source rate's effective timestamp/date
-   * normalized by the server-side acquisition process.
+   * Official TCMB website publication instant for the selected rate. It is
+   * not the later accounting-use date and not the server fetch time.
    */
   readonly effectiveAt: string;
 
   /**
-   * Instant when our server-side process loaded and approved it.
+   * Instant when our server-side acquisition process loaded and approved it.
    */
   readonly loadedAt: string;
 }

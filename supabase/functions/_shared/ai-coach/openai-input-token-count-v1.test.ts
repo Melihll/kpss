@@ -10,7 +10,7 @@ import {
 const request = {
   requestFingerprint: "sha256:complete-request-a",
   modelId: "gpt-5.4-mini",
-  coverage: "complete_provider_counted_payload",
+  coverage: "complete_generation_request",
 } as const;
 
 describe("OpenAI complete input-token count V1", () => {
@@ -95,6 +95,26 @@ describe("OpenAI complete input-token count V1", () => {
         providerRequestId: null,
       }),
     ).toThrow("AI_OPENAI_INPUT_COUNT_INVALID");
+  });
+
+  it("cannot label fixture counting as production-authoritative or vice versa", () => {
+    expect(() => createOpenAiInputTokenCountResultV1({
+      request,
+      inputTokens: 10,
+      countedAt: "2026-09-11T20:00:00.000Z",
+      providerRequestId: null,
+      authority: "test_fixture",
+      billingTreatment: "production_billing_status_unverified",
+    })).toThrow("AI_OPENAI_INPUT_COUNT_AUTHORITY_BILLING_MISMATCH");
+
+    expect(() => createOpenAiInputTokenCountResultV1({
+      request,
+      inputTokens: 10,
+      countedAt: "2026-09-11T20:00:00.000Z",
+      providerRequestId: null,
+      authority: "openai_responses_input_token_count",
+      billingTreatment: "test_fixture_no_charge",
+    })).toThrow("AI_OPENAI_INPUT_COUNT_AUTHORITY_BILLING_MISMATCH");
   });
 
   it("remains production-ineligible by default", () => {

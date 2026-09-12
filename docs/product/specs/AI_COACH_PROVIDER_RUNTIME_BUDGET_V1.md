@@ -37,9 +37,9 @@ This chain is contractual and locally tested but not connected to the current Co
 
 Every callable production route must additionally have one authoritative billable-bound contract. That contract must cover the complete request payload; place a server-enforced upper bound on input tokens; confirm that the provider-enforced output limit includes visible and reasoning output; map reasoning tokens to the authoritative output price; enumerate input, cached-input, output, and reasoning-output as covered classes; and declare no uncovered billable token class. UTF-8 evidence bytes remain a conservative planning estimate only and are not accepted as this production billing proof.
 
-No production route catalog or model identifiers are embedded in 6B.6A. `null`, fixture, non-production, incomplete, future-effective, unverified, or billing-unbounded input resolves to explicit unavailable state. Feature code and clients cannot select provider, model, tier, pricing version, retry, fallback, or reservation amount. The current user-facing Coach runtime does not use this resolver yet.
+The later 6B.6B.1 audit adds a pinned, server-owned OpenAI route/pricing candidate from current official model documentation. `null`, fixture, non-production, incomplete, future-effective, unverified, or billing-unbounded input still resolves unavailable. Feature code and clients cannot select provider, model, tier, pricing version, retry, fallback, or reservation amount. The current user-facing Coach runtime does not use this resolver.
 
-Authoritative current provider/model facts were not available in the repository and were not invented. Production route status is therefore `production_config_missing` until an approved server-side source is supplied and operationally reviewed.
+The catalog alone is insufficient: token-count endpoint billing and cache-write billing remain unresolved, authoritative live FX acquisition/current snapshot and update ownership are absent, and production billing bounds remain empty. Provider-call eligibility therefore remains false. See [Read-Only Provider Orchestrator V1](AI_COACH_READ_ONLY_PROVIDER_ORCHESTRATOR_V1.md).
 
 ## 3. Pricing and FX authority
 
@@ -47,7 +47,7 @@ Every production route must have a matching effective pricing entry marked `auth
 
 The FX boundary requires provider currency to TRY, a positive rate, snapshot/source/version identity, effective time, load time, and a positive maximum age. Production accepts only `authoritative_config` snapshots that are effective, loaded no earlier than their effective time, not future-loaded, and fresh at evaluation time. Missing, fixture, invalid, or stale FX fails closed. Provider requests do not fetch FX from the internet.
 
-No approved production pricing catalog or FX source/update mechanism is included. The operator must later provide versioned server configuration, approval evidence, refresh ownership, alerting, and rotation policy. Historical ledger rows retain the exact pricing and FX facts used for each attempt.
+The later 6B.6B.1 audit includes a versioned pricing candidate verified against official model pages, but no FX acquisition/update mechanism is included. The operator must later provide refresh ownership, alerting, and rotation policy for pricing and FX. Historical ledger rows retain the exact pricing and FX facts used for each attempt.
 
 ## 4. Persistent user-wide reservation
 
@@ -162,15 +162,14 @@ Accepted local evidence on 2026-09-11:
 
 ## 11. Remaining activation blockers
 
-6B.6A is not sufficient to make a real provider call. Before a later separately approved runtime scope may do so, all of the following remain mandatory:
+6B.6A plus the disconnected 6B.6B.1 orchestrator are not sufficient to make a real provider call. Before a later separately approved DEV smoke may do so, all of the following remain mandatory:
 
-1. approved current production route/provider/model configuration and evidence;
-2. approved production pricing catalog and update ownership;
-3. approved FX source, refresh mechanism, staleness monitoring, and current snapshot;
-4. a server-side orchestrator that enforces the entire route → price/FX → reserve → attempt → ledger → settle/reconcile chain;
-5. complete-payload input-bound enforcement and provider output/reasoning-limit enforcement before the network call;
-6. provider gateway metering wired so no network attempt can bypass an accepted reservation;
-7. operational reconciliation/alerting and failure-runbook acceptance;
-8. separately approved production migration, deployment, secrets/configuration, and limited-release verification.
+1. explicit official/contractual billing treatment for `POST /responses/input_tokens`;
+2. explicit selected-route cache-write billing treatment, or a provider request contract that proves the class cannot be billed;
+3. approved FX acquisition, refresh/staleness monitoring, current snapshot, and update ownership;
+4. a real non-production gateway that sends the exact counted immutable request and preserves provider request-ID/usage fidelity;
+5. operational reconciliation/alerting and failure-runbook acceptance;
+6. separately approved secrets and one-DEV-smoke scope with kill/rollback controls;
+7. independently approved production migration, deployment, current Coach wiring, and limited-release verification.
 
-Until then production configuration remains unavailable and the user-facing runtime remains unchanged.
+The 6B.6B.1 orchestrator enforces route → price/FX → exact count → reserve → mocked attempt → ledger → settle/reconcile locally, but explicitly rejects production. Until all remaining gates close, provider production eligibility remains false and the user-facing runtime remains unchanged.

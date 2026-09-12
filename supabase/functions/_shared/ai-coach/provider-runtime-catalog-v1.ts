@@ -49,6 +49,22 @@ export const AI_OPENAI_PRICING_SOURCE_V1: AiAuthoritativeConfigSourceV1 = {
   loadedAt: "2026-09-11T19:30:00.000Z",
 };
 
+/**
+ * The three-column catalog below is valid only for standard/global text
+ * processing. Regional endpoints carry an uplift and GPT-5.4 long-context
+ * requests above 272K input tokens use different multipliers. The Coach
+ * request contract prohibits both cases instead of silently under-reserving.
+ */
+export const AI_OPENAI_PRICING_GUARDRAILS_V1 = Object.freeze({
+  endpointClass: "global_standard" as const,
+  serviceTier: "default" as const,
+  regionalProcessingAllowed: false as const,
+  gpt54LongContextThresholdTokens: 272_000,
+  gpt54LongContextAllowed: false as const,
+  cacheWriteBillingTreatment: "unverified_must_be_zero" as const,
+  inputTokenCountEndpointBilling: "unresolved" as const,
+});
+
 const RETRYABLE_PROVIDER_CATEGORIES = [
   "timeout",
   "rate_limit",
@@ -66,7 +82,7 @@ export const AI_OPENAI_ROUTE_CATALOG_V1 = {
     {
       tier: "economy",
       provider: "openai",
-      modelId: "gpt-5.4-nano",
+      modelId: "gpt-5.4-nano-2026-03-17",
 
       // Product cap, intentionally far below model theoretical maximum.
       maxOutputTokens: 500,
@@ -83,7 +99,7 @@ export const AI_OPENAI_ROUTE_CATALOG_V1 = {
     {
       tier: "standard",
       provider: "openai",
-      modelId: "gpt-5.4-mini",
+      modelId: "gpt-5.4-mini-2026-03-17",
 
       maxOutputTokens: 900,
       timeoutMs: 12_000,
@@ -99,7 +115,7 @@ export const AI_OPENAI_ROUTE_CATALOG_V1 = {
     {
       tier: "strong",
       provider: "openai",
-      modelId: "gpt-5.4",
+      modelId: "gpt-5.4-2026-03-05",
 
       maxOutputTokens: 1_400,
       timeoutMs: 18_000,
@@ -123,7 +139,7 @@ export const AI_OPENAI_PRICING_CATALOG_V1 = {
   entries: [
     {
       provider: "openai",
-      modelId: "gpt-5.4-nano",
+      modelId: "gpt-5.4-nano-2026-03-17",
       effectiveFrom: "2026-09-11T00:00:00.000Z",
       effectiveTo: null,
       billingCurrency: "USD",
@@ -135,7 +151,7 @@ export const AI_OPENAI_PRICING_CATALOG_V1 = {
 
     {
       provider: "openai",
-      modelId: "gpt-5.4-mini",
+      modelId: "gpt-5.4-mini-2026-03-17",
       effectiveFrom: "2026-09-11T00:00:00.000Z",
       effectiveTo: null,
       billingCurrency: "USD",
@@ -147,7 +163,7 @@ export const AI_OPENAI_PRICING_CATALOG_V1 = {
 
     {
       provider: "openai",
-      modelId: "gpt-5.4",
+      modelId: "gpt-5.4-2026-03-05",
       effectiveFrom: "2026-09-11T00:00:00.000Z",
       effectiveTo: null,
       billingCurrency: "USD",

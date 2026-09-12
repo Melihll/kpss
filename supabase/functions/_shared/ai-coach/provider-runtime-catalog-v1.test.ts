@@ -12,6 +12,7 @@ import {
 import {
   AI_OPENAI_CAPABILITY_ROUTES_V1,
   AI_OPENAI_PRICING_CATALOG_V1,
+  AI_OPENAI_PRICING_GUARDRAILS_V1,
   AI_OPENAI_PRICING_SOURCE_V1,
   AI_OPENAI_ROUTE_CATALOG_V1,
   AI_OPENAI_ROUTE_SOURCE_V1,
@@ -34,19 +35,19 @@ describe("OpenAI production runtime catalog V1", () => {
       {
         tier: "economy",
         provider: "openai",
-        modelId: "gpt-5.4-nano",
+        modelId: "gpt-5.4-nano-2026-03-17",
         maxOutputTokens: 500,
       },
       {
         tier: "standard",
         provider: "openai",
-        modelId: "gpt-5.4-mini",
+        modelId: "gpt-5.4-mini-2026-03-17",
         maxOutputTokens: 900,
       },
       {
         tier: "strong",
         provider: "openai",
-        modelId: "gpt-5.4",
+        modelId: "gpt-5.4-2026-03-05",
         maxOutputTokens: 1400,
       },
     ]);
@@ -57,7 +58,7 @@ describe("OpenAI production runtime catalog V1", () => {
 
     expect(AI_OPENAI_PRICING_CATALOG_V1.entries).toEqual([
       expect.objectContaining({
-        modelId: "gpt-5.4-nano",
+        modelId: "gpt-5.4-nano-2026-03-17",
         billingCurrency: "USD",
         inputPerMillionTokens: 0.2,
         cachedInputPerMillionTokens: 0.02,
@@ -65,7 +66,7 @@ describe("OpenAI production runtime catalog V1", () => {
         sourceKind: "authoritative_config",
       }),
       expect.objectContaining({
-        modelId: "gpt-5.4-mini",
+        modelId: "gpt-5.4-mini-2026-03-17",
         billingCurrency: "USD",
         inputPerMillionTokens: 0.75,
         cachedInputPerMillionTokens: 0.075,
@@ -73,7 +74,7 @@ describe("OpenAI production runtime catalog V1", () => {
         sourceKind: "authoritative_config",
       }),
       expect.objectContaining({
-        modelId: "gpt-5.4",
+        modelId: "gpt-5.4-2026-03-05",
         billingCurrency: "USD",
         inputPerMillionTokens: 2.5,
         cachedInputPerMillionTokens: 0.25,
@@ -121,7 +122,7 @@ describe("OpenAI production runtime catalog V1", () => {
     );
 
     expect(economy.tier).toBe("economy");
-    expect(economy.modelId).toBe("gpt-5.4-nano");
+    expect(economy.modelId).toBe("gpt-5.4-nano-2026-03-17");
 
     const standard = routeAiCapabilityV1(
       {
@@ -135,7 +136,7 @@ describe("OpenAI production runtime catalog V1", () => {
     );
 
     expect(standard.tier).toBe("standard");
-    expect(standard.modelId).toBe("gpt-5.4-mini");
+    expect(standard.modelId).toBe("gpt-5.4-mini-2026-03-17");
 
     const strong = routeAiCapabilityV1(
       {
@@ -149,7 +150,18 @@ describe("OpenAI production runtime catalog V1", () => {
     );
 
     expect(strong.tier).toBe("strong");
-    expect(strong.modelId).toBe("gpt-5.4");
+    expect(strong.modelId).toBe("gpt-5.4-2026-03-05");
+  });
+
+  it("locks ordinary global pricing and refuses regional/long-context assumptions", () => {
+    expect(AI_OPENAI_PRICING_GUARDRAILS_V1).toMatchObject({
+      endpointClass: "global_standard",
+      serviceTier: "default",
+      regionalProcessingAllowed: false,
+      gpt54LongContextAllowed: false,
+      cacheWriteBillingTreatment: "unverified_must_be_zero",
+      inputTokenCountEndpointBilling: "unresolved",
+    });
   });
 
   it("does not activate provider runtime without FX and billing bounds", () => {
