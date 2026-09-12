@@ -178,7 +178,10 @@ function promptInstructions(locale: string): string {
     "Görev, plan veya kapasite değiştirildiğini söyleme; bu akış salt okunurdur.",
     "Öğretmenlik, özel ders, quiz ve mastery özellikleri kapsam dışıdır.",
     "Kullanıcı dilinde yalnız durum analizi, ilerleme değerlendirmesi, ders dengesi, çalışma eğilimi ve plan riski ifadelerini kullan; tıbbi veya mastery tanısı dili kullanma.",
-    "Her olgusal iddia için yalnız sağlanan sourceFactPaths listesinden referans ver.",
+    "sourceFactPaths alanına yalnız input JSON içindeki referenceCatalog.sourceFactPaths dizisinde bulunan tam dizeleri, değiştirmeden kopyala.",
+    "acknowledgedUnknowns alanına yalnız referenceCatalog.acknowledgedUnknownPaths dizisindeki tam dizeleri kopyala.",
+    "staleOrBlockedWarnings alanına yalnız referenceCatalog.staleOrBlockedWarningPaths dizisindeki tam dizeleri kopyala.",
+    "Reference catalog içinde bulunmayan bir path üretme veya tahmin etme; uygun path yoksa ilgili diziyi boş bırak.",
     "Kısa ve yararlı ol; kanıt yeterli değilse sessiz/temkinli kalmak geçerlidir.",
   ].join("\n");
 }
@@ -204,10 +207,35 @@ export function buildOpenAiCoachRequestV1(input: {
   const signalVersion = input.evidence.evidence.signalCandidates?.length
     ? "coach-signal-candidate-v1" as const
     : null;
+
+  const sourceFactPaths =
+    suppliedCoachEvidenceFactPathsV1(input.evidence);
+
+  const acknowledgedUnknownPaths =
+    [...new Set(
+      input.evidence.unknowns.map((item) => item.path),
+    )].sort();
+
+  const staleOrBlockedWarningPaths =
+    [...new Set(
+      input.evidence.unknowns
+        .filter(
+          (item) =>
+            item.availability === "blocked"
+            || item.availability === "stale",
+        )
+        .map((item) => item.path),
+    )].sort();
+
   const evidencePayload = {
     capability: input.capability,
     evidenceVersion: input.evidence.version,
     signalVersion,
+    referenceCatalog: {
+      sourceFactPaths,
+      acknowledgedUnknownPaths,
+      staleOrBlockedWarningPaths,
+    },
     evidence: input.evidence,
   };
   const responseBody: OpenAiCoachResponseBodyV1 = {

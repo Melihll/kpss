@@ -16,6 +16,7 @@ import {
   buildOpenAiCoachRequestV1,
   fingerprintOpenAiCoachRequestV1,
   stableCanonicalJsonV1,
+  suppliedCoachEvidenceFactPathsV1,
   validateGroundedCoachResponseV1,
 } from "./openai-coach-request-v1.ts";
 
@@ -97,6 +98,122 @@ describe("immutable OpenAI Coach request V1", () => {
         staleOrBlockedWarnings: [],
       },
     })).toThrow("GROUNDED_COACH_RESPONSE_FACT_REFS_INVALID");
+  });
+
+  it("sends the exact deterministic grounding reference catalog used by local validation", () => {
+    const projected = evidence();
+
+    const route = routeAiCapabilityV1({
+      runtimeEnvironment: "production",
+      capability: "today_analysis",
+      evidence: estimateAiEvidenceV1(
+        new TextEncoder().encode(
+          JSON.stringify(projected),
+        ).byteLength,
+      ),
+      expectedResponse: "medium",
+      budgetState: "normal",
+    }, AI_OPENAI_ROUTE_CATALOG_V1);
+
+    const value = buildOpenAiCoachRequestV1({
+      route,
+      capability: "today_analysis",
+      evidence: projected,
+      locale: "tr-TR",
+    });
+
+    const payload = JSON.parse(
+      value.responseBody.input[0].content[0].text,
+    );
+
+    const expectedFactPaths =
+      [...suppliedCoachEvidenceFactPathsV1(projected)];
+
+    const expectedUnknownPaths =
+      [...new Set(
+        projected.unknowns.map((item) => item.path),
+      )].sort();
+
+    const expectedWarningPaths =
+      [...new Set(
+        projected.unknowns
+          .filter(
+            (item) =>
+              item.availability === "blocked"
+              || item.availability === "stale",
+          )
+          .map((item) => item.path),
+      )].sort();
+
+    expect(
+      payload.referenceCatalog,
+    ).toEqual({
+      sourceFactPaths: expectedFactPaths,
+      acknowledgedUnknownPaths:
+        expectedUnknownPaths,
+      staleOrBlockedWarningPaths:
+        expectedWarningPaths,
+    });
+
+    expect(
+      value.responseBody.instructions,
+    ).toContain(
+      "referenceCatalog.sourceFactPaths",
+    );
+
+    expect(
+      value.responseBody.instructions,
+    ).toContain(
+      "referenceCatalog.acknowledgedUnknownPaths",
+    );
+
+    expect(
+      value.responseBody.instructions,
+    ).toContain(
+      "referenceCatalog.staleOrBlockedWarningPaths",
+    );
+
+    expect(expectedFactPaths.length).toBeGreaterThan(0);
+
+    const accepted =
+      validateGroundedCoachResponseV1({
+        capability: "today_analysis",
+        evidence: projected,
+        providerValue: {
+          answer:
+            "Sağlanan exact referans kataloğundaki kanıta dayanır.",
+          sourceFactPaths: [
+            expectedFactPaths[0],
+          ],
+          acknowledgedUnknowns: [],
+          staleOrBlockedWarnings: [],
+        },
+      });
+
+    expect(
+      accepted.sourceFactPaths,
+    ).toEqual([
+      expectedFactPaths[0],
+    ]);
+
+    expect(
+      () =>
+        validateGroundedCoachResponseV1({
+          capability: "today_analysis",
+          evidence: projected,
+          providerValue: {
+            answer:
+              "Katalog dışı referans reddedilmelidir.",
+            sourceFactPaths: [
+              "evidence.fabricated.path",
+            ],
+            acknowledgedUnknowns: [],
+            staleOrBlockedWarnings: [],
+          },
+        }),
+    ).toThrow(
+      "GROUNDED_COACH_RESPONSE_HALLUCINATED_FACT_REFERENCE",
+    );
   });
 
   it("canonicalizes object keys deterministically without reordering arrays", () => {

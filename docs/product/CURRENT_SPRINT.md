@@ -1,5 +1,29 @@
 # Current Sprint
 
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_4_GROUNDING_STOP_2026_09_12**
+>
+> - Attempt 4 reached the full real provider transport and accounting path.
+> - Real TCMB calls: `1`.
+> - Real OpenAI input-token count calls: `1`; HTTP status `200`.
+> - Exact input tokens: `2716`.
+> - Count provider request id: `req_b3eb7177ea0349fda7d480f05cea7502`.
+> - Real OpenAI generation calls: `1`; HTTP status `200`.
+> - Generation provider request id: `req_658551d2cc8e4f0abe40a06c3f1b298b`.
+> - Provider order: `count -> generation`.
+> - Accounting order: `reserve -> markStarted -> settle`.
+> - Accounting counters: reserve `1`, markStarted `1`, settle `1`, release `0`, reconcile `0`.
+> - Production access, DB calls, Planner calls, task mutations, deploys, migrations, retries, and fallbacks: all `0`.
+> - Execution stopped fail-closed only at grounded response validation with `GROUNDED_COACH_RESPONSE_HALLUCINATED_FACT_REFERENCE`.
+> - Root cause: the prompt required exact fact references but the request payload did not expose the validator's exact allowed reference catalog.
+> - Offline repair now sends deterministic `referenceCatalog.sourceFactPaths`, `referenceCatalog.acknowledgedUnknownPaths`, and `referenceCatalog.staleOrBlockedWarningPaths` to the model.
+> - Grounding validator strictness remains unchanged; fabricated or out-of-catalog paths are still rejected.
+> - Focused grounding repair acceptance: `55/55` tests PASS; typecheck PASS; AI economics safety PASS; AI Coach safety PASS.
+> - Attempt 4 authorization is consumed. No automatic rerun is authorized.
+> - Any next real provider execution is Attempt 5 and requires new explicit operator authorization.
+> - Production provider remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This block supersedes older current-state wording below it.
+
+
 > **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_3_COST_TIME_STOP_2026_09_12**
 >
 > - Attempt 3 real controlled-DEV execution reached the repaired OpenAI input-token count boundary successfully.
