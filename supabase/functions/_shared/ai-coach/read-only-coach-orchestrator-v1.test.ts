@@ -89,6 +89,7 @@ function harness(options: {
   countFingerprint?: string;
   countModel?: string;
   countClientRequestId?: string;
+  countedAt?: string;
   countTransportAuthority?: OpenAiInputCountTransportV1["authority"];
   generationTransportAuthority?: OpenAiGenerationTransportV1["authority"];
   reserveAllowed?: boolean;
@@ -110,7 +111,7 @@ function harness(options: {
     count: async ({ fingerprint, clientRequestId }) => {
       counters.count += 1;
       if (options.countError) throw options.countError;
-      return { object: "response.input_tokens", inputTokens: 1_000, countedAt: AT, requestFingerprint: options.countFingerprint ?? fingerprint.value, modelId: options.countModel ?? fingerprint.modelId, clientRequestId: options.countClientRequestId ?? clientRequestId, providerRequestId: "count_mock_1" };
+      return { object: "response.input_tokens", inputTokens: 1_000, countedAt: options.countedAt ?? AT, requestFingerprint: options.countFingerprint ?? fingerprint.value, modelId: options.countModel ?? fingerprint.modelId, clientRequestId: options.countClientRequestId ?? clientRequestId, providerRequestId: "count_mock_1" };
     },
   };
   const generationTransport: OpenAiGenerationTransportV1 = {
@@ -415,6 +416,41 @@ describe("6B.6B.2 controlled local DEV orchestration authority", () => {
     });
 
     expect(test.counters.reservations[0].costAuthorization).toMatchObject({
+      authority: "controlled_dev_runtime",
+      runtimeEnvironment: "local",
+    });
+  });
+
+  it("authorizes controlled DEV cost at the real count observation time", async () => {
+    const test = configureControlledLocalDevOrchestratorTest(
+      harness({
+        countTransportAuthority: "openai_dev_gateway",
+        generationTransportAuthority: "openai_dev_gateway",
+        countedAt: "2026-09-10T09:00:05.000Z",
+      }),
+    );
+
+    expect(test.input.requestedAt).toBe(
+      "2026-09-10T09:00:00.000Z",
+    );
+
+    const result =
+      await runReadOnlyCoachCapabilityV1(test.input);
+
+    expect(result.noMutationPerformed).toBe(true);
+
+    expect(test.counters).toMatchObject({
+      count: 1,
+      reserve: 1,
+      mark: 1,
+      provider: 1,
+      settle: 1,
+      reconcile: 0,
+    });
+
+    expect(
+      test.counters.reservations[0].costAuthorization,
+    ).toMatchObject({
       authority: "controlled_dev_runtime",
       runtimeEnvironment: "local",
     });

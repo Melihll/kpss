@@ -1,5 +1,25 @@
 # KPSS Koçu Product Roadmap
 
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_3_COST_TIME_STOP_2026_09_12**
+>
+> - Attempt 3 real controlled-DEV execution reached the repaired OpenAI input-token count boundary successfully.
+> - Real TCMB calls: `1`.
+> - Real OpenAI input-token count calls: `1`.
+> - OpenAI input-token count HTTP status: `200`.
+> - Count provider request id: `req_13e199b81c404d9da2e281ae71c5b241`.
+> - Real OpenAI generation calls: `0`.
+> - Accounting reserve / mark-started / settle / release / reconcile: `0 / 0 / 0 / 0 / 0`.
+> - Execution stopped fail-closed at local controlled-DEV cost authorization with `AI_CONTROLLED_DEV_COST_BOUND_INVALID`.
+> - Root cause: the exact count proof is observed at `countedAt`, but controlled-DEV cost authorization evaluated the proof at the earlier request start time (`requestedAt`). Real network latency therefore made a valid proof appear future-dated.
+> - Focused offline repair changes controlled-DEV cost authorization evaluation from `input.requestedAt` to `counted.countedAt`.
+> - Regression coverage now explicitly models a real count observation occurring after request start.
+> - Focused repair acceptance: `48/48` tests PASS; typecheck PASS; AI economics safety PASS; AI Coach safety PASS.
+> - Attempt 3 authorization is consumed. No automatic rerun is authorized.
+> - Any next real provider execution is Attempt 4 and requires new explicit operator authorization.
+> - Production provider remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This block supersedes older current-state wording below it.
+
+
 > **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_2_HARNESS_DISCOVERY_FAILURE_2026_09_12**
 >
 > - Attempt 2 received explicit operator authorization, but the temporary Vitest harness was created under `scripts/`, which is outside the repository's configured Vitest include paths.

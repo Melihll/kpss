@@ -376,7 +376,10 @@ export async function runReadOnlyCoachCapabilityV1(
         bound,
         pricingCatalog: input.pricingCatalog,
         fxSnapshot: input.fxSnapshot,
-        evaluatedAt: input.requestedAt,
+        // The exact count proof only exists at countedAt. In a real network
+        // call countedAt is necessarily later than requestedAt, so cost
+        // authorization must evaluate the proof at its observation time.
+        evaluatedAt: counted.countedAt,
         activation: input.providerRuntimeActivation!,
         userId: input.userId,
         examProfileId: input.examProfileId,
