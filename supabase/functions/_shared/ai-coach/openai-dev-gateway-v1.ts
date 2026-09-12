@@ -272,7 +272,13 @@ export function createOpenAiDevGatewayV1(input: {
 /** Adapter with the exact injected transport names used by the read-only orchestrator. */
 export function openAiDevGatewayAsOrchestratorTransportsV1(gateway: OpenAiDevGatewayV1) {
   return Object.freeze({
-    inputCountTransport: Object.freeze({ count: gateway.countInputTokens }),
-    generationTransport: Object.freeze({ execute: gateway.createResponse }),
+    inputCountTransport: Object.freeze({
+      authority: "openai_dev_gateway" as const,
+      count: gateway.countInputTokens,
+    }),
+    generationTransport: Object.freeze({
+      authority: "openai_dev_gateway" as const,
+      execute: gateway.createResponse,
+    }),
   });
 }

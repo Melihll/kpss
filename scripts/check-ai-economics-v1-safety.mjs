@@ -118,7 +118,34 @@ for (const marker of ["requestPayloadCoverage", "server_rejects_above_bound", "p
   }
 }
 
-for (const marker of ["production_prohibited", "runtime_switch_off", "billing_gate_unavailable", "OPENAI_API_KEY", "server_secret", "requestTimeNetworkFetchAllowed", "server_side_scheduled_config_acquisition", "realDevSmokeBillingEligible: false", "readyForDevSmoke: false"]) {
+const devRuntimeSafetyMarkers = [
+  "production_prohibited",
+  "runtime_switch_off",
+  "billing_gate_unavailable",
+  "OPENAI_API_KEY",
+  "server_secret",
+  "requestTimeNetworkFetchAllowed",
+  "server_side_scheduled_config_acquisition",
+
+  // The official billing audit still does not independently authorize
+  // a real provider call.
+  "realDevSmokeBillingEligible: false",
+
+  // TEMP_DEV_COST_POLICY_2026_09_12:
+  // one server-owned, identity-bound local DEV smoke may be explicitly
+  // authorized while input-token-count billing remains unresolved.
+  'status: "ready_for_explicit_live_call_policy"',
+  'devCostPolicy: "observe_and_measure"',
+  "countEndpointBillingRiskAcceptedForOneSmoke: true",
+  "hardMonthlyUserCeilingIsDevEntryGate: false",
+  "readyForDevSmoke: true",
+  "explicitly_accepted_unresolved_dev",
+
+  // This relaxation never grants production authority.
+  "productionAllowed: false",
+];
+
+for (const marker of devRuntimeSafetyMarkers) {
   if (!providerBoundary.includes(marker)) {
     console.error(`MISSING_DEV_RUNTIME_SAFETY_MARKER=${marker}`);
     failed = true;

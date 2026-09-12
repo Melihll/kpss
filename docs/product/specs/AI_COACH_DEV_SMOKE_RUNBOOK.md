@@ -1,6 +1,6 @@
 # AI Coach — One Controlled DEV Smoke and Reconciliation Runbook
 
-Status: `DEFINED_NOT_EXECUTED — BLOCKED_BY_INPUT_COUNT_BILLING — PRODUCTION_PROHIBITED`
+Status: `DEFINED_NOT_EXECUTED — READY_FOR_SEPARATE_EXPLICIT_DEV_SMOKE_AUTHORIZATION — INPUT_COUNT_BILLING_UNRESOLVED — PRODUCTION_PROHIBITED`
 
 ## Preconditions — every item must be green
 
@@ -8,7 +8,7 @@ Status: `DEFINED_NOT_EXECUTED — BLOCKED_BY_INPUT_COUNT_BILLING — PRODUCTION_
 - Central server switch set only for `local_dev` + `one_controlled_dev_smoke_v1`.
 - One exact server-side user/profile allowlist; no production identity or data.
 - `OPENAI_API_KEY` present only in the server secret store and never printed.
-- Current official billing audit explicitly resolves `/responses/input_tokens` as no-charge, or a separately approved count-call worst-case reservation exists before the call. Current state: **not met**.
+- `TEMP_DEV_COST_POLICY_2026_09_12` is explicitly active for this one controlled local-DEV observation, and the server-owned activation reports `inputCountBillingAuthority=explicitly_accepted_unresolved_dev`. The count-endpoint billing fact itself remains **UNRESOLVED** and must not be represented as free.
 - Selected GPT-5.4 pinned model, global standard service, and official frozen pricing version match.
 - Fresh approved TCMB USD/TRY `ForexSelling` snapshot passes the 96-hour policy.
 - `today_analysis` / `today_explain`; evidence `<=16,384` bytes; exact complete input `<=200,000`; `max_output_tokens=900`.
@@ -16,7 +16,7 @@ Status: `DEFINED_NOT_EXECUTED — BLOCKED_BY_INPUT_COUNT_BILLING — PRODUCTION_
 - One attempt, zero automatic retries, zero fallback, no tools, `store:false`.
 - Local DB and ledger/RLS acceptance green; production runtime remains disabled.
 
-## Execution checklist — do not run under 6B.6B.2
+## Execution checklist — run only after separate explicit real-smoke authorization
 
 1. Record internal request, correlation, reservation, attempt, and count client-request IDs.
 2. Revalidate switch, environment, allowlist, billing gate, pricing, FX, and current user-month state.
@@ -46,4 +46,4 @@ Operator-visible records must include reason code, severity, user/accounting mon
 
 ## Stop conditions
 
-Stop without a provider retry if any precondition changes, count billing remains unresolved, count fails, FX is stale, reservation is denied, request identity drifts, usage is malformed, provider outcome is unknown, actual exceeds reservation, any domain/Planner mutation appears, or the kill switch cannot be confirmed OFF.
+Stop without a provider retry if any precondition changes, the explicit unresolved-billing risk acceptance is missing/malformed, count fails, FX is stale, reservation is denied, request identity drifts, usage is malformed, provider outcome is unknown, actual exceeds reservation, any domain/Planner mutation appears, or the kill switch cannot be confirmed OFF.

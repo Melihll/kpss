@@ -4,6 +4,7 @@ import type { AiFxSnapshotV1, AiPricingCatalogV1, AiRouteCatalogV1 } from "../..
 import { coachContextV1Fixture, type CoachContextV1FixtureKind } from "../../../../packages/domain/src/ai-coach/fixtures/coach-context-v1.ts";
 import { blockedCoachContextV1Fact, unknownCoachContextV1Fact } from "../../../../packages/domain/src/ai-coach/coach-context-v1.ts";
 import { AI_OPENAI_PRICING_CATALOG_V1, AI_OPENAI_ROUTE_CATALOG_V1 } from "./provider-runtime-catalog-v1.ts";
+import { AI_PROVIDER_RUNTIME_SERVER_KEYS_V1, resolveAiProviderRuntimeActivationV1 } from "./provider-runtime-activation-v1.ts";
 import { runReadOnlyCoachCapabilityV1, type OpenAiGenerationTransportV1, type OpenAiInputCountTransportV1, type ReadOnlyCoachAccountingGatewayV1 } from "./read-only-coach-orchestrator-v1.ts";
 
 const AT = "2026-09-10T09:00:00.000Z";
@@ -88,6 +89,8 @@ function harness(options: {
   countFingerprint?: string;
   countModel?: string;
   countClientRequestId?: string;
+  countTransportAuthority?: OpenAiInputCountTransportV1["authority"];
+  generationTransportAuthority?: OpenAiGenerationTransportV1["authority"];
   reserveAllowed?: boolean;
   settlementStatus?: string;
   markError?: Error;
@@ -103,6 +106,7 @@ function harness(options: {
 } = {}) {
   const counters: Counters = { count: 0, reserve: 0, mark: 0, provider: 0, settle: 0, release: 0, reconcile: 0, events: [], reservations: [] };
   const inputCountTransport: OpenAiInputCountTransportV1 = {
+    authority: options.countTransportAuthority ?? "test_fixture",
     count: async ({ fingerprint, clientRequestId }) => {
       counters.count += 1;
       if (options.countError) throw options.countError;
@@ -110,6 +114,7 @@ function harness(options: {
     },
   };
   const generationTransport: OpenAiGenerationTransportV1 = {
+    authority: options.generationTransportAuthority ?? "test_fixture",
     execute: async ({ request, fingerprint, clientRequestId }) => {
       counters.provider += 1;
       if (options.providerError) throw options.providerError;
@@ -328,5 +333,157 @@ describe("6B.6B.1 mocked read-only Coach orchestration A-Z", () => {
     const test = harness({ sentProviderRequestId: "req_different" });
     await expect(runReadOnlyCoachCapabilityV1(test.input)).rejects.toThrow("PROVIDER_REQUEST_ID_MISMATCH");
     expect(test.counters).toMatchObject({ settle: 0, reconcile: 1 });
+  });
+});
+
+
+function controlledDevActivationForOrchestratorTest() {
+  const keys = AI_PROVIDER_RUNTIME_SERVER_KEYS_V1;
+
+  const activation = resolveAiProviderRuntimeActivationV1({
+    deploymentEnvironment: "local_dev",
+    serverConfig: {
+      [keys.enabled]: "true",
+      [keys.environment]: "local_dev",
+      [keys.scope]: "one_controlled_dev_smoke_v1",
+      [keys.allowedUserId]: "user-esra",
+      [keys.allowedProfileId]: "profile-kpss-2027",
+      [keys.acceptUnresolvedCountBillingRisk]: "true",
+    },
+    userId: "user-esra",
+    examProfileId: "profile-kpss-2027",
+  });
+
+  if (activation.availability !== "available") {
+    throw new Error(`controlled DEV activation unavailable: ${activation.reason}`);
+  }
+
+  return activation;
+}
+
+function configureControlledLocalDevOrchestratorTest(
+  test: ReturnType<typeof harness>,
+) {
+  test.input.runtimeEnvironment = "local";
+
+  test.input.routeCatalog = {
+    ...LOCAL_ROUTES,
+    environment: "local",
+  };
+
+  test.input.pricingCatalog = {
+    ...LOCAL_PRICING,
+    environment: "local",
+    entries: LOCAL_PRICING.entries.map((entry) => ({
+      ...entry,
+      sourceKind: "authoritative_config" as const,
+    })),
+  };
+
+  test.input.fxSnapshot = {
+    ...LOCAL_FX,
+    source: "tcmb-controlled-dev-test-authority",
+    sourceKind: "authoritative_config",
+  };
+
+  test.input.providerRuntimeActivation =
+    controlledDevActivationForOrchestratorTest();
+
+  return test;
+}
+
+describe("6B.6B.2 controlled local DEV orchestration authority", () => {
+  it("uses official count authority and controlled DEV cost authority", async () => {
+    const test = configureControlledLocalDevOrchestratorTest(
+      harness({
+        countTransportAuthority: "openai_dev_gateway",
+        generationTransportAuthority: "openai_dev_gateway",
+      }),
+    );
+
+    const result = await runReadOnlyCoachCapabilityV1(test.input);
+
+    expect(result.noMutationPerformed).toBe(true);
+
+    expect(test.counters).toMatchObject({
+      count: 1,
+      reserve: 1,
+      mark: 1,
+      provider: 1,
+      settle: 1,
+      reconcile: 0,
+    });
+
+    expect(test.counters.reservations[0].costAuthorization).toMatchObject({
+      authority: "controlled_dev_runtime",
+      runtimeEnvironment: "local",
+    });
+  });
+
+  it("rejects local DEV without activation before token counting", async () => {
+    const test = harness({
+      countTransportAuthority: "openai_dev_gateway",
+      generationTransportAuthority: "openai_dev_gateway",
+    });
+
+    test.input.runtimeEnvironment = "local";
+
+    test.input.routeCatalog = {
+      ...LOCAL_ROUTES,
+      environment: "local",
+    };
+
+    test.input.pricingCatalog = {
+      ...LOCAL_PRICING,
+      environment: "local",
+      entries: LOCAL_PRICING.entries.map((entry) => ({
+        ...entry,
+        sourceKind: "authoritative_config" as const,
+      })),
+    };
+
+    test.input.fxSnapshot = {
+      ...LOCAL_FX,
+      sourceKind: "authoritative_config",
+    };
+
+    await expect(
+      runReadOnlyCoachCapabilityV1(test.input),
+    ).rejects.toThrow(
+      "READ_ONLY_COACH_CONTROLLED_DEV_AUTHORITY_INVALID",
+    );
+
+    expect(test.counters.count).toBe(0);
+    expect(test.counters.provider).toBe(0);
+  });
+
+  it("rejects fixture transports inside controlled local DEV before counting", async () => {
+    const test =
+      configureControlledLocalDevOrchestratorTest(harness());
+
+    await expect(
+      runReadOnlyCoachCapabilityV1(test.input),
+    ).rejects.toThrow(
+      "READ_ONLY_COACH_CONTROLLED_DEV_AUTHORITY_INVALID",
+    );
+
+    expect(test.counters.count).toBe(0);
+    expect(test.counters.provider).toBe(0);
+  });
+
+  it("rejects real-gateway authority inside test runtime", async () => {
+    const test = harness({
+      countTransportAuthority: "openai_dev_gateway",
+      generationTransportAuthority: "openai_dev_gateway",
+    });
+
+    await expect(
+      runReadOnlyCoachCapabilityV1(test.input),
+    ).rejects.toThrow(
+      "READ_ONLY_COACH_TEST_TRANSPORT_AUTHORITY_INVALID",
+    );
+
+    expect(test.counters.count).toBe(0);
+    expect(test.counters.provider).toBe(0);
   });
 });

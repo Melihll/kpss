@@ -15,9 +15,9 @@ describe("6B.6B.2 billing, reconciliation, and one-smoke policy", () => {
     expect(AI_OPENAI_BILLING_AUDIT_V1.selectedRoutesCacheWriteTreatment).toBe("documented_no_additional_charge");
   });
 
-  it("keeps the future one-call DEV smoke blocked by count-endpoint billing", () => {
-    expect(AI_COACH_DEV_SMOKE_POLICY_V1).toMatchObject({ status: "blocked_before_live_call", readyForDevSmoke: false, providerAttemptCount: 1, automaticRetryCount: 0, fallbackAllowed: false, hardMonthlyUserCeilingTry: 300 });
-    expect(() => assertCoachDevSmokeRequestV1({ environment: "local_dev", capability: "today_analysis", evidenceBytes: 1_000, maxOutputTokens: 900, providerAttemptCount: 1, fallbackAllowed: false })).toThrow("responses_input_token_count_endpoint_billing_unresolved");
+  it("allows the bounded DEV smoke policy while preserving unresolved billing truth", () => {
+    expect(AI_COACH_DEV_SMOKE_POLICY_V1).toMatchObject({ status: "ready_for_explicit_live_call_policy", readyForDevSmoke: true, providerAttemptCount: 1, automaticRetryCount: 0, fallbackAllowed: false, hardMonthlyUserCeilingTry: 300 });
+    expect(() => assertCoachDevSmokeRequestV1({ environment: "local_dev", capability: "today_analysis", evidenceBytes: 1_000, maxOutputTokens: 900, providerAttemptCount: 1, fallbackAllowed: false })).not.toThrow();
   });
 
   it("rejects smoke scope widening before checking the remaining blocker", () => {

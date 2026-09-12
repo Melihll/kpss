@@ -5,7 +5,7 @@ export const AI_COACH_DEV_SMOKE_POLICY_V1_VERSION =
 
 export const AI_COACH_DEV_SMOKE_POLICY_V1 = Object.freeze({
   version: AI_COACH_DEV_SMOKE_POLICY_V1_VERSION,
-  status: "blocked_before_live_call" as const,
+  status: "ready_for_explicit_live_call_policy" as const,
   environment: "local_dev" as const,
   capability: "today_analysis" as const,
   evidenceScope: "today_explain" as const,
@@ -27,12 +27,22 @@ export const AI_COACH_DEV_SMOKE_POLICY_V1 = Object.freeze({
   plannerOperationAllowed: false as const,
   productionDataAllowed: false as const,
   postAttemptLedgerInspectionRequired: true as const,
+
+  // Temporary DEV / initial single-user policy.
+  // Billing truth stays unresolved; one explicitly authorized DEV smoke
+  // accepts that unknown cost while retaining telemetry and accounting.
+  devCostPolicy: "observe_and_measure" as const,
+  observationWindowDays: 30,
+  countEndpointBillingRiskAcceptedForOneSmoke: true as const,
+
+  // Retained as a defensive accounting safety belt, but no longer used
+  // as the entry gate for this controlled DEV smoke.
   hardMonthlyUserCeilingTry: 300,
+  hardMonthlyUserCeilingIsDevEntryGate: false as const,
+
   countEndpointBilling: AI_OPENAI_BILLING_AUDIT_V1.inputCountEndpointBilling,
-  readyForDevSmoke: false as const,
-  blockers: Object.freeze([
-    "responses_input_token_count_endpoint_billing_unresolved",
-  ]),
+  readyForDevSmoke: true as const,
+  blockers: Object.freeze([] as const),
 });
 
 export function assertCoachDevSmokeRequestV1(input: {

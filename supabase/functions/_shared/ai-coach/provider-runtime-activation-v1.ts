@@ -8,6 +8,7 @@ export const AI_PROVIDER_RUNTIME_ACTIVATION_V1_VERSION =
 
 export const AI_PROVIDER_RUNTIME_SERVER_KEYS_V1 = Object.freeze({
   enabled: "AI_PROVIDER_RUNTIME_ENABLED",
+  acceptUnresolvedCountBillingRisk: "AI_PROVIDER_RUNTIME_ACCEPT_UNRESOLVED_COUNT_BILLING_RISK",
   environment: "AI_PROVIDER_RUNTIME_ENVIRONMENT",
   scope: "AI_PROVIDER_RUNTIME_SCOPE",
   allowedUserId: "AI_PROVIDER_RUNTIME_ALLOWED_USER_ID",
@@ -23,6 +24,10 @@ export type AiProviderRuntimeActivationV1 =
       userId: string;
       examProfileId: string;
       billingAuditVersion: typeof AI_OPENAI_BILLING_AUDIT_V1_VERSION | "test_fixture";
+      inputCountBillingAuthority:
+        | "documented_no_charge"
+        | "explicitly_accepted_unresolved_dev"
+        | "test_fixture_no_charge";
       serverOwned: true;
       productionAllowed: false;
     }>
@@ -98,9 +103,26 @@ export function resolveAiProviderRuntimeActivationV1(input: {
   }
 
   const billingGate = input.billingGate ?? AI_PROVIDER_RUNTIME_BILLING_GATE_V1;
+
+  // Official billing truth remains unresolved. This is a separate,
+  // explicit server-owned LOCAL DEV risk acceptance for exactly one
+  // controlled smoke. Production is rejected above and cannot use it.
+  const unresolvedDevBillingRiskAccepted =
+    input.deploymentEnvironment === "local_dev"
+    && billingGate.authority === "official_audit"
+    && billingGate.inputCountEndpointBilling === "unresolved"
+    && input.serverConfig[
+      AI_PROVIDER_RUNTIME_SERVER_KEYS_V1.acceptUnresolvedCountBillingRisk
+    ] === "true";
+
   const billingAllowed = input.deploymentEnvironment === "test"
     ? billingGate.authority === "test_fixture" && billingGate.inputCountEndpointBilling === "test_fixture_no_charge"
-    : billingGate.authority === "official_audit" && billingGate.inputCountEndpointBilling === "documented_no_charge";
+    : billingGate.authority === "official_audit"
+      && (
+        billingGate.inputCountEndpointBilling === "documented_no_charge"
+        || unresolvedDevBillingRiskAccepted
+      );
+
   if (!billingAllowed) return unavailable("billing_gate_unavailable");
 
   return Object.freeze({
@@ -111,6 +133,12 @@ export function resolveAiProviderRuntimeActivationV1(input: {
     userId: input.userId,
     examProfileId: input.examProfileId,
     billingAuditVersion: billingGate.auditVersion,
+    inputCountBillingAuthority:
+      input.deploymentEnvironment === "test"
+        ? "test_fixture_no_charge"
+        : billingGate.inputCountEndpointBilling === "documented_no_charge"
+          ? "documented_no_charge"
+          : "explicitly_accepted_unresolved_dev",
     serverOwned: true,
     productionAllowed: false,
   });

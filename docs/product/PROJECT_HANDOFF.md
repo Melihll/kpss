@@ -6,7 +6,7 @@ Last updated: 2026-09-12
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Base branch: `main`
-- Local working branch: `evre6-ai-coach` (HEAD/remote checkpoint is `9efd0640e97091535fda9d8887763d7a41c9bc3f`; current 6B.6B.2 pre-smoke work is uncommitted; do not push or commit yet)
+- Local working branch: `evre6-ai-coach`; the 6B.6B.2 local-acceptance checkpoint is committed on the feature branch. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
 - 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - 6B.1 accepted checkpoint: `acd16ffb2263b5285b14bd7329ff4357d7971e00`
 - Last verified product checkpoint before W5: `fa46fd2`
@@ -34,7 +34,7 @@ The architecture is subject-agnostic across all KPSS subjects. Do not create Mat
 - P48 planned-credit accounting correction: deployed and observing.
 - `PLN-004`: `IMPLEMENTED_LOCAL_VERIFIED`; production-authoritative activation gated.
 - Planner V2 / Planner Truth Evre 5: `CLOSED`. Engineering, exact-profile production acceptance, and final Week/Today real-user observation are complete. Confirm and Apply are OFF.
-- Evre 6 AI Coach: 6A is `CLOSED`; 6B.1–6B.6B.1 are accepted locally; 6B.6B.2 is active and uncommitted. The disconnected pre-smoke foundation adds a central default-OFF/prod-prohibited switch, server-only credential boundary, fixed-origin injected-fetch OpenAI gateway, strict usage/request identity, deterministic official-source TCMB acquisition, and reconciliation/smoke runbooks. Official `/responses/input_tokens` billing is unresolved, so real DEV smoke and production provider traffic remain blocked. Both AI migrations remain local-only; runtime, deployment, gates, and production are unchanged.
+- Evre 6 AI Coach: 6A is `CLOSED`; 6B.1–6B.6B.1 are accepted locally; 6B.6B.2 local acceptance is green and checkpointed on the feature branch. The controlled local-DEV authority chain now includes the default-OFF/prod-prohibited switch, server-only credential, fixed-origin injected-fetch gateway, real/mock transport authority separation, exact OpenAI count identity with unresolved billing preserved, dedicated controlled-DEV cost authorization, authoritative local route/pricing, TCMB acquisition/freshness, and full A→Z mocked smoke. `TEMP_DEV_COST_POLICY_2026_09_12` allows one separately approved observed-cost local-DEV smoke despite unresolved count billing; no real provider call has occurred. Both AI migrations remain local-only; current Coach runtime, deployment, gates, and production are unchanged.
 
 PLN-004 verification:
 - targeted domain tests `22/22` PASS;
@@ -57,9 +57,9 @@ PLN-004 verification:
 
 `AIC-002 / Evre 6B — 6B.6B.2 controlled DEV pre-smoke foundation`
 
-Goal: finish local acceptance of the disconnected DEV-only gateway, activation/secret authority, usage/request identity, TCMB acquisition, and reconciliation policy without performing the live call or weakening the hard-ceiling boundary.
+Goal: checkpoint the green 6B.6B.2 controlled local-DEV acceptance, preserve the temporary observed-cost DEV policy, and prepare for a separately authorized single real DEV smoke without activating production or current Coach runtime.
 
-Evre 6 AI Coach is the active macro phase. 6A is closed, 6B.1–6B.6B.1 are accepted locally, and 6B.6B.2 is active/uncommitted. The added gateway remains capability-gated and cannot become available while the official count-endpoint billing gate is unresolved. This work does not authorize a live provider call, current Coach integration, deployment, production migration, plan mutation, proposal creation, Preview, Confirm, Apply, gate changes, or production activation. 6C–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
+Evre 6 AI Coach is the active macro phase. 6A is closed, 6B.1–6B.6B.1 are accepted locally, and 6B.6B.2 local acceptance is green and checkpointed on the feature branch. The controlled local-DEV path may become available only through server-owned exact-scope activation with explicit unresolved-count-billing risk acceptance under `TEMP_DEV_COST_POLICY_2026_09_12`; the official billing audit itself remains non-authorizing. This work does not authorize a real provider call without separate approval, current Coach integration, deployment, production migration, plan mutation, proposal creation, Preview, Confirm, Apply, gate changes, or production activation. 6C–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
 
 MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning foundations remain tracked work rather than being silently treated as closed by the Planner V2 pilot.
 
@@ -72,7 +72,7 @@ MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning founda
 - All quantities, lifecycle states, proactive triggers, and feasibility decisions are deterministic; no LLM is used for deterministic calculations.
 - CoachContext material facts come only from canonical Material Truth and Canonical Workload Engine; legacy top-three projections are not truth sources.
 - Incomplete PLN-002 semantics make definitive ahead/behind claims unknown, but do not block other independently known Coach facts.
-- AI usage/cost telemetry starts in 6B. The automatic 300 TL per-user hard governor is completed in 6G before production acceptance.
+- AI usage/cost telemetry starts in 6B. `TEMP_DEV_COST_POLICY_2026_09_12` temporarily makes the 300 TL monthly ceiling non-blocking only for the controlled initial local-DEV observation path; the automatic 300 TL per-user hard governor remains a mandatory 6G production-acceptance requirement.
 - Model routing/pricing and versioned TRY estimation are centralized server-side; the ledger carries provider cost and versioned TRY cost estimates.
 - New development must not use the legacy Coach planning Apply path. Every future Coach-originated planning mutation must converge on the canonical Planner V2 lifecycle.
 - Real-plan impact claims require a fresh deterministic Planner V2 scenario/preview.
@@ -86,7 +86,7 @@ MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning founda
 
 ## NEXT EXACT STEP
 
-Complete local review of [Controlled DEV Runtime Pre-Smoke Foundation V1](specs/AI_COACH_CONTROLLED_DEV_RUNTIME_V1.md) and the [DEV Smoke/Reconciliation Runbook](specs/AI_COACH_DEV_SMOKE_RUNBOOK.md). Before one real DEV provider smoke, obtain an explicit official no-charge decision for `/responses/input_tokens` or separately approve a pre-reservable worst-case count-call model, then satisfy every smoke checklist item under a new explicit authorization. The current work must not execute the call. Production migration, runtime activation, deployment, and live Coach wiring remain separate work requiring explicit approval.
+Checkpoint the completed local review of [Controlled DEV Runtime Pre-Smoke Foundation V1](specs/AI_COACH_CONTROLLED_DEV_RUNTIME_V1.md) and the [DEV Smoke/Reconciliation Runbook](specs/AI_COACH_DEV_SMOKE_RUNBOOK.md). Under `TEMP_DEV_COST_POLICY_2026_09_12`, the unresolved `/responses/input_tokens` billing fact is explicitly accepted only for one controlled observed-cost local-DEV smoke; before that real call, obtain separate explicit authorization and satisfy the real TCMB, server-secret, exact identity/allowlist, kill-switch, one-attempt/no-fallback, reservation/reconciliation, and no-production-data checklist. Production migration, current Coach runtime activation, deployment, and production provider traffic remain separate work requiring explicit approval.
 
 Keep the accepted Evre 5 Planner V2 result intact. Do not widen preview access, re-enable Confirm/Apply, manufacture another proposal, or manually repair the accepted result. Production preview remains exact-profile-only; Confirm and Apply remain OFF.
 

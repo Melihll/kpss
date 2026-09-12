@@ -1,3 +1,4 @@
+import type { AiProviderRuntimeActivationV1 } from "./provider-runtime-activation-v1.ts";
 import { routeAiCapabilityV1 } from "../ai-coach.bundle.js";
 import type {
   AiCoachCapabilityV1,
@@ -48,7 +49,7 @@ export interface AiProviderBillableBoundV1 {
 
 export interface AiProviderCostAuthorizationV1 {
   readonly version: typeof AI_PROVIDER_COST_AUTHORIZATION_V1_VERSION;
-  readonly authority: "production_runtime_config" | "test_fixture";
+  readonly authority: "production_runtime_config" | "controlled_dev_runtime" | "test_fixture";
   readonly runtimeEnvironment: "production" | "test" | "local";
   readonly provider: string;
   readonly modelId: string;
@@ -306,6 +307,151 @@ export function authorizeRequestProviderCostMaximumV1(input: {
     version: AI_PROVIDER_COST_AUTHORIZATION_V1_VERSION,
     authority: route.runtimeEnvironment === "production" ? "production_runtime_config" : "test_fixture",
     runtimeEnvironment: route.runtimeEnvironment,
+    provider: route.provider,
+    modelId: route.modelId,
+    modelTier: route.tier,
+    routeCatalogVersion: route.catalogVersion,
+    pricingVersion: route.pricingVersion,
+    fxPolicyVersion: fxSnapshot.policyVersion,
+    fxSnapshotVersion: fxSnapshot.snapshotVersion,
+    billingBoundVersion: bound.version,
+    providerRequestFingerprint: bound.requestFingerprint,
+    inputCountVersion: bound.inputCountVersion,
+    inputTokenUpperBound: bound.inputTokenUpperBound,
+    outputTokenUpperBound: bound.outputTokenUpperBound,
+    tryMaximum,
+  });
+}
+
+export function authorizeControlledDevObservedProviderCostV1(input: {
+  readonly route: AiModelRouteDecisionV1;
+  readonly bound: AiProviderBillableBoundV1;
+  readonly pricingCatalog: AiPricingCatalogV1;
+  readonly fxSnapshot: AiFxSnapshotV1;
+  readonly evaluatedAt: string;
+  readonly activation: AiProviderRuntimeActivationV1;
+  readonly userId: string;
+  readonly examProfileId: string;
+}): AiProviderCostAuthorizationV1 {
+  const {
+    route,
+    bound,
+    pricingCatalog,
+    fxSnapshot,
+    activation,
+  } = input;
+
+  if (!isInstant(input.evaluatedAt)) {
+    throw new Error("AI_CONTROLLED_DEV_COST_EVALUATED_AT_INVALID");
+  }
+
+  if (!input.userId.trim() || !input.examProfileId.trim()) {
+    throw new Error("AI_CONTROLLED_DEV_IDENTITY_REQUIRED");
+  }
+
+  if (
+    activation.availability !== "available"
+    || activation.deploymentEnvironment !== "local_dev"
+    || activation.scope !== "one_controlled_dev_smoke_v1"
+    || activation.userId !== input.userId
+    || activation.examProfileId !== input.examProfileId
+    || activation.productionAllowed !== false
+    || activation.inputCountBillingAuthority !== "explicitly_accepted_unresolved_dev"
+  ) {
+    throw new Error("AI_CONTROLLED_DEV_ACTIVATION_INVALID");
+  }
+
+  if (
+    route.runtimeEnvironment !== "local"
+    || route.catalogEnvironment !== "local"
+    || route.disposition !== "model"
+    || route.provider === null
+    || route.modelId === null
+    || route.tier === "no_model"
+    || bound.provider !== route.provider
+    || bound.modelId !== route.modelId
+    || bound.tier !== route.tier
+    || bound.pricingVersion !== route.pricingVersion
+    || pricingCatalog.version !== route.pricingVersion
+    || pricingCatalog.environment !== "local"
+    || bound.outputTokenUpperBound !== route.maxOutputTokens
+    || bound.inputBoundMethod !== "openai_responses_input_tokens_exact"
+    || bound.inputCountBillingTreatment !== "unresolved"
+    || bound.requestPayloadCoverage !== "complete"
+    || bound.inputBoundEnforcement !== "server_rejects_above_bound"
+    || bound.providerOutputLimitEnforced !== true
+    || bound.reasoningTokensPricedAs !== "output"
+    || bound.endpointClass !== "global_standard"
+    || bound.serviceTier !== "default"
+    || bound.cacheWriteBillingTreatment !== "documented_no_additional_charge"
+    || bound.uncoveredBillableTokenClasses.length !== 0
+    || !bound.requestFingerprint.trim()
+    || !sourceIsAuthoritative(bound.source, input.evaluatedAt)
+  ) {
+    throw new Error("AI_CONTROLLED_DEV_COST_BOUND_INVALID");
+  }
+
+  const price = pricingCatalog.entries.find((entry) =>
+    entry.provider === route.provider
+    && entry.modelId === route.modelId
+    && Date.parse(entry.effectiveFrom) <= Date.parse(input.evaluatedAt)
+    && (
+      entry.effectiveTo === null
+      || Date.parse(input.evaluatedAt) < Date.parse(entry.effectiveTo)
+    )
+  );
+
+  if (
+    !price
+    || price.sourceKind !== "authoritative_config"
+    || price.billingCurrency !== fxSnapshot.baseCurrency
+    || fxSnapshot.quoteCurrency !== "TRY"
+  ) {
+    throw new Error("AI_CONTROLLED_DEV_PRICE_OR_FX_AUTHORITY_INVALID");
+  }
+
+  if (
+    fxSnapshot.sourceKind !== "authoritative_config"
+    || !Number.isFinite(fxSnapshot.rate)
+    || fxSnapshot.rate <= 0
+    || !Number.isInteger(fxSnapshot.maxAgeSeconds)
+    || fxSnapshot.maxAgeSeconds <= 0
+    || Date.parse(fxSnapshot.loadedAt) < Date.parse(fxSnapshot.effectiveAt)
+    || Date.parse(fxSnapshot.loadedAt) > Date.parse(input.evaluatedAt)
+    || Date.parse(input.evaluatedAt) < Date.parse(fxSnapshot.effectiveAt)
+    || Date.parse(input.evaluatedAt) - Date.parse(fxSnapshot.effectiveAt)
+      > fxSnapshot.maxAgeSeconds * 1_000
+  ) {
+    throw new Error("AI_CONTROLLED_DEV_FX_UNAVAILABLE");
+  }
+
+  const maximumInputRate = Math.max(
+    price.inputPerMillionTokens,
+    price.cachedInputPerMillionTokens ?? price.inputPerMillionTokens,
+  );
+
+  const nativeMaximum =
+    bound.inputTokenUpperBound * maximumInputRate / 1_000_000
+    + bound.outputTokenUpperBound * price.outputPerMillionTokens / 1_000_000;
+
+  const tryMaximum =
+    Math.ceil(nativeMaximum * fxSnapshot.rate * 1_000_000) / 1_000_000;
+
+  // This is a per-request defensive reservation belt, not the temporary
+  // monthly DEV-entry policy. The unresolved count-endpoint cost is not
+  // represented as zero or free here.
+  if (
+    !Number.isFinite(tryMaximum)
+    || tryMaximum <= 0
+    || tryMaximum > 300
+  ) {
+    throw new Error("AI_CONTROLLED_DEV_COST_MAXIMUM_NOT_RESERVABLE");
+  }
+
+  return Object.freeze({
+    version: AI_PROVIDER_COST_AUTHORIZATION_V1_VERSION,
+    authority: "controlled_dev_runtime",
+    runtimeEnvironment: "local",
     provider: route.provider,
     modelId: route.modelId,
     modelTier: route.tier,

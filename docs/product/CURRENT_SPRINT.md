@@ -8,14 +8,14 @@ Sprint status: `IN_PROGRESS`
 
 Sprint objective: Build and verify the versioned CoachContextV1 plus its disconnected, read-only provider orchestration foundation without changing live AI runtime behavior, production state/schema, or gates.
 
-Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.1 are accepted locally. 6B.6B.2 is active and uncommitted: it adds only disconnected pre-smoke foundations for a future single DEV call. Current official documentation resolves the selected GPT-5.4 cache-write treatment but does not explicitly resolve whether `/responses/input_tokens` is billable; therefore the central activation contract keeps real DEV and production provider traffic fail-closed. AI runtime behavior, production schema/data, deployments, and gates remain unchanged. PLN-002 remains `IN_PROGRESS` pending natural Extra Study acceptance evidence.
+Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.1 are accepted locally. 6B.6B.2 local acceptance is green and checkpointed on the feature branch: the controlled local-DEV authority chain, authoritative local route/pricing envelope, TCMB FX boundary, server-only credential boundary, real gateway adapter, exact-count billing identity, dedicated controlled-DEV cost authorization, and full A→Z mocked smoke are verified. No real provider call has been executed. Official `/responses/input_tokens` billing remains unresolved; `TEMP_DEV_COST_POLICY_2026_09_12` permits only a separately approved, observed-cost, single controlled local-DEV smoke while production remains prohibited. Current Coach runtime, production schema/data, deployments, and Planner gates remain unchanged. PLN-002 remains `IN_PROGRESS` pending natural Extra Study acceptance evidence.
 
 ## NOW
 
 ### `AIC-002` / Evre 6B — CoachContextV1
 
 - Priority: `P0`
-- Status: `IN_PROGRESS — 6B.6B.2 ACTIVE — NOT_READY_FOR_DEV_SMOKE — PRODUCTION ACTIVATION BLOCKED`
+- Status: `IN_PROGRESS — 6B.6B.2 LOCAL_ACCEPTANCE_GREEN — READY_FOR_EXPLICIT_DEV_SMOKE_AUTHORIZATION — REAL_SMOKE_NOT_EXECUTED — PRODUCTION ACTIVATION BLOCKED`
 - Scope: disconnected read-only orchestration plus fail-closed DEV-only activation/secret/gateway, exact request and usage identity, deterministic TCMB acquisition, and reconciliation/smoke policy; no live AI runtime integration, real provider call, deploy, gate change, or production access.
 - Authority state: read-only; Planner V2 Confirm OFF; Planner V2 Apply OFF.
 
@@ -40,7 +40,7 @@ Current deliverable/evidence:
 - The 6B.6B.1 provider audit pinned documented GPT-5.4 snapshots/prices and blocked regional and >272K long-context paths. The 6B.6B.2 official audit now classifies the selected GPT-5.4 cache-write treatment as no-additional-charge while leaving `/responses/input_tokens` billing unresolved. TCMB indicative-selling provenance retains explicit non-binding and 96-hour fail-closed semantics.
 - 6B.6B.1 acceptance: focused context/evidence/signal/economics/provider/orchestrator `139/139`, full loopback integration/RLS `157/157`, full non-integration `1,096/1,096`, workspace typecheck, local DB lint, all relevant safety scripts, docs consistency, bundle byte determinism, and diff check PASS. Real local orchestrator domain mutation delta `0`, Planner lifecycle/proposal delta `0`, and real provider network calls `0`.
 - 6B.6B.2 pre-smoke foundation is defined in [Controlled DEV Runtime Pre-Smoke Foundation V1](specs/AI_COACH_CONTROLLED_DEV_RUNTIME_V1.md) and [One Controlled DEV Smoke and Reconciliation Runbook](specs/AI_COACH_DEV_SMOKE_RUNBOOK.md). It adds a central default-OFF/prod-prohibited server switch, closure-held server credential, fixed-origin injected-fetch gateway with zero automatic retries, strict usage and provider/request identity parsing, official-source TCMB acquisition with source-owned freshness, and critical reconciliation policy.
-- The official audit classifies selected GPT-5.4 separate cache-write cost as not applicable/documented no-additional-charge and keeps `/responses/input_tokens` billing unresolved. Consequently the checked-in real-DEV billing gate remains unavailable, no live smoke was performed, and 6B.6B.2 is not ready for a real DEV smoke.
+- The official audit still keeps `/responses/input_tokens` billing unresolved and does not independently authorize a provider call. `TEMP_DEV_COST_POLICY_2026_09_12` explicitly accepts that unresolved count-endpoint billing risk for exactly one separately approved local-DEV smoke while preserving token/cost/TRY telemetry, reservation, reconciliation, one-attempt/no-fallback limits, and production prohibition. The full mocked A→Z path is green; no live smoke has been performed.
 
 ### `AIC-001` / Evre 6A — Product / Authority / Cost Contract
 
@@ -126,8 +126,8 @@ The next active product-foundation task is `MAT-001`, which supplies the exact p
 
 ## NEXT
 
-1. Keep real DEV and production provider eligibility false until `/responses/input_tokens` billing is explicitly resolved or a separately approved pre-reservable worst-case count-call model exists
-2. Complete and review 6B.6B.2 local acceptance; authorize exactly one bounded DEV smoke only in a separate explicit task after every checklist prerequisite is green
+1. Keep production provider eligibility false. For local DEV only, retain `TEMP_DEV_COST_POLICY_2026_09_12`: unresolved count-endpoint billing may be accepted only by the server-owned exact-scope activation for one separately approved observed-cost smoke
+2. Checkpoint the green 6B.6B.2 local acceptance, then authorize exactly one bounded real DEV smoke only as a separate explicit task after real TCMB, server-secret, identity/allowlist, and operator checklist preflight are green
 3. Close `PLN-002` natural Extra Study authenticated real-user acceptance when real usage provides evidence
 4. Keep `PLN-004` production-authoritative activation gated while MAT-001/PLN-005 inputs mature
 5. Re-evaluate PLN-003 production-authoritative duration activation only after canonical learning-stage, material, and resource-role inputs exist
@@ -135,7 +135,7 @@ The next active product-foundation task is `MAT-001`, which supplies the exact p
 `NEXT` indicates intended sequence, not permission to deploy. Stage-dependent duration activation remains separately gated.
 ## Do not start
 
-- live/current Coach runtime wiring or a real provider call before a separately approved later scope; 6B.3–6B.6B.2 authorize no activation;
+- live/current Coach product runtime wiring or a real provider call without separate explicit authorization; 6B.6B.2 local acceptance permits only the controlled DEV policy/preflight path and grants no production or user-facing runtime activation;
 - 6C–6G work before their documented entry conditions;
 - AI teacher, tutoring, quiz, mock, grading, or mastery features in Evre 6;
 - any Coach task/capacity/material/progress/stage mutation or non-canonical planning Apply path;

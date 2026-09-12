@@ -1,6 +1,6 @@
 # AI Coach — Controlled DEV Runtime Pre-Smoke Foundation V1
 
-Status: `EVRE_6B.6B.2_ACTIVE — INPUT_COUNT_BILLING_UNRESOLVED — NOT_READY_FOR_DEV_SMOKE — PRODUCTION_DISABLED — CONFIRM_OFF — APPLY_OFF`
+Status: `EVRE_6B.6B.2_LOCAL_ACCEPTANCE_GREEN — INPUT_COUNT_BILLING_UNRESOLVED — READY_FOR_EXPLICIT_DEV_SMOKE_AUTHORIZATION — REAL_SMOKE_NOT_EXECUTED — PRODUCTION_DISABLED — CONFIRM_OFF — APPLY_OFF`
 
 Contract versions: `ai-provider-runtime-activation-v1`, `openai-server-secret-v1`, `openai-dev-gateway-v1`, `ai-openai-billing-audit-v1-2026-09-12`, `ai-tcmb-fx-acquisition-v1`, `ai-provider-reconciliation-policy-v1`, and `ai-coach-dev-smoke-policy-v1`.
 
@@ -8,7 +8,7 @@ Contract versions: `ai-provider-runtime-activation-v1`, `openai-server-secret-v1
 
 6B.6B.2 prepares the server-only boundary for one future explicitly authorized DEV provider smoke. It does not make that call, connect the current Coach endpoint, authorize production, deploy, push, commit, or change Planner gates.
 
-The checked-in activation remains fail-closed. Current official OpenAI documentation describes `POST /responses/input_tokens` and its result but does not explicitly say whether that counting call is billed. Because an unmodeled provider call cannot be proven inside the 300 TRY user/month ceiling, real DEV and production activation remain blocked. This is not waived by a local environment flag.
+The official OpenAI audit remains fail-closed as an authority source: current documentation describes `POST /responses/input_tokens` and its result but does not explicitly resolve whether that counting call is billed. `TEMP_DEV_COST_POLICY_2026_09_12` does not relabel that uncertainty as free; instead, it allows exactly one separately approved, server-owned, identity-bound local-DEV smoke to explicitly accept the unresolved count-endpoint billing risk while retaining telemetry, reservation, reconciliation, and observed-cost evidence. Production remains independently prohibited.
 
 ## 2. Official OpenAI billing decision table
 
@@ -17,7 +17,7 @@ Audit date: 2026-09-12. Only current official OpenAI documentation was used.
 | Fact | Decision | Evidence | Runtime consequence |
 | --- | --- | --- | --- |
 | `POST /responses/input_tokens` exists and returns complete Responses input tokens | `VERIFIED` | [Input Tokens API](https://developers.openai.com/api/reference/typescript/resources/responses/subresources/input_tokens) | Exact complete-request count is the required generation input bound. |
-| Count endpoint cost/no-cost treatment | `UNRESOLVED` | The official endpoint reference states no explicit billing treatment. | No real count call; DEV smoke and production stay blocked. |
+| Count endpoint cost/no-cost treatment | `UNRESOLVED` | The official endpoint reference states no explicit billing treatment. | Official audit alone authorizes no call. Under `TEMP_DEV_COST_POLICY_2026_09_12`, exactly one separately approved controlled local-DEV smoke may explicitly accept the unresolved risk; production remains blocked. |
 | GPT-5.4 separate cache-write charge | `NOT APPLICABLE` | [Prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching) assigns the 1.25× write charge to GPT-5.6 and later; GPT-5.4 has no additional write charge. | Selected GPT-5.4 routes do not add a separate write component. A surprising non-zero `cache_write_tokens` value is an invariant violation, not ordinary billing. |
 | Cached input pricing | `VERIFIED` | [GPT-5.4 model](https://developers.openai.com/api/docs/models/gpt-5.4) and the corresponding mini/nano model pages publish cached-input rates. | Actual cached tokens use the frozen matching cached-input rate; reservation never assumes a cache hit. |
 | Responses usage fields | `VERIFIED` | [Responses create](https://developers.openai.com/api/reference/cli/resources/responses/methods/create) and prompt-caching guidance expose input, cached/cache-write detail, output, reasoning detail, and total. | Missing/malformed/subset/total/unknown-class evidence is reconciliation-required. |
@@ -38,7 +38,7 @@ No inference is made from documentation silence.
 - the official billing gate must be complete;
 - request bodies and user text are not accepted as activation input.
 
-Mock transports remain available to local/test acceptance without enabling real provider traffic. The current official billing gate is incomplete, so even a correctly formed local DEV configuration resolves `billing_gate_unavailable`.
+Mock transports remain available to local/test acceptance without enabling real provider traffic. For controlled `local_dev`, an otherwise valid exact-scope server configuration may resolve available only when the server-owned unresolved-count-billing risk flag is explicitly `true`; malformed, missing, wrong-identity, wrong-scope, and production configurations remain unavailable. The official billing audit itself still grants no provider-call authority.
 
 `OPENAI_API_KEY` is read only by the Supabase server boundary. The credential is kept in a closure, serializes to a redacted marker, is never written to the ledger or reservation, and missing/malformed values fail closed. No browser/client import, committed `.env`, or production-secret change is authorized.
 
@@ -110,13 +110,13 @@ settled user-month TRY
 <= 300 TRY
 ```
 
-The proof is not complete for a real attempt because the count endpoint's own cost is unresolved. The safe accounting design is therefore to authorize **zero real count calls** until that endpoint is officially established as no-charge or receives a separately approved, pre-reservable worst-case billing model. No DEV switch can bypass this result.
+The generation-cost reservation proof remains complete for the modeled Responses request, while the count endpoint's own billing remains unresolved and is not represented as zero/free. `TEMP_DEV_COST_POLICY_2026_09_12` temporarily permits exactly one separately approved controlled local-DEV smoke to observe that unknown cost in practice. This exception is DEV-only, server-owned, identity-bound, one-attempt/no-fallback, fully metered, and does not weaken production cost requirements.
 
 ## 9. One future DEV smoke policy
 
 The defined but unexecuted candidate is exactly one authenticated local-DEV `today_analysis` using `today_explain`, the centrally required `standard` route, at most 16,384 evidence bytes, at most 200,000 exact complete input tokens, and exactly 900 combined output/reasoning tokens. It requires the central kill switch, exact allowlist, server key, fresh authoritative TCMB snapshot, exact count, atomic reservation, one provider attempt, no fallback, no automatic retry, no mutations, no Planner action, no production data, and post-attempt ledger/reservation inspection.
 
-Current status is `NOT_READY_FOR_DEV_SMOKE` solely because the count-call billing fact remains unresolved. Production is independently ineligible and would still require approved migration/deployment/runtime/gate scope after this DEV evidence.
+Current status is `READY_FOR_EXPLICIT_DEV_SMOKE_AUTHORIZATION`: local technical acceptance and full mocked A→Z execution are green, but no real provider call has occurred. The remaining gate is a separate explicit real-smoke authorization plus real TCMB/server-secret/operator preflight. Production is independently ineligible and would still require approved migration/deployment/runtime/gate scope after any DEV evidence.
 
 ## 10. Authority state
 
