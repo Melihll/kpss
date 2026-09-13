@@ -1,5 +1,19 @@
 # Current Sprint
 
+> **Active phase - REACTIVE_COACH_6C1_ROUTING_FOUNDATION_2026_09_13**
+>
+> - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
+> - **6C Reactive Coach is ACTIVE.**
+> - 6C.1 introduces a pure server-owned request-routing contract only; it does not expose a user-facing provider runtime.
+> - Deterministic Today-fact, out-of-scope teaching/quiz, chat-Apply, and unsupported planning-change requests remain T0 with zero provider authority.
+> - In-scope analysis requests map only to existing read-only capabilities: `today_analysis`, `week_analysis`, `subject_analysis`, `planner_explanation`, or `complex_status_analysis`.
+> - The route decision stores no raw user text and grants no Planner/task/capacity mutation, confirmation, or Apply authority.
+> - Legacy `ai-coach-plan-preview` / generic Apply is not a new 6C truth or mutation path.
+> - Production provider remains prohibited. Confirm and Apply remain OFF.
+> - 6D-6G remain NOT_STARTED.
+> - This block supersedes older current-state wording below it.
+
+
 > **Controlled DEV acceptance CLOSED - REAL_SMOKE_ATTEMPT_5_GREEN_2026_09_13**
 >
 > - Attempt 5 completed the complete real controlled-DEV provider path successfully.
@@ -102,7 +116,7 @@
 > - This current-state block supersedes older pre-smoke wording later in this document.
 
 
-Last updated: 2026-09-12
+Last updated: 2026-09-13
 
 ## Sprint 02 — Evre 6B & Continuing Planning Foundations
 
@@ -238,7 +252,7 @@ The next active product-foundation task is `MAT-001`, which supplies the exact p
 ## Do not start
 
 - live/current Coach product runtime wiring or a real provider call without separate explicit authorization; 6B.6B.2 local acceptance permits only the controlled DEV policy/preflight path and grants no production or user-facing runtime activation;
-- 6C–6G work before their documented entry conditions;
+- 6D-6G work before their documented entry conditions;
 - AI teacher, tutoring, quiz, mock, grading, or mastery features in Evre 6;
 - any Coach task/capacity/material/progress/stage mutation or non-canonical planning Apply path;
 - gamification;

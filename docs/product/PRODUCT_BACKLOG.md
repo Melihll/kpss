@@ -1,5 +1,19 @@
 # KPSS Koçu Product Backlog
 
+> **Active phase - REACTIVE_COACH_6C1_ROUTING_FOUNDATION_2026_09_13**
+>
+> - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
+> - **6C Reactive Coach is ACTIVE.**
+> - 6C.1 introduces a pure server-owned request-routing contract only; it does not expose a user-facing provider runtime.
+> - Deterministic Today-fact, out-of-scope teaching/quiz, chat-Apply, and unsupported planning-change requests remain T0 with zero provider authority.
+> - In-scope analysis requests map only to existing read-only capabilities: `today_analysis`, `week_analysis`, `subject_analysis`, `planner_explanation`, or `complex_status_analysis`.
+> - The route decision stores no raw user text and grants no Planner/task/capacity mutation, confirmation, or Apply authority.
+> - Legacy `ai-coach-plan-preview` / generic Apply is not a new 6C truth or mutation path.
+> - Production provider remains prohibited. Confirm and Apply remain OFF.
+> - 6D-6G remain NOT_STARTED.
+> - This block supersedes older current-state wording below it.
+
+
 > **Controlled DEV acceptance CLOSED - REAL_SMOKE_ATTEMPT_5_GREEN_2026_09_13**
 >
 > - Attempt 5 completed the complete real controlled-DEV provider path successfully.
@@ -104,7 +118,7 @@
 
 Status: Active
 
-Last updated: 2026-09-12
+Last updated: 2026-09-13
 
 ## Workflow
 
@@ -152,8 +166,8 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | ID | Phase | Priority | Title | Status |
 | --- | --- | --- | --- | --- |
 | `AIC-001` | 6A | `P0` | Product / Authority / Cost Contract | `DONE` |
-| `AIC-002` | 6B | `P0` | CoachContextV1 | `IN_PROGRESS — 6B.6B.2 LOCAL_ACCEPTANCE_GREEN / SECOND_REAL_SMOKE_NOT_AUTHORIZED` |
-| `AIC-003` | 6C | `P1` | Reactive Coach | `TODO` |
+| `AIC-002` | 6B | `P0` | CoachContextV1 | `DONE - CONTROLLED DEV RUNTIME ACCEPTANCE CLOSED` |
+| `AIC-003` | 6C | `P1` | Reactive Coach | `IN_PROGRESS - 6C.1 REQUEST ROUTING FOUNDATION` |
 | `AIC-004` | 6D | `P1` | Proactive Coach | `TODO` |
 | `AIC-005` | 6E | `P0` | Planner V2 Integration | `TODO` |
 | `AIC-006` | 6F | `P1` | Conversation Intelligence | `TODO` |
@@ -184,7 +198,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-002` / Evre 6B — CoachContextV1
 
 - Priority: `P0`
-- Status: `IN_PROGRESS — 6B.1–6B.6B.1 ACCEPTED — 6B.6B.2 LOCAL_ACCEPTANCE_GREEN / SECOND_REAL_SMOKE_NOT_AUTHORIZED — REAL_SMOKE_ATTEMPT_1_COUNT_HTTP_400 — PRODUCTION ACTIVATION BLOCKED`
+- Status: `DONE - 6B RUNTIME FOUNDATION CLOSED`
 - Dependency: closed `AIC-001`; accepted 6B.1 checkpoint `acd16ffb2263b5285b14bd7329ff4357d7971e00`.
 - Desired outcome: One immutable, minimal, user-scoped context envelope supplies canonical facts, provenance, freshness, confidence/authority, unknowns, and bounded conversation state while beginning centralized router/pricing and AI usage/cost telemetry.
 - Acceptance criteria:
@@ -211,7 +225,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-003` / Evre 6C — Reactive Coach
 
 - Priority: `P1`
-- Status: `TODO`
+- Status: `IN_PROGRESS - 6C.1 REQUEST ROUTING FOUNDATION`
 - Dependency: accepted `AIC-002`, eval fixtures, cost ledger, and separate release scope.
 - Desired outcome: The user can ask the Coach to Explain, Diagnose, or Guide and receive grounded Turkish responses with deterministic fallbacks.
 - Acceptance criteria:

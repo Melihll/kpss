@@ -1,5 +1,19 @@
 # KPSS Koçu Product Roadmap
 
+> **Active phase - REACTIVE_COACH_6C1_ROUTING_FOUNDATION_2026_09_13**
+>
+> - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
+> - **6C Reactive Coach is ACTIVE.**
+> - 6C.1 introduces a pure server-owned request-routing contract only; it does not expose a user-facing provider runtime.
+> - Deterministic Today-fact, out-of-scope teaching/quiz, chat-Apply, and unsupported planning-change requests remain T0 with zero provider authority.
+> - In-scope analysis requests map only to existing read-only capabilities: `today_analysis`, `week_analysis`, `subject_analysis`, `planner_explanation`, or `complex_status_analysis`.
+> - The route decision stores no raw user text and grants no Planner/task/capacity mutation, confirmation, or Apply authority.
+> - Legacy `ai-coach-plan-preview` / generic Apply is not a new 6C truth or mutation path.
+> - Production provider remains prohibited. Confirm and Apply remain OFF.
+> - 6D-6G remain NOT_STARTED.
+> - This block supersedes older current-state wording below it.
+
+
 > **Controlled DEV acceptance CLOSED - REAL_SMOKE_ATTEMPT_5_GREEN_2026_09_13**
 >
 > - Attempt 5 completed the complete real controlled-DEV provider path successfully.
@@ -104,7 +118,7 @@
 
 Status: Active
 
-Last updated: 2026-09-12
+Last updated: 2026-09-13
 
 ## Roadmap rules
 
@@ -201,8 +215,8 @@ The normative product, truth, authority, scenario, proactive, cost, and phase co
 | Sequence | Sub-phase | Status | Outcome |
 | --- | --- | --- | --- |
 | 6A | Product / Authority / Cost Contract | `CLOSED` | Final product outcomes, truth sources, non-authority, 20 scenarios, proactive triggers, cost envelope, and phase gates accepted. |
-| 6B | CoachContextV1 | `ACTIVE — 6B.6B.2 LOCAL_ACCEPTANCE_GREEN / SECOND_REAL_SMOKE_NOT_AUTHORIZED` | 6B.1–6B.6B.1 are accepted locally. 6B.6B.2 now verifies the controlled local-DEV gateway/activation/secret boundary, transport authority separation, exact count identity, controlled-DEV cost authorization, authoritative local route/pricing, TCMB freshness, and full A→Z mocked smoke. `/responses/input_tokens` billing remains officially unresolved, but `TEMP_DEV_COST_POLICY_2026_09_12` allows one separately approved observed-cost local-DEV smoke. No real provider call has occurred; production remains prohibited. |
-| 6C | Reactive Coach | `NOT_STARTED` | Deliver user-initiated Explain / Diagnose / Guide with grounding, fallbacks, and metering. |
+| 6B | CoachContextV1 | `CLOSED` | Controlled DEV runtime acceptance completed; canonical context/evidence, routing/pricing, telemetry, provider safety, and real controlled-DEV acceptance are closed. Production provider remains prohibited. |
+| 6C | Reactive Coach | `ACTIVE - 6C.1 REQUEST ROUTING FOUNDATION` | Build user-initiated Explain / Diagnose / Guide with deterministic T0 routing, canonical grounding, safe fallbacks, and no mutation authority. |
 | 6D | Proactive Coach | `NOT_STARTED` | Add deterministic in-app triggers, cooldowns, dedupe, attention controls, and valid silence. |
 | 6E | Planner V2 integration | `NOT_STARTED` | Route every Coach planning mutation to the one canonical Planner V2 lifecycle. |
 | 6F | Conversation Intelligence | `NOT_STARTED` | Add short recent context plus compact structured state/signals without long-term raw history or authority transfer. |
