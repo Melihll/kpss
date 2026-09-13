@@ -104,6 +104,8 @@ Evre 6B must define one immutable, user-scoped, time-bounded context envelope co
 
 The context builder performs no LLM call and no mutation. Missing or stale facts remain explicit; they are never filled by inference. Raw long-term conversation history is not stored by default.
 
+The 6B.1 typed shape, fact-envelope semantics, canonical field/source matrix, legacy exclusions, explicit truth gaps, and A–H fixture contract are defined in [AI Coach — CoachContextV1 Contract and Canonical Source Map](AI_COACH_CONTEXT_V1.md). That contract is a local read-only domain definition only; live database wiring, AI runtime integration, model calls, and telemetry remain outside 6B.1.
+
 ### 4.4 Responsibility split
 
 | Concern | Deterministic product responsibility | LLM responsibility |
@@ -469,6 +471,20 @@ The cost envelope applies to variable AI-model inference spend per active user p
 
 The hard budget governor must refuse a call when its conservative maximum versioned TRY estimate would push the user's accrued monthly model spend above `300 TL`. At or above the ceiling, deterministic product features and template Coach responses continue; the user receives `COST_LIMITED`, not a broken product. Telemetry begins in 6B; automatic hard-governor completion is a mandatory 6G exit criterion before production acceptance.
 
+### 10.1A Temporary controlled-DEV cost-policy supersession — `TEMP_DEV_COST_POLICY_2026_09_12`
+
+This dated decision temporarily supersedes the **DEV-entry** interpretation of the 300 TL monthly ceiling for the initial single-user controlled local-DEV observation only. It does **not** remove or weaken the production cost contract, the 6G hard-governor exit criterion, provider telemetry, token accounting, versioned pricing/TRY estimation, reservation, settlement, or reconciliation.
+
+For the controlled 6B.6B.2 local-DEV smoke:
+
+- official `/responses/input_tokens` billing remains `UNRESOLVED` and must never be represented as free;
+- one separately approved smoke may explicitly accept that unresolved count-endpoint billing risk through the server-owned exact-scope activation;
+- actual provider/token/cost/TRY telemetry must be retained and observed for approximately 30 days before recalibrating the development cost policy;
+- the existing 300 TL machinery may remain as a defensive accounting safety belt, but it is not the entry blocker for this controlled DEV observation;
+- production provider traffic remains prohibited;
+- this decision grants no Coach mutation, Planner Preview/Confirm/Apply, deployment, production migration, or production runtime authority.
+
+The normal/heavy-user targets and automatic hard `300 TL/month` per-user governor remain required before 6G production acceptance.
 ### 10.2 Every call is metered
 
 The AI usage/cost telemetry ledger starts in 6B and covers every Evre 6 model call from that point: successful, failed, timed-out, retried, fallback, summarization, eval-sampling, and proactive wording calls whenever the provider can bill them. No broad production exposure is allowed before the 6G hard governor exists. The 6G production acceptance window requires a call-ledger identity and pre-call budget reservation before every provider request.
@@ -597,4 +613,4 @@ Evre 6A is `CLOSED` because:
 9. Runtime code, deployments, migrations, gates, and production state remain unchanged.
 10. Planner V2 Confirm remains OFF and Planner V2 Apply remains OFF.
 
-6B is next but remains not started until a separate implementation scope is approved.
+6B is active under separate bounded scopes. 6B.1–6B.5 are accepted locally, including the unconnected canonical context/evidence/signal and economics foundations; they do not activate the AI runtime, apply the ledger migration to production, or complete 6B. Atomic budget reservation and authoritative production economics remain prerequisites before 6B.6 provider activation.

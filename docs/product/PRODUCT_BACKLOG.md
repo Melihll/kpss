@@ -1,8 +1,124 @@
 # KPSS Koçu Product Backlog
 
+> **Active phase - REACTIVE_COACH_6C1_ROUTING_FOUNDATION_2026_09_13**
+>
+> - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
+> - **6C Reactive Coach is ACTIVE.**
+> - 6C.1 introduces a pure server-owned request-routing contract only; it does not expose a user-facing provider runtime.
+> - Deterministic Today-fact, out-of-scope teaching/quiz, chat-Apply, and unsupported planning-change requests remain T0 with zero provider authority.
+> - In-scope analysis requests map only to existing read-only capabilities: `today_analysis`, `week_analysis`, `subject_analysis`, `planner_explanation`, or `complex_status_analysis`.
+> - The route decision stores no raw user text and grants no Planner/task/capacity mutation, confirmation, or Apply authority.
+> - Legacy `ai-coach-plan-preview` / generic Apply is not a new 6C truth or mutation path.
+> - Production provider remains prohibited. Confirm and Apply remain OFF.
+> - 6D-6G remain NOT_STARTED.
+> - This block supersedes older current-state wording below it.
+
+
+> **Controlled DEV acceptance CLOSED - REAL_SMOKE_ATTEMPT_5_GREEN_2026_09_13**
+>
+> - Attempt 5 completed the complete real controlled-DEV provider path successfully.
+> - Real TCMB calls: `1`.
+> - OpenAI input-token count: `1`, HTTP `200`, exact input tokens `4882`.
+> - Count request id: `req_0ac3ad3a0b2f46cbbb2e2017bac58b47`.
+> - OpenAI generation: `1`, HTTP `200`.
+> - Generation request id: `req_1f2dbdd2d2e74b3c98e29eb1480db51c`.
+> - Provider order: `count -> generation`.
+> - Accounting order: `reserve -> markStarted -> settle`.
+> - Accounting counters: reserve `1`, markStarted `1`, settle `1`, release `0`, reconcile `0`.
+> - Provider usage: input `4882`, cached input `0`, output `153`, total `5035`.
+> - Observed actualTryCost: `0.211052`.
+> - Grounded response validation passed with `5` accepted source fact paths.
+> - Response capability: `today_analysis`.
+> - `noMutationPerformed = true`.
+> - Production access, DB calls, Planner calls, task mutations, deploys, migrations, retries, and fallbacks: all `0`.
+> - Secret cleanup, temporary harness cleanup, HEAD preservation, and clean-worktree post-check all passed.
+> - Attempt 5 authorization is consumed. No further controlled-DEV smoke attempt is required for this acceptance gate.
+> - **6B.6B.2 Controlled DEV Runtime Acceptance: CLOSED.**
+> - **6B Runtime Foundation: CLOSED.**
+> - Next product phase: **6C Reactive Coach**.
+> - Production provider remains prohibited until separately authorized.
+> - Confirm and Apply remain OFF.
+> - This block supersedes older controlled-DEV current-state notes below it.
+
+
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_4_GROUNDING_STOP_2026_09_12**
+>
+> - Attempt 4 reached the full real provider transport and accounting path.
+> - Real TCMB calls: `1`.
+> - Real OpenAI input-token count calls: `1`; HTTP status `200`.
+> - Exact input tokens: `2716`.
+> - Count provider request id: `req_b3eb7177ea0349fda7d480f05cea7502`.
+> - Real OpenAI generation calls: `1`; HTTP status `200`.
+> - Generation provider request id: `req_658551d2cc8e4f0abe40a06c3f1b298b`.
+> - Provider order: `count -> generation`.
+> - Accounting order: `reserve -> markStarted -> settle`.
+> - Accounting counters: reserve `1`, markStarted `1`, settle `1`, release `0`, reconcile `0`.
+> - Production access, DB calls, Planner calls, task mutations, deploys, migrations, retries, and fallbacks: all `0`.
+> - Execution stopped fail-closed only at grounded response validation with `GROUNDED_COACH_RESPONSE_HALLUCINATED_FACT_REFERENCE`.
+> - Root cause: the prompt required exact fact references but the request payload did not expose the validator's exact allowed reference catalog.
+> - Offline repair now sends deterministic `referenceCatalog.sourceFactPaths`, `referenceCatalog.acknowledgedUnknownPaths`, and `referenceCatalog.staleOrBlockedWarningPaths` to the model.
+> - Grounding validator strictness remains unchanged; fabricated or out-of-catalog paths are still rejected.
+> - Focused grounding repair acceptance: `55/55` tests PASS; typecheck PASS; AI economics safety PASS; AI Coach safety PASS.
+> - Attempt 4 authorization is consumed. No automatic rerun is authorized.
+> - Any next real provider execution is Attempt 5 and requires new explicit operator authorization.
+> - Production provider remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This block supersedes older current-state wording below it.
+
+
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_3_COST_TIME_STOP_2026_09_12**
+>
+> - Attempt 3 real controlled-DEV execution reached the repaired OpenAI input-token count boundary successfully.
+> - Real TCMB calls: `1`.
+> - Real OpenAI input-token count calls: `1`.
+> - OpenAI input-token count HTTP status: `200`.
+> - Count provider request id: `req_13e199b81c404d9da2e281ae71c5b241`.
+> - Real OpenAI generation calls: `0`.
+> - Accounting reserve / mark-started / settle / release / reconcile: `0 / 0 / 0 / 0 / 0`.
+> - Execution stopped fail-closed at local controlled-DEV cost authorization with `AI_CONTROLLED_DEV_COST_BOUND_INVALID`.
+> - Root cause: the exact count proof is observed at `countedAt`, but controlled-DEV cost authorization evaluated the proof at the earlier request start time (`requestedAt`). Real network latency therefore made a valid proof appear future-dated.
+> - Focused offline repair changes controlled-DEV cost authorization evaluation from `input.requestedAt` to `counted.countedAt`.
+> - Regression coverage now explicitly models a real count observation occurring after request start.
+> - Focused repair acceptance: `48/48` tests PASS; typecheck PASS; AI economics safety PASS; AI Coach safety PASS.
+> - Attempt 3 authorization is consumed. No automatic rerun is authorized.
+> - Any next real provider execution is Attempt 4 and requires new explicit operator authorization.
+> - Production provider remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This block supersedes older current-state wording below it.
+
+
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_2_HARNESS_DISCOVERY_FAILURE_2026_09_12**
+>
+> - Attempt 2 received explicit operator authorization, but the temporary Vitest harness was created under `scripts/`, which is outside the repository's configured Vitest include paths.
+> - Vitest stopped with `No test files found` before the test body executed.
+> - Attempt 2 real TCMB calls: `0`.
+> - Attempt 2 real OpenAI input-token count calls: `0`.
+> - Attempt 2 real OpenAI generation calls: `0`.
+> - Database calls, Planner calls, task mutations, production access, deploys, and migrations: `0`.
+> - Attempt 2 therefore did **not** test the repaired provider contract and did **not** create a new real provider attempt.
+> - The Attempt 2 operational authorization is consumed under the no-automatic-rerun rule.
+> - Any next real provider execution requires a new explicit authorization and must use a Vitest-discoverable temporary harness under `supabase/functions/_shared/ai-coach/**/*.test.ts`.
+> - Provider repair remains locally GREEN and committed. Production provider remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This block supersedes older current-state wording below it.
+
+
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_1_2026_09_12**
+>
+> - The first explicitly authorized real controlled-DEV smoke attempt is consumed.
+> - Real OpenAI input-token calls in attempt 1: `1`.
+> - The input-token request returned HTTP `400` and failed closed as `count_http_error`.
+> - Provider request id: `req_ee35d869741f444c8de988f93b0f9bec`.
+> - Real generation calls in attempt 1: `0`.
+> - Reservation / mark-started / settlement / release / reconciliation: `0 / 0 / 0 / 0 / 0`.
+> - Database calls, Planner calls, task mutations, production access, deploys, and migrations caused by the smoke: `0`.
+> - The offline provider-contract repair is focused-GREEN. The strict provider schema surface was reduced while stronger deterministic local validation remains enforced.
+> - Safe provider error `type/code/param` diagnostics are now implemented locally; provider message text is not surfaced.
+> - A second real provider smoke is **NOT AUTHORIZED**.
+> - Production provider activation remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This current-state block supersedes older pre-smoke wording later in this document.
+
+
 Status: Active
 
-Last updated: 2026-09-10
+Last updated: 2026-09-13
 
 ## Workflow
 
@@ -50,8 +166,8 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | ID | Phase | Priority | Title | Status |
 | --- | --- | --- | --- | --- |
 | `AIC-001` | 6A | `P0` | Product / Authority / Cost Contract | `DONE` |
-| `AIC-002` | 6B | `P0` | CoachContextV1 | `READY` |
-| `AIC-003` | 6C | `P1` | Reactive Coach | `TODO` |
+| `AIC-002` | 6B | `P0` | CoachContextV1 | `DONE - CONTROLLED DEV RUNTIME ACCEPTANCE CLOSED` |
+| `AIC-003` | 6C | `P1` | Reactive Coach | `IN_PROGRESS - 6C.1 REQUEST ROUTING FOUNDATION` |
 | `AIC-004` | 6D | `P1` | Proactive Coach | `TODO` |
 | `AIC-005` | 6E | `P0` | Planner V2 Integration | `TODO` |
 | `AIC-006` | 6F | `P1` | Conversation Intelligence | `TODO` |
@@ -82,8 +198,8 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-002` / Evre 6B — CoachContextV1
 
 - Priority: `P0`
-- Status: `READY`
-- Dependency: closed `AIC-001`; starting work still requires a separate implementation scope.
+- Status: `DONE - 6B RUNTIME FOUNDATION CLOSED`
+- Dependency: closed `AIC-001`; accepted 6B.1 checkpoint `acd16ffb2263b5285b14bd7329ff4357d7971e00`.
 - Desired outcome: One immutable, minimal, user-scoped context envelope supplies canonical facts, provenance, freshness, confidence/authority, unknowns, and bounded conversation state while beginning centralized router/pricing and AI usage/cost telemetry.
 - Acceptance criteria:
   - Context distinguishes plan, task, capacity, workload, material progress, stage, resource role, and study-intent semantics.
@@ -96,11 +212,20 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
   - Every Evre 6 model call from 6B onward is recorded in a usage/cost ledger with provider cost and a versioned TRY estimate.
   - Context minimization, user isolation, redaction, fingerprints, fixtures, and per-tier token estimates pass review.
   - No provider call, proposal creation, confirmation, Apply, or production activation is introduced by the context contract itself.
+- 6B.1 note (2026-09-10): [CoachContextV1 Contract and Canonical Source Map](specs/AI_COACH_CONTEXT_V1.md) is accepted at `acd16ffb2263b5285b14bd7329ff4357d7971e00`, with a pure typed builder, executable field/source and legacy-exclusion registries, compactness/authority guards, and A–H fixtures/tests. It does not complete router/pricing, telemetry, or 6B as a whole.
+- 6B.2 note (2026-09-10): canonical read-only adapters and focused proofs are implemented locally (30/30; 42-task internal canonical context 52,716 bytes). The targeted real local-Supabase integration test passes `1/1` with mutable-row delta `0` and Planner lifecycle-row delta `0`; static safety proves zero preview recomputation and zero legacy Coach truth-loader calls. No runtime wiring, production access, migration, Preview, Confirm, or Apply occurred.
+- 6B.3 requirement: retain the complete internal canonical context and introduce a separate compact allowlisted LLM-facing projection plus on-demand detail strategy. The 52,716-byte high-volume fixture must not be sent wholesale to a model or “optimized” by deleting canonical truth from the internal contract.
+- 6B.3 local note (2026-09-11): `CoachEvidenceViewV1` implements eight explicit scope/capability pairs and six bounded detail kinds over the immutable canonical context. High-volume scope reductions are 56.9–97.8%; the largest detail is 10,103 bytes. A–H, limits, availability/provenance preservation, no-leak, profile isolation, local-DB zero-mutation, and static no-preview/no-legacy/no-LLM/no-query proofs are locally accepted. No runtime wiring or production action occurred.
+- 6B.4 local acceptance (2026-09-11): centralized `CoachSignalCandidateV1` registry evaluates only known/fresh facts or emits explicit data-quality candidates for unavailable facts. Fifteen signal classes, source-owned freshness policy, deterministic dedupe/cooldown/attention metadata, five bounded evidence-scope integrations, A–J tests, and high-volume size evidence are accepted locally. No prose, LLM/provider call, proposal, runtime wiring, or production action occurs.
+- 6B.5 local acceptance (2026-09-11): [Central Router, Pricing, FX and Usage Ledger V1](specs/AI_COACH_ROUTER_COST_TELEMETRY_V1.md) defines capability routing, production-fail-closed fixture-only versioned pricing/FX, `AiUsageEventV1`, Europe/Istanbul monthly accounting, deterministic preflight, and a service-owned append-only ledger. The migration is applied only to loopback local Supabase for RLS/idempotency/immutability tests. Atomic persistent user-month reservation, authoritative production pricing/FX, production migration, provider metering, and runtime wiring remain hard prerequisites/open work for 6B.6.
+- 6B.6A local acceptance (2026-09-11): [Provider Runtime and Atomic Budget Safety V1](specs/AI_COACH_PROVIDER_RUNTIME_BUDGET_V1.md) adds a production-authoritative configuration boundary that defaults to unavailable, complete billable-token-bound gating, defensive provider-attempt observation, atomic user-wide Istanbul-month worst-case reservation, service-only lifecycle RPCs, transactional ledger settlement, reconciliation states, and read-only operational views. Exact `290 + 10` / `290 + 10.01` and concurrent saturation tests pass. At that checkpoint production route/pricing/FX/billable-bound facts and update mechanisms were absent; no provider or user-facing runtime was wired, the migration was local-only, and 6B remained in progress.
+- 6B.6B.1 local acceptance (2026-09-12): [Read-Only Provider Orchestrator V1](specs/AI_COACH_READ_ONLY_PROVIDER_ORCHESTRATOR_V1.md) audits the manual provider foundation, pins current official GPT-5.4 snapshot/pricing facts, blocks regional/long-context/unmodeled billing, and connects canonical context/evidence/signals through immutable request identity, exact mocked input count, worst-case TRY authorization, real local atomic reservation/ledger, mocked provider observation, and grounded response validation. It is disconnected from live Coach and rejects production. Count-endpoint/cache-write billing, acquired FX, operations, real gateway, production migration/deployment, and activation remain blockers; 6B remains in progress.
+- 6B.6B.2 local acceptance green (2026-09-12): [Controlled DEV Runtime Pre-Smoke Foundation V1](specs/AI_COACH_CONTROLLED_DEV_RUNTIME_V1.md) and the [DEV Smoke/Reconciliation Runbook](specs/AI_COACH_DEV_SMOKE_RUNBOOK.md) now cover the central default-OFF, production-prohibited, server-only exact allowlist; closure-held API key; fixed-origin injected-fetch gateway; transport authority separation; official count identity with unresolved billing preserved; dedicated controlled-DEV cost authorization; authoritative local route/pricing envelope; deterministic TCMB acquisition/freshness; one-attempt/no-retry/no-fallback policy; and critical reconciliation. Full A→Z mocked smoke and checkpoint regression are green. `TEMP_DEV_COST_POLICY_2026_09_12` permits a separately approved single observed-cost local-DEV smoke despite unresolved count-endpoint billing; no real provider call has occurred and production remains blocked.
 
 ## `AIC-003` / Evre 6C — Reactive Coach
 
 - Priority: `P1`
-- Status: `TODO`
+- Status: `IN_PROGRESS - 6C.1 REQUEST ROUTING FOUNDATION`
 - Dependency: accepted `AIC-002`, eval fixtures, cost ledger, and separate release scope.
 - Desired outcome: The user can ask the Coach to Explain, Diagnose, or Guide and receive grounded Turkish responses with deterministic fallbacks.
 - Acceptance criteria:

@@ -58,7 +58,7 @@ export async function loadCanonicalMaterialUnits(
   const resources = (resourceResult.data ?? [])
     .filter((row: any) => row.status === "active");
 
-  const resourceById = new Map(
+  const resourceById = new Map<string, any>(
     resources.map((row: any) => [String(row.id), row]),
   );
 
@@ -211,7 +211,7 @@ export async function loadCanonicalMaterialUnits(
     curriculumRows = result.data ?? [];
   }
 
-  const curriculumById = new Map(
+  const curriculumById = new Map<string, any>(
     curriculumRows.map((row: any) => [String(row.id), row]),
   );
   const progressByVideo = new Map(

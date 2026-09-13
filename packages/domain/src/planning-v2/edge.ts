@@ -3,6 +3,10 @@
 } from "./db-snapshot-builder";
 
 export {
+  mergePlanningTaskProgressV1,
+} from "./db-snapshot-contract";
+
+export {
   decidePlanningActionV2,
 } from "./planning-decision";
 

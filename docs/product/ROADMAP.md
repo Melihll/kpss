@@ -1,8 +1,124 @@
 # KPSS Koçu Product Roadmap
 
+> **Active phase - REACTIVE_COACH_6C1_ROUTING_FOUNDATION_2026_09_13**
+>
+> - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
+> - **6C Reactive Coach is ACTIVE.**
+> - 6C.1 introduces a pure server-owned request-routing contract only; it does not expose a user-facing provider runtime.
+> - Deterministic Today-fact, out-of-scope teaching/quiz, chat-Apply, and unsupported planning-change requests remain T0 with zero provider authority.
+> - In-scope analysis requests map only to existing read-only capabilities: `today_analysis`, `week_analysis`, `subject_analysis`, `planner_explanation`, or `complex_status_analysis`.
+> - The route decision stores no raw user text and grants no Planner/task/capacity mutation, confirmation, or Apply authority.
+> - Legacy `ai-coach-plan-preview` / generic Apply is not a new 6C truth or mutation path.
+> - Production provider remains prohibited. Confirm and Apply remain OFF.
+> - 6D-6G remain NOT_STARTED.
+> - This block supersedes older current-state wording below it.
+
+
+> **Controlled DEV acceptance CLOSED - REAL_SMOKE_ATTEMPT_5_GREEN_2026_09_13**
+>
+> - Attempt 5 completed the complete real controlled-DEV provider path successfully.
+> - Real TCMB calls: `1`.
+> - OpenAI input-token count: `1`, HTTP `200`, exact input tokens `4882`.
+> - Count request id: `req_0ac3ad3a0b2f46cbbb2e2017bac58b47`.
+> - OpenAI generation: `1`, HTTP `200`.
+> - Generation request id: `req_1f2dbdd2d2e74b3c98e29eb1480db51c`.
+> - Provider order: `count -> generation`.
+> - Accounting order: `reserve -> markStarted -> settle`.
+> - Accounting counters: reserve `1`, markStarted `1`, settle `1`, release `0`, reconcile `0`.
+> - Provider usage: input `4882`, cached input `0`, output `153`, total `5035`.
+> - Observed actualTryCost: `0.211052`.
+> - Grounded response validation passed with `5` accepted source fact paths.
+> - Response capability: `today_analysis`.
+> - `noMutationPerformed = true`.
+> - Production access, DB calls, Planner calls, task mutations, deploys, migrations, retries, and fallbacks: all `0`.
+> - Secret cleanup, temporary harness cleanup, HEAD preservation, and clean-worktree post-check all passed.
+> - Attempt 5 authorization is consumed. No further controlled-DEV smoke attempt is required for this acceptance gate.
+> - **6B.6B.2 Controlled DEV Runtime Acceptance: CLOSED.**
+> - **6B Runtime Foundation: CLOSED.**
+> - Next product phase: **6C Reactive Coach**.
+> - Production provider remains prohibited until separately authorized.
+> - Confirm and Apply remain OFF.
+> - This block supersedes older controlled-DEV current-state notes below it.
+
+
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_4_GROUNDING_STOP_2026_09_12**
+>
+> - Attempt 4 reached the full real provider transport and accounting path.
+> - Real TCMB calls: `1`.
+> - Real OpenAI input-token count calls: `1`; HTTP status `200`.
+> - Exact input tokens: `2716`.
+> - Count provider request id: `req_b3eb7177ea0349fda7d480f05cea7502`.
+> - Real OpenAI generation calls: `1`; HTTP status `200`.
+> - Generation provider request id: `req_658551d2cc8e4f0abe40a06c3f1b298b`.
+> - Provider order: `count -> generation`.
+> - Accounting order: `reserve -> markStarted -> settle`.
+> - Accounting counters: reserve `1`, markStarted `1`, settle `1`, release `0`, reconcile `0`.
+> - Production access, DB calls, Planner calls, task mutations, deploys, migrations, retries, and fallbacks: all `0`.
+> - Execution stopped fail-closed only at grounded response validation with `GROUNDED_COACH_RESPONSE_HALLUCINATED_FACT_REFERENCE`.
+> - Root cause: the prompt required exact fact references but the request payload did not expose the validator's exact allowed reference catalog.
+> - Offline repair now sends deterministic `referenceCatalog.sourceFactPaths`, `referenceCatalog.acknowledgedUnknownPaths`, and `referenceCatalog.staleOrBlockedWarningPaths` to the model.
+> - Grounding validator strictness remains unchanged; fabricated or out-of-catalog paths are still rejected.
+> - Focused grounding repair acceptance: `55/55` tests PASS; typecheck PASS; AI economics safety PASS; AI Coach safety PASS.
+> - Attempt 4 authorization is consumed. No automatic rerun is authorized.
+> - Any next real provider execution is Attempt 5 and requires new explicit operator authorization.
+> - Production provider remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This block supersedes older current-state wording below it.
+
+
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_3_COST_TIME_STOP_2026_09_12**
+>
+> - Attempt 3 real controlled-DEV execution reached the repaired OpenAI input-token count boundary successfully.
+> - Real TCMB calls: `1`.
+> - Real OpenAI input-token count calls: `1`.
+> - OpenAI input-token count HTTP status: `200`.
+> - Count provider request id: `req_13e199b81c404d9da2e281ae71c5b241`.
+> - Real OpenAI generation calls: `0`.
+> - Accounting reserve / mark-started / settle / release / reconcile: `0 / 0 / 0 / 0 / 0`.
+> - Execution stopped fail-closed at local controlled-DEV cost authorization with `AI_CONTROLLED_DEV_COST_BOUND_INVALID`.
+> - Root cause: the exact count proof is observed at `countedAt`, but controlled-DEV cost authorization evaluated the proof at the earlier request start time (`requestedAt`). Real network latency therefore made a valid proof appear future-dated.
+> - Focused offline repair changes controlled-DEV cost authorization evaluation from `input.requestedAt` to `counted.countedAt`.
+> - Regression coverage now explicitly models a real count observation occurring after request start.
+> - Focused repair acceptance: `48/48` tests PASS; typecheck PASS; AI economics safety PASS; AI Coach safety PASS.
+> - Attempt 3 authorization is consumed. No automatic rerun is authorized.
+> - Any next real provider execution is Attempt 4 and requires new explicit operator authorization.
+> - Production provider remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This block supersedes older current-state wording below it.
+
+
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_2_HARNESS_DISCOVERY_FAILURE_2026_09_12**
+>
+> - Attempt 2 received explicit operator authorization, but the temporary Vitest harness was created under `scripts/`, which is outside the repository's configured Vitest include paths.
+> - Vitest stopped with `No test files found` before the test body executed.
+> - Attempt 2 real TCMB calls: `0`.
+> - Attempt 2 real OpenAI input-token count calls: `0`.
+> - Attempt 2 real OpenAI generation calls: `0`.
+> - Database calls, Planner calls, task mutations, production access, deploys, and migrations: `0`.
+> - Attempt 2 therefore did **not** test the repaired provider contract and did **not** create a new real provider attempt.
+> - The Attempt 2 operational authorization is consumed under the no-automatic-rerun rule.
+> - Any next real provider execution requires a new explicit authorization and must use a Vitest-discoverable temporary harness under `supabase/functions/_shared/ai-coach/**/*.test.ts`.
+> - Provider repair remains locally GREEN and committed. Production provider remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This block supersedes older current-state wording below it.
+
+
+> **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_1_2026_09_12**
+>
+> - The first explicitly authorized real controlled-DEV smoke attempt is consumed.
+> - Real OpenAI input-token calls in attempt 1: `1`.
+> - The input-token request returned HTTP `400` and failed closed as `count_http_error`.
+> - Provider request id: `req_ee35d869741f444c8de988f93b0f9bec`.
+> - Real generation calls in attempt 1: `0`.
+> - Reservation / mark-started / settlement / release / reconciliation: `0 / 0 / 0 / 0 / 0`.
+> - Database calls, Planner calls, task mutations, production access, deploys, and migrations caused by the smoke: `0`.
+> - The offline provider-contract repair is focused-GREEN. The strict provider schema surface was reduced while stronger deterministic local validation remains enforced.
+> - Safe provider error `type/code/param` diagnostics are now implemented locally; provider message text is not surfaced.
+> - A second real provider smoke is **NOT AUTHORIZED**.
+> - Production provider activation remains prohibited. Current Coach runtime remains disconnected. 6C remains `NOT_STARTED`. Confirm and Apply remain OFF.
+> - This current-state block supersedes older pre-smoke wording later in this document.
+
+
 Status: Active
 
-Last updated: 2026-09-10
+Last updated: 2026-09-13
 
 ## Roadmap rules
 
@@ -68,7 +184,7 @@ M1 is complete only when:
 - `CLOSED`: Evre 5 Planner V2 / Planner Truth engineering, exact-profile production acceptance, and final Week/Today real-user observation.
 - `ACTIVE MACRO PHASE`: Evre 6 AI Coach.
 - `CLOSED SUB-PHASE`: 6A Product / Authority / Cost Contract; final decisions accepted, docs only, runtime unchanged, production Confirm OFF, Apply OFF.
-- `NEXT SUB-PHASE`: 6B CoachContextV1, pending a separate implementation scope.
+- `ACTIVE SUB-PHASE`: 6B CoachContextV1. 6B.1–6B.6B.1 are accepted locally; 6B.6B.2 local acceptance is green and checkpointed on the feature branch. The controlled local-DEV authority chain, gateway, exact count identity, dedicated cost authorization, authoritative local catalogs, TCMB boundary, reconciliation policy, and full A→Z mocked smoke are verified while current Coach remains disconnected. `TEMP_DEV_COST_POLICY_2026_09_12` permits only a separately approved single observed-cost local-DEV smoke despite unresolved `/responses/input_tokens` billing; production eligibility remains false.
 - `CONTINUING FOUNDATIONS`: natural `PLN-002` Extra Study acceptance and gated `PLN-003`/`PLN-004`/`MAT-001`/`PLN-005` maturity work.
 
 ## Evre 6 — AI Coach
@@ -77,7 +193,7 @@ M1 is complete only when:
 
 Make KPSS Koçu a context-aware coach that explains product facts and Planner V2 decisions, performs evidence-backed durum analizi / ilerleme değerlendirmesi, guides the user's next decision, surfaces controlled in-app proactive insights, and sustains safe contextual conversation without becoming a teacher, planner, or mutation authority.
 
-The normative product, truth, authority, scenario, proactive, cost, and phase contract is [AI Coach Evre 6 — Product, Authority & Cost Contract](specs/AI_COACH_EVRE_6_PRODUCT_AUTHORITY_COST_CONTRACT.md).
+The normative product, truth, authority, scenario, proactive, cost, and phase contract is [AI Coach Evre 6 — Product, Authority & Cost Contract](specs/AI_COACH_EVRE_6_PRODUCT_AUTHORITY_COST_CONTRACT.md). The 6B.1 typed context and canonical source matrix are in [AI Coach — CoachContextV1 Contract and Canonical Source Map](specs/AI_COACH_CONTEXT_V1.md).
 
 ### Authority boundary
 
@@ -99,8 +215,8 @@ The normative product, truth, authority, scenario, proactive, cost, and phase co
 | Sequence | Sub-phase | Status | Outcome |
 | --- | --- | --- | --- |
 | 6A | Product / Authority / Cost Contract | `CLOSED` | Final product outcomes, truth sources, non-authority, 20 scenarios, proactive triggers, cost envelope, and phase gates accepted. |
-| 6B | CoachContextV1 | `NEXT — NOT_STARTED` | Build canonical context/fact envelopes and begin centralized router/pricing plus usage/cost telemetry. |
-| 6C | Reactive Coach | `NOT_STARTED` | Deliver user-initiated Explain / Diagnose / Guide with grounding, fallbacks, and metering. |
+| 6B | CoachContextV1 | `CLOSED` | Controlled DEV runtime acceptance completed; canonical context/evidence, routing/pricing, telemetry, provider safety, and real controlled-DEV acceptance are closed. Production provider remains prohibited. |
+| 6C | Reactive Coach | `ACTIVE - 6C.1 REQUEST ROUTING FOUNDATION` | Build user-initiated Explain / Diagnose / Guide with deterministic T0 routing, canonical grounding, safe fallbacks, and no mutation authority. |
 | 6D | Proactive Coach | `NOT_STARTED` | Add deterministic in-app triggers, cooldowns, dedupe, attention controls, and valid silence. |
 | 6E | Planner V2 integration | `NOT_STARTED` | Route every Coach planning mutation to the one canonical Planner V2 lifecycle. |
 | 6F | Conversation Intelligence | `NOT_STARTED` | Add short recent context plus compact structured state/signals without long-term raw history or authority transfer. |

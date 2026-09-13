@@ -32,6 +32,7 @@
     "edge:bundle:ai-coach": "esbuild packages/domain/src/ai-coach/index.ts --bundle --format=esm --platform=neutral --target=es2022 --outfile=supabase/functions/_shared/ai-coach.bundle.js",
     "test:ai-coach-safety": "node scripts/check-ai-coach-safety.mjs",
     "test:ai-coach-plan-preview-safety": "node scripts/check-ai-coach-plan-preview-safety.mjs",
+    "test:ai-economics-safety": "node scripts/check-ai-economics-v1-safety.mjs",
     "test:planning-v2-shadow": "node scripts/run-planning-v2-shadow-smoke.mjs",
     "test:planning-v2-shadow-safety": "node scripts/check-planning-v2-shadow-safety.mjs",
     "test:canonical-planner-v2-readonly-safety": "node scripts/check-canonical-planner-v2-readonly-safety.mjs",
