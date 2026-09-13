@@ -1,5 +1,32 @@
 # KPSS Koçu Product Backlog
 
+> **Controlled DEV acceptance CLOSED - REAL_SMOKE_ATTEMPT_5_GREEN_2026_09_13**
+>
+> - Attempt 5 completed the complete real controlled-DEV provider path successfully.
+> - Real TCMB calls: `1`.
+> - OpenAI input-token count: `1`, HTTP `200`, exact input tokens `4882`.
+> - Count request id: `req_0ac3ad3a0b2f46cbbb2e2017bac58b47`.
+> - OpenAI generation: `1`, HTTP `200`.
+> - Generation request id: `req_1f2dbdd2d2e74b3c98e29eb1480db51c`.
+> - Provider order: `count -> generation`.
+> - Accounting order: `reserve -> markStarted -> settle`.
+> - Accounting counters: reserve `1`, markStarted `1`, settle `1`, release `0`, reconcile `0`.
+> - Provider usage: input `4882`, cached input `0`, output `153`, total `5035`.
+> - Observed actualTryCost: `0.211052`.
+> - Grounded response validation passed with `5` accepted source fact paths.
+> - Response capability: `today_analysis`.
+> - `noMutationPerformed = true`.
+> - Production access, DB calls, Planner calls, task mutations, deploys, migrations, retries, and fallbacks: all `0`.
+> - Secret cleanup, temporary harness cleanup, HEAD preservation, and clean-worktree post-check all passed.
+> - Attempt 5 authorization is consumed. No further controlled-DEV smoke attempt is required for this acceptance gate.
+> - **6B.6B.2 Controlled DEV Runtime Acceptance: CLOSED.**
+> - **6B Runtime Foundation: CLOSED.**
+> - Next product phase: **6C Reactive Coach**.
+> - Production provider remains prohibited until separately authorized.
+> - Confirm and Apply remain OFF.
+> - This block supersedes older controlled-DEV current-state notes below it.
+
+
 > **Current controlled-DEV state - REAL_SMOKE_ATTEMPT_4_GROUNDING_STOP_2026_09_12**
 >
 > - Attempt 4 reached the full real provider transport and accounting path.
