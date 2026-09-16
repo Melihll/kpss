@@ -1,16 +1,19 @@
 # Current Sprint
 
-> **Active phase - REACTIVE_COACH_6C1_ROUTING_FOUNDATION_2026_09_13**
+> **Active phase - REACTIVE_COACH_6C2_EXECUTOR_COMPLETE_2026_09_16**
 >
 > - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
 > - **6C Reactive Coach is ACTIVE.**
-> - 6C.1 introduces a pure server-owned request-routing contract only; it does not expose a user-facing provider runtime.
-> - Deterministic Today-fact, out-of-scope teaching/quiz, chat-Apply, and unsupported planning-change requests remain T0 with zero provider authority.
-> - In-scope analysis requests map only to existing read-only capabilities: `today_analysis`, `week_analysis`, `subject_analysis`, `planner_explanation`, or `complex_status_analysis`.
-> - The route decision stores no raw user text and grants no Planner/task/capacity mutation, confirmation, or Apply authority.
-> - Legacy `ai-coach-plan-preview` / generic Apply is not a new 6C truth or mutation path.
-> - Production provider remains prohibited. Confirm and Apply remain OFF.
+> - **6C.1 request routing is CLOSED** at checkpoint `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`.
+> - **6C.2 reactive executor code is COMPLETE** at checkpoint `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
+> - The router and executor now cover deterministic T0 Today facts, out-of-scope teaching/quiz, chat-Apply and direct planning-change stops, plus server-selected read-only capability delegation.
+> - Canonical subject resolution is enforced before subject analysis. Ambiguous subject resolution degrades to clarification instead of model guessing.
+> - Provider budget denial degrades to `COST_LIMITED`; generic provider failure degrades to `UNKNOWN_OR_BLOCKED`; provider output must preserve `noMutationPerformed = true`.
+> - 6C.2 acceptance: executor `12/12`, focused 6C `63/63`, full non-integration `1181/1181` across `159/159` files, workspace typecheck PASS, AI economics safety PASS, and AI Coach safety PASS.
+> - User-facing runtime/API/UI wiring remains `0`. Real provider calls caused by 6C.2 remain `0`. Planner/task/capacity mutation authority remains `0`.
+> - Production provider remains prohibited. Confirm and Apply remain OFF. No deploy, migration, production mutation, or main push occurred.
 > - 6D-6G remain NOT_STARTED.
+> - Next 6C slice: an authenticated user-facing server/API boundary over the accepted router + executor, still fail-closed and non-mutating.
 > - This block supersedes older current-state wording below it.
 
 
@@ -116,7 +119,7 @@
 > - This current-state block supersedes older pre-smoke wording later in this document.
 
 
-Last updated: 2026-09-13
+Last updated: 2026-09-16
 
 ## Sprint 02 — Evre 6B & Continuing Planning Foundations
 
@@ -127,6 +130,19 @@ Sprint objective: Build and verify the versioned CoachContextV1 plus its disconn
 Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.1 are accepted locally. 6B.6B.2 local acceptance is green and checkpointed on the feature branch: the controlled local-DEV authority chain, authoritative local route/pricing envelope, TCMB FX boundary, server-only credential boundary, real gateway adapter, exact-count billing identity, dedicated controlled-DEV cost authorization, and full A→Z mocked smoke are verified. No real provider call has been executed. Official `/responses/input_tokens` billing remains unresolved; `TEMP_DEV_COST_POLICY_2026_09_12` permits only a separately approved, observed-cost, single controlled local-DEV smoke while production remains prohibited. Current Coach runtime, production schema/data, deployments, and Planner gates remain unchanged. PLN-002 remains `IN_PROGRESS` pending natural Extra Study acceptance evidence.
 
 ## NOW
+
+### `AIC-003` / Evre 6C — Reactive Coach
+
+- Priority: `P1`
+- Status: `IN_PROGRESS — 6C.2 EXECUTOR COMPLETE — USER-FACING RUNTIME NOT WIRED`
+- 6C.1 request-routing checkpoint: `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`.
+- 6C.2 executor checkpoint: `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
+- Deterministic T0 requests make zero provider calls; read-only provider routes receive only server-selected capabilities.
+- Canonical subject resolution, clarification, `COST_LIMITED`, `UNKNOWN_OR_BLOCKED`, and provider no-mutation guards are implemented.
+- Acceptance: executor `12/12`; focused 6C `63/63`; full non-integration `1181/1181` across `159/159` files; workspace typecheck and both AI safety gates PASS.
+- User-facing runtime wiring, real 6C.2 provider traffic, Planner/task/capacity mutation, Confirm, Apply, deploy, migration, and main push are all `0`.
+- Next exact slice: authenticated server/API boundary for the accepted router + executor. Production provider activation remains prohibited.
+
 
 ### `AIC-002` / Evre 6B — CoachContextV1
 

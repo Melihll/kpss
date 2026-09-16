@@ -1,16 +1,19 @@
 # KPSS Koçu — Project Handoff
 
-> **Active phase - REACTIVE_COACH_6C1_ROUTING_FOUNDATION_2026_09_13**
+> **Active phase - REACTIVE_COACH_6C2_EXECUTOR_COMPLETE_2026_09_16**
 >
 > - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
 > - **6C Reactive Coach is ACTIVE.**
-> - 6C.1 introduces a pure server-owned request-routing contract only; it does not expose a user-facing provider runtime.
-> - Deterministic Today-fact, out-of-scope teaching/quiz, chat-Apply, and unsupported planning-change requests remain T0 with zero provider authority.
-> - In-scope analysis requests map only to existing read-only capabilities: `today_analysis`, `week_analysis`, `subject_analysis`, `planner_explanation`, or `complex_status_analysis`.
-> - The route decision stores no raw user text and grants no Planner/task/capacity mutation, confirmation, or Apply authority.
-> - Legacy `ai-coach-plan-preview` / generic Apply is not a new 6C truth or mutation path.
-> - Production provider remains prohibited. Confirm and Apply remain OFF.
+> - **6C.1 request routing is CLOSED** at checkpoint `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`.
+> - **6C.2 reactive executor code is COMPLETE** at checkpoint `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
+> - The router and executor now cover deterministic T0 Today facts, out-of-scope teaching/quiz, chat-Apply and direct planning-change stops, plus server-selected read-only capability delegation.
+> - Canonical subject resolution is enforced before subject analysis. Ambiguous subject resolution degrades to clarification instead of model guessing.
+> - Provider budget denial degrades to `COST_LIMITED`; generic provider failure degrades to `UNKNOWN_OR_BLOCKED`; provider output must preserve `noMutationPerformed = true`.
+> - 6C.2 acceptance: executor `12/12`, focused 6C `63/63`, full non-integration `1181/1181` across `159/159` files, workspace typecheck PASS, AI economics safety PASS, and AI Coach safety PASS.
+> - User-facing runtime/API/UI wiring remains `0`. Real provider calls caused by 6C.2 remain `0`. Planner/task/capacity mutation authority remains `0`.
+> - Production provider remains prohibited. Confirm and Apply remain OFF. No deploy, migration, production mutation, or main push occurred.
 > - 6D-6G remain NOT_STARTED.
+> - Next 6C slice: an authenticated user-facing server/API boundary over the accepted router + executor, still fail-closed and non-mutating.
 > - This block supersedes older current-state wording below it.
 
 
@@ -116,13 +119,13 @@
 > - This current-state block supersedes older pre-smoke wording later in this document.
 
 
-Last updated: 2026-09-13
+Last updated: 2026-09-16
 
 ## Canonical source
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Base branch: `main`
-- Local working branch: `evre6-ai-coach`; the 6B.6B.2 local-acceptance checkpoint is committed on the feature branch. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
+- Local working branch: `evre6-ai-coach`; latest accepted 6C.2 executor checkpoint is `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
 - 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - 6B.1 accepted checkpoint: `acd16ffb2263b5285b14bd7329ff4357d7971e00`
 - Last verified product checkpoint before W5: `fa46fd2`
@@ -171,11 +174,11 @@ PLN-004 verification:
 
 ## Active task
 
-`AIC-002 / Evre 6B — 6B.6B.2 controlled DEV pre-smoke foundation`
+`AIC-003 / Evre 6C — Reactive Coach user-facing server/API boundary`
 
-Goal: checkpoint the green 6B.6B.2 controlled local-DEV acceptance, preserve the temporary observed-cost DEV policy, and prepare for a separately authorized single real DEV smoke without activating production or current Coach runtime.
+Goal: expose the already accepted 6C.1 router and 6C.2 executor through a new authenticated, user-scoped server/API boundary without activating production provider traffic, legacy planning Apply, or any Planner/task/capacity mutation path.
 
-Evre 6 AI Coach is the active macro phase. 6A is closed, 6B.1–6B.6B.1 are accepted locally, and 6B.6B.2 local acceptance is green and checkpointed on the feature branch. The controlled local-DEV path may become available only through server-owned exact-scope activation with explicit unresolved-count-billing risk acceptance under `TEMP_DEV_COST_POLICY_2026_09_12`; the official billing audit itself remains non-authorizing. This work does not authorize a real provider call without separate approval, current Coach integration, deployment, production migration, plan mutation, proposal creation, Preview, Confirm, Apply, gate changes, or production activation. 6C–6G are not started. AI teacher/tutoring/quiz/mastery features are outside Evre 6.
+6B Runtime Foundation is CLOSED. 6C.1 request routing is CLOSED at `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`. 6C.2 executor code is COMPLETE at `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`. The executor proves deterministic T0 execution, read-only capability delegation, canonical subject resolution, clarification, cost/provider failure degradation, and provider no-mutation enforcement. User-facing runtime/API/UI wiring remains zero. 6D-6G are not started.
 
 MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning foundations remain tracked work rather than being silently treated as closed by the Planner V2 pilot.
 
@@ -202,13 +205,11 @@ MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning founda
 
 ## NEXT EXACT STEP
 
-Checkpoint the completed local review of [Controlled DEV Runtime Pre-Smoke Foundation V1](specs/AI_COACH_CONTROLLED_DEV_RUNTIME_V1.md) and the [DEV Smoke/Reconciliation Runbook](specs/AI_COACH_DEV_SMOKE_RUNBOOK.md). Under `TEMP_DEV_COST_POLICY_2026_09_12`, the unresolved `/responses/input_tokens` billing fact is explicitly accepted only for one controlled observed-cost local-DEV smoke; before that real call, obtain separate explicit authorization and satisfy the real TCMB, server-secret, exact identity/allowlist, kill-switch, one-attempt/no-fallback, reservation/reconciliation, and no-production-data checklist. Production migration, current Coach runtime activation, deployment, and production provider traffic remain separate work requiring explicit approval.
+Implement the next 6C slice as an authenticated, user-scoped server/API boundary over `routeReactiveCoachRequestV1` and `executeReactiveCoachRequestV1`. Preserve server-owned routing, canonical context identity checks, deterministic T0 zero-provider behavior, existing centralized provider accounting/orchestration, safe fallback states, and `noMutationPerformed = true`.
 
-Keep the accepted Evre 5 Planner V2 result intact. Do not widen preview access, re-enable Confirm/Apply, manufacture another proposal, or manually repair the accepted result. Production preview remains exact-profile-only; Confirm and Apply remain OFF.
+Do not route the new Reactive Coach through legacy `ai-coach-plan-preview` or generic Apply. Do not add Planner/task/capacity mutation authority, conversation-based confirmation, or Apply authority. Do not deploy, migrate, enable the production provider, or change production gates as part of this next slice.
 
-In parallel, continue passive observation of the next natural W2-eligible physical study lifecycle for the exact-profile pilot. Inspect it read-only if it occurs; do not manufacture activity, widen the allowlist, or alter accepted evidence.
-
-Telegram requires a separately reviewed service-role W2 wrapper plus authoritative page-boundary UX before it can enter an activation proposal. Do not activate canonical workload planning while production physical pace evidence remains insufficient.
+Keep the accepted Evre 5 Planner V2 result intact. Production Confirm and Apply remain OFF.
 
 ## 2026-09-10 Evre 6A final contract closure
 
