@@ -1,19 +1,20 @@
 # Current Sprint
 
-> **Active phase - REACTIVE_COACH_6C2_EXECUTOR_COMPLETE_2026_09_16**
+> **Active phase - REACTIVE_COACH_6C3A_AUTHENTICATED_API_COMPLETE_2026_09_16**
 >
 > - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
 > - **6C Reactive Coach is ACTIVE.**
 > - **6C.1 request routing is CLOSED** at checkpoint `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`.
-> - **6C.2 reactive executor code is COMPLETE** at checkpoint `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
-> - The router and executor now cover deterministic T0 Today facts, out-of-scope teaching/quiz, chat-Apply and direct planning-change stops, plus server-selected read-only capability delegation.
-> - Canonical subject resolution is enforced before subject analysis. Ambiguous subject resolution degrades to clarification instead of model guessing.
-> - Provider budget denial degrades to `COST_LIMITED`; generic provider failure degrades to `UNKNOWN_OR_BLOCKED`; provider output must preserve `noMutationPerformed = true`.
-> - 6C.2 acceptance: executor `12/12`, focused 6C `63/63`, full non-integration `1181/1181` across `159/159` files, workspace typecheck PASS, AI economics safety PASS, and AI Coach safety PASS.
-> - User-facing runtime/API/UI wiring remains `0`. Real provider calls caused by 6C.2 remain `0`. Planner/task/capacity mutation authority remains `0`.
-> - Production provider remains prohibited. Confirm and Apply remain OFF. No deploy, migration, production mutation, or main push occurred.
+> - **6C.2 reactive executor is CLOSED** at checkpoint `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
+> - **6C.3A authenticated server/API boundary is CLOSED** at checkpoint `c78becfe5137b360437ef33af4932ef7733ba317`.
+> - The new `POST /ai-coach/reactive` app-api route derives user authority from the verified JWT and active exam profile authority from the server; client-supplied user/profile/provider/apply/confirmation authority is rejected.
+> - Deterministic T0 execution is available through the new boundary. Provider-required routes remain fail-closed as `PROVIDER_UNAVAILABLE` and make zero provider calls in this slice.
+> - 6C.3A acceptance: HTTP boundary `11/11`, focused Reactive Coach `38/38`, full non-integration `1192/1192` across `160/160` files, workspace typecheck PASS, AI economics safety PASS, and AI Coach safety PASS.
+> - Coach-boundary service-role authority is `0`; direct Planner/task/capacity mutation authority is `0`; real provider calls caused by 6C.3A are `0`.
+> - The code is committed only on `evre6-ai-coach`; production deployment is `0`, migration is `0`, and main push is `0`.
+> - Production provider remains prohibited. Confirm and Apply remain OFF.
 > - 6D-6G remain NOT_STARTED.
-> - Next 6C slice: an authenticated user-facing server/API boundary over the accepted router + executor, still fail-closed and non-mutating.
+> - Next 6C slice: **6C.3B controlled DEV provider-read-only runtime binding** using only server-owned activation/configuration and the accepted 6B accounting/orchestrator path. Production activation remains prohibited.
 > - This block supersedes older current-state wording below it.
 
 
@@ -134,14 +135,15 @@ Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.
 ### `AIC-003` / Evre 6C — Reactive Coach
 
 - Priority: `P1`
-- Status: `IN_PROGRESS — 6C.2 EXECUTOR COMPLETE — USER-FACING RUNTIME NOT WIRED`
+- Status: `IN_PROGRESS — 6C.3A AUTHENTICATED SERVER/API BOUNDARY CLOSED — PROVIDER RUNTIME NOT YET BOUND`
 - 6C.1 request-routing checkpoint: `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`.
 - 6C.2 executor checkpoint: `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
+- 6C.3A authenticated server/API boundary checkpoint: `c78becfe5137b360437ef33af4932ef7733ba317`.
 - Deterministic T0 requests make zero provider calls; read-only provider routes receive only server-selected capabilities.
 - Canonical subject resolution, clarification, `COST_LIMITED`, `UNKNOWN_OR_BLOCKED`, and provider no-mutation guards are implemented.
 - Acceptance: executor `12/12`; focused 6C `63/63`; full non-integration `1181/1181` across `159/159` files; workspace typecheck and both AI safety gates PASS.
-- User-facing runtime wiring, real 6C.2 provider traffic, Planner/task/capacity mutation, Confirm, Apply, deploy, migration, and main push are all `0`.
-- Next exact slice: authenticated server/API boundary for the accepted router + executor. Production provider activation remains prohibited.
+- Authenticated app-api boundary wiring is present in code and undeployed. Real 6C.3A provider traffic, Planner/task/capacity mutation, Confirm, Apply, deploy, migration, and main push are all `0`.
+- Next exact slice: `6C.3B` controlled DEV provider-read-only runtime binding through server-owned activation/configuration and the accepted 6B orchestrator/accounting path. Production provider activation remains prohibited.
 
 
 ### `AIC-002` / Evre 6B — CoachContextV1

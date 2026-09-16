@@ -1,19 +1,20 @@
 # KPSS Koçu Product Roadmap
 
-> **Active phase - REACTIVE_COACH_6C2_EXECUTOR_COMPLETE_2026_09_16**
+> **Active phase - REACTIVE_COACH_6C3A_AUTHENTICATED_API_COMPLETE_2026_09_16**
 >
 > - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
 > - **6C Reactive Coach is ACTIVE.**
 > - **6C.1 request routing is CLOSED** at checkpoint `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`.
-> - **6C.2 reactive executor code is COMPLETE** at checkpoint `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
-> - The router and executor now cover deterministic T0 Today facts, out-of-scope teaching/quiz, chat-Apply and direct planning-change stops, plus server-selected read-only capability delegation.
-> - Canonical subject resolution is enforced before subject analysis. Ambiguous subject resolution degrades to clarification instead of model guessing.
-> - Provider budget denial degrades to `COST_LIMITED`; generic provider failure degrades to `UNKNOWN_OR_BLOCKED`; provider output must preserve `noMutationPerformed = true`.
-> - 6C.2 acceptance: executor `12/12`, focused 6C `63/63`, full non-integration `1181/1181` across `159/159` files, workspace typecheck PASS, AI economics safety PASS, and AI Coach safety PASS.
-> - User-facing runtime/API/UI wiring remains `0`. Real provider calls caused by 6C.2 remain `0`. Planner/task/capacity mutation authority remains `0`.
-> - Production provider remains prohibited. Confirm and Apply remain OFF. No deploy, migration, production mutation, or main push occurred.
+> - **6C.2 reactive executor is CLOSED** at checkpoint `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
+> - **6C.3A authenticated server/API boundary is CLOSED** at checkpoint `c78becfe5137b360437ef33af4932ef7733ba317`.
+> - The new `POST /ai-coach/reactive` app-api route derives user authority from the verified JWT and active exam profile authority from the server; client-supplied user/profile/provider/apply/confirmation authority is rejected.
+> - Deterministic T0 execution is available through the new boundary. Provider-required routes remain fail-closed as `PROVIDER_UNAVAILABLE` and make zero provider calls in this slice.
+> - 6C.3A acceptance: HTTP boundary `11/11`, focused Reactive Coach `38/38`, full non-integration `1192/1192` across `160/160` files, workspace typecheck PASS, AI economics safety PASS, and AI Coach safety PASS.
+> - Coach-boundary service-role authority is `0`; direct Planner/task/capacity mutation authority is `0`; real provider calls caused by 6C.3A are `0`.
+> - The code is committed only on `evre6-ai-coach`; production deployment is `0`, migration is `0`, and main push is `0`.
+> - Production provider remains prohibited. Confirm and Apply remain OFF.
 > - 6D-6G remain NOT_STARTED.
-> - Next 6C slice: an authenticated user-facing server/API boundary over the accepted router + executor, still fail-closed and non-mutating.
+> - Next 6C slice: **6C.3B controlled DEV provider-read-only runtime binding** using only server-owned activation/configuration and the accepted 6B accounting/orchestrator path. Production activation remains prohibited.
 > - This block supersedes older current-state wording below it.
 
 
@@ -219,7 +220,7 @@ The normative product, truth, authority, scenario, proactive, cost, and phase co
 | --- | --- | --- | --- |
 | 6A | Product / Authority / Cost Contract | `CLOSED` | Final product outcomes, truth sources, non-authority, 20 scenarios, proactive triggers, cost envelope, and phase gates accepted. |
 | 6B | CoachContextV1 | `CLOSED` | Controlled DEV runtime acceptance completed; canonical context/evidence, routing/pricing, telemetry, provider safety, and real controlled-DEV acceptance are closed. Production provider remains prohibited. |
-| 6C | Reactive Coach | `ACTIVE - 6C.2 EXECUTOR COMPLETE / USER-FACING RUNTIME NOT WIRED` | Route and execute user-initiated Explain / Diagnose / Guide through deterministic T0 or the accepted read-only provider boundary; next wire the authenticated server/API surface without granting mutation authority. |
+| 6C | Reactive Coach | `ACTIVE - 6C.3A AUTHENTICATED API CLOSED / PROVIDER RUNTIME NOT YET BOUND` | Authenticated server/API routing now exposes deterministic T0 safely with server-owned user/profile authority; next bind provider-read-only execution in controlled DEV through server-owned activation and the accepted 6B orchestration/accounting path. |
 | 6D | Proactive Coach | `NOT_STARTED` | Add deterministic in-app triggers, cooldowns, dedupe, attention controls, and valid silence. |
 | 6E | Planner V2 integration | `NOT_STARTED` | Route every Coach planning mutation to the one canonical Planner V2 lifecycle. |
 | 6F | Conversation Intelligence | `NOT_STARTED` | Add short recent context plus compact structured state/signals without long-term raw history or authority transfer. |

@@ -1,19 +1,20 @@
 # KPSS Koçu — Project Handoff
 
-> **Active phase - REACTIVE_COACH_6C2_EXECUTOR_COMPLETE_2026_09_16**
+> **Active phase - REACTIVE_COACH_6C3A_AUTHENTICATED_API_COMPLETE_2026_09_16**
 >
 > - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
 > - **6C Reactive Coach is ACTIVE.**
 > - **6C.1 request routing is CLOSED** at checkpoint `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`.
-> - **6C.2 reactive executor code is COMPLETE** at checkpoint `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
-> - The router and executor now cover deterministic T0 Today facts, out-of-scope teaching/quiz, chat-Apply and direct planning-change stops, plus server-selected read-only capability delegation.
-> - Canonical subject resolution is enforced before subject analysis. Ambiguous subject resolution degrades to clarification instead of model guessing.
-> - Provider budget denial degrades to `COST_LIMITED`; generic provider failure degrades to `UNKNOWN_OR_BLOCKED`; provider output must preserve `noMutationPerformed = true`.
-> - 6C.2 acceptance: executor `12/12`, focused 6C `63/63`, full non-integration `1181/1181` across `159/159` files, workspace typecheck PASS, AI economics safety PASS, and AI Coach safety PASS.
-> - User-facing runtime/API/UI wiring remains `0`. Real provider calls caused by 6C.2 remain `0`. Planner/task/capacity mutation authority remains `0`.
-> - Production provider remains prohibited. Confirm and Apply remain OFF. No deploy, migration, production mutation, or main push occurred.
+> - **6C.2 reactive executor is CLOSED** at checkpoint `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
+> - **6C.3A authenticated server/API boundary is CLOSED** at checkpoint `c78becfe5137b360437ef33af4932ef7733ba317`.
+> - The new `POST /ai-coach/reactive` app-api route derives user authority from the verified JWT and active exam profile authority from the server; client-supplied user/profile/provider/apply/confirmation authority is rejected.
+> - Deterministic T0 execution is available through the new boundary. Provider-required routes remain fail-closed as `PROVIDER_UNAVAILABLE` and make zero provider calls in this slice.
+> - 6C.3A acceptance: HTTP boundary `11/11`, focused Reactive Coach `38/38`, full non-integration `1192/1192` across `160/160` files, workspace typecheck PASS, AI economics safety PASS, and AI Coach safety PASS.
+> - Coach-boundary service-role authority is `0`; direct Planner/task/capacity mutation authority is `0`; real provider calls caused by 6C.3A are `0`.
+> - The code is committed only on `evre6-ai-coach`; production deployment is `0`, migration is `0`, and main push is `0`.
+> - Production provider remains prohibited. Confirm and Apply remain OFF.
 > - 6D-6G remain NOT_STARTED.
-> - Next 6C slice: an authenticated user-facing server/API boundary over the accepted router + executor, still fail-closed and non-mutating.
+> - Next 6C slice: **6C.3B controlled DEV provider-read-only runtime binding** using only server-owned activation/configuration and the accepted 6B accounting/orchestrator path. Production activation remains prohibited.
 > - This block supersedes older current-state wording below it.
 
 
@@ -125,7 +126,7 @@ Last updated: 2026-09-16
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Base branch: `main`
-- Local working branch: `evre6-ai-coach`; latest accepted 6C.2 executor checkpoint is `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
+- Local working branch: `evre6-ai-coach`; latest accepted 6C.3A authenticated server/API checkpoint is `c78becfe5137b360437ef33af4932ef7733ba317`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
 - 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - 6B.1 accepted checkpoint: `acd16ffb2263b5285b14bd7329ff4357d7971e00`
 - Last verified product checkpoint before W5: `fa46fd2`
@@ -174,11 +175,13 @@ PLN-004 verification:
 
 ## Active task
 
-`AIC-003 / Evre 6C — Reactive Coach user-facing server/API boundary`
+`AIC-003 / Evre 6C — 6C.3B controlled DEV provider-read-only runtime binding`
 
-Goal: expose the already accepted 6C.1 router and 6C.2 executor through a new authenticated, user-scoped server/API boundary without activating production provider traffic, legacy planning Apply, or any Planner/task/capacity mutation path.
+Goal: connect provider-required Reactive Coach routes to the already accepted read-only 6B orchestrator only through server-owned controlled-DEV activation/configuration. Preserve the authenticated 6C.3A HTTP boundary, canonical user/profile identity, centralized accounting, provider grounding, fail-closed behavior, and zero mutation authority.
 
-6B Runtime Foundation is CLOSED. 6C.1 request routing is CLOSED at `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`. 6C.2 executor code is COMPLETE at `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`. The executor proves deterministic T0 execution, read-only capability delegation, canonical subject resolution, clarification, cost/provider failure degradation, and provider no-mutation enforcement. User-facing runtime/API/UI wiring remains zero. 6D-6G are not started.
+6B Runtime Foundation is CLOSED. 6C.1 request routing is CLOSED at `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`. 6C.2 executor is CLOSED at `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`. 6C.3A authenticated server/API boundary is CLOSED at `c78becfe5137b360437ef33af4932ef7733ba317`. The new endpoint is committed on the feature branch but is not deployed. Deterministic T0 works through the boundary; provider-required routes currently stop as `PROVIDER_UNAVAILABLE` before any provider call.
+
+6C.3B must not enable production provider traffic, accept provider authority from request bodies, use service-role authority in the HTTP boundary, create Planner/task/capacity mutation authority, or change Confirm/Apply gates. 6D-6G are not started.
 
 MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning foundations remain tracked work rather than being silently treated as closed by the Planner V2 pilot.
 
@@ -205,9 +208,9 @@ MAT-001, PLN-002 natural Extra Study acceptance, and other gated planning founda
 
 ## NEXT EXACT STEP
 
-Implement the next 6C slice as an authenticated, user-scoped server/API boundary over `routeReactiveCoachRequestV1` and `executeReactiveCoachRequestV1`. Preserve server-owned routing, canonical context identity checks, deterministic T0 zero-provider behavior, existing centralized provider accounting/orchestration, safe fallback states, and `noMutationPerformed = true`.
+Implement `6C.3B` as a controlled-DEV-only provider-read-only binding behind the accepted `POST /ai-coach/reactive` boundary. Reuse the existing server-owned provider activation/configuration, exact user/profile allowlist semantics, read-only orchestrator, count/reserve/markStarted/generate/settle accounting chain, strict grounded-output validation, and safe `COST_LIMITED` / `UNKNOWN_OR_BLOCKED` degradation.
 
-Do not route the new Reactive Coach through legacy `ai-coach-plan-preview` or generic Apply. Do not add Planner/task/capacity mutation authority, conversation-based confirmation, or Apply authority. Do not deploy, migrate, enable the production provider, or change production gates as part of this next slice.
+The request body must remain message-only and must not gain user/profile/provider/config/Apply authority. Production must continue to fail closed. Do not deploy, migrate, enable production provider traffic, change production secrets, or change Planner V2 Confirm/Apply gates as part of this slice.
 
 Keep the accepted Evre 5 Planner V2 result intact. Production Confirm and Apply remain OFF.
 
