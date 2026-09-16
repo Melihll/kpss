@@ -622,3 +622,378 @@ describe(
     );
   },
 );
+
+function safeProviderExecutionV1() {
+  return {
+    version:
+      "reactive-coach-executor-v1",
+
+    route: {
+      version:
+        "reactive-coach-route-v1",
+
+      state:
+        "EXPLANATION",
+
+      executionTier:
+        "PROVIDER_READ_ONLY",
+
+      capability:
+        "week_analysis",
+
+      deterministicKind:
+        null,
+
+      reasonCode:
+        "provider-week-test",
+
+      requiresCanonicalContext:
+        true,
+
+      providerCallAllowed:
+        true,
+
+      authority: {
+        taskMutationAllowed:
+          false,
+
+        plannerMutationAllowed:
+          false,
+
+        capacityMutationAllowed:
+          false,
+
+        confirmationAllowed:
+          false,
+
+        applyAllowed:
+          false,
+      },
+
+      rawUserTextStored:
+        false,
+    },
+
+    response: {
+      state:
+        "EXPLANATION",
+
+      executionTier:
+        "PROVIDER_READ_ONLY",
+
+      capability:
+        "week_analysis",
+
+      deterministicKind:
+        null,
+
+      answer:
+        "Haftalik durum analizi.",
+
+      sourceFactPaths: [
+        "week.value",
+      ],
+
+      acknowledgedUnknowns: [],
+      staleOrBlockedWarnings: [],
+
+      providerAttempted:
+        true,
+
+      providerUsed:
+        true,
+
+      noMutationPerformed:
+        true,
+    },
+
+    provider: {
+      accounting: {
+        reservationId:
+          "reservation-http-test",
+
+        reservationStatus:
+          "settled",
+
+        usageEventRecorded:
+          true,
+      },
+
+      observability: {
+        requestId:
+          "request-http-6c3a",
+      },
+    },
+  } as any;
+}
+
+
+describe(
+  "6C.3B Reactive Coach lazy provider HTTP binding",
+  () => {
+    it(
+      "prepares provider only for a provider-tier request and passes it into executor",
+      async () => {
+        const providerExecution = {
+          serviceClient: {
+            authority:
+              "server-only",
+          },
+
+          correlationId:
+            "request-http-6c3a",
+
+          reservationId:
+            "reservation-http",
+
+          providerAttemptId:
+            "attempt-http",
+
+          reservationExpiresAt:
+            "2026-09-16T08:10:00.000Z",
+
+          retryNumber:
+            0,
+
+          fallbackFromAttemptId:
+            null,
+
+          runtimeEnvironment:
+            "local",
+
+          routingBudgetState:
+            "normal",
+
+          routeCatalog:
+            {},
+
+          pricingCatalog:
+            {},
+
+          fxSnapshot:
+            {},
+
+          providerRuntimeActivation:
+            {},
+
+          dependencies:
+            {},
+        } as any;
+
+        const prepareProviderExecution =
+          vi.fn(
+            async () =>
+              providerExecution,
+          );
+
+        const execute =
+          vi.fn(
+            async (input: any) => {
+              expect(
+                input.provider,
+              ).toBe(
+                providerExecution,
+              );
+
+              expect(
+                input.userId,
+              ).toBe(
+                "user-server-owned",
+              );
+
+              expect(
+                input.examProfileId,
+              ).toBe(
+                "profile-server-owned",
+              );
+
+              return safeProviderExecutionV1();
+            },
+          );
+
+        const result =
+          await handleReactiveCoachHttpV1({
+            ...baseInput(),
+
+            body: {
+              message:
+                "Bu hafta durumum nasil?",
+            },
+
+            dependencies: {
+              execute,
+              prepareProviderExecution,
+            },
+          });
+
+        expect(
+          prepareProviderExecution,
+        ).toHaveBeenCalledTimes(1);
+
+        expect(
+          prepareProviderExecution,
+        ).toHaveBeenCalledWith({
+          requestId:
+            "request-http-6c3a",
+
+          requestedAt:
+            "2026-09-16T08:00:00.000Z",
+        });
+
+        expect(execute)
+          .toHaveBeenCalledTimes(1);
+
+        expect(result)
+          .toMatchObject({
+            status:
+              200,
+
+            body: {
+              status:
+                "OK",
+
+              execution: {
+                response: {
+                  executionTier:
+                    "PROVIDER_READ_ONLY",
+
+                  providerUsed:
+                    true,
+
+                  noMutationPerformed:
+                    true,
+                },
+              },
+            },
+          });
+      },
+    );
+
+
+    it(
+      "keeps provider route fail-closed when server preparation returns null",
+      async () => {
+        const execute =
+          vi.fn();
+
+        const prepareProviderExecution =
+          vi.fn(
+            async () =>
+              null,
+          );
+
+        const result =
+          await handleReactiveCoachHttpV1({
+            ...baseInput(),
+
+            body: {
+              message:
+                "Bu hafta durumum nasil?",
+            },
+
+            dependencies: {
+              execute,
+              prepareProviderExecution,
+            },
+          });
+
+        expect(
+          prepareProviderExecution,
+        ).toHaveBeenCalledTimes(1);
+
+        expect(execute)
+          .not.toHaveBeenCalled();
+
+        expect(result)
+          .toMatchObject({
+            status:
+              503,
+
+            body: {
+              status:
+                "PROVIDER_UNAVAILABLE",
+            },
+          });
+      },
+    );
+
+
+    it(
+      "sanitizes provider preparation failures",
+      async () => {
+        const execute =
+          vi.fn();
+
+        const result =
+          await handleReactiveCoachHttpV1({
+            ...baseInput(),
+
+            body: {
+              message:
+                "Bu hafta durumum nasil?",
+            },
+
+            dependencies: {
+              execute,
+
+              prepareProviderExecution:
+                async () => {
+                  throw new Error(
+                    "OPENAI_SECRET_SHOULD_NOT_LEAK",
+                  );
+                },
+            },
+          });
+
+        expect(execute)
+          .not.toHaveBeenCalled();
+
+        expect(result.status)
+          .toBe(503);
+
+        expect(
+          JSON.stringify(
+            result.body,
+          ),
+        ).not.toContain(
+          "OPENAI_SECRET_SHOULD_NOT_LEAK",
+        );
+      },
+    );
+
+
+    it(
+      "never prepares provider runtime for deterministic T0 requests",
+      async () => {
+        const prepareProviderExecution =
+          vi.fn();
+
+        const execute =
+          vi.fn(
+            async () =>
+              safeExecution(),
+          );
+
+        const result =
+          await handleReactiveCoachHttpV1({
+            ...baseInput(),
+
+            dependencies: {
+              execute,
+              prepareProviderExecution,
+            },
+          });
+
+        expect(
+          prepareProviderExecution,
+        ).not.toHaveBeenCalled();
+
+        expect(execute)
+          .toHaveBeenCalledTimes(1);
+
+        expect(result.status)
+          .toBe(200);
+      },
+    );
+  },
+);

@@ -41,6 +41,11 @@ import {
 } from "../_shared/planner-v2-proposal-http.ts";
 import { handleReactiveCoachHttpV1 } from "../_shared/ai-coach/reactive-coach-http-v1.ts";
 import {
+  createReactiveCoachDevProviderPreparationV1,
+  REACTIVE_COACH_DEV_RUNTIME_SERVER_KEYS_V1,
+  resolveReactiveCoachDeploymentEnvironmentV1,
+} from "../_shared/ai-coach/reactive-coach-dev-runtime-v1.ts";
+import {
   buildPlannerV2ApplyPlanCandidate,
   buildPlannerV2Preview,
   fingerprintPlannerV2SnapshotComponents,
@@ -820,6 +825,57 @@ Deno.serve(async (request) => {
     const plannerV2ConfirmationEnabled = plannerV2Capabilities.confirmationEnabled;
     const plannerV2ApplyEnabled = plannerV2Capabilities.applyEnabled;
 
+    const reactiveCoachDevKeys =
+      REACTIVE_COACH_DEV_RUNTIME_SERVER_KEYS_V1;
+
+    const reactiveCoachProviderPreparation =
+      createReactiveCoachDevProviderPreparationV1({
+        deploymentEnvironment:
+          resolveReactiveCoachDeploymentEnvironmentV1(
+            Deno.env.get("SUPABASE_URL"),
+          ),
+
+        serverConfig: {
+          [reactiveCoachDevKeys.enabled]:
+            Deno.env.get(
+              reactiveCoachDevKeys.enabled,
+            ),
+
+          [reactiveCoachDevKeys.environment]:
+            Deno.env.get(
+              reactiveCoachDevKeys.environment,
+            ),
+
+          [reactiveCoachDevKeys.allowedUserId]:
+            Deno.env.get(
+              reactiveCoachDevKeys.allowedUserId,
+            ),
+
+          [reactiveCoachDevKeys.allowedProfileId]:
+            Deno.env.get(
+              reactiveCoachDevKeys.allowedProfileId,
+            ),
+
+          [reactiveCoachDevKeys.acceptUnresolvedCountBillingRisk]:
+            Deno.env.get(
+              reactiveCoachDevKeys.acceptUnresolvedCountBillingRisk,
+            ),
+        },
+
+        openAiApiKey:
+          () =>
+            Deno.env.get("OPENAI_API_KEY"),
+
+        serviceClient,
+        userId,
+
+        examProfileId:
+          profile.id,
+
+        fetchImpl:
+          fetch,
+      });
+
     if (request.method === "POST" && route === "/ai-coach/reactive") {
       const body = await request.json().catch(() => null);
 
@@ -830,6 +886,11 @@ Deno.serve(async (request) => {
         examProfileId: profile.id,
         requestId: crypto.randomUUID(),
         requestedAt: new Date().toISOString(),
+
+        dependencies: {
+          prepareProviderExecution:
+            reactiveCoachProviderPreparation,
+        },
       });
 
       return json(result.body, result.status);

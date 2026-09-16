@@ -272,7 +272,10 @@ export async function runReadOnlyCoachCapabilityV1(
       !activation
       || activation.availability !== "available"
       || activation.deploymentEnvironment !== "local_dev"
-      || activation.scope !== "one_controlled_dev_smoke_v1"
+      || (
+        activation.scope !== "one_controlled_dev_smoke_v1"
+        && activation.scope !== "reactive_coach_dev_v1"
+      )
       || activation.userId !== input.userId
       || activation.examProfileId !== input.examProfileId
       || activation.serverOwned !== true

@@ -1,6 +1,7 @@
 import {
   executeReactiveCoachRequestV1,
   type ReactiveCoachExecutionResultV1,
+  type ReactiveCoachProviderExecutionInputV1,
 } from "./reactive-coach-executor-v1.ts";
 
 import {
@@ -22,6 +23,15 @@ type Client = any;
 export interface ReactiveCoachHttpDependenciesV1 {
   readonly execute:
     typeof executeReactiveCoachRequestV1;
+
+  readonly prepareProviderExecution?:
+    (input: {
+      readonly requestId: string;
+      readonly requestedAt: string;
+    }) => Promise<
+      ReactiveCoachProviderExecutionInputV1
+      | null
+    >;
 }
 
 
@@ -148,21 +158,16 @@ function providerUnavailableResult(
 }
 
 
-function executionIsSafeT0(
+function executionPreservesNoMutationAuthority(
   result: ReactiveCoachExecutionResultV1,
+  expectedRoute: ReactiveCoachRouteDecisionV1,
 ): boolean {
   return (
     result.route.executionTier
-      === "T0_DETERMINISTIC"
+      === expectedRoute.executionTier
 
-    && result.response.executionTier
-      === "T0_DETERMINISTIC"
-
-    && result.response.providerAttempted
-      === false
-
-    && result.response.providerUsed
-      === false
+    && result.route.capability
+      === expectedRoute.capability
 
     && result.response.noMutationPerformed
       === true
@@ -189,6 +194,68 @@ function executionIsSafeT0(
   );
 }
 
+
+function executionIsSafeForRoute(
+  result: ReactiveCoachExecutionResultV1,
+  expectedRoute: ReactiveCoachRouteDecisionV1,
+): boolean {
+  if (
+    !executionPreservesNoMutationAuthority(
+      result,
+      expectedRoute,
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    expectedRoute.executionTier
+      === "T0_DETERMINISTIC"
+  ) {
+    return (
+      result.response.executionTier
+        === "T0_DETERMINISTIC"
+
+      && result.response.providerAttempted
+        === false
+
+      && result.response.providerUsed
+        === false
+
+      && result.provider
+        === null
+    );
+  }
+
+  if (
+    result.response.executionTier
+      !== "PROVIDER_READ_ONLY"
+  ) {
+    return false;
+  }
+
+  if (
+    result.response.capability
+      !== expectedRoute.capability
+  ) {
+    return false;
+  }
+
+  if (
+    result.response.providerUsed
+      === true
+  ) {
+    return (
+      result.response.providerAttempted
+        === true
+
+      && result.provider
+        !== null
+    );
+  }
+
+  return result.provider === null;
+}
 
 export async function handleReactiveCoachHttpV1(
   input: HandleReactiveCoachHttpInputV1,
@@ -296,19 +363,53 @@ export async function handleReactiveCoachHttpV1(
     );
   }
 
-  if (
-    route.executionTier
-      === "PROVIDER_READ_ONLY"
-  ) {
-    return providerUnavailableResult(
-      route,
-    );
-  }
-
   const dependencies = {
     ...DEFAULT_DEPENDENCIES,
     ...input.dependencies,
   };
+
+  let provider:
+    ReactiveCoachProviderExecutionInputV1
+    | undefined;
+
+  if (
+    route.executionTier
+      === "PROVIDER_READ_ONLY"
+  ) {
+    if (
+      !dependencies.prepareProviderExecution
+    ) {
+      return providerUnavailableResult(
+        route,
+      );
+    }
+
+    try {
+      const preparedProvider =
+        await dependencies
+          .prepareProviderExecution({
+            requestId:
+              input.requestId,
+
+            requestedAt:
+              input.requestedAt,
+          });
+
+      if (!preparedProvider) {
+        return providerUnavailableResult(
+          route,
+        );
+      }
+
+      provider =
+        preparedProvider;
+    }
+    catch {
+      return providerUnavailableResult(
+        route,
+      );
+    }
+  }
 
   let execution:
     ReactiveCoachExecutionResultV1;
@@ -333,6 +434,10 @@ export async function handleReactiveCoachHttpV1(
 
         requestedAt:
           input.requestedAt,
+
+        ...(provider
+          ? { provider }
+          : {}),
       });
   }
   catch {
@@ -344,8 +449,9 @@ export async function handleReactiveCoachHttpV1(
   }
 
   if (
-    !executionIsSafeT0(
+    !executionIsSafeForRoute(
       execution,
+      route,
     )
   ) {
     return errorResult(

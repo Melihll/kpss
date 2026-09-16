@@ -20,7 +20,7 @@ export type AiProviderRuntimeActivationV1 =
       version: typeof AI_PROVIDER_RUNTIME_ACTIVATION_V1_VERSION;
       availability: "available";
       deploymentEnvironment: "local_dev" | "test";
-      scope: "one_controlled_dev_smoke_v1" | "mock_test_only";
+      scope: "one_controlled_dev_smoke_v1" | "reactive_coach_dev_v1" | "mock_test_only";
       userId: string;
       examProfileId: string;
       billingAuditVersion: typeof AI_OPENAI_BILLING_AUDIT_V1_VERSION | "test_fixture";
@@ -78,6 +78,9 @@ export function resolveAiProviderRuntimeActivationV1(input: {
   readonly serverConfig: Readonly<Record<string, string | undefined>>;
   readonly userId: string;
   readonly examProfileId: string;
+  readonly localDevScope?:
+    | "one_controlled_dev_smoke_v1"
+    | "reactive_coach_dev_v1";
   readonly billingGate?: AiProviderRuntimeBillingGateV1;
 }): AiProviderRuntimeActivationV1 {
   if (input.deploymentEnvironment === "production") return unavailable("production_prohibited");
@@ -91,7 +94,7 @@ export function resolveAiProviderRuntimeActivationV1(input: {
   }
   const expectedScope = input.deploymentEnvironment === "test"
     ? "mock_test_only"
-    : "one_controlled_dev_smoke_v1";
+    : input.localDevScope ?? "one_controlled_dev_smoke_v1";
   if (input.serverConfig[AI_PROVIDER_RUNTIME_SERVER_KEYS_V1.scope] !== expectedScope) {
     return unavailable("scope_invalid");
   }
@@ -104,9 +107,10 @@ export function resolveAiProviderRuntimeActivationV1(input: {
 
   const billingGate = input.billingGate ?? AI_PROVIDER_RUNTIME_BILLING_GATE_V1;
 
-  // Official billing truth remains unresolved. This is a separate,
-  // explicit server-owned LOCAL DEV risk acceptance for exactly one
-  // controlled smoke. Production is rejected above and cannot use it.
+  // Official billing truth remains unresolved. LOCAL DEV use requires
+  // an explicit server-owned scope plus explicit unresolved-cost risk
+  // acceptance. Production is rejected above and cannot use either
+  // the historical one-smoke scope or the Reactive Coach DEV scope.
   const unresolvedDevBillingRiskAccepted =
     input.deploymentEnvironment === "local_dev"
     && billingGate.authority === "official_audit"
