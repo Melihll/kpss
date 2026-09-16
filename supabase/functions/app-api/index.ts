@@ -39,6 +39,7 @@ import {
   parseExactPlannerV2ProposalIdentity,
   plannerV2LifecycleErrorCode,
 } from "../_shared/planner-v2-proposal-http.ts";
+import { handleReactiveCoachHttpV1 } from "../_shared/ai-coach/reactive-coach-http-v1.ts";
 import {
   buildPlannerV2ApplyPlanCandidate,
   buildPlannerV2Preview,
@@ -818,6 +819,21 @@ Deno.serve(async (request) => {
     const plannerV2PreviewEnabled = plannerV2Capabilities.previewEnabled;
     const plannerV2ConfirmationEnabled = plannerV2Capabilities.confirmationEnabled;
     const plannerV2ApplyEnabled = plannerV2Capabilities.applyEnabled;
+
+    if (request.method === "POST" && route === "/ai-coach/reactive") {
+      const body = await request.json().catch(() => null);
+
+      const result = await handleReactiveCoachHttpV1({
+        body,
+        contextClient: client,
+        userId,
+        examProfileId: profile.id,
+        requestId: crypto.randomUUID(),
+        requestedAt: new Date().toISOString(),
+      });
+
+      return json(result.body, result.status);
+    }
 
     if (request.method === "GET" && route === "/planner-v2/capability") {
       return json(plannerV2Capabilities);
