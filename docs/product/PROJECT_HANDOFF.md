@@ -1,21 +1,21 @@
 # KPSS Koçu — Project Handoff
 
-> **Active phase - REACTIVE_COACH_6C3B_CONTROLLED_DEV_BINDING_COMPLETE_2026_09_16**
+> **Active phase - REACTIVE_COACH_6C_FINAL_ACCEPTANCE_COMPLETE_2026_09_17**
 >
 > - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
-> - **6C Reactive Coach remains ACTIVE pending its final acceptance gate.**
+> - **6C Reactive Coach is CLOSED / AIC-003 is DONE.**
 > - **6C.1 request routing is CLOSED** at checkpoint `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`.
 > - **6C.2 reactive executor is CLOSED** at checkpoint `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
 > - **6C.3A authenticated server/API boundary is CLOSED** at checkpoint `c78becfe5137b360437ef33af4932ef7733ba317`.
-> - **6C.3B controlled DEV provider-read-only runtime binding is CLOSED** at checkpoint `f86824ca307d3f0bc8c6ce821dcd06f7f8ec0f63`.
-> - 6C.3B uses the separate server-owned `reactive_coach_dev_v1` authority with exact user/profile allowlists; historical `one_controlled_dev_smoke_v1` authority remains separate.
-> - Provider preparation is lazy: production, runtime-OFF, and identity-denied requests stop before API-key read and before TCMB/OpenAI preparation. Deterministic T0 performs zero provider preparation.
-> - Request-body authority remains message-only. The HTTP boundary has no provider/service-role secret authority and no direct product database mutation authority.
-> - 6C.3B acceptance: runtime `11/11`, HTTP `15/15`, focused Reactive Coach `53/53`, shared provider regression `78/78`, full non-integration `1207/1207` across `161/161` files, workspace typecheck PASS, both AI safety gates PASS, and final read-only authority audit PASS.
-> - Automatic retry is `0`; provider fallback is `0`; product mutation authority is `0`; real OpenAI calls during 6C.3B verification are `0`.
-> - Production deployment is `0`, migration is `0`, main push is `0`. Production provider remains prohibited. Confirm and Apply remain OFF.
-> - **6D remains NOT_STARTED.** Before 6D begins, 6C must pass its final acceptance gate against the canonical Reactive Coach scenario/authority contract.
+> - **6C.3B controlled DEV provider-read-only binding is CLOSED** at checkpoint `f86824ca307d3f0bc8c6ce821dcd06f7f8ec0f63`; canonical 6C.3B docs checkpoint is `091252c031aa054d548e9a2033bb4a54abe0a09b`.
+> - **Final 6C acceptance code checkpoint:** `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`.
+> - The canonical 20-scenario product/authority matrix is accepted for the 6C boundary. Later-slice behaviors remain fail-closed or safely delegated without granting mutation authority.
+> - Final acceptance evidence: focused routing/executor `29/29`; complete AI Coach regression `205/205` across `20/20` files; full non-integration `1209/1209` across `161/161` files; workspace typecheck PASS; mutation-authority audit PASS.
+> - Planner/task/capacity mutation authority, Confirm authority, and Apply authority remain `false`.
+> - Production deployment is `0`, migration is `0`, main push is `0`, real provider calls during final acceptance are `0`, and production mutation is `0`.
+> - **6D Proactive Coach remains NOT_STARTED and is the next product slice.**
 > - This block supersedes older current-state wording below it.
+
 
 
 
@@ -127,7 +127,7 @@ Last updated: 2026-09-16
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Base branch: `main`
-- Local working branch: `evre6-ai-coach`; latest accepted 6C.3B controlled DEV provider binding checkpoint is `f86824ca307d3f0bc8c6ce821dcd06f7f8ec0f63`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
+- Local working branch: `evre6-ai-coach`; latest accepted Evre 6C final acceptance checkpoint is `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
 - 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - 6B.1 accepted checkpoint: `acd16ffb2263b5285b14bd7329ff4357d7971e00`
 - Last verified product checkpoint before W5: `fa46fd2`
@@ -176,17 +176,17 @@ PLN-004 verification:
 
 ## Active task
 
-`AIC-003 / Evre 6C — final Reactive Coach acceptance gate`
+`AIC-004 / Evre 6D — Proactive Coach (NEXT / NOT_STARTED)`
 
-6C.1 request routing, 6C.2 executor, 6C.3A authenticated server/API boundary, and 6C.3B controlled DEV provider-read-only runtime binding are implemented and accepted. The latest 6C.3B code checkpoint is `f86824ca307d3f0bc8c6ce821dcd06f7f8ec0f63`.
+`AIC-003 / Evre 6C Reactive Coach` is CLOSED at final acceptance checkpoint `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`.
 
-The dedicated Reactive Coach runtime uses `reactive_coach_dev_v1`, exact server-owned user/profile allowlists, production/runtime-OFF fail-closed behavior, lazy secret/network preparation, zero provider preparation for deterministic T0, no automatic retry/fallback, the accepted 6B accounting/orchestrator path, strict grounding, and zero product mutation authority.
+The canonical 20-scenario Reactive Coach authority contract is accepted for 6C. Focused routing/executor `29/29`, complete AI Coach `205/205`, full non-integration `1209/1209` across `161/161` files, workspace typecheck, and mutation-authority audit are green.
 
-6C remains ACTIVE only because AIC-003 still requires its final scenario/authority acceptance evidence. Do not mark AIC-003 DONE or start 6D until that final gate is explicitly reviewed.
+Reactive Coach remains read-only. Planner/task/capacity mutation authority, Confirm authority, and Apply authority remain false. Production provider activation is still prohibited and no Evre 6C code has been deployed from this feature branch.
 
-Production provider remains prohibited. The feature is undeployed. Confirm and Apply remain OFF. 6D-6G remain NOT_STARTED.
+6D has not started. Its product boundary is deterministic in-app proactive insight eligibility with materiality, freshness, cooldown/dedupe, attention budget, safe deterministic fallback, user control, and no automatic proposal.
 
-MAT-001, PLN-002 natural Extra Study acceptance, and other separately gated planning foundations remain tracked work.
+6E Planner integration, 6F bounded conversation intelligence, and 6G production acceptance remain NOT_STARTED.
 
 ## Production guardrails
 
@@ -211,13 +211,11 @@ MAT-001, PLN-002 natural Extra Study acceptance, and other separately gated plan
 
 ## NEXT EXACT STEP
 
-Run the final Evre 6C Reactive Coach acceptance gate against the canonical 20-scenario product/authority contract. Build an explicit evidence matrix showing which scenarios are deterministic T0, provider-read-only, clarification, out-of-scope, planning-unavailable, Apply-unavailable, cost-limited, or provider-failure cases and bind each one to executable tests/evidence.
+Prepare the `AIC-004 / Evre 6D Proactive Coach` implementation slice from the accepted Evre 6 product contract. Keep trigger eligibility fully deterministic and server-owned before any optional wording call.
 
-The final gate must reconfirm: deterministic calculations make zero provider calls; provider answers are schema-valid and grounded; request text cannot transfer user/profile/provider/Planner/Confirm/Apply authority; provider failures and cost limits degrade safely; no task/capacity/workload/material/progress/stage mutation occurs; and production provider exposure remains prohibited.
+The first 6D slice must preserve: in-app only delivery; versioned materiality thresholds; freshness/context fingerprints; category cooldown and dedupe; attention budget; active-session protection; deterministic fallback; dismiss/snooze/disable controls; silence as a valid outcome; zero automatic Planner proposal generation; and zero Confirm/Apply authority.
 
-If the full 6C acceptance matrix is green, close `AIC-003 / 6C` and only then start `AIC-004 / 6D Proactive Coach`.
-
-Do not deploy, migrate, enable production provider traffic, change production secrets, or change Planner V2 Confirm/Apply gates during this gate.
+Do not deploy, migrate, enable production provider traffic, enable outbound notifications, or change Planner V2 Confirm/Apply gates while opening 6D.
 
 ## 2026-09-10 Evre 6A final contract closure
 

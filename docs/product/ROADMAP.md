@@ -1,21 +1,21 @@
 # KPSS Koçu Product Roadmap
 
-> **Active phase - REACTIVE_COACH_6C3B_CONTROLLED_DEV_BINDING_COMPLETE_2026_09_16**
+> **Active phase - REACTIVE_COACH_6C_FINAL_ACCEPTANCE_COMPLETE_2026_09_17**
 >
 > - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
-> - **6C Reactive Coach remains ACTIVE pending its final acceptance gate.**
+> - **6C Reactive Coach is CLOSED / AIC-003 is DONE.**
 > - **6C.1 request routing is CLOSED** at checkpoint `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`.
 > - **6C.2 reactive executor is CLOSED** at checkpoint `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
 > - **6C.3A authenticated server/API boundary is CLOSED** at checkpoint `c78becfe5137b360437ef33af4932ef7733ba317`.
-> - **6C.3B controlled DEV provider-read-only runtime binding is CLOSED** at checkpoint `f86824ca307d3f0bc8c6ce821dcd06f7f8ec0f63`.
-> - 6C.3B uses the separate server-owned `reactive_coach_dev_v1` authority with exact user/profile allowlists; historical `one_controlled_dev_smoke_v1` authority remains separate.
-> - Provider preparation is lazy: production, runtime-OFF, and identity-denied requests stop before API-key read and before TCMB/OpenAI preparation. Deterministic T0 performs zero provider preparation.
-> - Request-body authority remains message-only. The HTTP boundary has no provider/service-role secret authority and no direct product database mutation authority.
-> - 6C.3B acceptance: runtime `11/11`, HTTP `15/15`, focused Reactive Coach `53/53`, shared provider regression `78/78`, full non-integration `1207/1207` across `161/161` files, workspace typecheck PASS, both AI safety gates PASS, and final read-only authority audit PASS.
-> - Automatic retry is `0`; provider fallback is `0`; product mutation authority is `0`; real OpenAI calls during 6C.3B verification are `0`.
-> - Production deployment is `0`, migration is `0`, main push is `0`. Production provider remains prohibited. Confirm and Apply remain OFF.
-> - **6D remains NOT_STARTED.** Before 6D begins, 6C must pass its final acceptance gate against the canonical Reactive Coach scenario/authority contract.
+> - **6C.3B controlled DEV provider-read-only binding is CLOSED** at checkpoint `f86824ca307d3f0bc8c6ce821dcd06f7f8ec0f63`; canonical 6C.3B docs checkpoint is `091252c031aa054d548e9a2033bb4a54abe0a09b`.
+> - **Final 6C acceptance code checkpoint:** `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`.
+> - The canonical 20-scenario product/authority matrix is accepted for the 6C boundary. Later-slice behaviors remain fail-closed or safely delegated without granting mutation authority.
+> - Final acceptance evidence: focused routing/executor `29/29`; complete AI Coach regression `205/205` across `20/20` files; full non-integration `1209/1209` across `161/161` files; workspace typecheck PASS; mutation-authority audit PASS.
+> - Planner/task/capacity mutation authority, Confirm authority, and Apply authority remain `false`.
+> - Production deployment is `0`, migration is `0`, main push is `0`, real provider calls during final acceptance are `0`, and production mutation is `0`.
+> - **6D Proactive Coach remains NOT_STARTED and is the next product slice.**
 > - This block supersedes older current-state wording below it.
+
 
 
 
@@ -221,7 +221,7 @@ The normative product, truth, authority, scenario, proactive, cost, and phase co
 | --- | --- | --- | --- |
 | 6A | Product / Authority / Cost Contract | `CLOSED` | Final product outcomes, truth sources, non-authority, 20 scenarios, proactive triggers, cost envelope, and phase gates accepted. |
 | 6B | CoachContextV1 | `CLOSED` | Controlled DEV runtime acceptance completed; canonical context/evidence, routing/pricing, telemetry, provider safety, and real controlled-DEV acceptance are closed. Production provider remains prohibited. |
-| 6C | Reactive Coach | `ACTIVE - 6C.3B CLOSED / FINAL ACCEPTANCE PENDING` | Dedicated controlled-DEV provider-read-only runtime binding is accepted with production fail-closed, exact server-owned allowlists, lazy preparation, accounting/orchestrator reuse, and zero mutation authority. Complete the final Reactive Coach scenario/authority acceptance gate before starting 6D.
+| 6C | Reactive Coach | `CLOSED - FINAL ACCEPTANCE COMPLETE` | Canonical 20-scenario authority acceptance is complete at `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`; Reactive Coach remains read-only with zero Planner/task/capacity/Confirm/Apply authority. 6D Proactive Coach is next and remains NOT_STARTED.
 | 6D | Proactive Coach | `NOT_STARTED` | Add deterministic in-app triggers, cooldowns, dedupe, attention controls, and valid silence. |
 | 6E | Planner V2 integration | `NOT_STARTED` | Route every Coach planning mutation to the one canonical Planner V2 lifecycle. |
 | 6F | Conversation Intelligence | `NOT_STARTED` | Add short recent context plus compact structured state/signals without long-term raw history or authority transfer. |
