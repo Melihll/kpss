@@ -1,21 +1,22 @@
 # KPSS Koçu Product Backlog
 
-> **Active phase - REACTIVE_COACH_6C3A_AUTHENTICATED_API_COMPLETE_2026_09_16**
+> **Active phase - REACTIVE_COACH_6C3B_CONTROLLED_DEV_BINDING_COMPLETE_2026_09_16**
 >
 > - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
-> - **6C Reactive Coach is ACTIVE.**
+> - **6C Reactive Coach remains ACTIVE pending its final acceptance gate.**
 > - **6C.1 request routing is CLOSED** at checkpoint `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`.
 > - **6C.2 reactive executor is CLOSED** at checkpoint `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
 > - **6C.3A authenticated server/API boundary is CLOSED** at checkpoint `c78becfe5137b360437ef33af4932ef7733ba317`.
-> - The new `POST /ai-coach/reactive` app-api route derives user authority from the verified JWT and active exam profile authority from the server; client-supplied user/profile/provider/apply/confirmation authority is rejected.
-> - Deterministic T0 execution is available through the new boundary. Provider-required routes remain fail-closed as `PROVIDER_UNAVAILABLE` and make zero provider calls in this slice.
-> - 6C.3A acceptance: HTTP boundary `11/11`, focused Reactive Coach `38/38`, full non-integration `1192/1192` across `160/160` files, workspace typecheck PASS, AI economics safety PASS, and AI Coach safety PASS.
-> - Coach-boundary service-role authority is `0`; direct Planner/task/capacity mutation authority is `0`; real provider calls caused by 6C.3A are `0`.
-> - The code is committed only on `evre6-ai-coach`; production deployment is `0`, migration is `0`, and main push is `0`.
-> - Production provider remains prohibited. Confirm and Apply remain OFF.
-> - 6D-6G remain NOT_STARTED.
-> - Next 6C slice: **6C.3B controlled DEV provider-read-only runtime binding** using only server-owned activation/configuration and the accepted 6B accounting/orchestrator path. Production activation remains prohibited.
+> - **6C.3B controlled DEV provider-read-only runtime binding is CLOSED** at checkpoint `f86824ca307d3f0bc8c6ce821dcd06f7f8ec0f63`.
+> - 6C.3B uses the separate server-owned `reactive_coach_dev_v1` authority with exact user/profile allowlists; historical `one_controlled_dev_smoke_v1` authority remains separate.
+> - Provider preparation is lazy: production, runtime-OFF, and identity-denied requests stop before API-key read and before TCMB/OpenAI preparation. Deterministic T0 performs zero provider preparation.
+> - Request-body authority remains message-only. The HTTP boundary has no provider/service-role secret authority and no direct product database mutation authority.
+> - 6C.3B acceptance: runtime `11/11`, HTTP `15/15`, focused Reactive Coach `53/53`, shared provider regression `78/78`, full non-integration `1207/1207` across `161/161` files, workspace typecheck PASS, both AI safety gates PASS, and final read-only authority audit PASS.
+> - Automatic retry is `0`; provider fallback is `0`; product mutation authority is `0`; real OpenAI calls during 6C.3B verification are `0`.
+> - Production deployment is `0`, migration is `0`, main push is `0`. Production provider remains prohibited. Confirm and Apply remain OFF.
+> - **6D remains NOT_STARTED.** Before 6D begins, 6C must pass its final acceptance gate against the canonical Reactive Coach scenario/authority contract.
 > - This block supersedes older current-state wording below it.
+
 
 
 > **Controlled DEV acceptance CLOSED - REAL_SMOKE_ATTEMPT_5_GREEN_2026_09_13**
@@ -171,7 +172,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | --- | --- | --- | --- | --- |
 | `AIC-001` | 6A | `P0` | Product / Authority / Cost Contract | `DONE` |
 | `AIC-002` | 6B | `P0` | CoachContextV1 | `DONE - CONTROLLED DEV RUNTIME ACCEPTANCE CLOSED` |
-| `AIC-003` | 6C | `P1` | Reactive Coach | `IN_PROGRESS - 6C.3A AUTHENTICATED API CLOSED / PROVIDER RUNTIME NOT YET BOUND` |
+| `AIC-003` | 6C | `P1` | Reactive Coach | `IN_PROGRESS - 6C.3B CLOSED / FINAL ACCEPTANCE PENDING` |
 | `AIC-004` | 6D | `P1` | Proactive Coach | `TODO` |
 | `AIC-005` | 6E | `P0` | Planner V2 Integration | `TODO` |
 | `AIC-006` | 6F | `P1` | Conversation Intelligence | `TODO` |
@@ -229,7 +230,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-003` / Evre 6C — Reactive Coach
 
 - Priority: `P1`
-- Status: `IN_PROGRESS - 6C.3A AUTHENTICATED API CLOSED / PROVIDER RUNTIME NOT YET BOUND`
+- Status: `IN_PROGRESS - 6C.3B CLOSED / FINAL ACCEPTANCE PENDING`
 - Dependency: accepted `AIC-002`, eval fixtures, cost ledger, and separate release scope.
 - Desired outcome: The user can ask the Coach to Explain, Diagnose, or Guide and receive grounded Turkish responses with deterministic fallbacks.
 - Acceptance criteria:
@@ -244,7 +245,8 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 - 6C.1 completion note (2026-09-13): pure server-owned request routing is accepted at `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`; deterministic T0 and read-only capability selection grant no mutation, confirmation, or Apply authority.
 - 6C.2 completion note (2026-09-16): the disconnected reactive executor is accepted at `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`. T0 Today facts, out-of-scope/planning stops, canonical subject resolution, read-only orchestrator delegation, cost/provider failure fallbacks, and provider no-mutation enforcement pass executor `12/12`, focused `63/63`, full non-integration `1181/1181` across `159/159` files, workspace typecheck, and AI safety gates.
 - 6C.3A completion note (2026-09-16): the authenticated server/API boundary is accepted at `c78becfe5137b360437ef33af4932ef7733ba317`. `POST /ai-coach/reactive` derives user/profile authority server-side, rejects client authority injection, enables deterministic T0 execution, and fails provider-required routes closed without invoking provider runtime. HTTP boundary `11/11`, focused Reactive Coach `38/38`, full non-integration `1192/1192` across `160/160` files, workspace typecheck, and both AI safety gates PASS.
-- 6C remains `IN_PROGRESS`: 6C.3A code is not deployed, provider-required routes are still unavailable at this boundary, and no new Coach UI exists. Next is `6C.3B` controlled DEV provider-read-only runtime binding. Production provider remains prohibited and Confirm/Apply remain OFF.
+- 6C.3B completion note (2026-09-16): dedicated `reactive_coach_dev_v1` authority, exact user/profile allowlists, production/runtime-OFF fail-closed behavior, lazy secret/network preparation, T0 zero-provider preparation, and server-owned app-api provider binding are accepted at `f86824ca307d3f0bc8c6ce821dcd06f7f8ec0f63`. Runtime `11/11`, HTTP `15/15`, focused Reactive Coach `53/53`, shared provider regression `78/78`, full non-integration `1207/1207` across `161/161` files, workspace typecheck, both AI safety gates, and final read-only authority audit PASS.
+- 6C remains `IN_PROGRESS` only for its final acceptance gate. The explicit AIC-003 scenario/authority acceptance criteria must be evidenced before the item becomes `DONE` and before 6D starts. Production provider remains prohibited and Confirm/Apply remain OFF.
 
 ## `AIC-004` / Evre 6D — Proactive Coach
 
