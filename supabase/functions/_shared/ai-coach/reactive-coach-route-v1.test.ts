@@ -228,6 +228,164 @@ describe(
     );
 
     it(
+      "binds remaining reactive canonical scenarios to their safe 6C disposition",
+      () => {
+        const cases = [
+          {
+            message:
+              "Cumartesi 60 dakika daha vaktim var.",
+            state:
+              "PROPOSAL_UNAVAILABLE",
+            tier:
+              "T0_DETERMINISTIC",
+            capability: null,
+            kind:
+              "planning_change_unavailable",
+            provider: false,
+          },
+          {
+            message:
+              "Bugün çok yorgunum, en hafif dersi bırak.",
+            state:
+              "NEEDS_CLARIFICATION",
+            tier:
+              "T0_DETERMINISTIC",
+            capability: null,
+            kind:
+              "fatigue_clarification",
+            provider: false,
+          },
+          {
+            message:
+              "Dün hiç çalışamadım, şimdi ne olacak?",
+            state:
+              "EXPLANATION",
+            tier:
+              "PROVIDER_READ_ONLY",
+            capability:
+              "complex_status_analysis",
+            kind: null,
+            provider: true,
+          },
+          {
+            message:
+              "15 dakika boşluk var; neden matematik videosunu koymadın?",
+            state:
+              "EXPLANATION",
+            tier:
+              "PROVIDER_READ_ONLY",
+            capability:
+              "planner_explanation",
+            kind: null,
+            provider: true,
+          },
+          {
+            message:
+              "Bu öneri tam olarak neyi değiştirecek?",
+            state:
+              "EXPLANATION",
+            tier:
+              "PROVIDER_READ_ONLY",
+            capability:
+              "planner_explanation",
+            kind: null,
+            provider: true,
+          },
+          {
+            message:
+              "Yarınki matematik görevini iptal et.",
+            state:
+              "PROPOSAL_UNAVAILABLE",
+            tier:
+              "T0_DETERMINISTIC",
+            capability: null,
+            kind:
+              "planning_change_unavailable",
+            provider: false,
+          },
+          {
+            message:
+              "Yargı Plus vatandaşlık kitabını kaynaklara ekle.",
+            state:
+              "UNKNOWN_OR_BLOCKED",
+            tier:
+              "T0_DETERMINISTIC",
+            capability: null,
+            kind:
+              "material_creation_unavailable",
+            provider: false,
+          },
+          {
+            message:
+              "Kitapta 120 sayfa kaldı; kaç saatte biter?",
+            state:
+              "EXPLANATION",
+            tier:
+              "PROVIDER_READ_ONLY",
+            capability:
+              "complex_status_analysis",
+            kind: null,
+            provider: true,
+          },
+          {
+            message:
+              "Bu kitabı bitirdim, ilerlemeyi tamamlandı yap.",
+            state:
+              "EXPLANATION",
+            tier:
+              "PROVIDER_READ_ONLY",
+            capability:
+              "complex_status_analysis",
+            kind: null,
+            provider: true,
+          },
+          {
+            message:
+              "90 değil 120 olsun; onu cuma yapalım.",
+            state:
+              "NEEDS_CLARIFICATION",
+            tier:
+              "T0_DETERMINISTIC",
+            capability: null,
+            kind:
+              "contextual_correction_unresolved",
+            provider: false,
+          },
+        ] as const;
+
+        for (const item of cases) {
+          const value =
+            routeReactiveCoachRequestV1(
+              item.message,
+            );
+
+          expect(value).toMatchObject({
+            state:
+              item.state,
+            executionTier:
+              item.tier,
+            capability:
+              item.capability,
+            deterministicKind:
+              item.kind,
+            providerCallAllowed:
+              item.provider,
+          });
+
+          expect(value.authority).toEqual({
+            serverOwnedSelection: true,
+            rawUserTextStored: false,
+            plannerMutationAllowed: false,
+            taskMutationAllowed: false,
+            capacityMutationAllowed: false,
+            confirmationAllowed: false,
+            applyAllowed: false,
+          });
+        }
+      },
+    );
+
+    it(
       "preserves zero mutation authority for every route class",
       () => {
         const samples = [

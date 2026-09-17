@@ -355,6 +355,79 @@ function staticDeterministicAnswer(
     });
   }
 
+  if (
+    route.deterministicKind
+      === "fatigue_clarification"
+  ) {
+    return deepFreeze({
+      state:
+        "NEEDS_CLARIFICATION",
+      executionTier:
+        "T0_DETERMINISTIC",
+      capability: null,
+      deterministicKind:
+        "fatigue_clarification",
+      answer:
+        "Hangi görevi bırakacağıma karar veremem ve yorgunluk ifadesini bir kapasite sayısına çeviremem. Bugün toplam kaç dakika ayırabileceğini açıkça belirt. Planın değişmedi.",
+      sourceFactPaths: [],
+      acknowledgedUnknowns: [],
+      staleOrBlockedWarnings: [],
+      providerAttempted: false,
+      providerUsed: false,
+      noMutationPerformed: true,
+    });
+  }
+
+  if (
+    route.deterministicKind
+      === "material_creation_unavailable"
+  ) {
+    return deepFreeze({
+      state:
+        "UNKNOWN_OR_BLOCKED",
+      executionTier:
+        "T0_DETERMINISTIC",
+      capability: null,
+      deterministicKind:
+        "material_creation_unavailable",
+      answer:
+        "Reactive Coach yeni bir kitabı veya kaynağı canonical materyal kataloğuna eklemez. Mevcut eşleşme ya da ayrı incelenmiş materyal akışı gerekir. Kaynaklarda değişiklik yapılmadı.",
+      sourceFactPaths: [],
+      acknowledgedUnknowns: [
+        "canonical_material_match",
+      ],
+      staleOrBlockedWarnings: [],
+      providerAttempted: false,
+      providerUsed: false,
+      noMutationPerformed: true,
+    });
+  }
+
+  if (
+    route.deterministicKind
+      === "contextual_correction_unresolved"
+  ) {
+    return deepFreeze({
+      state:
+        "NEEDS_CLARIFICATION",
+      executionTier:
+        "T0_DETERMINISTIC",
+      capability: null,
+      deterministicKind:
+        "contextual_correction_unresolved",
+      answer:
+        "Bu mesajdaki referansı önceki konuşma durumuna güvenle bağlayamıyorum. Gün, hedef süre ve istediğin değişikliği açıkça yeniden belirt. Mevcut öneri ve plan değişmedi.",
+      sourceFactPaths: [],
+      acknowledgedUnknowns: [
+        "conversation_referent",
+      ],
+      staleOrBlockedWarnings: [],
+      providerAttempted: false,
+      providerUsed: false,
+      noMutationPerformed: true,
+    });
+  }
+
   throw new Error(
     "REACTIVE_COACH_DETERMINISTIC_KIND_UNSUPPORTED",
   );

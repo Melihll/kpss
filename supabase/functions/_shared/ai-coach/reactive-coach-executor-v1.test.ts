@@ -422,6 +422,89 @@ describe(
 
 
     it(
+      "keeps new 6C safety guards deterministic with zero context or provider authority",
+      async () => {
+        const cases = [
+          {
+            message:
+              "Bugün çok yorgunum, en hafif dersi bırak.",
+            state:
+              "NEEDS_CLARIFICATION",
+            kind:
+              "fatigue_clarification",
+          },
+          {
+            message:
+              "Yargı Plus vatandaşlık kitabını kaynaklara ekle.",
+            state:
+              "UNKNOWN_OR_BLOCKED",
+            kind:
+              "material_creation_unavailable",
+          },
+          {
+            message:
+              "90 değil 120 olsun; onu cuma yapalım.",
+            state:
+              "NEEDS_CLARIFICATION",
+            kind:
+              "contextual_correction_unresolved",
+          },
+        ] as const;
+
+        for (const item of cases) {
+          const loadContext =
+            vi.fn();
+
+          const runProvider =
+            vi.fn();
+
+          const result =
+            await executeReactiveCoachRequestV1({
+              ...baseInput(),
+              rawMessage:
+                item.message,
+              dependencies: {
+                loadContext,
+                runProvider,
+              },
+            });
+
+          expect(
+            loadContext,
+          ).not.toHaveBeenCalled();
+
+          expect(
+            runProvider,
+          ).not.toHaveBeenCalled();
+
+          expect(result.response)
+            .toMatchObject({
+              state:
+                item.state,
+              executionTier:
+                "T0_DETERMINISTIC",
+              deterministicKind:
+                item.kind,
+              providerAttempted:
+                false,
+              providerUsed:
+                false,
+              noMutationPerformed:
+                true,
+            });
+
+          expect(
+            result.route.authority.applyAllowed,
+          ).toBe(false);
+
+          expect(
+            result.route.authority.confirmationAllowed,
+          ).toBe(false);
+        }
+      },
+    );
+
+    it(
       "delegates week analysis only through the injected read-only orchestrator boundary",
       async () => {
         const current =

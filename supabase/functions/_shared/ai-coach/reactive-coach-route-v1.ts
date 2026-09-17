@@ -30,7 +30,10 @@ export type ReactiveCoachDeterministicKindV1 =
   | "out_of_scope_teaching"
   | "out_of_scope_quiz"
   | "planning_change_unavailable"
-  | "apply_unavailable";
+  | "apply_unavailable"
+  | "fatigue_clarification"
+  | "material_creation_unavailable"
+  | "contextual_correction_unresolved";
 
 export type ReactiveCoachRouteReasonV1 =
   | "exact_today_progress_is_deterministic"
@@ -42,6 +45,10 @@ export type ReactiveCoachRouteReasonV1 =
   | "week_question_requires_grounded_analysis"
   | "today_question_requires_grounded_analysis"
   | "subject_question_requires_grounded_analysis"
+  | "fatigue_requires_explicit_capacity"
+  | "material_creation_requires_reviewed_flow"
+  | "contextual_correction_requires_bounded_referent"
+  | "proposal_diff_requires_grounded_explanation"
   | "general_question_requires_grounded_analysis";
 
 export interface ReactiveCoachRouteDecisionV1 {
@@ -245,6 +252,85 @@ export function routeReactiveCoachRequestV1(
     });
   }
 
+  const materialCreationRequest =
+    containsAny(message, [
+      "kaynaklara ekle",
+      "kaynaklara ekley",
+      "kaynak ekle",
+      "kaynak olarak ekle",
+    ]);
+
+  if (materialCreationRequest) {
+    return decision({
+      state:
+        "UNKNOWN_OR_BLOCKED",
+      executionTier:
+        "T0_DETERMINISTIC",
+      capability: null,
+      deterministicKind:
+        "material_creation_unavailable",
+      reasonCode:
+        "material_creation_requires_reviewed_flow",
+      requiresCanonicalContext: false,
+      providerCallAllowed: false,
+    });
+  }
+
+  const fatigueWithoutMeasurableCapacity =
+    message.includes("yorgun")
+    && containsAny(message, [
+      "en hafif",
+      "hafif dersi",
+      "dersi birak",
+      "gorevi birak",
+    ]);
+
+  if (fatigueWithoutMeasurableCapacity) {
+    return decision({
+      state:
+        "NEEDS_CLARIFICATION",
+      executionTier:
+        "T0_DETERMINISTIC",
+      capability: null,
+      deterministicKind:
+        "fatigue_clarification",
+      reasonCode:
+        "fatigue_requires_explicit_capacity",
+      requiresCanonicalContext: false,
+      providerCallAllowed: false,
+    });
+  }
+
+  const contextualCorrectionRequest =
+    message.includes(" degil ")
+    && containsAny(message, [
+      " onu ",
+      " bunu ",
+      "onu cuma",
+      "bunu cuma",
+      "onu yarin",
+      "bunu yarin",
+    ])
+    && containsAny(message, [
+      "olsun",
+      "yapalim",
+    ]);
+
+  if (contextualCorrectionRequest) {
+    return decision({
+      state:
+        "NEEDS_CLARIFICATION",
+      executionTier:
+        "T0_DETERMINISTIC",
+      capability: null,
+      deterministicKind:
+        "contextual_correction_unresolved",
+      reasonCode:
+        "contextual_correction_requires_bounded_referent",
+      requiresCanonicalContext: false,
+      providerCallAllowed: false,
+    });
+  }
   const planningMutationRequest =
     /\b(tasi|iptal et|plani duzelt|planimi duzelt|calisamayacagim|calisamam)\b/
       .test(message)
@@ -272,6 +358,33 @@ export function routeReactiveCoachRequestV1(
     });
   }
 
+  const proposalDiffQuestion =
+    containsAny(message, [
+      "oneri",
+      "proposal",
+    ])
+    && containsAny(message, [
+      "neyi degistirecek",
+      "tam olarak neyi",
+      "ne degisecek",
+      "ne degistiriyor",
+      "farki ne",
+    ]);
+
+  if (proposalDiffQuestion) {
+    return decision({
+      state: "EXPLANATION",
+      executionTier:
+        "PROVIDER_READ_ONLY",
+      capability:
+        "planner_explanation",
+      deterministicKind: null,
+      reasonCode:
+        "proposal_diff_requires_grounded_explanation",
+      requiresCanonicalContext: true,
+      providerCallAllowed: true,
+    });
+  }
   const todayProgressQuestion =
     message.includes("bugun")
     && containsAny(message, [
