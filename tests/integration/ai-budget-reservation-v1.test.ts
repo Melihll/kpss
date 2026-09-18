@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import { createLocalAuthenticatedClient } from "./_helpers/local-auth.ts";
 import { describe, expect, it } from "vitest";
 import {
   AI_PROVIDER_BILLABLE_BOUND_V1_VERSION,
@@ -28,7 +29,8 @@ import {
 const url = process.env.SUPABASE_URL;
 const anonKey = process.env.SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !anonKey || !serviceRoleKey) throw new Error("Local Supabase credentials are required.");
+const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+if (!url || !anonKey || !serviceRoleKey || !jwtSecret) throw new Error("Local Supabase credentials are required.");
 if (!["127.0.0.1", "localhost", "::1"].includes(new URL(url).hostname)) throw new Error("AI_BUDGET_INTEGRATION_REQUIRES_LOOPBACK_SUPABASE");
 
 const EDITION = "11000000-0000-0000-0000-000000000001";
@@ -43,11 +45,12 @@ function serviceClient() {
 }
 
 async function register(label: string): Promise<{ client: SupabaseClient; user: User }> {
-  const client = anonClient();
+  const signupClient = anonClient();
   const suffix = randomUUID();
-  const result = await client.auth.signUp({ email: `ai-budget-${label}-${suffix}@example.test`, password: `Safe-${suffix}` });
+  const result = await signupClient.auth.signUp({ email: `ai-budget-${label}-${suffix}@example.test`, password: `Safe-${suffix}` });
   expect(result.error).toBeNull();
-  return { client, user: result.data.user! };
+  const user = result.data.user!;
+  return { client: createLocalAuthenticatedClient({ url: url!, anonKey: anonKey!, jwtSecret: jwtSecret!, userId: user.id }), user };
 }
 
 async function createProfile(client: SupabaseClient, userId: string, status: "active" | "paused" = "active"): Promise<string> {

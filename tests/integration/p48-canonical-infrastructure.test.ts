@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createLocalAuthenticatedClient } from "./_helpers/local-auth.ts";
 import { beforeAll, describe, expect, it } from "vitest";
 // The importer is intentionally plain ESM so it can also run as a standalone CLI.
 // @ts-expect-error no declaration file is needed by the integration harness.
@@ -8,7 +9,8 @@ import { runImporter } from "../../scripts/import-p48-canonical.mjs";
 const url = process.env.SUPABASE_URL;
 const anonKey = process.env.SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !anonKey || !serviceRoleKey) throw new Error("Supabase URL, anon key and service-role key are required.");
+const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+if (!url || !anonKey || !serviceRoleKey || !jwtSecret) throw new Error("Supabase URL, anon key, service-role key and JWT secret are required.");
 
 const EDITION = "11000000-0000-0000-0000-000000000001";
 const CONSUMER_SECTION_KEY = "p48:31000000-0000-0000-0000-000000000018:section:002";
@@ -18,11 +20,17 @@ function anonymousClient() {
 }
 
 async function createActor(label: string) {
-  const api = anonymousClient();
+  const signupApi = anonymousClient();
   const unique = randomUUID();
-  const signup = await api.auth.signUp({ email: `canonical-${label}-${unique}@example.test`, password: `Safe-${unique}` });
+  const signup = await signupApi.auth.signUp({ email: `canonical-${label}-${unique}@example.test`, password: `Safe-${unique}` });
   expect(signup.error).toBeNull();
   const user = signup.data.user!;
+  const api = createLocalAuthenticatedClient({
+    url: url!,
+    anonKey: anonKey!,
+    jwtSecret: jwtSecret!,
+    userId: user.id,
+  });
   const profile = await api.from("exam_profiles").insert({
     user_id: user.id, exam_edition_id: EDITION, preparation_start_date: "2026-08-01", target_exam_date: "2027-09-06", status: "active",
   }).select("id").single();

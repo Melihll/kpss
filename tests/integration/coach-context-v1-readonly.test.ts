@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import { createLocalAuthenticatedClient } from "./_helpers/local-auth.ts";
 import { beforeAll, describe, expect, it } from "vitest";
 import { loadCoachContextV1ReadOnly } from "../../supabase/functions/_shared/coach-context-v1-readonly.ts";
 import {
@@ -17,7 +18,8 @@ import { runReadOnlyCoachCapabilityV1 } from "../../supabase/functions/_shared/a
 const url = process.env.SUPABASE_URL;
 const anonKey = process.env.SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !anonKey || !serviceRoleKey) throw new Error("Local Supabase credentials are required.");
+const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+if (!url || !anonKey || !serviceRoleKey || !jwtSecret) throw new Error("Local Supabase credentials are required.");
 if (!["127.0.0.1", "localhost", "::1"].includes(new URL(url).hostname)) throw new Error("COACH_ORCHESTRATOR_INTEGRATION_REQUIRES_LOOPBACK_SUPABASE");
 
 const EDITION = "11000000-0000-0000-0000-000000000001";
@@ -99,13 +101,15 @@ function absoluteRowDelta(before: Record<string, number>, after: Record<string, 
 }
 
 describe("CoachContextV1 local database read adapter", () => {
-  const actor = client();
+  const signupActor = client();
+  let actor: SupabaseClient;
   let user: User;
   let profileId: string;
   let planId: string;
 
   beforeAll(async () => {
-    user = await register(actor);
+    user = await register(signupActor);
+    actor = createLocalAuthenticatedClient({ url: url!, anonKey: anonKey!, jwtSecret: jwtSecret!, userId: user.id });
     expect((await actor.from("user_profiles").update({ display_name: "Context Test", timezone: "Europe/Istanbul" }).eq("id", user.id)).error).toBeNull();
     const profile = await actor.from("exam_profiles").insert({ user_id: user.id, exam_edition_id: EDITION, preparation_start_date: "2026-09-01", target_exam_date: "2027-08-01", status: "active" }).select("id").single();
     expect(profile.error).toBeNull();
@@ -223,6 +227,7 @@ describe("CoachContextV1 local database read adapter", () => {
       fxSnapshot: LOCAL_FX,
       dependencies: {
         inputCountTransport: {
+          authority: "test_fixture",
           count: async ({ fingerprint, clientRequestId }) => {
             countCalls += 1;
             return {
@@ -237,6 +242,7 @@ describe("CoachContextV1 local database read adapter", () => {
           },
         },
         generationTransport: {
+          authority: "test_fixture",
           execute: async ({ fingerprint, clientRequestId }) => {
             providerCalls += 1;
             return {

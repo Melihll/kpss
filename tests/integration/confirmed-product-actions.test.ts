@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import { createLocalAuthenticatedClient } from "./_helpers/local-auth.ts";
 import { beforeAll, describe, expect, it } from "vitest";
 
 const url = process.env.SUPABASE_URL;
 const anonKey = process.env.SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !anonKey || !serviceRoleKey) throw new Error("Local Supabase env required");
+const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+if (!url || !anonKey || !serviceRoleKey || !jwtSecret) throw new Error("Local Supabase env required");
 
 const EDITION = "11000000-0000-0000-0000-000000000001";
 const SUBJECT = "20000000-0000-0000-0000-000000000002";
@@ -39,8 +41,10 @@ async function register(api: SupabaseClient, label: string): Promise<User> {
 }
 
 describe("R2 confirmed action RPC integration", () => {
-  const owner = client();
-  const other = client();
+  const ownerSignup = client();
+  let owner: SupabaseClient;
+  const otherSignup = client();
+  let other: SupabaseClient;
   const admin = client(serviceRoleKey);
   let ownerUser: User;
   let profileId: string;
@@ -75,8 +79,10 @@ describe("R2 confirmed action RPC integration", () => {
   }
 
   beforeAll(async () => {
-    ownerUser = await register(owner, "owner");
-    await register(other, "other");
+    ownerUser = await register(ownerSignup, "owner");
+    owner = createLocalAuthenticatedClient({ url: url!, anonKey: anonKey!, jwtSecret: jwtSecret!, userId: ownerUser.id });
+    const otherUser = await register(otherSignup, "other");
+    other = createLocalAuthenticatedClient({ url: url!, anonKey: anonKey!, jwtSecret: jwtSecret!, userId: otherUser.id });
     const profile = await owner.from("exam_profiles").insert({
       user_id: ownerUser.id,
       exam_edition_id: EDITION,

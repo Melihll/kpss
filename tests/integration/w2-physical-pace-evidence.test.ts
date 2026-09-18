@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import { createLocalAuthenticatedClient } from "./_helpers/local-auth.ts";
 import { beforeAll, describe, expect, it } from "vitest";
 import { PhysicalStudyLifecycleService } from "../../supabase/functions/_shared/physical-study-lifecycle";
 import { loadCanonicalWorkloadEvidence } from "../../supabase/functions/_shared/canonical-workload-evidence";
@@ -7,8 +8,9 @@ import { loadCanonicalWorkloadEvidence } from "../../supabase/functions/_shared/
 const url = process.env.SUPABASE_URL;
 const anonKey = process.env.SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const jwtSecret = process.env.SUPABASE_JWT_SECRET;
 
-if (!url || !anonKey || !serviceRoleKey) {
+if (!url || !anonKey || !serviceRoleKey || !jwtSecret) {
   throw new Error("Supabase integration env required");
 }
 
@@ -31,7 +33,8 @@ async function register(api: SupabaseClient): Promise<User> {
 }
 
 describe.sequential("W2 atomic physical pace persistence", () => {
-  const actor = client();
+  const signupActor = client();
+  let actor: SupabaseClient;
   const admin = client(serviceRoleKey);
   let user: User;
   let profileId: string;
@@ -85,7 +88,8 @@ describe.sequential("W2 atomic physical pace persistence", () => {
   }
 
   beforeAll(async () => {
-    user = await register(actor);
+    user = await register(signupActor);
+    actor = createLocalAuthenticatedClient({ url: url!, anonKey: anonKey!, jwtSecret: jwtSecret!, userId: user.id });
     const profile = await actor.from("exam_profiles").insert({
       user_id: user.id,
       exam_edition_id: EDITION,
