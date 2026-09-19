@@ -1,5 +1,18 @@
 # KPSS Koçu — Project Handoff
 
+> **Authoritative current state — PROACTIVE_COACH_6D_CLOSED_2026_09_19**
+>
+> - **Evre 6D Proactive Coach is CLOSED; `AIC-004` is DONE. Evre 6E Planner V2 Integration is `NOT_STARTED`.**
+> - Accepted implementation baseline: `421de04e2c52c0bf7b0f296a679dfb9108db0030`.
+> - Accepted implementation includes the deterministic selector, versioned materiality/actionability policy, canonical hysteresis, active-study protection, persisted presentation/control/clear state, server-owned runtime assembly, authenticated `POST /ai-coach/proactive`, deterministic cards, post-surface idempotent presentation recording, dismiss/snooze/disable-category controls, and the Today web surface.
+> - `EVRE_6D_SHADOW_ACCEPTANCE = PASS`: `39/39` mandatory scenarios; launch positives `4/4`; healthy/no-intervention silence `4/4`; unresolved-materiality silence `4/4`; authority/freshness silence `6/6`; active-study protection PASS; user controls `3/3`; cooldown/attention `4/4`; hysteresis `6/6`; false positives `0`; wrong signal/evidence `0`.
+> - Verification: focused proactive `140/140`; final matrix harness `32/32`; full non-integration `1341/1341` across `173/173` files; loopback local persistence `8/8`; workspace typecheck, AI Coach safety, and Planner safety PASS.
+> - Unauthorized DB mutations, Planner/task/capacity mutations, provider calls, and LLM calls are all `0`. This closure checkpoint adds `0` migrations and performs `0` production deploy/mutation/migration actions. Planner Confirm and Apply remain OFF.
+> - The four unresolved signal classes remain fail-closed silence; closing 6D does not authorize new signals, provider activation, Planner proposals, deployment, migration, Confirm, or Apply.
+> - **NEXT EXACT STEP:** Begin Evre 6E / Planner V2 Integration as a separate checkpoint while preserving proposal-before-mutation, explicit confirmation, stale proposal rejection, Today protection, Confirm OFF and Apply OFF until separately authorized.
+> - This block supersedes every older current-state, active-status, remaining-work, and next-step statement below. Older checkpoint sections remain historical evidence only.
+
+
 > **Active phase - PROACTIVE_COACH_6D_PERSISTENCE_CHECKPOINT_2026_09_19**
 >
 > - **6B Runtime Foundation and 6C Reactive Coach are CLOSED; AIC-003 is DONE.**
@@ -190,9 +203,9 @@ PLN-004 verification:
 - `youtube_video_progress` stores playback/completion progress.
 - `topic_resource_links` links topics to resources/playlists, but individual video-to-topic mapping is not yet canonical.
 
-## Active task
+## Current phase boundary
 
-`AIC-004 / Evre 6D — Proactive Coach (ACTIVE / IN_PROGRESS)`
+`AIC-004 / Evre 6D — Proactive Coach (DONE / CLOSED)`
 
 `AIC-003 / Evre 6C Reactive Coach` is CLOSED at final acceptance checkpoint `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`.
 
@@ -202,9 +215,9 @@ Reactive Coach remains read-only. Planner/task/capacity mutation authority, Conf
 
 6D Step 2A deterministic selection is accepted at `3481271b26fd0241d8ecd4a310e08ea85e5083c6`, with local-auth harness stabilization at `888040011dc773a5a143b4d62d054623957495c3`. Step 2B.3 adds the immutable eight-signal materiality/actionability policy at `c3d8fbe60a8dae4474a5d67ec547010b7fcbbcb2`; Step 2B.4 integrates it before active-work and attention controls at `a0db5d8d0d5d1a80026e2f6906ae70c3f868470c`. The server-owned runtime state, canonical hysteresis, selector authority, and active-session read adapter are accepted at `afff40f`, `2ba293f`, `df9da9f`, and `02d0fe6`.
 
-V1 may select only completed-as-planned, repeated task miss, recent recovery, and persisted Planner warning after independent evidence validation. Partial completion, completion drop, capacity change, and material stall remain explicit unresolved silence. The domain contract now distinguishes cooldown from hysteresis and requires canonical clear evidence before re-arm. Existing schema has no safe presentation, user-control, or clear-observation store, so those runtime facts fail closed and a separate reviewed persistence checkpoint is required. Runtime assembly, deterministic templates/rendering, and shadow precision/actionability acceptance remain open, so AIC-004 is not done.
+V1 may select only completed-as-planned, repeated task miss, recent recovery, and persisted Planner warning after independent evidence validation. Partial completion, completion drop, capacity change, and material stall remain explicit unresolved silence. The accepted implementation now includes persisted presentation/control/clear state, server-owned runtime assembly, authenticated read-only selection, deterministic post-surface cards, idempotent presentation recording, dismiss/snooze/disable controls, and the Today surface. Final shadow precision/actionability/silence acceptance passed `39/39` with zero false positives or wrong signal/evidence selections, so AIC-004 is complete at baseline `421de04e2c52c0bf7b0f296a679dfb9108db0030`.
 
-6E Planner integration, 6F bounded conversation intelligence, and 6G production acceptance remain NOT_STARTED.
+6E Planner integration, 6F bounded conversation intelligence, and 6G production acceptance remain NOT_STARTED. No 6E implementation has begun.
 
 ## Production guardrails
 
@@ -229,11 +242,9 @@ V1 may select only completed-as-planned, repeated task miss, recent recovery, an
 
 ## NEXT EXACT STEP
 
-Prepare a separate `AIC-004 / Evre 6D` persistence-design checkpoint for the smallest server-owned presentation, user-control, and clear-observation schema. Do not mix migration work with deterministic rendering.
+Begin Evre 6E / Planner V2 Integration as a separate checkpoint while preserving proposal-before-mutation, explicit confirmation, stale proposal rejection, Today protection, Confirm OFF and Apply OFF until separately authorized.
 
-Any future migration remains local DEV only until separately reviewed. After persistence is accepted, wire runtime assembly, then implement deterministic proactive card templates/rendering and shadow precision/actionability acceptance. Preserve in-app-only delivery, silence, zero automatic Planner proposal generation, and zero Confirm/Apply authority.
-
-Do not deploy, migrate, enable production provider traffic, enable outbound notifications, or change Planner V2 Confirm/Apply gates while opening 6D.
+Do not infer implementation authority from this handoff. Do not deploy, migrate, access or mutate production, activate provider traffic, create/apply Planner proposals, or change Planner V2 Confirm/Apply gates while preparing the separate 6E checkpoint.
 
 ## 2026-09-10 Evre 6A final contract closure
 

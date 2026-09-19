@@ -1,5 +1,18 @@
 # KPSS Koçu Product Roadmap
 
+> **Authoritative current state — PROACTIVE_COACH_6D_CLOSED_2026_09_19**
+>
+> - **Evre 6D Proactive Coach is CLOSED; `AIC-004` is DONE. Evre 6E Planner V2 Integration is `NOT_STARTED`.**
+> - Accepted implementation baseline: `421de04e2c52c0bf7b0f296a679dfb9108db0030`.
+> - Accepted implementation includes the deterministic selector, versioned materiality/actionability policy, canonical hysteresis, active-study protection, persisted presentation/control/clear state, server-owned runtime assembly, authenticated `POST /ai-coach/proactive`, deterministic cards, post-surface idempotent presentation recording, dismiss/snooze/disable-category controls, and the Today web surface.
+> - `EVRE_6D_SHADOW_ACCEPTANCE = PASS`: `39/39` mandatory scenarios; launch positives `4/4`; healthy/no-intervention silence `4/4`; unresolved-materiality silence `4/4`; authority/freshness silence `6/6`; active-study protection PASS; user controls `3/3`; cooldown/attention `4/4`; hysteresis `6/6`; false positives `0`; wrong signal/evidence `0`.
+> - Verification: focused proactive `140/140`; final matrix harness `32/32`; full non-integration `1341/1341` across `173/173` files; loopback local persistence `8/8`; workspace typecheck, AI Coach safety, and Planner safety PASS.
+> - Unauthorized DB mutations, Planner/task/capacity mutations, provider calls, and LLM calls are all `0`. This closure checkpoint adds `0` migrations and performs `0` production deploy/mutation/migration actions. Planner Confirm and Apply remain OFF.
+> - The four unresolved signal classes remain fail-closed silence; closing 6D does not authorize new signals, provider activation, Planner proposals, deployment, migration, Confirm, or Apply.
+> - Evre 6E remains `NOT_STARTED`; it may begin only as a separate checkpoint preserving proposal-before-mutation, explicit confirmation, stale proposal rejection, Today protection, Confirm OFF, and Apply OFF until separately authorized.
+> - This block supersedes every older current-state, active-status, remaining-work, and next-step statement below. Older checkpoint sections remain historical evidence only.
+
+
 > **Active phase - PROACTIVE_COACH_6D_PERSISTENCE_CHECKPOINT_2026_09_19**
 >
 > - **6B Runtime Foundation and 6C Reactive Coach are CLOSED; AIC-003 is DONE.**
@@ -204,7 +217,8 @@ M1 is complete only when:
 - `ACTIVE MACRO PHASE`: Evre 6 AI Coach.
 - `CLOSED SUB-PHASE`: 6A Product / Authority / Cost Contract; final decisions accepted, docs only, runtime unchanged, production Confirm OFF, Apply OFF.
 - `CLOSED SUB-PHASE`: 6B CoachContextV1 and 6C Reactive Coach.
-- `ACTIVE SUB-PHASE`: 6D Proactive Coach. Deterministic selection, materiality/actionability, server-owned runtime state, canonical hysteresis, and the read-only active-session authority are accepted; persistence/runtime assembly, deterministic rendering, and shadow acceptance remain open.
+- `CLOSED SUB-PHASE`: 6D Proactive Coach / AIC-004. Final implementation baseline `421de04e2c52c0bf7b0f296a679dfb9108db0030` and deterministic `39/39` shadow acceptance are accepted with zero false positives, wrong signal/evidence, unauthorized mutations, or provider/LLM calls.
+- `NOT_STARTED SUB-PHASE`: 6E Planner V2 Integration. It requires a separate checkpoint and grants no proposal, Confirm, Apply, deployment, migration, or production authority.
 - `CONTINUING FOUNDATIONS`: natural `PLN-002` Extra Study acceptance and gated `PLN-003`/`PLN-004`/`MAT-001`/`PLN-005` maturity work.
 
 ## Evre 6 — AI Coach
@@ -237,7 +251,7 @@ The normative product, truth, authority, scenario, proactive, cost, and phase co
 | 6A | Product / Authority / Cost Contract | `CLOSED` | Final product outcomes, truth sources, non-authority, 20 scenarios, proactive triggers, cost envelope, and phase gates accepted. |
 | 6B | CoachContextV1 | `CLOSED` | Controlled DEV runtime acceptance completed; canonical context/evidence, routing/pricing, telemetry, provider safety, and real controlled-DEV acceptance are closed. Production provider remains prohibited. |
 | 6C | Reactive Coach | `CLOSED - FINAL ACCEPTANCE COMPLETE` | Canonical 20-scenario authority acceptance is complete at `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`; Reactive Coach remains read-only with zero Planner/task/capacity/Confirm/Apply authority. |
-| 6D | Proactive Coach | `ACTIVE / IN_PROGRESS` | Selector, materiality, runtime-state, hysteresis, and active-session read authority are accepted. Four unresolved signal classes and missing persisted presentation/control/clear facts fail closed; persistence/runtime assembly, deterministic rendering, and shadow acceptance remain. |
+| 6D | Proactive Coach | `CLOSED - FINAL ACCEPTANCE COMPLETE` | Deterministic selector/cards, materiality, runtime state, hysteresis, active-study protection, persistence, user controls, Today rendering, and `39/39` shadow acceptance are complete at `421de04e2c52c0bf7b0f296a679dfb9108db0030`. |
 | 6E | Planner V2 integration | `NOT_STARTED` | Route every Coach planning mutation to the one canonical Planner V2 lifecycle. |
 | 6F | Conversation Intelligence | `NOT_STARTED` | Add short recent context plus compact structured state/signals without long-term raw history or authority transfer. |
 | 6G | Eval / Cost / Production Acceptance | `NOT_STARTED` | Complete the 300 TL hard governor and prove safety, groundedness, UX, cost, observability, and limited production acceptance. |
