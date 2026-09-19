@@ -40,6 +40,7 @@ import {
   plannerV2LifecycleErrorCode,
 } from "../_shared/planner-v2-proposal-http.ts";
 import { handleReactiveCoachHttpV1 } from "../_shared/ai-coach/reactive-coach-http-v1.ts";
+import { handleProactiveCoachHttpV1 } from "../_shared/ai-coach/proactive-coach-http-v1.ts";
 import {
   createReactiveCoachDevProviderPreparationV1,
   REACTIVE_COACH_DEV_RUNTIME_SERVER_KEYS_V1,
@@ -893,6 +894,20 @@ Deno.serve(async (request) => {
         },
       });
 
+      return json(result.body, result.status);
+    }
+
+    if (request.method === "POST" && route === "/ai-coach/proactive") {
+      const body = await request.json().catch(() => null);
+      const result = await handleProactiveCoachHttpV1({
+        body,
+        contextClient: client,
+        userId,
+        examProfileId: profile.id,
+        currentDate: today,
+        requestId: crypto.randomUUID(),
+        requestedAt: new Date().toISOString(),
+      });
       return json(result.body, result.status);
     }
 
