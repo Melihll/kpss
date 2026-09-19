@@ -2,6 +2,7 @@
   CoachSignalAttentionCategoryV1,
   CoachSignalCandidateV1,
 } from "./coach-signal-v1";
+import { evaluateProactiveCoachMaterialityV1 } from "./proactive-coach-materiality-policy-v1";
 
 export const PROACTIVE_COACH_SELECTION_V1_VERSION =
   "proactive-coach-selection-v1" as const;
@@ -18,6 +19,10 @@ export type ProactiveCoachSuppressionReasonV1 =
   | "not_proactive_candidate"
   | "fact_not_fresh"
   | "confidence_insufficient"
+  | "materiality_threshold_unresolved"
+  | "materiality_evidence_invalid"
+  | "materiality_not_satisfied"
+  | "materiality_not_actionable"
   | "active_study_session"
   | "category_disabled"
   | "category_snoozed"
@@ -277,6 +282,24 @@ function suppressionReason(
     )
   ) {
     return "confidence_insufficient";
+  }
+
+  const materiality = evaluateProactiveCoachMaterialityV1(candidate);
+
+  if (materiality.materiality === "unresolved") {
+    return materiality.suppressionReason === "required_evidence_missing_or_invalid"
+      || materiality.suppressionReason === "candidate_contract_mismatch"
+      || materiality.suppressionReason === "confidence_below_policy_minimum"
+      ? "materiality_evidence_invalid"
+      : "materiality_threshold_unresolved";
+  }
+
+  if (materiality.materiality === "not_material") {
+    return "materiality_not_satisfied";
+  }
+
+  if (!materiality.actionable) {
+    return "materiality_not_actionable";
   }
 
   if (state.activeStudySession) {

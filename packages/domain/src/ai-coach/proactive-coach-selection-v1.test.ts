@@ -479,4 +479,133 @@ describe("Proactive Coach deterministic selection V1", () => {
     expect(value.evidence).toBe(originalEvidence);
     expect(value.provenance).toBe(originalProvenance);
   });
+
+  it.each([
+    {
+      signalType: "today_partial_completion" as const,
+      reasonCode: "today_partial_task_count_present" as const,
+      evidence: { partiallyCompletedTaskCount: 99, remainingMinutes: 9_999 } as CoachSignalCandidateV1["evidence"],
+      category: "progress" as const,
+    },
+    {
+      signalType: "subject_recent_completion_drop" as const,
+      reasonCode: "canonical_completion_drop_input_present" as const,
+      evidence: { dropValue: 9_999, subjectId: "subject-law" } as CoachSignalCandidateV1["evidence"],
+      category: "progress" as const,
+    },
+    {
+      signalType: "schedule_capacity_change" as const,
+      reasonCode: "canonical_capacity_change_input_present" as const,
+      evidence: { capacityDeltaMinutes: 9_999, date: CURRENT_DATE } as CoachSignalCandidateV1["evidence"],
+      category: "capacity" as const,
+    },
+    {
+      signalType: "material_progress_stalled" as const,
+      reasonCode: "canonical_material_stall_input_present" as const,
+      evidence: { materialViewId: "material-1", progressState: "stalled" } as CoachSignalCandidateV1["evidence"],
+      category: "material" as const,
+    },
+  ])("P. keeps unresolved $signalType silent regardless of apparent magnitude", ({
+    signalType,
+    reasonCode,
+    evidence,
+    category,
+  }) => {
+    const result = selectProactiveCoachInsightV1([
+      candidate({
+        signalType,
+        reasonCode,
+        evidence,
+        eligibility: {
+          reactiveExplanation: true,
+          proactiveCandidate: true,
+          attentionCategory: category,
+          cooldownClass: "state_change",
+          silenceAllowed: true,
+        },
+      }),
+    ], state());
+
+    expect(result.outcome).toBe("silence");
+    expect(result.suppressions[0]?.reason).toBe("materiality_threshold_unresolved");
+  });
+
+  it("Q. rejects malformed or independently non-material launch evidence", () => {
+    const malformed = candidate({ evidence: { distinctMissCount: 2 } });
+    const belowThreshold = candidate({
+      dedupeKey: "one-miss",
+      evidence: {
+        distinctMissCount: 1,
+        taskId: "task-1",
+        windowStart: "2026-09-10T00:00:00.000Z",
+        windowEnd: "2026-09-17T00:00:00.000Z",
+      },
+    });
+
+    const result = selectProactiveCoachInsightV1([malformed, belowThreshold], state());
+
+    expect(result.outcome).toBe("silence");
+    expect(result.suppressions.map((item) => item.reason)).toEqual(
+      expect.arrayContaining(["materiality_evidence_invalid", "materiality_not_satisfied"]),
+    );
+  });
+
+  it("R. keeps active-work and user-control protections after materiality passes", () => {
+    expect(selectProactiveCoachInsightV1(
+      [candidate()],
+      state({ activeStudySession: true }),
+    ).suppressions[0]?.reason).toBe("active_study_session");
+
+    expect(selectProactiveCoachInsightV1(
+      [candidate()],
+      state({ disabledCategories: ["consistency"] }),
+    ).suppressions[0]?.reason).toBe("category_disabled");
+
+    expect(selectProactiveCoachInsightV1(
+      [candidate({
+        signalType: "today_partial_completion",
+        reasonCode: "today_partial_task_count_present",
+        evidence: { partiallyCompletedTaskCount: 1, remainingMinutes: 20 },
+        eligibility: {
+          reactiveExplanation: true,
+          proactiveCandidate: true,
+          attentionCategory: "progress",
+          cooldownClass: "state_change",
+          silenceAllowed: true,
+        },
+      })],
+      state({ activeStudySession: true }),
+    ).suppressions[0]?.reason).toBe("materiality_threshold_unresolved");
+  });
+
+  it("S. is byte-deterministic without mutating state or candidate collections", () => {
+    const values = [candidate()];
+    const policyState = state();
+    const valuesBefore = structuredClone(values);
+    const stateBefore = structuredClone(policyState);
+
+    const first = selectProactiveCoachInsightV1(values, policyState);
+    const second = selectProactiveCoachInsightV1(values, policyState);
+
+    expect(JSON.stringify(first)).toBe(JSON.stringify(second));
+    expect(values).toEqual(valuesBefore);
+    expect(policyState).toEqual(stateBefore);
+    expect(Object.isFrozen(first)).toBe(true);
+    expect(Object.isFrozen(first.selectedCandidate)).toBe(true);
+  });
+
+  it("T. enforces the surface/session attention budget independently", () => {
+    const result = selectProactiveCoachInsightV1([candidate()], state({
+      presentations: [{
+        fingerprint: "other-surface-fingerprint",
+        attentionCategory: "progress",
+        presentedAt: "2026-09-16T07:00:00.000Z",
+        calendarDate: "2026-09-16",
+        surfaceSessionId: "surface-1",
+      }],
+    }));
+
+    expect(result.outcome).toBe("silence");
+    expect(result.suppressions[0]?.reason).toBe("surface_session_attention_budget");
+  });
 });
