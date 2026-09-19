@@ -10,3 +10,4 @@ export * from "./coach-evidence-view-v1";
 export * from "./ai-economics-v1";
 export * from "./proactive-coach-selection-v1";
 export * from "./proactive-coach-materiality-policy-v1";
+export * from "./proactive-coach-runtime-state-v1";
