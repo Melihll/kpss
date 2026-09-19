@@ -1,14 +1,17 @@
 # Current Sprint
 
-> **Active phase - PROACTIVE_COACH_6D_MATERIALITY_CHECKPOINT_2026_09_19**
+> **Active phase - PROACTIVE_COACH_6D_RUNTIME_HYSTERESIS_CHECKPOINT_2026_09_19**
 >
 > - **6B Runtime Foundation and 6C Reactive Coach are CLOSED; AIC-003 is DONE.**
 > - **6D Proactive Coach / AIC-004 is ACTIVE / IN_PROGRESS and is not complete.**
 > - Step 2A deterministic selector is accepted at `3481271b26fd0241d8ecd4a310e08ea85e5083c6`; its local-auth regression checkpoint is `888040011dc773a5a143b4d62d054623957495c3`.
 > - Step 2B.3 versioned materiality/actionability policy is accepted at `c3d8fbe60a8dae4474a5d67ec547010b7fcbbcb2`; Step 2B.4 selector gating is accepted at `a0db5d8d0d5d1a80026e2f6906ae70c3f868470c`.
+> - Runtime state, hysteresis, selector authority, and read-only active-session adapter checkpoints are `afff40f`, `2ba293f`, `df9da9f`, and `02d0fe6`.
 > - V1 launch-enabled signals are `today_completed_as_planned`, `repeated_task_miss`, `recent_recovery`, and `planner_warning_present`. `today_partial_completion`, `subject_recent_completion_drop`, `schedule_capacity_change`, and `material_progress_stalled` remain deterministic fail-closed silence because their materiality/unit/source thresholds are unresolved.
-> - Focused signal/materiality/selector tests pass `54/54`; full non-integration passes `1249/1249` across `163/163` files; workspace typecheck and AI Coach/Planner safety checks pass.
-> - Cooldown is not claimed as hysteresis. The current selector state has no authoritative persisted clear-condition observation; persistent hysteresis remains open until an approved server-owned state contract exists. Runtime state/user-control wiring, deterministic rendering/templates, and shadow precision/actionability acceptance also remain.
+> - Same-date completion and same recovery event do not re-fire. Repeated miss and Planner warning require canonical clear observations before re-arm; cooldown is never a substitute.
+> - Active-study truth is read from `study_sessions` by exact authenticated user/profile under RLS. Missing/ambiguous authority, presentation history, user controls, or clear observations fail closed to silence.
+> - Existing schema is insufficient for presentation/control/clear persistence. No migration was created; a separate reviewed local-only migration checkpoint is recommended.
+> - Focused tests pass `78/78`; full non-integration passes `1273/1273` across `166/166` files; full loopback integration passes `158/158` across `17/17` files; workspace typecheck and AI Coach/Planner safety checks pass.
 > - Production deployment/mutation, migrations/resets, provider/LLM calls, and automatic Planner proposal/Preview/Confirm/Apply calls for this checkpoint are all `0`. Planner Confirm and Apply remain OFF.
 > - This block supersedes older current-state wording below it.
 
@@ -132,13 +135,23 @@ Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.
 ### `AIC-004` / Evre 6D — Proactive Coach
 
 - Priority: `P1`
-- Status: `ACTIVE / IN_PROGRESS — STEP 2A AND STEP 2B MATERIALITY GATE ACCEPTED`
+- Status: `ACTIVE / IN_PROGRESS — RUNTIME STATE AND HYSTERESIS CONTRACT ACCEPTED`
 - Step 2A selector checkpoints: `3481271b26fd0241d8ecd4a310e08ea85e5083c6` and `888040011dc773a5a143b4d62d054623957495c3`.
 - Step 2B checkpoints: materiality/actionability policy `c3d8fbe60a8dae4474a5d67ec547010b7fcbbcb2`; selector gate `a0db5d8d0d5d1a80026e2f6906ae70c3f868470c`.
+- Runtime/hysteresis checkpoints: state contract `afff40f`; clear-condition policy `2ba293f`; selector enforcement `df9da9f`; active-session adapter `02d0fe6`.
 - Launch-enabled V1: completed-as-planned, repeated task miss, recent recovery, and persisted Planner warning. Partial completion, completion drop, capacity change, and material stall remain fail-closed until source/unit/threshold semantics are approved.
 - The selector enforces materiality before active-work and user-control/attention gates. It remains deterministic, in-app-only, prose-free, provider-free, mutation-free, and Planner-authority-free.
-- Persistent hysteresis is not yet implemented: existing 72h/24h cooldown state does not prove a canonical condition cleared. Do not claim cooldown as hysteresis or add persistence before a reviewed state contract.
-- Next safe work: define the server-owned read-only runtime state boundary, then deterministic templates/rendering and shadow precision/actionability acceptance. AIC-004 remains open.
+- Hysteresis semantics are explicit: date/event condition keys prevent duplicate completion/recovery firing; repeated miss requires same-task clear plus two later misses; Planner warning requires a zero-warning clear then a later warning. Cooldown alone never re-arms.
+- The read-only active-session authority is `study_sessions` under exact authenticated user/profile filters and RLS. Unavailable or ambiguous reads suppress proactive presentation.
+- Presentation history, dismiss/snooze/disable controls, and clear/re-arm observations need a new dedicated persistence contract; no suitable existing table was repurposed and no migration was created.
+- Next safe work: review the smallest local-only persistence schema as a separate checkpoint. Runtime assembly, deterministic templates/rendering, and shadow precision/actionability acceptance remain open. AIC-004 remains open.
+
+Future persistence contract — design boundary only, not a migration in this checkpoint:
+
+- immutable presentation records scoped by `user_id` + `exam_profile_id`, carrying signal type, condition key, factual fingerprint, attention category, presented timestamp, user-local calendar date, and surface-session identity;
+- user-control records scoped by the same owner/profile, carrying an exact dismissed fingerprint or category-level snooze/disable target, effective/expiry state, and audit timestamps;
+- server-owned clear observations scoped by owner/profile + signal type + condition key, carrying `cleared`/`not_cleared`, observation time, reason code, and canonical source-fact paths;
+- narrow indexed reads only; authenticated ownership/RLS; service-owned presentation and clear-observation writes; user-control writes only through an explicit validated product boundary; no Planner, AI usage-ledger, generic preference, or proposal table reuse.
 
 ### `AIC-003` / Evre 6C — Reactive Coach
 
@@ -153,7 +166,7 @@ Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.
 - Canonical subject resolution, clarification, `COST_LIMITED`, `UNKNOWN_OR_BLOCKED`, and provider no-mutation guards are implemented.
 - Final 6C acceptance evidence: canonical scenarios `20/20`; focused routing/executor `29/29`; complete AI Coach regression `205/205` across `20/20` files; full non-integration `1209/1209` across `161/161` files; workspace typecheck and mutation-authority audit PASS.
 - Reactive Coach final acceptance is checkpointed and undeployed. Production provider activation, Planner/task/capacity mutation, Confirm, Apply, deploy, migration, and main push remain `0`.
-- Current product slice: `AIC-004 / Evre 6D Proactive Coach` is `ACTIVE / IN_PROGRESS`; Step 2A and the Step 2B materiality gate are accepted, while runtime state, real hysteresis, rendering, and shadow acceptance remain open. Production provider activation remains separately gated.
+- Current product slice: `AIC-004 / Evre 6D Proactive Coach` is `ACTIVE / IN_PROGRESS`; selector, materiality, server-owned runtime state, canonical hysteresis, and read-only active-session authority are accepted. Persistence/runtime assembly, rendering, and shadow acceptance remain open. Production provider activation remains separately gated.
 
 
 ### `AIC-002` / Evre 6B — CoachContextV1

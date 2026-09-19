@@ -1,14 +1,17 @@
 # KPSS Koçu Product Backlog
 
-> **Active phase - PROACTIVE_COACH_6D_MATERIALITY_CHECKPOINT_2026_09_19**
+> **Active phase - PROACTIVE_COACH_6D_RUNTIME_HYSTERESIS_CHECKPOINT_2026_09_19**
 >
 > - **6B Runtime Foundation and 6C Reactive Coach are CLOSED; AIC-003 is DONE.**
 > - **6D Proactive Coach / AIC-004 is ACTIVE / IN_PROGRESS and is not complete.**
 > - Step 2A deterministic selector is accepted at `3481271b26fd0241d8ecd4a310e08ea85e5083c6`; its local-auth regression checkpoint is `888040011dc773a5a143b4d62d054623957495c3`.
 > - Step 2B.3 versioned materiality/actionability policy is accepted at `c3d8fbe60a8dae4474a5d67ec547010b7fcbbcb2`; Step 2B.4 selector gating is accepted at `a0db5d8d0d5d1a80026e2f6906ae70c3f868470c`.
+> - Runtime state, hysteresis, selector authority, and read-only active-session adapter checkpoints are `afff40f`, `2ba293f`, `df9da9f`, and `02d0fe6`.
 > - V1 launch-enabled signals are `today_completed_as_planned`, `repeated_task_miss`, `recent_recovery`, and `planner_warning_present`. `today_partial_completion`, `subject_recent_completion_drop`, `schedule_capacity_change`, and `material_progress_stalled` remain deterministic fail-closed silence because their materiality/unit/source thresholds are unresolved.
-> - Focused signal/materiality/selector tests pass `54/54`; full non-integration passes `1249/1249` across `163/163` files; workspace typecheck and AI Coach/Planner safety checks pass.
-> - Cooldown is not claimed as hysteresis. The current selector state has no authoritative persisted clear-condition observation; persistent hysteresis remains open until an approved server-owned state contract exists. Runtime state/user-control wiring, deterministic rendering/templates, and shadow precision/actionability acceptance also remain.
+> - Same-date completion and same recovery event do not re-fire. Repeated miss and Planner warning require canonical clear observations before re-arm; cooldown never proves a clear.
+> - Active-study truth is resolved from `study_sessions` with exact authenticated user/profile filters and RLS. Missing/ambiguous active authority or missing persisted presentation/control/clear state fails closed.
+> - Existing schema is insufficient for proactive persistence without repurposing unrelated authorities. No migration was created; a separate reviewed local-only persistence checkpoint is recommended.
+> - Focused tests pass `78/78`; full non-integration passes `1273/1273` across `166/166` files; full loopback integration passes `158/158` across `17/17` files; workspace typecheck and AI Coach/Planner safety checks pass.
 > - Production deployment/mutation, migrations/resets, provider/LLM calls, and automatic Planner proposal/Preview/Confirm/Apply calls for this checkpoint are all `0`. Planner Confirm and Apply remain OFF.
 > - This block supersedes older current-state wording below it.
 
@@ -248,7 +251,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-004` / Evre 6D — Proactive Coach
 
 - Priority: `P1`
-- Status: `IN_PROGRESS — STEP 2A AND STEP 2B MATERIALITY GATE ACCEPTED`
+- Status: `IN_PROGRESS — RUNTIME STATE AND HYSTERESIS CONTRACT ACCEPTED`
 - Dependency: accepted reactive safety and approved trigger/attention policy.
 - Desired outcome: Deterministic, timely, actionable in-app insights reach the user without noise, manipulation, invented causes, outbound messaging, or automatic planning.
 - Acceptance criteria:
@@ -262,7 +265,10 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 
 - Step 2A note (2026-09-19): deterministic in-app-only selection, freshness, stable fingerprint, 72h same-fingerprint cooldown, 24h category cooldown, daily/surface budgets, active-study suppression, and caller-supplied disable/snooze/dismiss controls are accepted at `3481271b26fd0241d8ecd4a310e08ea85e5083c6`; local-auth harness stabilization is `888040011dc773a5a143b4d62d054623957495c3`.
 - Step 2B note (2026-09-19): the versioned immutable materiality/actionability policy is accepted at `c3d8fbe60a8dae4474a5d67ec547010b7fcbbcb2` and integrated into selection at `a0db5d8d0d5d1a80026e2f6906ae70c3f868470c`. V1 launch-enabled signals are completed-as-planned, repeated task miss, recent recovery, and persisted Planner warning. Partial completion, completion drop, capacity change, and material stall remain fail-closed because their materiality/unit/source thresholds are unresolved.
-- Remaining: approved server-owned runtime/user-control state, canonical clear-condition persistence for real hysteresis (cooldown is insufficient), deterministic templates/rendering, and shadow precision/actionability acceptance. No migration is introduced by this checkpoint; AIC-004 remains open.
+- Runtime/hysteresis note (2026-09-19): `afff40f`, `2ba293f`, and `df9da9f` add a versioned server-owned runtime state, explicit condition keys/clear evidence, and selector enforcement. Same-date completed-as-planned and the same recovery event cannot re-fire; repeated miss requires same-task clear plus two later ordered misses; Planner warning requires a zero-warning clear followed by a later warning. Cooldown alone never re-arms.
+- Active-session adapter note (2026-09-19): `02d0fe6` reads only the exact authenticated user/profile active `study_sessions` row under RLS, is bounded and read-only, and fails unavailable/ambiguous authority closed. Focused `78/78`, full non-integration `1273/1273`, and full local integration `158/158` pass with session/Planner mutation delta `0`.
+- Persistence audit: existing preference, Planner proposal, and AI telemetry tables are not semantically valid stores for proactive presentation history, dismiss/snooze/disable controls, or clear/re-arm observations. A dedicated minimal schema is required before live runtime assembly; handle it in a separate reviewed local-only migration checkpoint. No migration was created or applied here.
+- Remaining: persistence/schema decision, runtime assembly/wiring, deterministic templates/rendering, and shadow precision/actionability acceptance. AIC-004 remains open.
 
 ## `AIC-005` / Evre 6E — Planner V2 Integration
 

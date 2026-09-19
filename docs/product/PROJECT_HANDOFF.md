@@ -1,14 +1,18 @@
 # KPSS Koçu — Project Handoff
 
-> **Active phase - PROACTIVE_COACH_6D_MATERIALITY_CHECKPOINT_2026_09_19**
+> **Active phase - PROACTIVE_COACH_6D_RUNTIME_HYSTERESIS_CHECKPOINT_2026_09_19**
 >
 > - **6B Runtime Foundation and 6C Reactive Coach are CLOSED; AIC-003 is DONE.**
 > - **6D Proactive Coach / AIC-004 is ACTIVE / IN_PROGRESS and is not complete.**
 > - Step 2A deterministic selector is accepted at `3481271b26fd0241d8ecd4a310e08ea85e5083c6`; its local-auth regression checkpoint is `888040011dc773a5a143b4d62d054623957495c3`.
 > - Step 2B.3 versioned materiality/actionability policy is accepted at `c3d8fbe60a8dae4474a5d67ec547010b7fcbbcb2`; Step 2B.4 selector gating is accepted at `a0db5d8d0d5d1a80026e2f6906ae70c3f868470c`.
+> - The versioned server-owned runtime state contract is accepted at `afff40f`; canonical clear-condition/hysteresis policy at `2ba293f`; selector authority integration at `df9da9f`; and the exact user/profile read-only active-session adapter at `02d0fe6`.
 > - V1 launch-enabled signals are `today_completed_as_planned`, `repeated_task_miss`, `recent_recovery`, and `planner_warning_present`. `today_partial_completion`, `subject_recent_completion_drop`, `schedule_capacity_change`, and `material_progress_stalled` remain deterministic fail-closed silence because their materiality/unit/source thresholds are unresolved.
-> - Focused signal/materiality/selector tests pass `54/54`; full non-integration passes `1249/1249` across `163/163` files; workspace typecheck and AI Coach/Planner safety checks pass.
-> - Cooldown is not claimed as hysteresis. The current selector state has no authoritative persisted clear-condition observation; persistent hysteresis remains open until an approved server-owned state contract exists. Runtime state/user-control wiring, deterministic rendering/templates, and shadow precision/actionability acceptance also remain.
+> - Same-date completed-as-planned and same recovery event cannot re-fire. Repeated miss requires a later canonical same-task clear plus two new ordered misses; Planner warning requires a canonical zero-warning clear followed by a later warning. Cooldown never proves either clear condition.
+> - `study_sessions` is the canonical active-work authority. The read-only resolver uses authenticated server-derived user/profile identity, exact filters, a bound of two, RLS, and fail-closed unavailable/ambiguous facts; active-session truth is not delegated to a client or LLM.
+> - Existing schema cannot persist proactive presentations, dismiss/snooze/disable controls, or clear/re-arm observations without semantic repurposing. These facts therefore remain unavailable and selection is silent where required. A separate reviewed local-only migration checkpoint is recommended; no migration was created or applied here.
+> - Focused runtime/hysteresis/materiality/selector/adapter tests pass `78/78`; full non-integration passes `1273/1273` across `166/166` files; full loopback local integration passes `158/158` across `17/17` files; workspace typecheck and AI Coach/Planner safety checks pass.
+> - Remaining 6D work: persistence/schema decision for presentations, user controls, and clear observations; runtime assembly/wiring; deterministic rendering/templates; and shadow precision/actionability acceptance.
 > - Production deployment/mutation, migrations/resets, provider/LLM calls, and automatic Planner proposal/Preview/Confirm/Apply calls for this checkpoint are all `0`. Planner Confirm and Apply remain OFF.
 > - This block supersedes older current-state wording below it.
 
@@ -123,7 +127,7 @@ Last updated: 2026-09-19
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Base branch: `main`
-- Local working branch: `evre6-ai-coach`; latest accepted Evre 6C final acceptance checkpoint is `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
+- Local working branch: `develop`; latest accepted Evre 6D runtime code checkpoint is `02d0fe664b987187ca4e5c36f15a834a602586bb`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
 - 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - 6B.1 accepted checkpoint: `acd16ffb2263b5285b14bd7329ff4357d7971e00`
 - Last verified product checkpoint before W5: `fa46fd2`
@@ -180,9 +184,9 @@ The canonical 20-scenario Reactive Coach authority contract is accepted for 6C. 
 
 Reactive Coach remains read-only. Planner/task/capacity mutation authority, Confirm authority, and Apply authority remain false. Production provider activation is still prohibited and no Evre 6C code has been deployed from this feature branch.
 
-6D Step 2A deterministic selection is accepted at `3481271b26fd0241d8ecd4a310e08ea85e5083c6`, with local-auth harness stabilization at `888040011dc773a5a143b4d62d054623957495c3`. Step 2B.3 adds the immutable eight-signal materiality/actionability policy at `c3d8fbe60a8dae4474a5d67ec547010b7fcbbcb2`; Step 2B.4 integrates it before active-work and attention controls at `a0db5d8d0d5d1a80026e2f6906ae70c3f868470c`.
+6D Step 2A deterministic selection is accepted at `3481271b26fd0241d8ecd4a310e08ea85e5083c6`, with local-auth harness stabilization at `888040011dc773a5a143b4d62d054623957495c3`. Step 2B.3 adds the immutable eight-signal materiality/actionability policy at `c3d8fbe60a8dae4474a5d67ec547010b7fcbbcb2`; Step 2B.4 integrates it before active-work and attention controls at `a0db5d8d0d5d1a80026e2f6906ae70c3f868470c`. The server-owned runtime state, canonical hysteresis, selector authority, and active-session read adapter are accepted at `afff40f`, `2ba293f`, `df9da9f`, and `02d0fe6`.
 
-V1 may select only completed-as-planned, repeated task miss, recent recovery, and persisted Planner warning after independent evidence validation. Partial completion, completion drop, capacity change, and material stall remain explicit unresolved silence. Existing cooldown/dedupe state is not canonical clear-condition hysteresis; an approved persistent server-owned state contract is still required. Runtime/user-control wiring, deterministic templates/rendering, and shadow precision/actionability acceptance remain open, so AIC-004 is not done.
+V1 may select only completed-as-planned, repeated task miss, recent recovery, and persisted Planner warning after independent evidence validation. Partial completion, completion drop, capacity change, and material stall remain explicit unresolved silence. The domain contract now distinguishes cooldown from hysteresis and requires canonical clear evidence before re-arm. Existing schema has no safe presentation, user-control, or clear-observation store, so those runtime facts fail closed and a separate reviewed persistence checkpoint is required. Runtime assembly, deterministic templates/rendering, and shadow precision/actionability acceptance remain open, so AIC-004 is not done.
 
 6E Planner integration, 6F bounded conversation intelligence, and 6G production acceptance remain NOT_STARTED.
 
@@ -209,9 +213,9 @@ V1 may select only completed-as-planned, repeated task miss, recent recovery, an
 
 ## NEXT EXACT STEP
 
-Prepare the `AIC-004 / Evre 6D Proactive Coach` implementation slice from the accepted Evre 6 product contract. Keep trigger eligibility fully deterministic and server-owned before any optional wording call.
+Prepare a separate `AIC-004 / Evre 6D` persistence-design checkpoint for the smallest server-owned presentation, user-control, and clear-observation schema. Do not mix migration work with deterministic rendering.
 
-The first 6D slice must preserve: in-app only delivery; versioned materiality thresholds; freshness/context fingerprints; category cooldown and dedupe; attention budget; active-session protection; deterministic fallback; dismiss/snooze/disable controls; silence as a valid outcome; zero automatic Planner proposal generation; and zero Confirm/Apply authority.
+Any future migration remains local DEV only until separately reviewed. After persistence is accepted, wire runtime assembly, then implement deterministic proactive card templates/rendering and shadow precision/actionability acceptance. Preserve in-app-only delivery, silence, zero automatic Planner proposal generation, and zero Confirm/Apply authority.
 
 Do not deploy, migrate, enable production provider traffic, enable outbound notifications, or change Planner V2 Confirm/Apply gates while opening 6D.
 

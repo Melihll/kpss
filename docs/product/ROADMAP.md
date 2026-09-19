@@ -1,14 +1,16 @@
 # KPSS Koçu Product Roadmap
 
-> **Active phase - PROACTIVE_COACH_6D_MATERIALITY_CHECKPOINT_2026_09_19**
+> **Active phase - PROACTIVE_COACH_6D_RUNTIME_HYSTERESIS_CHECKPOINT_2026_09_19**
 >
 > - **6B Runtime Foundation and 6C Reactive Coach are CLOSED; AIC-003 is DONE.**
 > - **6D Proactive Coach / AIC-004 is ACTIVE / IN_PROGRESS and is not complete.**
 > - Step 2A deterministic selector is accepted at `3481271b26fd0241d8ecd4a310e08ea85e5083c6`; its local-auth regression checkpoint is `888040011dc773a5a143b4d62d054623957495c3`.
 > - Step 2B.3 versioned materiality/actionability policy is accepted at `c3d8fbe60a8dae4474a5d67ec547010b7fcbbcb2`; Step 2B.4 selector gating is accepted at `a0db5d8d0d5d1a80026e2f6906ae70c3f868470c`.
+> - Runtime state, hysteresis, selector authority, and read-only active-session adapter checkpoints are `afff40f`, `2ba293f`, `df9da9f`, and `02d0fe6`.
 > - V1 launch-enabled signals are `today_completed_as_planned`, `repeated_task_miss`, `recent_recovery`, and `planner_warning_present`. `today_partial_completion`, `subject_recent_completion_drop`, `schedule_capacity_change`, and `material_progress_stalled` remain deterministic fail-closed silence because their materiality/unit/source thresholds are unresolved.
-> - Focused signal/materiality/selector tests pass `54/54`; full non-integration passes `1249/1249` across `163/163` files; workspace typecheck and AI Coach/Planner safety checks pass.
-> - Cooldown is not claimed as hysteresis. The current selector state has no authoritative persisted clear-condition observation; persistent hysteresis remains open until an approved server-owned state contract exists. Runtime state/user-control wiring, deterministic rendering/templates, and shadow precision/actionability acceptance also remain.
+> - Clear/re-arm semantics are now explicit and cooldown is never treated as hysteresis. Missing active-session authority or persisted presentation/control/clear state fails closed to silence.
+> - `study_sessions` provides bounded exact-user/profile active-work truth under RLS. Existing schema cannot safely persist proactive history/controls/clear observations, so a separate reviewed local-only migration checkpoint is recommended; no migration was created here.
+> - Focused tests pass `78/78`; full non-integration passes `1273/1273` across `166/166` files; full loopback integration passes `158/158` across `17/17` files; workspace typecheck and AI Coach/Planner safety checks pass.
 > - Production deployment/mutation, migrations/resets, provider/LLM calls, and automatic Planner proposal/Preview/Confirm/Apply calls for this checkpoint are all `0`. Planner Confirm and Apply remain OFF.
 > - This block supersedes older current-state wording below it.
 
@@ -186,7 +188,7 @@ M1 is complete only when:
 - `ACTIVE MACRO PHASE`: Evre 6 AI Coach.
 - `CLOSED SUB-PHASE`: 6A Product / Authority / Cost Contract; final decisions accepted, docs only, runtime unchanged, production Confirm OFF, Apply OFF.
 - `CLOSED SUB-PHASE`: 6B CoachContextV1 and 6C Reactive Coach.
-- `ACTIVE SUB-PHASE`: 6D Proactive Coach. Step 2A deterministic selection and Step 2B versioned materiality/actionability gating are accepted; runtime state, real hysteresis, deterministic rendering, and shadow acceptance remain open.
+- `ACTIVE SUB-PHASE`: 6D Proactive Coach. Deterministic selection, materiality/actionability, server-owned runtime state, canonical hysteresis, and the read-only active-session authority are accepted; persistence/runtime assembly, deterministic rendering, and shadow acceptance remain open.
 - `CONTINUING FOUNDATIONS`: natural `PLN-002` Extra Study acceptance and gated `PLN-003`/`PLN-004`/`MAT-001`/`PLN-005` maturity work.
 
 ## Evre 6 — AI Coach
@@ -219,7 +221,7 @@ The normative product, truth, authority, scenario, proactive, cost, and phase co
 | 6A | Product / Authority / Cost Contract | `CLOSED` | Final product outcomes, truth sources, non-authority, 20 scenarios, proactive triggers, cost envelope, and phase gates accepted. |
 | 6B | CoachContextV1 | `CLOSED` | Controlled DEV runtime acceptance completed; canonical context/evidence, routing/pricing, telemetry, provider safety, and real controlled-DEV acceptance are closed. Production provider remains prohibited. |
 | 6C | Reactive Coach | `CLOSED - FINAL ACCEPTANCE COMPLETE` | Canonical 20-scenario authority acceptance is complete at `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`; Reactive Coach remains read-only with zero Planner/task/capacity/Confirm/Apply authority. |
-| 6D | Proactive Coach | `ACTIVE / IN_PROGRESS` | Step 2A selector and Step 2B materiality gate are accepted. Four unresolved signal classes fail closed; persistent clear-condition hysteresis, runtime/user controls, deterministic rendering, and shadow acceptance remain. |
+| 6D | Proactive Coach | `ACTIVE / IN_PROGRESS` | Selector, materiality, runtime-state, hysteresis, and active-session read authority are accepted. Four unresolved signal classes and missing persisted presentation/control/clear facts fail closed; persistence/runtime assembly, deterministic rendering, and shadow acceptance remain. |
 | 6E | Planner V2 integration | `NOT_STARTED` | Route every Coach planning mutation to the one canonical Planner V2 lifecycle. |
 | 6F | Conversation Intelligence | `NOT_STARTED` | Add short recent context plus compact structured state/signals without long-term raw history or authority transfer. |
 | 6G | Eval / Cost / Production Acceptance | `NOT_STARTED` | Complete the 300 TL hard governor and prove safety, groundedness, UX, cost, observability, and limited production acceptance. |
