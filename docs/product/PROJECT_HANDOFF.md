@@ -1,5 +1,21 @@
 # KPSS Koçu — Project Handoff
 
+> **Active phase - PROACTIVE_COACH_6D_PERSISTENCE_CHECKPOINT_2026_09_19**
+>
+> - **6B Runtime Foundation and 6C Reactive Coach are CLOSED; AIC-003 is DONE.**
+> - **6D Proactive Coach / AIC-004 remains ACTIVE / IN_PROGRESS and is not complete.**
+> - Deterministic selection, versioned materiality/actionability, server-owned runtime-state contract, canonical hysteresis, and exact user/profile active-session authority are accepted.
+> - Dedicated proactive-state persistence is accepted in local DEV at `7302b23f7686ef6703f25ae8e54fb3568c8d9749`. Migration `20260919120000_ai_coach_proactive_state_v1.sql` defines immutable server-recorded presentation history, profile-scoped user controls, and immutable server-owned clear observations.
+> - Presentation and clear-observation writes are server-only. Dismiss, snooze, and category-disable controls use narrow authenticated ownership-bound RPCs. RLS, exact user/profile isolation, validation, idempotency, and immutable audit semantics are locally verified.
+> - The read-only proactive runtime adapter loads presentation/control/clear state with exact user/profile filters, bounded reads, returned-row ownership validation, and fail-closed unavailable/ambiguous behavior. Active-study truth remains canonical from `study_sessions`.
+> - Launch-enabled V1 signals remain `today_completed_as_planned`, `repeated_task_miss`, `recent_recovery`, and `planner_warning_present`. `today_partial_completion`, `subject_recent_completion_drop`, `schedule_capacity_change`, and `material_progress_stalled` remain deterministic fail-closed silence.
+> - Persistence re-acceptance: runtime adapter unit `4/4`; focused persistence integration `8/8`. Final acceptance: full Vitest `1443/1443` across `185/185` files; full loopback integration `166/166` across `18/18` files; PostgreSQL lint PASS; workspace typecheck PASS; AI Coach plan-preview safety PASS; canonical Planner V2 read-only safety PASS.
+> - Remaining 6D work: server/app-api runtime assembly and wiring; deterministic proactive card/templates plus web dismiss/snooze/disable controls; then shadow precision/actionability/silence acceptance.
+> - Persistence migration is local DEV only. Production migration/deploy/mutation = `0`; provider/LLM activation = `0`; automatic Planner proposal/Preview/Confirm/Apply = `0`. Planner Confirm and Apply remain OFF.
+> - **NEXT EXACT STEP:** wire the accepted proactive persistence into the server-owned AIC-004 runtime assembly without production activation. Rendering/web controls follow only after that boundary is GREEN.
+> - This block supersedes older current-state, status, remaining-work, persistence-required, and next-step wording below it.
+
+
 > **Active phase - PROACTIVE_COACH_6D_RUNTIME_HYSTERESIS_CHECKPOINT_2026_09_19**
 >
 > - **6B Runtime Foundation and 6C Reactive Coach are CLOSED; AIC-003 is DONE.**
@@ -127,7 +143,7 @@ Last updated: 2026-09-19
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Base branch: `main`
-- Local working branch: `develop`; latest accepted Evre 6D runtime code checkpoint is `02d0fe664b987187ca4e5c36f15a834a602586bb`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
+- Local working branch: `develop`; latest accepted Evre 6D persistence code checkpoint is `7302b23f7686ef6703f25ae8e54fb3568c8d9749`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
 - 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - 6B.1 accepted checkpoint: `acd16ffb2263b5285b14bd7329ff4357d7971e00`
 - Last verified product checkpoint before W5: `fa46fd2`
