@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AppApiError, FRIENDLY_API_ERRORS, callAppApi } from "../lib/app-api";
-import { callAiCoachPreview, type AiCoachApplyResponse, type AiCoachPlanPreviewResponse } from "../lib/ai-coach-api";
+import { callAiCoachPreview, callReactiveCoach, type AiCoachApplyResponse, type AiCoachPlanPreviewResponse, type ReactiveCoachResponseV1 } from "../lib/ai-coach-api";
 import { presentAiCoachPreview } from "../lib/ai-coach-presenter";
 import { supabase } from "../lib/supabase";
 import { Icon } from "./Icon";
+import { PlannerCoachExplanationCard } from "./PlannerCoachExplanationCard";
 
 export type CoachDrawerMode = "default" | "capacity";
 
@@ -15,8 +16,9 @@ interface CoachDrawerProps {
 }
 
 const QUICK_PROMPTS = [
-  "Yarın 60 dakika daha çalışabilirim.",
-  "Yarın 30 dakika daha az vaktim var.",
+  "Planımda sorun var mı?",
+  "Planner ne görüyor?",
+  "Bu hafta planı yenilemeli miyim?",
 ] as const;
 
 const CAPACITY_QUICK_PROMPTS = [
@@ -31,6 +33,7 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
   const [message, setMessage] = useState("");
   const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
   const [response, setResponse] = useState<AiCoachPlanPreviewResponse | null>(null);
+  const [reactiveResponse, setReactiveResponse] = useState<ReactiveCoachResponseV1 | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [sending, setSending] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -46,13 +49,14 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
     setMessage("");
     setSubmittedMessage(null);
     setResponse(null);
+    setReactiveResponse(null);
     setApplied(null);
     setDetailsOpen(false);
     setError(null);
   }, [mode, open]);
 
   useEffect(() => {
-    if (!open || profileId) return;
+    if (!open || mode !== "capacity" || profileId) return;
     let active = true;
     setLoadingProfile(true);
 
@@ -83,7 +87,7 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
     })();
 
     return () => { active = false; };
-  }, [open, profileId]);
+  }, [mode, open, profileId]);
 
   useEffect(() => {
     if (!open) return;
@@ -103,14 +107,21 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
   async function submit(event: FormEvent) {
     event.preventDefault();
     const normalized = message.trim();
-    if (!profileId || !normalized || sending) return;
+    if ((mode === "capacity" && !profileId) || !normalized || sending) return;
     setSending(true);
     setDetailsOpen(false);
     setError(null);
     setSubmittedMessage(normalized);
     try {
-      const result = await callAiCoachPreview(profileId, normalized);
-      setResponse(result);
+      if (mode === "capacity") {
+        const result = await callAiCoachPreview(profileId!, normalized);
+        setResponse(result);
+        setReactiveResponse(null);
+      } else {
+        const result = await callReactiveCoach(normalized);
+        setReactiveResponse(result);
+        setResponse(null);
+      }
       setMessage("");
     } catch (caught) {
       console.error("AI_COACH_PREVIEW_FAILED", caught);
@@ -162,11 +173,11 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
 
       <div className="coach-drawer-body">
         {!submittedMessage && <section className="coach-intro">
-          <span className="coach-kicker">{mode === "capacity" ? "Vaktini plana yansıt" : "Programını birlikte düşünelim"}</span>
-          <h2>{mode === "capacity" ? "Vaktin nasıl değişti?" : "Bugün ne değişti?"}</h2>
+          <span className="coach-kicker">{mode === "capacity" ? "Vaktini plana yansıt" : "Planını birlikte değerlendirelim"}</span>
+          <h2>{mode === "capacity" ? "Vaktin nasıl değişti?" : "Planner hakkında ne bilmek istiyorsun?"}</h2>
           <p>{mode === "capacity"
             ? "Daha az ya da daha fazla çalışabileceğin süreyi yaz. Önce etkisini gösteririm; planında değişiklik yapmam."
-            : "Vaktindeki değişikliği veya çalışma durumunu yaz. Koç önce anlamlandırır, sonra planına dokunmadan etkisini hesaplar."
+            : "Koç mevcut canonical Planner kanıtını açıklar. Sohbet mesajı planını onaylamaz, uygulamaz veya değiştirmez."
           }</p>
           <div className="coach-quick-prompts">
             {quickPrompts.map((prompt) => <button type="button" key={prompt} onClick={() => { setMessage(prompt); textareaRef.current?.focus(); }}>{prompt}</button>)}
@@ -175,7 +186,18 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
 
         {submittedMessage && <div className="coach-user-message"><span>Sen</span><p>{submittedMessage}</p></div>}
 
-        {sending && <div className="coach-thinking" aria-live="polite"><span><Icon name="spark" /></span><div><strong>Planını kontrol ediyorum</strong><p>Mesajını yorumlayıp Planning V2 önizlemesiyle karşılaştırıyorum.</p></div></div>}
+        {sending && <div className="coach-thinking" aria-live="polite"><span><Icon name="spark" /></span><div><strong>Planını kontrol ediyorum</strong><p>{mode === "capacity" ? "Mesajını yorumlayıp Planning V2 önizlemesiyle karşılaştırıyorum." : "Mevcut Planner kanıtını salt okunur biçimde değerlendiriyorum."}</p></div></div>}
+
+        {reactiveResponse && !sending && reactiveResponse.execution.response.plannerExplanation && <PlannerCoachExplanationCard
+          explanation={reactiveResponse.execution.response.plannerExplanation}
+          onOpenPreview={onClose}
+        />}
+
+        {reactiveResponse && !sending && !reactiveResponse.execution.response.plannerExplanation && <article className="coach-result tone-neutral" aria-live="polite">
+          <span className="coach-result-eyebrow">KPSS Koçu · salt okunur</span>
+          <h3>Durum değerlendirmesi</h3>
+          <p>{reactiveResponse.execution.response.answer}</p>
+        </article>}
 
         {presentation && !sending && <article className={`coach-result tone-${presentation.tone}${presentation.previewState ? ` preview-${presentation.previewState.toLowerCase()}` : ""}`} aria-live="polite">
           <span className="coach-result-eyebrow">{presentation.eyebrow}</span>
@@ -218,7 +240,7 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
             </>}
           </div>}
           {presentation.note && <div className="coach-preview-note"><Icon name="check" /><span>{presentation.note}</span></div>}
-          {response?.status === "VALID" && response.confirmation && presentation.previewState === "READY" && !applied && <button
+          {mode === "capacity" && response?.status === "VALID" && response.confirmation && presentation.previewState === "READY" && !applied && <button
             className="secondary-action"
             type="button"
             disabled={applying}
@@ -248,9 +270,9 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
           value={message}
           rows={3}
           maxLength={1200}
-          placeholder={mode === "capacity" ? "Örn. Yarın toplam 2 saat çalışabilirim." : "Örn. Yarın 60 dakika daha çalışabilirim."}
+          placeholder={mode === "capacity" ? "Örn. Yarın toplam 2 saat çalışabilirim." : "Örn. Planner ne görüyor?"}
           aria-label="Koça mesaj yaz"
-          disabled={sending || loadingProfile || !profileId}
+          disabled={sending || (mode === "capacity" && (loadingProfile || !profileId))}
           onChange={(event) => setMessage(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
@@ -259,7 +281,7 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
             }
           }}
         />
-        <div><small>{loadingProfile ? "Profil hazırlanıyor…" : "Enter gönderir · Shift+Enter yeni satır"}</small><button type="submit" disabled={sending || !profileId || !message.trim()} aria-label="Mesajı gönder"><Icon name="arrow" weight="bold" /></button></div>
+        <div><small>{mode === "capacity" && loadingProfile ? "Profil hazırlanıyor…" : "Enter gönderir · Shift+Enter yeni satır"}</small><button type="submit" disabled={sending || (mode === "capacity" && !profileId) || !message.trim()} aria-label="Mesajı gönder"><Icon name="arrow" weight="bold" /></button></div>
       </form>
     </aside>
   </>;

@@ -13,3 +13,4 @@ export * from "./proactive-coach-materiality-policy-v1";
 export * from "./proactive-coach-runtime-state-v1";
 export * from "./proactive-coach-hysteresis-v1";
 export * from "./proactive-coach-card-v1";
+export * from "./planner-coach-explanation-v1";

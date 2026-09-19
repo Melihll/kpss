@@ -116,7 +116,7 @@ function parseEvidence(raw, index, needsClarification, issues) {
     path,
     issues
   );
-  const base = {
+  const base2 = {
     type: evidenceType,
     confidence: confidence(raw.confidence, `${path}.confidence`, issues),
     effectiveDate: isoDate(raw.effectiveDate, `${path}.effectiveDate`, issues),
@@ -124,7 +124,7 @@ function parseEvidence(raw, index, needsClarification, issues) {
     curriculumHint: optionalText(raw.curriculumHint, `${path}.curriculumHint`, issues),
     reasonCode: optionalText(raw.reasonCode, `${path}.reasonCode`, issues)
   };
-  if (!capacity) return Object.freeze(base);
+  if (!capacity) return Object.freeze(base2);
   const direction = raw.direction;
   if (direction !== void 0 && direction !== null && direction !== "INCREASE" && direction !== "DECREASE") {
     issue(issues, `${path}.direction`, "INVALID_DIRECTION", "Direction must be INCREASE or DECREASE.");
@@ -142,7 +142,7 @@ function parseEvidence(raw, index, needsClarification, issues) {
     issue(issues, path, "MISSING_CAPACITY_AMOUNT", "A capacity amount or clarification is required.");
   }
   return Object.freeze({
-    ...base,
+    ...base2,
     type: "CAPACITY_CHANGE_REQUEST",
     direction: normalizedDirection,
     deltaMinutes,
@@ -1146,7 +1146,7 @@ var COACH_SIGNAL_V1_LIMITS = Object.freeze({
   serializedBytes: 24576
 });
 function registryEntry(signalType) {
-  return COACH_SIGNAL_REGISTRY_V1.find((entry) => entry.signalType === signalType);
+  return COACH_SIGNAL_REGISTRY_V1.find((entry2) => entry2.signalType === signalType);
 }
 function isExpired(expiresAt, generatedAt) {
   return expiresAt !== null && Date.parse(generatedAt) >= Date.parse(expiresAt);
@@ -1196,7 +1196,7 @@ function authority() {
   };
 }
 function materialize(context, draft) {
-  const entry = registryEntry(draft.signalType);
+  const entry2 = registryEntry(draft.signalType);
   const sourceFactPaths = [...new Set(draft.sourceFactPaths)].sort();
   if (sourceFactPaths.length > COACH_SIGNAL_V1_LIMITS.sourceFactPathsPerCandidate) throw new Error("COACH_SIGNAL_TOO_MANY_SOURCE_PATHS");
   const evidence = sortedEvidence(draft.evidence);
@@ -1224,10 +1224,10 @@ function materialize(context, draft) {
     provenance,
     dedupeKey,
     eligibility: {
-      reactiveExplanation: entry.reactiveExplanation,
-      proactiveCandidate: entry.proactiveCandidate,
-      attentionCategory: entry.attentionCategory,
-      cooldownClass: entry.cooldownClass,
+      reactiveExplanation: entry2.reactiveExplanation,
+      proactiveCandidate: entry2.proactiveCandidate,
+      attentionCategory: entry2.attentionCategory,
+      cooldownClass: entry2.cooldownClass,
       silenceAllowed: true
     },
     authority: authority()
@@ -1305,7 +1305,14 @@ function addRecentProgressSignals(context, drafts) {
       reasonCode: "same_task_missed_multiple_times_in_recent_window",
       sourceFactPaths: [`recentProgress.value.taskEvents[taskId=${taskId}]`],
       facts: [fact],
-      evidence: { distinctMissCount: misses.length, taskId, windowEnd: recentProgress.value.windowEnd, windowStart: recentProgress.value.windowStart }
+      evidence: {
+        distinctMissCount: misses.length,
+        latestMissedAt: misses.at(-1).occurredAt,
+        secondLatestMissedAt: misses.at(-2).occurredAt,
+        taskId,
+        windowEnd: recentProgress.value.windowEnd,
+        windowStart: recentProgress.value.windowStart
+      }
     });
     const recovery = taskEvents.at(-1)?.status === "completed" ? taskEvents.at(-1) : void 0;
     const lastMissBeforeRecovery = recovery ? [...misses].reverse().find((event) => event.occurredAt < recovery.occurredAt) : void 0;
@@ -1508,7 +1515,7 @@ function buildCoachSignalSetV1(context, selection = {}) {
   const importanceOrder = { high: 0, medium: 1, low: 2 };
   const all = [...unique.values()].filter((candidate) => selectedTypes === null || selectedTypes.has(candidate.signalType)).filter((candidate) => selection.subjectId === void 0 || candidate.subjectId === selection.subjectId).filter((candidate) => selection.proactiveOnly !== true || candidate.eligibility.proactiveCandidate).sort((left, right) => importanceOrder[left.importance] - importanceOrder[right.importance] || left.signalType.localeCompare(right.signalType) || left.dedupeKey.localeCompare(right.dedupeKey));
   const candidates = all.slice(0, COACH_SIGNAL_V1_LIMITS.candidates);
-  const result = {
+  const result2 = {
     version: COACH_SIGNAL_SET_V1_VERSION,
     sourceContext: { version: context.version, requestId: context.requestId },
     asOf: context.generatedAt,
@@ -1517,9 +1524,9 @@ function buildCoachSignalSetV1(context, selection = {}) {
     silenceEligible: true,
     authority: authority()
   };
-  const bytes = new TextEncoder().encode(JSON.stringify(result)).byteLength;
+  const bytes = new TextEncoder().encode(JSON.stringify(result2)).byteLength;
   if (bytes > COACH_SIGNAL_V1_LIMITS.serializedBytes) throw new Error(`COACH_SIGNAL_SET_V1_TOO_LARGE:${bytes}`);
-  return deepFreeze2(result);
+  return deepFreeze2(result2);
 }
 
 // packages/domain/src/ai-coach/coach-evidence-view-v1.ts
@@ -2243,10 +2250,10 @@ function routeAiCapabilityV1(input, catalog) {
   if (catalog.contractVersion !== AI_MODEL_ROUTER_V1_VERSION || catalog.routes.length === 0) throw new Error("AI_ROUTE_CATALOG_INVALID");
   if (!isIsoInstant(catalog.effectiveFrom) || new Set(catalog.routes.map((item) => item.tier)).size !== catalog.routes.length) throw new Error("AI_ROUTE_CATALOG_INVALID");
   if (catalog.routes.some((item) => !item.provider.trim() || !item.modelId.trim() || !Number.isInteger(item.maxOutputTokens) || item.maxOutputTokens <= 0 || !Number.isInteger(item.timeoutMs) || item.timeoutMs <= 0 || !Number.isInteger(item.retryPolicy.maxAttempts) || item.retryPolicy.maxAttempts < 1)) throw new Error("AI_ROUTE_CATALOG_INVALID");
-  const base = CAPABILITY_DEFAULT_TIER[input.capability];
+  const base2 = CAPABILITY_DEFAULT_TIER[input.capability];
   const noRetry = { maxAttempts: 0, retryableCategories: [] };
-  const authority2 = { serverOwnedSelection: true, clientOverrideAllowed: false, rawUserTextUsed: false, providerCallMade: false };
-  if (base === "no_model") return deepFreeze4({
+  const authority5 = { serverOwnedSelection: true, clientOverrideAllowed: false, rawUserTextUsed: false, providerCallMade: false };
+  if (base2 === "no_model") return deepFreeze4({
     version: AI_MODEL_ROUTER_V1_VERSION,
     runtimeEnvironment: input.runtimeEnvironment,
     catalogEnvironment: catalog.environment,
@@ -2262,7 +2269,7 @@ function routeAiCapabilityV1(input, catalog) {
     retryPolicy: noRetry,
     fallbackTier: null,
     reasonCode: "deterministic_capability_no_model",
-    authority: authority2
+    authority: authority5
   });
   if (input.budgetState === "unknown" || input.budgetState === "hard_limit") return deepFreeze4({
     version: AI_MODEL_ROUTER_V1_VERSION,
@@ -2280,9 +2287,9 @@ function routeAiCapabilityV1(input, catalog) {
     retryPolicy: noRetry,
     fallbackTier: null,
     reasonCode: input.budgetState === "unknown" ? "budget_unknown_fail_closed" : "budget_hard_limit_blocked",
-    authority: authority2
+    authority: authority5
   });
-  let rank = tierRank(base);
+  let rank = tierRank(base2);
   let reasonCode = "capability_default_route";
   if (input.evidence.sizeClass === "large" || input.expectedResponse === "long" || input.complexity === "high") {
     rank = Math.min(2, rank + 1);
@@ -2315,7 +2322,7 @@ function routeAiCapabilityV1(input, catalog) {
     retryPolicy: structuredClone(route.retryPolicy),
     fallbackTier: route.fallbackTier,
     reasonCode,
-    authority: authority2
+    authority: authority5
   });
 }
 function validateUsage(usage) {
@@ -2338,19 +2345,19 @@ function calculateAiNativeCostV1(route, usage, catalog, occurredAt) {
   if (usage.availability === "unavailable") return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: null, reason: "usage_unavailable" };
   if (route.runtimeEnvironment === "production" && catalog.environment !== "production") return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: null, reason: "authoritative_production_pricing_unavailable" };
   const at = Date.parse(occurredAt);
-  const entry = catalog.entries.find((item) => item.provider === route.provider && item.modelId === route.modelId && Date.parse(item.effectiveFrom) <= at && (item.effectiveTo === null || at < Date.parse(item.effectiveTo)));
-  if (!entry || catalog.version !== route.pricingVersion) return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: null, reason: "pricing_entry_unavailable" };
-  if (route.runtimeEnvironment === "production" && entry.sourceKind !== "authoritative_config") return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: entry.billingCurrency, reason: "authoritative_production_pricing_unavailable" };
-  assertFiniteNonNegative(entry.inputPerMillionTokens, "AI_PRICING_INPUT_INVALID");
-  assertFiniteNonNegative(entry.outputPerMillionTokens, "AI_PRICING_OUTPUT_INVALID");
-  if (entry.cachedInputPerMillionTokens !== null) assertFiniteNonNegative(entry.cachedInputPerMillionTokens, "AI_PRICING_CACHED_INPUT_INVALID");
-  if ((usage.cachedInputTokens ?? 0) > 0 && entry.cachedInputPerMillionTokens === null) return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: entry.billingCurrency, reason: "cached_input_price_unavailable" };
+  const entry2 = catalog.entries.find((item) => item.provider === route.provider && item.modelId === route.modelId && Date.parse(item.effectiveFrom) <= at && (item.effectiveTo === null || at < Date.parse(item.effectiveTo)));
+  if (!entry2 || catalog.version !== route.pricingVersion) return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: null, reason: "pricing_entry_unavailable" };
+  if (route.runtimeEnvironment === "production" && entry2.sourceKind !== "authoritative_config") return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: entry2.billingCurrency, reason: "authoritative_production_pricing_unavailable" };
+  assertFiniteNonNegative(entry2.inputPerMillionTokens, "AI_PRICING_INPUT_INVALID");
+  assertFiniteNonNegative(entry2.outputPerMillionTokens, "AI_PRICING_OUTPUT_INVALID");
+  if (entry2.cachedInputPerMillionTokens !== null) assertFiniteNonNegative(entry2.cachedInputPerMillionTokens, "AI_PRICING_CACHED_INPUT_INVALID");
+  if ((usage.cachedInputTokens ?? 0) > 0 && entry2.cachedInputPerMillionTokens === null) return { state: "unpriced", pricingVersion: catalog.version, nativeAmount: null, nativeCurrency: entry2.billingCurrency, reason: "cached_input_price_unavailable" };
   const cachedTokens = usage.cachedInputTokens ?? 0;
   const uncachedTokens = usage.inputTokens - cachedTokens;
-  const uncachedInput = round(uncachedTokens * entry.inputPerMillionTokens / 1e6);
-  const cachedInput = round(cachedTokens * (entry.cachedInputPerMillionTokens ?? 0) / 1e6);
-  const output = round(usage.outputTokens * entry.outputPerMillionTokens / 1e6);
-  return { state: "known", pricingVersion: catalog.version, nativeAmount: round(uncachedInput + cachedInput + output), nativeCurrency: entry.billingCurrency, components: { uncachedInput, cachedInput, output } };
+  const uncachedInput = round(uncachedTokens * entry2.inputPerMillionTokens / 1e6);
+  const cachedInput = round(cachedTokens * (entry2.cachedInputPerMillionTokens ?? 0) / 1e6);
+  const output = round(usage.outputTokens * entry2.outputPerMillionTokens / 1e6);
+  return { state: "known", pricingVersion: catalog.version, nativeAmount: round(uncachedInput + cachedInput + output), nativeCurrency: entry2.billingCurrency, components: { uncachedInput, cachedInput, output } };
 }
 function convertAiCostToTryV1(nativeCost, fx, runtimeEnvironment, evaluatedAt) {
   assertRuntimeEnvironment(runtimeEnvironment);
@@ -2510,6 +2517,1086 @@ function preflightAiCostV1(input) {
   } : null;
   return deepFreeze4({ version: AI_COST_PREFLIGHT_V1_VERSION, route, evidence, estimateKind: "upper_bound_not_actual_billing", estimatedUsage, estimatedNativeCost: nativeCost, estimatedTryCost: tryCost, allowed, reasonCode, reservationProposal, reservationPersistence: "not_implemented_in_6b5", providerCallMade: false });
 }
+
+// packages/domain/src/ai-coach/proactive-coach-materiality-policy-v1.ts
+var PROACTIVE_COACH_MATERIALITY_POLICY_V1_VERSION = "proactive-coach-materiality-policy-v1";
+var PROACTIVE_COACH_MATERIALITY_THRESHOLD_V1_VERSION = "proactive-materiality-threshold-v1";
+var PROACTIVE_COACH_MATERIALITY_SIGNAL_TYPES_V1 = [
+  "today_completed_as_planned",
+  "today_partial_completion",
+  "repeated_task_miss",
+  "subject_recent_completion_drop",
+  "schedule_capacity_change",
+  "recent_recovery",
+  "planner_warning_present",
+  "material_progress_stalled"
+];
+function deepFreeze5(value) {
+  if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const child of Object.values(value)) deepFreeze5(child);
+  return value;
+}
+function entry(value) {
+  return value;
+}
+var PROACTIVE_COACH_MATERIALITY_POLICY_V1 = deepFreeze5({
+  version: PROACTIVE_COACH_MATERIALITY_POLICY_V1_VERSION,
+  thresholdVersion: PROACTIVE_COACH_MATERIALITY_THRESHOLD_V1_VERSION,
+  entries: [
+    entry({
+      signalType: "today_completed_as_planned",
+      thresholdVersion: PROACTIVE_COACH_MATERIALITY_THRESHOLD_V1_VERSION,
+      launchEnabled: true,
+      minimumAcceptedConfidence: "medium",
+      requiredReasonCode: "today_all_tasks_completed_with_planned_credit",
+      requiredAttentionCategory: "progress",
+      requiredEvidenceKeys: ["completedTaskCount", "plannedCreditMinutes", "plannedMinutes"],
+      materialityRuleCode: "today_completed_count_positive_and_planned_credit_covers_planned_v1",
+      actionabilityRuleCode: "acknowledge_completed_plan_or_review_today_v1",
+      recoveryHysteresisRuleCode: "clear_on_user_local_date_scope_rollover_v1"
+    }),
+    entry({
+      signalType: "today_partial_completion",
+      thresholdVersion: PROACTIVE_COACH_MATERIALITY_THRESHOLD_V1_VERSION,
+      launchEnabled: false,
+      minimumAcceptedConfidence: "medium",
+      requiredReasonCode: "today_partial_task_count_present",
+      requiredAttentionCategory: "progress",
+      requiredEvidenceKeys: ["partiallyCompletedTaskCount", "remainingMinutes"],
+      materialityRuleCode: "unresolved_partial_completion_materiality_threshold_v1",
+      actionabilityRuleCode: null,
+      recoveryHysteresisRuleCode: "unresolved_partial_completion_clear_threshold_v1"
+    }),
+    entry({
+      signalType: "repeated_task_miss",
+      thresholdVersion: PROACTIVE_COACH_MATERIALITY_THRESHOLD_V1_VERSION,
+      launchEnabled: true,
+      minimumAcceptedConfidence: "medium",
+      requiredReasonCode: "same_task_missed_multiple_times_in_recent_window",
+      requiredAttentionCategory: "consistency",
+      requiredEvidenceKeys: ["distinctMissCount", "taskId", "windowEnd", "windowStart"],
+      materialityRuleCode: "same_task_distinct_miss_count_at_least_two_v1",
+      actionabilityRuleCode: "review_same_task_miss_pattern_or_ask_conditions_changed_v1",
+      recoveryHysteresisRuleCode: "clear_on_same_task_canonical_recovery_after_latest_miss_v1"
+    }),
+    entry({
+      signalType: "subject_recent_completion_drop",
+      thresholdVersion: PROACTIVE_COACH_MATERIALITY_THRESHOLD_V1_VERSION,
+      launchEnabled: false,
+      minimumAcceptedConfidence: "medium",
+      requiredReasonCode: "canonical_completion_drop_input_present",
+      requiredAttentionCategory: "progress",
+      requiredEvidenceKeys: ["dropValue", "subjectId"],
+      materialityRuleCode: "unresolved_completion_drop_unit_and_threshold_v1",
+      actionabilityRuleCode: null,
+      recoveryHysteresisRuleCode: "unresolved_completion_drop_recovery_threshold_v1"
+    }),
+    entry({
+      signalType: "schedule_capacity_change",
+      thresholdVersion: PROACTIVE_COACH_MATERIALITY_THRESHOLD_V1_VERSION,
+      launchEnabled: false,
+      minimumAcceptedConfidence: "medium",
+      requiredReasonCode: "canonical_capacity_change_input_present",
+      requiredAttentionCategory: "capacity",
+      requiredEvidenceKeys: ["capacityDeltaMinutes", "date"],
+      materialityRuleCode: "unresolved_capacity_delta_materiality_threshold_v1",
+      actionabilityRuleCode: null,
+      recoveryHysteresisRuleCode: "unresolved_capacity_delta_clear_threshold_v1"
+    }),
+    entry({
+      signalType: "recent_recovery",
+      thresholdVersion: PROACTIVE_COACH_MATERIALITY_THRESHOLD_V1_VERSION,
+      launchEnabled: true,
+      minimumAcceptedConfidence: "medium",
+      requiredReasonCode: "completed_after_recent_miss",
+      requiredAttentionCategory: "consistency",
+      requiredEvidenceKeys: ["completedAt", "missedAt", "taskId"],
+      materialityRuleCode: "same_task_completion_timestamp_after_miss_timestamp_v1",
+      actionabilityRuleCode: "acknowledge_resumed_completion_without_trait_inference_v1",
+      recoveryHysteresisRuleCode: "clear_on_new_same_task_miss_after_recovery_v1"
+    }),
+    entry({
+      signalType: "planner_warning_present",
+      thresholdVersion: PROACTIVE_COACH_MATERIALITY_THRESHOLD_V1_VERSION,
+      launchEnabled: true,
+      minimumAcceptedConfidence: "medium",
+      requiredReasonCode: "persisted_planner_warning_count_present",
+      requiredAttentionCategory: "planner",
+      requiredEvidenceKeys: ["lifecycleState", "warningCount"],
+      materialityRuleCode: "fresh_persisted_planner_warning_count_at_least_one_v1",
+      actionabilityRuleCode: "explain_warning_or_offer_user_initiated_planner_review_v1",
+      recoveryHysteresisRuleCode: "clear_on_fresh_persisted_planner_warning_count_zero_v1"
+    }),
+    entry({
+      signalType: "material_progress_stalled",
+      thresholdVersion: PROACTIVE_COACH_MATERIALITY_THRESHOLD_V1_VERSION,
+      launchEnabled: false,
+      minimumAcceptedConfidence: "medium",
+      requiredReasonCode: "canonical_material_stall_input_present",
+      requiredAttentionCategory: "material",
+      requiredEvidenceKeys: ["materialViewId", "progressState"],
+      materialityRuleCode: "unresolved_source_owned_material_stall_threshold_v1",
+      actionabilityRuleCode: null,
+      recoveryHysteresisRuleCode: "unresolved_material_stall_recovery_threshold_v1"
+    })
+  ]
+});
+var ENTRY_BY_SIGNAL = new Map(
+  PROACTIVE_COACH_MATERIALITY_POLICY_V1.entries.map((item) => [item.signalType, item])
+);
+var PLANNER_LIFECYCLE_STATES = /* @__PURE__ */ new Set([
+  "generated",
+  "previewed",
+  "confirmed",
+  "applied",
+  "stale",
+  "rejected",
+  "expired"
+]);
+function authority2() {
+  return {
+    mode: "deterministic_materiality_actionability_only",
+    generatesProse: false,
+    llmCallsAllowed: false,
+    providerCallsAllowed: false,
+    dbReadsAllowed: false,
+    dbWritesAllowed: false,
+    plannerPreviewAllowed: false,
+    plannerProposalAllowed: false,
+    plannerConfirmationAllowed: false,
+    plannerApplyAllowed: false
+  };
+}
+function confidenceAccepted(confidence2, minimum) {
+  const rank = { low: 0, medium: 1, high: 2 };
+  return rank[confidence2] >= rank[minimum];
+}
+function finiteInteger(value) {
+  return typeof value === "number" && Number.isInteger(value) && Number.isFinite(value);
+}
+function nonEmptyString(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+function validTimestamp(value) {
+  return nonEmptyString(value) && Number.isFinite(Date.parse(value));
+}
+function validEvidenceShape(candidate, policy) {
+  return policy.requiredEvidenceKeys.every(
+    (key) => Object.prototype.hasOwnProperty.call(candidate.evidence, key)
+  );
+}
+function evaluateLaunchRule(candidate) {
+  const evidence = candidate.evidence;
+  switch (candidate.signalType) {
+    case "today_completed_as_planned": {
+      const completed = evidence.completedTaskCount;
+      const planned = evidence.plannedMinutes;
+      const credit = evidence.plannedCreditMinutes;
+      const evidenceValid = finiteInteger(completed) && finiteInteger(planned) && finiteInteger(credit) && completed >= 0 && planned >= 0 && credit >= 0;
+      return { evidenceValid, material: evidenceValid && completed > 0 && credit >= planned };
+    }
+    case "repeated_task_miss": {
+      const count = evidence.distinctMissCount;
+      const evidenceValid = finiteInteger(count) && count >= 0 && nonEmptyString(evidence.taskId) && validTimestamp(evidence.windowStart) && validTimestamp(evidence.windowEnd);
+      return { evidenceValid, material: evidenceValid && count >= 2 };
+    }
+    case "recent_recovery": {
+      const missedAt = evidence.missedAt;
+      const completedAt = evidence.completedAt;
+      const evidenceValid = nonEmptyString(evidence.taskId) && validTimestamp(missedAt) && validTimestamp(completedAt);
+      return {
+        evidenceValid,
+        material: evidenceValid && Date.parse(completedAt) > Date.parse(missedAt)
+      };
+    }
+    case "planner_warning_present": {
+      const count = evidence.warningCount;
+      const evidenceValid = finiteInteger(count) && count >= 0 && nonEmptyString(evidence.lifecycleState) && PLANNER_LIFECYCLE_STATES.has(evidence.lifecycleState);
+      return { evidenceValid, material: evidenceValid && count >= 1 };
+    }
+    default:
+      return { evidenceValid: false, material: false };
+  }
+}
+function decision(candidate, policy, values) {
+  return deepFreeze5({
+    version: PROACTIVE_COACH_MATERIALITY_POLICY_V1_VERSION,
+    signalType: candidate.signalType,
+    thresholdVersion: policy?.thresholdVersion ?? null,
+    launchEnabled: policy?.launchEnabled ?? false,
+    minimumAcceptedConfidence: policy?.minimumAcceptedConfidence ?? null,
+    materiality: values.materiality,
+    actionable: values.actionable,
+    materialityRuleCode: policy?.materialityRuleCode ?? null,
+    actionabilityRuleCode: policy?.actionabilityRuleCode ?? null,
+    recoveryHysteresisRuleCode: policy?.recoveryHysteresisRuleCode ?? null,
+    suppressionReason: values.suppressionReason,
+    authority: authority2()
+  });
+}
+function evaluateProactiveCoachMaterialityV1(candidate) {
+  const policy = ENTRY_BY_SIGNAL.get(candidate.signalType) ?? null;
+  if (!policy) {
+    return decision(candidate, null, {
+      materiality: "unresolved",
+      actionable: false,
+      suppressionReason: "signal_not_in_materiality_policy"
+    });
+  }
+  if (!policy.launchEnabled) {
+    return decision(candidate, policy, {
+      materiality: "unresolved",
+      actionable: false,
+      suppressionReason: "materiality_threshold_unresolved"
+    });
+  }
+  if (!confidenceAccepted(candidate.confidence, policy.minimumAcceptedConfidence)) {
+    return decision(candidate, policy, {
+      materiality: "unresolved",
+      actionable: false,
+      suppressionReason: "confidence_below_policy_minimum"
+    });
+  }
+  if (candidate.reasonCode !== policy.requiredReasonCode || candidate.eligibility.attentionCategory !== policy.requiredAttentionCategory || !candidate.eligibility.proactiveCandidate) {
+    return decision(candidate, policy, {
+      materiality: "unresolved",
+      actionable: false,
+      suppressionReason: "candidate_contract_mismatch"
+    });
+  }
+  if (!validEvidenceShape(candidate, policy)) {
+    return decision(candidate, policy, {
+      materiality: "unresolved",
+      actionable: false,
+      suppressionReason: "required_evidence_missing_or_invalid"
+    });
+  }
+  const evaluated = evaluateLaunchRule(candidate);
+  if (!evaluated.evidenceValid) {
+    return decision(candidate, policy, {
+      materiality: "unresolved",
+      actionable: false,
+      suppressionReason: "required_evidence_missing_or_invalid"
+    });
+  }
+  if (!evaluated.material) {
+    return decision(candidate, policy, {
+      materiality: "not_material",
+      actionable: false,
+      suppressionReason: "materiality_rule_not_satisfied"
+    });
+  }
+  return decision(candidate, policy, {
+    materiality: "material",
+    actionable: policy.actionabilityRuleCode !== null,
+    suppressionReason: null
+  });
+}
+
+// packages/domain/src/ai-coach/proactive-coach-hysteresis-v1.ts
+var PROACTIVE_COACH_HYSTERESIS_V1_VERSION = "proactive-coach-hysteresis-v1";
+function deepFreeze6(value) {
+  if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const child of Object.values(value)) deepFreeze6(child);
+  return value;
+}
+function nonEmptyString2(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+function validTimestamp2(value) {
+  return nonEmptyString2(value) && Number.isFinite(Date.parse(value));
+}
+function plannerSourceIdentity(candidate) {
+  const recordIds = candidate.provenance.flatMap((item) => item.recordIds).filter(nonEmptyString2).sort();
+  return recordIds.length > 0 ? [...new Set(recordIds)].join(",") : null;
+}
+function buildProactiveCoachConditionKeyV1(candidate) {
+  if (candidate.signalType === "today_completed_as_planned") {
+    return /^\d{4}-\d{2}-\d{2}$/.test(candidate.date ?? "") ? `today_completed_as_planned:${candidate.date}` : null;
+  }
+  if (candidate.signalType === "repeated_task_miss") {
+    return nonEmptyString2(candidate.evidence.taskId) ? `repeated_task_miss:${candidate.evidence.taskId}` : null;
+  }
+  if (candidate.signalType === "recent_recovery") {
+    const taskId = candidate.evidence.taskId;
+    const missedAt = candidate.evidence.missedAt;
+    const completedAt = candidate.evidence.completedAt;
+    return nonEmptyString2(taskId) && validTimestamp2(missedAt) && validTimestamp2(completedAt) ? `recent_recovery:${taskId}:${missedAt}:${completedAt}` : null;
+  }
+  if (candidate.signalType === "planner_warning_present") {
+    const identity = plannerSourceIdentity(candidate);
+    return identity ? `planner_warning_present:${identity}` : null;
+  }
+  return null;
+}
+function ruleCode(signalType) {
+  if (signalType === "today_completed_as_planned") return "rearm_on_new_user_local_calendar_date_v1";
+  if (signalType === "repeated_task_miss") return "rearm_after_same_task_completion_then_two_new_misses_v1";
+  if (signalType === "recent_recovery") return "single_presentation_per_exact_miss_completion_event_v1";
+  return "rearm_after_canonical_warning_count_zero_then_new_warning_observation_v1";
+}
+function decision2(candidate, conditionKey, values) {
+  const launchType = candidate.signalType;
+  return deepFreeze6({
+    version: PROACTIVE_COACH_HYSTERESIS_V1_VERSION,
+    signalType: candidate.signalType,
+    conditionKey,
+    clearConditionRuleCode: conditionKey ? ruleCode(launchType) : null,
+    ...values,
+    authority: {
+      mode: "deterministic_clear_condition_only",
+      cooldownIsHysteresis: false,
+      dbReadsAllowed: false,
+      dbWritesAllowed: false,
+      llmCallsAllowed: false,
+      providerCallsAllowed: false,
+      plannerProposalAllowed: false,
+      plannerConfirmationAllowed: false,
+      plannerApplyAllowed: false
+    }
+  });
+}
+function latestPresentation(values, conditionKey) {
+  return [...values].filter((item) => item.conditionKey === conditionKey).sort((left, right) => right.presentedAt.localeCompare(left.presentedAt))[0] ?? null;
+}
+function latestClear(values, signalType, conditionKey, after) {
+  return [...values].filter((item) => item.signalType === signalType && item.conditionKey === conditionKey && item.state === "cleared" && Date.parse(item.observedAt) > Date.parse(after)).sort((left, right) => right.observedAt.localeCompare(left.observedAt))[0] ?? null;
+}
+function evaluateProactiveCoachHysteresisV1(input) {
+  const { candidate } = input;
+  const conditionKey = buildProactiveCoachConditionKeyV1(candidate);
+  if (!conditionKey) return decision2(candidate, null, {
+    status: "blocked",
+    allowed: false,
+    reason: "rearm_not_proven_after_clear",
+    latestPresentationAt: null,
+    clearObservedAt: null
+  });
+  if (input.presentations.availability !== "known") return decision2(candidate, conditionKey, {
+    status: "blocked",
+    allowed: false,
+    reason: "clear_condition_authority_unavailable",
+    latestPresentationAt: null,
+    clearObservedAt: null
+  });
+  const presentation = latestPresentation(input.presentations.values, conditionKey);
+  if (!presentation) return decision2(candidate, conditionKey, {
+    status: "initially_armed",
+    allowed: true,
+    reason: "no_prior_condition_presentation",
+    latestPresentationAt: null,
+    clearObservedAt: null
+  });
+  if (candidate.signalType === "today_completed_as_planned") return decision2(candidate, conditionKey, {
+    status: "blocked",
+    allowed: false,
+    reason: "date_scoped_condition_already_presented",
+    latestPresentationAt: presentation.presentedAt,
+    clearObservedAt: null
+  });
+  if (candidate.signalType === "recent_recovery") return decision2(candidate, conditionKey, {
+    status: "blocked",
+    allowed: false,
+    reason: "event_instance_already_presented",
+    latestPresentationAt: presentation.presentedAt,
+    clearObservedAt: null
+  });
+  if (input.clearConditions.availability !== "known") return decision2(candidate, conditionKey, {
+    status: "blocked",
+    allowed: false,
+    reason: "clear_condition_authority_unavailable",
+    latestPresentationAt: presentation.presentedAt,
+    clearObservedAt: null
+  });
+  const signalType = candidate.signalType;
+  const clear = latestClear(input.clearConditions.values, signalType, conditionKey, presentation.presentedAt);
+  if (!clear) return decision2(candidate, conditionKey, {
+    status: "blocked",
+    allowed: false,
+    reason: "persistent_condition_requires_clear_observation",
+    latestPresentationAt: presentation.presentedAt,
+    clearObservedAt: null
+  });
+  if (candidate.signalType === "repeated_task_miss") {
+    const secondLatestMissedAt = candidate.evidence.secondLatestMissedAt;
+    const latestMissedAt = candidate.evidence.latestMissedAt;
+    const rearmed2 = validTimestamp2(secondLatestMissedAt) && validTimestamp2(latestMissedAt) && Date.parse(secondLatestMissedAt) > Date.parse(clear.observedAt) && Date.parse(latestMissedAt) >= Date.parse(secondLatestMissedAt);
+    return decision2(candidate, conditionKey, {
+      status: rearmed2 ? "rearmed" : "blocked",
+      allowed: rearmed2,
+      reason: rearmed2 ? "canonical_clear_and_new_condition_proven" : "rearm_not_proven_after_clear",
+      latestPresentationAt: presentation.presentedAt,
+      clearObservedAt: clear.observedAt
+    });
+  }
+  const rearmed = validTimestamp2(candidate.asOf) && Date.parse(candidate.asOf) > Date.parse(clear.observedAt);
+  return decision2(candidate, conditionKey, {
+    status: rearmed ? "rearmed" : "blocked",
+    allowed: rearmed,
+    reason: rearmed ? "canonical_clear_and_new_condition_proven" : "rearm_not_proven_after_clear",
+    latestPresentationAt: presentation.presentedAt,
+    clearObservedAt: clear.observedAt
+  });
+}
+
+// packages/domain/src/ai-coach/proactive-coach-selection-v1.ts
+var PROACTIVE_COACH_SELECTION_V1_VERSION = "proactive-coach-selection-v1";
+var PROACTIVE_COACH_POLICY_V1 = Object.freeze({
+  sameFingerprintCooldownMs: 72 * 60 * 60 * 1e3,
+  categoryCooldownMs: 24 * 60 * 60 * 1e3,
+  dailyAttentionLimit: 1,
+  surfaceSessionAttentionLimit: 1,
+  acceptedConfidence: ["high", "medium"]
+});
+function deepFreeze7(value) {
+  if (!value || typeof value !== "object" || Object.isFrozen(value)) {
+    return value;
+  }
+  Object.freeze(value);
+  for (const child of Object.values(value)) {
+    deepFreeze7(child);
+  }
+  return value;
+}
+function parseTimestamp(value, errorCode) {
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(errorCode);
+  }
+  return parsed;
+}
+function stableEvidence(candidate) {
+  return JSON.stringify(
+    Object.fromEntries(
+      Object.entries(candidate.evidence).sort(([left], [right]) => left.localeCompare(right))
+    )
+  );
+}
+function stableProvenance(candidate) {
+  return JSON.stringify(
+    candidate.provenance.map((item) => ({
+      source: item.source,
+      recordIds: [...item.recordIds].sort()
+    })).sort(
+      (left, right) => left.source.localeCompare(right.source) || left.recordIds.join("|").localeCompare(right.recordIds.join("|"))
+    )
+  );
+}
+function buildProactiveCoachFingerprintV1(candidate) {
+  return [
+    "proactive-fingerprint-v1",
+    candidate.dedupeKey,
+    candidate.signalType,
+    candidate.reasonCode,
+    candidate.subjectId ?? "global",
+    candidate.date ?? "any-date",
+    stableEvidence(candidate),
+    stableProvenance(candidate)
+  ].join("|");
+}
+function authority3() {
+  return {
+    mode: "deterministic_in_app_selection_only",
+    inAppOnly: true,
+    generatesProse: false,
+    llmCallsAllowed: false,
+    providerCallsAllowed: false,
+    dbWritesAllowed: false,
+    plannerProposalAllowed: false,
+    plannerConfirmationAllowed: false,
+    plannerApplyAllowed: false
+  };
+}
+function candidatePriority(candidate) {
+  const importance = {
+    high: 0,
+    medium: 1,
+    low: 2
+  };
+  const severity = {
+    warning: 0,
+    notice: 1,
+    info: 2
+  };
+  return [
+    importance[candidate.importance],
+    severity[candidate.severity],
+    candidate.signalType,
+    candidate.dedupeKey
+  ];
+}
+function compareCandidates(left, right) {
+  const a = candidatePriority(left);
+  const b = candidatePriority(right);
+  return a[0] - b[0] || a[1] - b[1] || a[2].localeCompare(b[2]) || a[3].localeCompare(b[3]);
+}
+function mostRecentPresentation(presentations, predicate) {
+  let mostRecent;
+  let mostRecentAt = Number.NEGATIVE_INFINITY;
+  for (const presentation of presentations) {
+    if (!predicate(presentation)) {
+      continue;
+    }
+    const presentedAt = parseTimestamp(
+      presentation.presentedAt,
+      "PROACTIVE_PRESENTATION_TIME_INVALID"
+    );
+    if (presentedAt > mostRecentAt) {
+      mostRecent = presentation;
+      mostRecentAt = presentedAt;
+    }
+  }
+  return mostRecent;
+}
+function suppressionReason(candidate, fingerprint, state, nowMs) {
+  if (!candidate.eligibility.proactiveCandidate) {
+    return "not_proactive_candidate";
+  }
+  if (candidate.freshness.state !== "fresh" || candidate.freshness.expiresAt !== null && nowMs >= parseTimestamp(
+    candidate.freshness.expiresAt,
+    "PROACTIVE_FRESHNESS_EXPIRY_INVALID"
+  )) {
+    return "fact_not_fresh";
+  }
+  if (!PROACTIVE_COACH_POLICY_V1.acceptedConfidence.includes(
+    candidate.confidence
+  )) {
+    return "confidence_insufficient";
+  }
+  const materiality = evaluateProactiveCoachMaterialityV1(candidate);
+  if (materiality.materiality === "unresolved") {
+    return materiality.suppressionReason === "required_evidence_missing_or_invalid" || materiality.suppressionReason === "candidate_contract_mismatch" || materiality.suppressionReason === "confidence_below_policy_minimum" ? "materiality_evidence_invalid" : "materiality_threshold_unresolved";
+  }
+  if (materiality.materiality === "not_material") {
+    return "materiality_not_satisfied";
+  }
+  if (!materiality.actionable) {
+    return "materiality_not_actionable";
+  }
+  if (state.activeStudySession.availability !== "known" || state.activeStudySession.value === null) {
+    return "active_study_session_authority_unavailable";
+  }
+  if (state.activeStudySession.value.active) {
+    return "active_study_session";
+  }
+  if (state.disabledCategories.availability !== "known" || state.snoozes.availability !== "known" || state.dismissedFingerprints.availability !== "known") {
+    return "user_controls_authority_unavailable";
+  }
+  if (state.disabledCategories.values.includes(
+    candidate.eligibility.attentionCategory
+  )) {
+    return "category_disabled";
+  }
+  const snooze = state.snoozes.values.find(
+    (item) => item.attentionCategory === candidate.eligibility.attentionCategory && nowMs < parseTimestamp(item.until, "PROACTIVE_SNOOZE_TIME_INVALID")
+  );
+  if (snooze) {
+    return "category_snoozed";
+  }
+  if (state.dismissedFingerprints.values.includes(fingerprint)) {
+    return "fingerprint_dismissed";
+  }
+  if (state.presentations.availability !== "known") {
+    return "presentation_history_authority_unavailable";
+  }
+  const hysteresis = evaluateProactiveCoachHysteresisV1({
+    candidate,
+    presentations: state.presentations,
+    clearConditions: state.clearConditions
+  });
+  if (!hysteresis.allowed) {
+    if (hysteresis.reason === "clear_condition_authority_unavailable") {
+      return "hysteresis_clear_condition_unavailable";
+    }
+    if (hysteresis.reason === "rearm_not_proven_after_clear" || hysteresis.reason === "persistent_condition_requires_clear_observation") {
+      return "hysteresis_rearm_not_proven";
+    }
+    return "hysteresis_condition_already_presented";
+  }
+  const sameFingerprint = mostRecentPresentation(
+    state.presentations.values,
+    (item) => item.fingerprint === fingerprint
+  );
+  if (sameFingerprint && nowMs - parseTimestamp(
+    sameFingerprint.presentedAt,
+    "PROACTIVE_PRESENTATION_TIME_INVALID"
+  ) < PROACTIVE_COACH_POLICY_V1.sameFingerprintCooldownMs) {
+    return "same_fingerprint_cooldown";
+  }
+  const sameCategory = mostRecentPresentation(
+    state.presentations.values,
+    (item) => item.attentionCategory === candidate.eligibility.attentionCategory
+  );
+  if (sameCategory && nowMs - parseTimestamp(
+    sameCategory.presentedAt,
+    "PROACTIVE_PRESENTATION_TIME_INVALID"
+  ) < PROACTIVE_COACH_POLICY_V1.categoryCooldownMs) {
+    return "category_cooldown";
+  }
+  const dailyCount = state.presentations.values.filter(
+    (item) => item.calendarDate === state.currentDate
+  ).length;
+  if (dailyCount >= PROACTIVE_COACH_POLICY_V1.dailyAttentionLimit) {
+    return "daily_attention_budget";
+  }
+  const surfaceCount = state.presentations.values.filter(
+    (item) => item.surfaceSessionId === state.surfaceSessionId
+  ).length;
+  if (surfaceCount >= PROACTIVE_COACH_POLICY_V1.surfaceSessionAttentionLimit) {
+    return "surface_session_attention_budget";
+  }
+  return null;
+}
+function selectProactiveCoachInsightV1(candidates, state) {
+  const nowMs = parseTimestamp(state.now, "PROACTIVE_NOW_INVALID");
+  const ordered = [...candidates].sort(compareCandidates);
+  const suppressions = [];
+  for (const candidate of ordered) {
+    const fingerprint = buildProactiveCoachFingerprintV1(candidate);
+    const conditionKey = buildProactiveCoachConditionKeyV1(candidate);
+    const reason = suppressionReason(
+      candidate,
+      fingerprint,
+      state,
+      nowMs
+    );
+    if (reason) {
+      suppressions.push({
+        dedupeKey: candidate.dedupeKey,
+        fingerprint,
+        attentionCategory: candidate.eligibility.attentionCategory,
+        reason
+      });
+      continue;
+    }
+    return deepFreeze7({
+      version: PROACTIVE_COACH_SELECTION_V1_VERSION,
+      evaluatedAt: state.now,
+      currentDate: state.currentDate,
+      outcome: "selected",
+      selectedCandidate: structuredClone(candidate),
+      selectedFingerprint: fingerprint,
+      selectedConditionKey: conditionKey,
+      suppressions,
+      authority: authority3()
+    });
+  }
+  return deepFreeze7({
+    version: PROACTIVE_COACH_SELECTION_V1_VERSION,
+    evaluatedAt: state.now,
+    currentDate: state.currentDate,
+    outcome: "silence",
+    selectedCandidate: null,
+    selectedFingerprint: null,
+    selectedConditionKey: null,
+    suppressions,
+    authority: authority3()
+  });
+}
+
+// packages/domain/src/ai-coach/proactive-coach-runtime-state-v1.ts
+var PROACTIVE_COACH_RUNTIME_STATE_V1_VERSION = "proactive-coach-runtime-state-v1";
+function deepFreeze8(value) {
+  if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const child of Object.values(value)) deepFreeze8(child);
+  return value;
+}
+function validTimestamp3(value) {
+  return value.trim().length > 0 && Number.isFinite(Date.parse(value));
+}
+function assertRuntimeFact(fact, label) {
+  if (!validTimestamp3(fact.asOf)) throw new Error(`PROACTIVE_RUNTIME_${label}_AS_OF_INVALID`);
+  if (fact.availability === "known") {
+    if (fact.value === null || fact.unavailableReason !== null) {
+      throw new Error(`PROACTIVE_RUNTIME_${label}_KNOWN_INVALID`);
+    }
+    return;
+  }
+  if (fact.value !== null || !fact.unavailableReason?.trim()) {
+    throw new Error(`PROACTIVE_RUNTIME_${label}_UNAVAILABLE_INVALID`);
+  }
+}
+function assertRuntimeCollection(collection, label) {
+  if (!validTimestamp3(collection.asOf)) throw new Error(`PROACTIVE_RUNTIME_${label}_AS_OF_INVALID`);
+  if (collection.availability === "known") {
+    if (collection.unavailableReason !== null) {
+      throw new Error(`PROACTIVE_RUNTIME_${label}_KNOWN_INVALID`);
+    }
+    return;
+  }
+  if (collection.values.length !== 0 || !collection.unavailableReason?.trim()) {
+    throw new Error(`PROACTIVE_RUNTIME_${label}_UNAVAILABLE_INVALID`);
+  }
+}
+function assertActiveSession(fact) {
+  assertRuntimeFact(fact, "ACTIVE_SESSION");
+  if (fact.availability !== "known" || fact.value === null) return;
+  const value = fact.value;
+  if (value.active) {
+    if (!value.sessionId?.trim() || !value.startedAt || !validTimestamp3(value.startedAt)) {
+      throw new Error("PROACTIVE_RUNTIME_ACTIVE_SESSION_IDENTITY_INVALID");
+    }
+  } else if (value.sessionId !== null || value.startedAt !== null) {
+    throw new Error("PROACTIVE_RUNTIME_INACTIVE_SESSION_IDENTITY_INVALID");
+  }
+}
+function cloneAndSortPresentations(values) {
+  return [...structuredClone(values)].sort(
+    (left, right) => left.presentedAt.localeCompare(right.presentedAt) || left.fingerprint.localeCompare(right.fingerprint)
+  );
+}
+function cloneAndSortSnoozes(values) {
+  return [...structuredClone(values)].sort(
+    (left, right) => left.attentionCategory.localeCompare(right.attentionCategory) || left.until.localeCompare(right.until)
+  );
+}
+function authority4() {
+  return {
+    mode: "server_owned_proactive_runtime_state",
+    clientActiveSessionOverrideAllowed: false,
+    deterministicDerivationOnly: true,
+    dbWritesAllowed: false,
+    llmCallsAllowed: false,
+    providerCallsAllowed: false,
+    plannerPreviewAllowed: false,
+    plannerProposalAllowed: false,
+    plannerConfirmationAllowed: false,
+    plannerApplyAllowed: false
+  };
+}
+function buildProactiveCoachRuntimeStateV1(input) {
+  if (!validTimestamp3(input.now)) throw new Error("PROACTIVE_RUNTIME_NOW_INVALID");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.currentDate)) {
+    throw new Error("PROACTIVE_RUNTIME_CURRENT_DATE_INVALID");
+  }
+  if (!input.surfaceSessionId.trim()) throw new Error("PROACTIVE_RUNTIME_SURFACE_SESSION_ID_INVALID");
+  assertActiveSession(input.activeStudySession);
+  assertRuntimeCollection(input.presentations, "PRESENTATIONS");
+  assertRuntimeCollection(input.dismissedFingerprints, "DISMISSED_FINGERPRINTS");
+  assertRuntimeCollection(input.snoozes, "SNOOZES");
+  assertRuntimeCollection(input.disabledCategories, "DISABLED_CATEGORIES");
+  assertRuntimeCollection(input.clearConditions, "CLEAR_CONDITIONS");
+  for (const presentation of input.presentations.values) {
+    if (!validTimestamp3(presentation.presentedAt)) {
+      throw new Error("PROACTIVE_PRESENTATION_TIME_INVALID");
+    }
+    if (!presentation.fingerprint.trim() || !presentation.conditionKey.trim() || !presentation.surfaceSessionId.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(presentation.calendarDate)) throw new Error("PROACTIVE_RUNTIME_PRESENTATION_INVALID");
+  }
+  for (const snooze of input.snoozes.values) {
+    if (!validTimestamp3(snooze.until)) throw new Error("PROACTIVE_RUNTIME_SNOOZE_INVALID");
+  }
+  if (input.dismissedFingerprints.values.some((value) => !value.trim())) {
+    throw new Error("PROACTIVE_RUNTIME_DISMISSED_FINGERPRINT_INVALID");
+  }
+  for (const observation of input.clearConditions.values) {
+    if (!observation.conditionKey.trim() || !observation.reasonCode.trim() || !validTimestamp3(observation.observedAt) || observation.sourceFactPaths.length === 0 || observation.sourceFactPaths.some((path) => !path.trim())) throw new Error("PROACTIVE_RUNTIME_CLEAR_CONDITION_INVALID");
+  }
+  return deepFreeze8({
+    version: PROACTIVE_COACH_RUNTIME_STATE_V1_VERSION,
+    now: input.now,
+    currentDate: input.currentDate,
+    surfaceSessionId: input.surfaceSessionId,
+    activeStudySession: structuredClone(input.activeStudySession),
+    presentations: {
+      ...structuredClone(input.presentations),
+      values: cloneAndSortPresentations(input.presentations.values)
+    },
+    dismissedFingerprints: {
+      ...structuredClone(input.dismissedFingerprints),
+      values: [...new Set(input.dismissedFingerprints.values)].sort()
+    },
+    snoozes: {
+      ...structuredClone(input.snoozes),
+      values: cloneAndSortSnoozes(input.snoozes.values)
+    },
+    disabledCategories: {
+      ...structuredClone(input.disabledCategories),
+      values: [...new Set(input.disabledCategories.values)].sort()
+    },
+    clearConditions: {
+      ...structuredClone(input.clearConditions),
+      values: [...structuredClone(input.clearConditions.values)].sort(
+        (left, right) => left.observedAt.localeCompare(right.observedAt) || left.conditionKey.localeCompare(right.conditionKey)
+      )
+    },
+    authority: authority4()
+  });
+}
+
+// packages/domain/src/ai-coach/proactive-coach-card-v1.ts
+var PROACTIVE_COACH_CARD_V1_VERSION = "proactive-coach-card-v1";
+var PROACTIVE_COACH_CARD_TEMPLATE_V1_VERSION = "proactive-coach-card-template-v1";
+var ACTIONS = Object.freeze([
+  { action: "dismiss", label: "Bu kart\u0131 kapat" },
+  { action: "snooze_24h", label: "24 saat ertele" },
+  { action: "disable_category", label: "Bu t\xFCr bildirimleri kapat" }
+]);
+function integer(value) {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+function base(selection, candidate) {
+  if (!selection.selectedFingerprint?.trim()) return null;
+  return {
+    version: PROACTIVE_COACH_CARD_V1_VERSION,
+    templateVersion: PROACTIVE_COACH_CARD_TEMPLATE_V1_VERSION,
+    presentationToken: selection.selectedFingerprint,
+    fingerprint: selection.selectedFingerprint,
+    actions: ACTIONS
+  };
+}
+function deepFreeze9(value) {
+  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze9(child);
+  }
+  return value;
+}
+function presentProactiveCoachCardV1(selection) {
+  if (selection.outcome !== "selected" || selection.selectedCandidate === null) return null;
+  const candidate = selection.selectedCandidate;
+  const common = base(selection, candidate);
+  if (!common || candidate.eligibility.proactiveCandidate !== true) return null;
+  switch (candidate.signalType) {
+    case "today_completed_as_planned": {
+      const completed = candidate.evidence.completedTaskCount;
+      const planned = candidate.evidence.plannedMinutes;
+      const credit = candidate.evidence.plannedCreditMinutes;
+      if (candidate.reasonCode !== "today_all_tasks_completed_with_planned_credit" || candidate.eligibility.attentionCategory !== "progress" || !integer(completed) || completed < 1 || !integer(planned) || !integer(credit) || credit < planned) return null;
+      return deepFreeze9({
+        ...common,
+        signalType: candidate.signalType,
+        attentionCategory: "progress",
+        title: "Bug\xFCn\xFCn plan\u0131 tamamland\u0131",
+        body: `Planlanan ${planned} dakikal\u0131k \xE7al\u0131\u015Fma bug\xFCn tamamland\u0131.`,
+        tone: "positive",
+        evidenceSummary: [
+          { label: "Tamamlanan g\xF6rev", value: String(completed) },
+          { label: "Plan kredisi", value: `${credit} dk` }
+        ]
+      });
+    }
+    case "repeated_task_miss": {
+      const count = candidate.evidence.distinctMissCount;
+      if (candidate.reasonCode !== "same_task_missed_multiple_times_in_recent_window" || candidate.eligibility.attentionCategory !== "consistency" || !integer(count) || count < 2 || typeof candidate.evidence.taskId !== "string" || !candidate.evidence.taskId.trim()) return null;
+      return deepFreeze9({
+        ...common,
+        signalType: candidate.signalType,
+        attentionCategory: "consistency",
+        title: "Ayn\u0131 g\xF6rev birden fazla kez ka\xE7\u0131r\u0131ld\u0131",
+        body: `Ayn\u0131 g\xF6rev son ilerleme penceresinde ${count} kez ka\xE7\u0131r\u0131ld\u0131.`,
+        tone: "warning",
+        evidenceSummary: [{ label: "Ka\xE7\u0131r\u0131lma", value: `${count} kez` }]
+      });
+    }
+    case "recent_recovery": {
+      const missedAt = candidate.evidence.missedAt;
+      const completedAt = candidate.evidence.completedAt;
+      if (candidate.reasonCode !== "completed_after_recent_miss" || candidate.eligibility.attentionCategory !== "consistency" || typeof missedAt !== "string" || typeof completedAt !== "string" || !Number.isFinite(Date.parse(missedAt)) || !Number.isFinite(Date.parse(completedAt)) || Date.parse(completedAt) <= Date.parse(missedAt)) return null;
+      return deepFreeze9({
+        ...common,
+        signalType: candidate.signalType,
+        attentionCategory: "consistency",
+        title: "Ka\xE7\u0131r\u0131lan g\xF6rev tamamland\u0131",
+        body: "Daha \xF6nce ka\xE7\u0131r\u0131lan ayn\u0131 g\xF6rev daha sonra tamamland\u0131.",
+        tone: "positive",
+        evidenceSummary: [{ label: "Durum", value: "Tamamland\u0131" }]
+      });
+    }
+    case "planner_warning_present": {
+      const count = candidate.evidence.warningCount;
+      if (candidate.reasonCode !== "persisted_planner_warning_count_present" || candidate.eligibility.attentionCategory !== "planner" || !integer(count) || count < 1 || typeof candidate.evidence.lifecycleState !== "string") return null;
+      return deepFreeze9({
+        ...common,
+        signalType: candidate.signalType,
+        attentionCategory: "planner",
+        title: "Plan\u0131nda dikkat gerektiren bir durum var",
+        body: `Mevcut Planner V2 kayd\u0131nda ${count} uyar\u0131 bulunuyor.`,
+        tone: "notice",
+        evidenceSummary: [{ label: "Plan uyar\u0131s\u0131", value: String(count) }]
+      });
+    }
+    default:
+      return null;
+  }
+}
+
+// packages/domain/src/ai-coach/planner-coach-explanation-v1.ts
+var PLANNER_COACH_EXPLANATION_V1_VERSION = "planner-coach-explanation-v1";
+var PLANNER_COACH_PREVIEW_HREF = "/week#planner-v2-preview";
+var AUTHORITY = Object.freeze({
+  mode: "interpretation_and_navigation_only",
+  plannerMutationAllowed: false,
+  taskMutationAllowed: false,
+  capacityMutationAllowed: false,
+  proposalCreationAllowed: false,
+  confirmationAllowed: false,
+  applyAllowed: false
+});
+function deepFreeze10(value) {
+  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze10(child);
+  }
+  return value;
+}
+function unavailableAction(reasonCode) {
+  return {
+    availability: "unavailable",
+    action: null,
+    label: null,
+    href: null,
+    reasonCode,
+    requiresExplicitUserAction: true,
+    autoRunPreview: false,
+    confirmsProposal: false,
+    appliesProposal: false
+  };
+}
+function availableAction(reasonCode) {
+  return {
+    availability: "available",
+    action: "open_existing_planner_v2_preview",
+    label: "Plan\u0131 \xF6nizle",
+    href: PLANNER_COACH_PREVIEW_HREF,
+    reasonCode,
+    requiresExplicitUserAction: true,
+    autoRunPreview: false,
+    confirmsProposal: false,
+    appliesProposal: false
+  };
+}
+function capabilityAction(capability, reasonCode) {
+  if (capability.availability === "unknown") {
+    return unavailableAction("canonical_preview_capability_unknown");
+  }
+  return capability.previewEnabled ? availableAction(reasonCode) : unavailableAction("canonical_preview_disabled");
+}
+function result(input) {
+  return deepFreeze10({
+    version: PLANNER_COACH_EXPLANATION_V1_VERSION,
+    ...input,
+    authority: AUTHORITY
+  });
+}
+function buildPlannerCoachExplanationV1(input) {
+  if (!Number.isFinite(Date.parse(input.now))) {
+    throw new Error("PLANNER_COACH_EXPLANATION_NOW_INVALID");
+  }
+  const planner = input.planner;
+  if (planner.availability === "stale") {
+    return result({
+      state: "STALE_OR_EXPIRED",
+      answer: "Planner kan\u0131t\u0131 g\xFCncel de\u011Fil. Eski kan\u0131ta dayanarak plan\u0131n hakk\u0131nda sonu\xE7 veya \xF6nizleme vaadi \xFCretmiyorum.",
+      currentPreviewExists: false,
+      lifecycleState: planner.value?.lifecycleState ?? null,
+      canonicalWarningCodes: [],
+      explanationFacts: [],
+      sourceFactPaths: [],
+      acknowledgedUnknowns: ["planner"],
+      staleOrBlockedWarnings: ["planner"],
+      provenance: planner.provenance,
+      asOf: planner.freshness.asOf,
+      previewAction: unavailableAction("planner_evidence_stale")
+    });
+  }
+  if (planner.availability === "unknown" || planner.availability === "blocked") {
+    const blocked = planner.availability === "blocked";
+    return result({
+      state: "UNKNOWN_OR_BLOCKED",
+      answer: "Planner durumu \u015Fu anda canonical kan\u0131tla do\u011Frulanam\u0131yor. Plan\u0131n hakk\u0131nda sonu\xE7 uydurmuyorum.",
+      currentPreviewExists: false,
+      lifecycleState: null,
+      canonicalWarningCodes: [],
+      explanationFacts: [],
+      sourceFactPaths: [],
+      acknowledgedUnknowns: ["planner"],
+      staleOrBlockedWarnings: blocked ? ["planner"] : [],
+      provenance: planner.provenance,
+      asOf: planner.freshness.asOf,
+      previewAction: unavailableAction(blocked ? "planner_evidence_blocked" : "planner_evidence_unknown")
+    });
+  }
+  if (planner.availability === "not_applicable") {
+    const previewAction2 = capabilityAction(input.previewCapability, "new_preview_available");
+    return result({
+      state: "NO_CURRENT_PREVIEW",
+      answer: previewAction2.availability === "available" ? "Do\u011Frulanm\u0131\u015F g\xFCncel bir Planner \xF6nizlemesi yok. Plan\u0131n hakk\u0131nda sonu\xE7 uydurmuyorum; istersen mevcut Planner V2 \xF6nizleme ak\u0131\u015F\u0131n\u0131 a\xE7abilirsin." : "Do\u011Frulanm\u0131\u015F g\xFCncel bir Planner \xF6nizlemesi yok. Plan\u0131n hakk\u0131nda sonu\xE7 uydurmuyorum ve mevcut capability ile \xF6nizleme sunulam\u0131yor.",
+      currentPreviewExists: false,
+      lifecycleState: null,
+      canonicalWarningCodes: [],
+      explanationFacts: [],
+      sourceFactPaths: [],
+      acknowledgedUnknowns: ["planner.currentPreview"],
+      staleOrBlockedWarnings: [],
+      provenance: planner.provenance,
+      asOf: planner.freshness.asOf,
+      previewAction: previewAction2
+    });
+  }
+  const value = planner.value;
+  const expiresAt = Date.parse(value.expiresAt);
+  const expired = value.lifecycleState === "stale" || value.lifecycleState === "expired" || (!Number.isFinite(expiresAt) || expiresAt <= Date.parse(input.now));
+  if (expired) {
+    return result({
+      state: "STALE_OR_EXPIRED",
+      answer: "Planner \xF6nizlemesi eskimi\u015F veya s\xFCresi dolmu\u015F. Bu kan\u0131ta dayanarak g\xFCncel plan sonucu \xFCretmiyorum.",
+      currentPreviewExists: false,
+      lifecycleState: value.lifecycleState,
+      canonicalWarningCodes: [],
+      explanationFacts: [],
+      sourceFactPaths: [],
+      acknowledgedUnknowns: ["planner.currentPreview"],
+      staleOrBlockedWarnings: ["planner"],
+      provenance: planner.provenance,
+      asOf: planner.freshness.asOf,
+      previewAction: unavailableAction("planner_evidence_stale")
+    });
+  }
+  const currentPreviewExists = value.lifecycleState === "generated" || value.lifecycleState === "previewed" || value.lifecycleState === "confirmed";
+  const warningCodes = [...new Set(value.warnings)].sort();
+  const previewAction = capabilityAction(
+    input.previewCapability,
+    currentPreviewExists ? "current_preview_review_available" : "new_preview_available"
+  );
+  if (!currentPreviewExists) {
+    return result({
+      state: "NO_CURRENT_PREVIEW",
+      answer: previewAction.availability === "available" ? "Planner lifecycle kan\u0131t\u0131 mevcut, ancak incelenebilir g\xFCncel bir \xF6nizleme yok. \u0130stersen mevcut Planner V2 \xF6nizleme ak\u0131\u015F\u0131n\u0131 a\xE7abilirsin." : "Planner lifecycle kan\u0131t\u0131 mevcut, ancak incelenebilir g\xFCncel bir \xF6nizleme yok ve mevcut capability ile \xF6nizleme sunulam\u0131yor.",
+      currentPreviewExists: false,
+      lifecycleState: value.lifecycleState,
+      canonicalWarningCodes: [],
+      explanationFacts: [],
+      sourceFactPaths: ["planner.value.lifecycleState"],
+      acknowledgedUnknowns: ["planner.currentPreview"],
+      staleOrBlockedWarnings: [],
+      provenance: planner.provenance,
+      asOf: planner.freshness.asOf,
+      previewAction
+    });
+  }
+  return result({
+    state: "CURRENT_PREVIEW",
+    answer: warningCodes.length > 0 ? `Planner'\u0131n g\xFCncel \xF6nizlemesinde ${warningCodes.length} canonical uyar\u0131 var. Ayr\u0131nt\u0131lar mevcut Planner kan\u0131t\u0131ndan gelir; plan\u0131nda de\u011Fi\u015Fiklik yap\u0131lmad\u0131.` : "Planner'\u0131n g\xFCncel \xF6nizlemesi var ve canonical uyar\u0131 bulunmuyor. Plan\u0131nda de\u011Fi\u015Fiklik yap\u0131lmad\u0131.",
+    currentPreviewExists: true,
+    lifecycleState: value.lifecycleState,
+    canonicalWarningCodes: warningCodes,
+    explanationFacts: value.explanationFacts,
+    sourceFactPaths: [
+      "planner.value.lifecycleState",
+      "planner.value.warnings",
+      "planner.value.explanationFacts",
+      "planner.value.expiresAt"
+    ],
+    acknowledgedUnknowns: [],
+    staleOrBlockedWarnings: [],
+    provenance: planner.provenance,
+    asOf: planner.freshness.asOf,
+    previewAction
+  });
+}
 export {
   AI_COACH_CAPABILITIES_V1,
   AI_COACH_INTENTS_V1,
@@ -2549,24 +3636,44 @@ export {
   COACH_SIGNAL_SET_V1_VERSION,
   COACH_SIGNAL_TYPES_V1,
   COACH_SIGNAL_V1_LIMITS,
+  PLANNER_COACH_EXPLANATION_V1_VERSION,
+  PLANNER_COACH_PREVIEW_HREF,
+  PROACTIVE_COACH_CARD_TEMPLATE_V1_VERSION,
+  PROACTIVE_COACH_CARD_V1_VERSION,
+  PROACTIVE_COACH_HYSTERESIS_V1_VERSION,
+  PROACTIVE_COACH_MATERIALITY_POLICY_V1,
+  PROACTIVE_COACH_MATERIALITY_POLICY_V1_VERSION,
+  PROACTIVE_COACH_MATERIALITY_SIGNAL_TYPES_V1,
+  PROACTIVE_COACH_MATERIALITY_THRESHOLD_V1_VERSION,
+  PROACTIVE_COACH_POLICY_V1,
+  PROACTIVE_COACH_RUNTIME_STATE_V1_VERSION,
+  PROACTIVE_COACH_SELECTION_V1_VERSION,
   aggregateMonthlyAiUsageV1,
   aiAccountingMonthV1,
   blockedCoachContextV1Fact,
   buildAiCoachSystemPromptV1,
   buildCoachContextV1,
   buildCoachSignalSetV1,
+  buildPlannerCoachExplanationV1,
+  buildProactiveCoachConditionKeyV1,
+  buildProactiveCoachFingerprintV1,
+  buildProactiveCoachRuntimeStateV1,
   calculateAiNativeCostV1,
   convertAiCostToTryV1,
   createAiUsageEventV1,
   estimateAiEvidenceV1,
+  evaluateProactiveCoachHysteresisV1,
+  evaluateProactiveCoachMaterialityV1,
   executeAiStudyMessageV1,
   knownCoachContextV1Fact,
   mapAiInterpretationToDomainEventV1,
   notApplicableCoachContextV1Fact,
   preflightAiCostV1,
+  presentProactiveCoachCardV1,
   projectCoachEvidenceViewV1,
   resolveCoachEvidenceDetailV1,
   routeAiCapabilityV1,
+  selectProactiveCoachInsightV1,
   staleCoachContextV1Fact,
   unknownCoachContextV1Fact,
   validateAiInterpretationV1

@@ -891,6 +891,17 @@ Deno.serve(async (request) => {
         examProfileId: profile.id,
         requestId: crypto.randomUUID(),
         requestedAt: new Date().toISOString(),
+        plannerPreviewCapability: plannerV2PreviewEnabled
+          ? {
+              availability: "known",
+              previewEnabled: true,
+              reasonCode: "canonical_preview_enabled",
+            }
+          : {
+              availability: "known",
+              previewEnabled: false,
+              reasonCode: "canonical_preview_disabled",
+            },
 
         dependencies: {
           prepareProviderExecution:

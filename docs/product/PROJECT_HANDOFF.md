@@ -1,5 +1,17 @@
 # KPSS Koçu — Project Handoff
 
+> **Authoritative current state - PLANNER_V2_COACH_INTEGRATION_6E_CLOSED_2026_09_19**
+>
+> - **Evre 6D Proactive Coach is CLOSED; `AIC-004` is DONE. Evre 6E Planner V2 Integration is CLOSED; `AIC-005` is DONE. Evre 6F Conversation Intelligence is `NOT_STARTED`; Evre 6G is `NOT_STARTED`.**
+> - Accepted Evre 6E implementation baseline: `836e6443aa7072f674d0da452d952cfa072b7d7b`.
+> - Evre 6E reuses canonical Planner evidence already carried through CoachContextV1 and adds a deterministic, fail-closed Planner explanation contract to the Reactive Coach path. No duplicate canonical Planner/workload/capacity truth engine was introduced.
+> - The web exposes an explicit user-triggered Planner Preview CTA and reuses the existing canonical Planner V2 Preview flow. Coach message generation does not automatically run Preview and natural-language agreement is not Planner confirmation.
+> - Acceptance is GREEN: focused 6E + 6D regression `129/129`; full non-integration `1362/1362` across `176/176` files; workspace typecheck PASS; AI Coach safety PASS; AI Coach plan-preview safety PASS; canonical Planner V2 read-only safety PASS.
+> - New Coach-side automatic Preview, proposal creation, Confirm, Apply, task mutation, capacity mutation, and Planner mutation authority are all `0`.
+> - This checkpoint adds `0` migrations and performs `0` production deploy/mutation/migration actions. Planner Confirm remains OFF. Planner Apply remains OFF.
+> - **NEXT EXACT STEP:** Begin Evre 6F / Conversation Intelligence as one deliberately minimal V1 slice: bounded recent conversation context plus compact structured state/signals only. Do not build a generic long-term memory platform.
+> - This block supersedes every older current-state, active-status, remaining-work, and next-step statement below. Older checkpoint sections remain historical evidence only.
+
 > **Authoritative current state — PROACTIVE_COACH_6D_CLOSED_2026_09_19**
 >
 > - **Evre 6D Proactive Coach is CLOSED; `AIC-004` is DONE. Evre 6E Planner V2 Integration is `NOT_STARTED`.**
@@ -9,7 +21,7 @@
 > - Verification: focused proactive `140/140`; final matrix harness `32/32`; full non-integration `1341/1341` across `173/173` files; loopback local persistence `8/8`; workspace typecheck, AI Coach safety, and Planner safety PASS.
 > - Unauthorized DB mutations, Planner/task/capacity mutations, provider calls, and LLM calls are all `0`. This closure checkpoint adds `0` migrations and performs `0` production deploy/mutation/migration actions. Planner Confirm and Apply remain OFF.
 > - The four unresolved signal classes remain fail-closed silence; closing 6D does not authorize new signals, provider activation, Planner proposals, deployment, migration, Confirm, or Apply.
-> - **NEXT EXACT STEP:** Begin Evre 6E / Planner V2 Integration as a separate checkpoint while preserving proposal-before-mutation, explicit confirmation, stale proposal rejection, Today protection, Confirm OFF and Apply OFF until separately authorized.
+> - **NEXT EXACT STEP:** Begin Evre 6F / Conversation Intelligence as one deliberately minimal V1 slice using bounded recent conversation context plus compact structured state/signals; preserve canonical truth, user/profile isolation, and all Planner authority boundaries.
 > - This block supersedes every older current-state, active-status, remaining-work, and next-step statement below. Older checkpoint sections remain historical evidence only.
 
 
@@ -156,7 +168,7 @@ Last updated: 2026-09-19
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Base branch: `main`
-- Local working branch: `develop`; latest accepted Evre 6D persistence code checkpoint is `7302b23f7686ef6703f25ae8e54fb3568c8d9749`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
+- Local working branch: `develop`; accepted Evre 6E implementation baseline is `836e6443aa7072f674d0da452d952cfa072b7d7b`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
 - 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - 6B.1 accepted checkpoint: `acd16ffb2263b5285b14bd7329ff4357d7971e00`
 - Last verified product checkpoint before W5: `fa46fd2`
@@ -217,7 +229,7 @@ Reactive Coach remains read-only. Planner/task/capacity mutation authority, Conf
 
 V1 may select only completed-as-planned, repeated task miss, recent recovery, and persisted Planner warning after independent evidence validation. Partial completion, completion drop, capacity change, and material stall remain explicit unresolved silence. The accepted implementation now includes persisted presentation/control/clear state, server-owned runtime assembly, authenticated read-only selection, deterministic post-surface cards, idempotent presentation recording, dismiss/snooze/disable controls, and the Today surface. Final shadow precision/actionability/silence acceptance passed `39/39` with zero false positives or wrong signal/evidence selections, so AIC-004 is complete at baseline `421de04e2c52c0bf7b0f296a679dfb9108db0030`.
 
-6E Planner integration, 6F bounded conversation intelligence, and 6G production acceptance remain NOT_STARTED. No 6E implementation has begun.
+6E Planner integration is CLOSED at accepted implementation baseline `836e6443aa7072f674d0da452d952cfa072b7d7b`. 6F bounded conversation intelligence and 6G production acceptance remain NOT_STARTED.
 
 ## Production guardrails
 
@@ -242,9 +254,9 @@ V1 may select only completed-as-planned, repeated task miss, recent recovery, an
 
 ## NEXT EXACT STEP
 
-Begin Evre 6E / Planner V2 Integration as a separate checkpoint while preserving proposal-before-mutation, explicit confirmation, stale proposal rejection, Today protection, Confirm OFF and Apply OFF until separately authorized.
+Begin Evre 6F / Conversation Intelligence as one deliberately minimal V1 slice using bounded recent conversation context plus compact structured state/signals; preserve canonical truth, user/profile isolation, and all Planner authority boundaries.
 
-Do not infer implementation authority from this handoff. Do not deploy, migrate, access or mutate production, activate provider traffic, create/apply Planner proposals, or change Planner V2 Confirm/Apply gates while preparing the separate 6E checkpoint.
+Do not infer implementation authority from this handoff. Do not deploy, migrate, access or mutate production, activate provider traffic, create/apply Planner proposals, or change Planner V2 Confirm/Apply gates while preparing the separate 6F checkpoint.
 
 ## 2026-09-10 Evre 6A final contract closure
 

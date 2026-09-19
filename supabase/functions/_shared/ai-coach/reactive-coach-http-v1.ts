@@ -9,6 +9,10 @@ import {
   type ReactiveCoachRouteDecisionV1,
 } from "./reactive-coach-route-v1.ts";
 
+import type {
+  PlannerCoachPreviewCapabilityV1,
+} from "../../../../packages/domain/src/ai-coach/planner-coach-explanation-v1.ts";
+
 
 export const REACTIVE_COACH_HTTP_V1_VERSION =
   "reactive-coach-http-v1" as const;
@@ -53,6 +57,9 @@ export interface HandleReactiveCoachHttpInputV1 {
 
   readonly requestedAt:
     string;
+
+  readonly plannerPreviewCapability?:
+    PlannerCoachPreviewCapabilityV1;
 
   readonly dependencies?:
     Partial<ReactiveCoachHttpDependenciesV1>;
@@ -434,6 +441,13 @@ export async function handleReactiveCoachHttpV1(
 
         requestedAt:
           input.requestedAt,
+
+        ...(input.plannerPreviewCapability
+          ? {
+              plannerPreviewCapability:
+                input.plannerPreviewCapability,
+            }
+          : {}),
 
         ...(provider
           ? { provider }

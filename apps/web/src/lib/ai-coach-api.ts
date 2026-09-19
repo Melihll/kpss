@@ -1,5 +1,6 @@
 import type {
   AiStudyMessageExecutionResultV1,
+  PlannerCoachExplanationV1,
   ProactiveCoachCardActionV1,
   ProactiveCoachCardV1,
   ProactiveCoachSelectionV1,
@@ -116,6 +117,40 @@ export interface ProactiveCoachActionResponseV1 {
   readonly presentationId?: string;
   readonly presentedAt?: string;
   readonly action?: "dismiss" | "snooze" | "disable_category";
+}
+
+export interface ReactiveCoachResponseV1 {
+  readonly version: "reactive-coach-http-v1";
+  readonly status: "OK";
+  readonly execution: {
+    readonly response: {
+      readonly state: string;
+      readonly executionTier: "T0_DETERMINISTIC" | "PROVIDER_READ_ONLY";
+      readonly capability: string | null;
+      readonly deterministicKind: string | null;
+      readonly answer: string;
+      readonly sourceFactPaths: readonly string[];
+      readonly acknowledgedUnknowns: readonly string[];
+      readonly staleOrBlockedWarnings: readonly string[];
+      readonly providerAttempted: boolean;
+      readonly providerUsed: boolean;
+      readonly noMutationPerformed: true;
+      readonly plannerExplanation?: PlannerCoachExplanationV1;
+    };
+  };
+}
+
+export async function callReactiveCoach(
+  message: string,
+): Promise<ReactiveCoachResponseV1> {
+  const normalizedMessage = message.trim();
+  if (!normalizedMessage) {
+    throw new AppApiError("INVALID_MESSAGE", "Koça göndermek için bir mesaj yazın.");
+  }
+  return callAppApi<ReactiveCoachResponseV1>("/ai-coach/reactive", {
+    method: "POST",
+    body: { message: normalizedMessage },
+  });
 }
 
 function normalizeSurfaceSessionId(value: string): string {

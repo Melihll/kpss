@@ -2,6 +2,15 @@ import type {
   CoachContextV1,
 } from "../../../../packages/domain/src/ai-coach/coach-context-v1.ts";
 
+import type {
+  PlannerCoachExplanationV1,
+  PlannerCoachPreviewCapabilityV1,
+} from "../../../../packages/domain/src/ai-coach/planner-coach-explanation-v1.ts";
+
+import {
+  buildPlannerCoachExplanationV1,
+} from "../ai-coach.bundle.js";
+
 import {
   loadCoachContextV1ReadOnly,
 } from "../coach-context-v1-readonly.ts";
@@ -81,6 +90,9 @@ export interface ExecuteReactiveCoachRequestInputV1 {
   readonly requestedAt:
     string;
 
+  readonly plannerPreviewCapability?:
+    PlannerCoachPreviewCapabilityV1;
+
   readonly provider?:
     ReactiveCoachProviderExecutionInputV1;
 
@@ -124,6 +136,9 @@ export interface ReactiveCoachAnswerV1 {
 
   readonly noMutationPerformed:
     true;
+
+  readonly plannerExplanation?:
+    PlannerCoachExplanationV1;
 }
 
 
@@ -552,6 +567,66 @@ function todayProgressAnswer(
 }
 
 
+function plannerStateExplanationAnswer(
+  context: CoachContextV1,
+  input: ExecuteReactiveCoachRequestInputV1,
+): ReactiveCoachAnswerV1 {
+  const explanation =
+    buildPlannerCoachExplanationV1({
+      planner:
+        context.planner,
+
+      previewCapability:
+        input.plannerPreviewCapability
+        ?? {
+          availability: "unknown",
+          previewEnabled: false,
+          reasonCode:
+            "canonical_preview_capability_unknown",
+        },
+
+      now:
+        input.requestedAt,
+    });
+
+  const state:
+    ReactiveCoachUxStateV1 =
+      explanation.state
+        === "STALE_OR_EXPIRED"
+        ? "STALE_OR_EXPIRED"
+        : explanation.state
+          === "UNKNOWN_OR_BLOCKED"
+          ? "UNKNOWN_OR_BLOCKED"
+          : "EXPLANATION";
+
+  return deepFreeze({
+    state,
+    executionTier:
+      "T0_DETERMINISTIC",
+    capability:
+      "planner_explanation",
+    deterministicKind:
+      "planner_state_explanation",
+    answer:
+      explanation.answer,
+    sourceFactPaths:
+      explanation.sourceFactPaths,
+    acknowledgedUnknowns:
+      explanation.acknowledgedUnknowns,
+    staleOrBlockedWarnings:
+      explanation.staleOrBlockedWarnings,
+    providerAttempted:
+      false,
+    providerUsed:
+      false,
+    noMutationPerformed:
+      true,
+    plannerExplanation:
+      explanation,
+  });
+}
+
+
 function resolveSubjectId(
   context: CoachContextV1,
   rawMessage: string,
@@ -803,10 +878,21 @@ export async function executeReactiveCoachRequestV1(
     route.executionTier
       === "T0_DETERMINISTIC"
   ) {
-    if (
+    const response =
       route.deterministicKind
-        !== "today_progress"
-    ) {
+        === "today_progress"
+        ? todayProgressAnswer(
+            context,
+          )
+        : route.deterministicKind
+            === "planner_state_explanation"
+          ? plannerStateExplanationAnswer(
+              context,
+              input,
+            )
+          : null;
+
+    if (response === null) {
       throw new Error(
         "REACTIVE_COACH_CONTEXTUAL_T0_KIND_UNSUPPORTED",
       );
@@ -818,10 +904,7 @@ export async function executeReactiveCoachRequestV1(
 
       route,
 
-      response:
-        todayProgressAnswer(
-          context,
-        ),
+      response,
 
       provider:
         null,

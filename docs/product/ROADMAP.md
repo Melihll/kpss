@@ -1,5 +1,17 @@
 # KPSS Koçu Product Roadmap
 
+> **Authoritative current state - PLANNER_V2_COACH_INTEGRATION_6E_CLOSED_2026_09_19**
+>
+> - **Evre 6D Proactive Coach is CLOSED; `AIC-004` is DONE. Evre 6E Planner V2 Integration is CLOSED; `AIC-005` is DONE. Evre 6F Conversation Intelligence is `NOT_STARTED`; Evre 6G is `NOT_STARTED`.**
+> - Accepted Evre 6E implementation baseline: `836e6443aa7072f674d0da452d952cfa072b7d7b`.
+> - Evre 6E reuses canonical Planner evidence already carried through CoachContextV1 and adds a deterministic, fail-closed Planner explanation contract to the Reactive Coach path. No duplicate canonical Planner/workload/capacity truth engine was introduced.
+> - The web exposes an explicit user-triggered Planner Preview CTA and reuses the existing canonical Planner V2 Preview flow. Coach message generation does not automatically run Preview and natural-language agreement is not Planner confirmation.
+> - Acceptance is GREEN: focused 6E + 6D regression `129/129`; full non-integration `1362/1362` across `176/176` files; workspace typecheck PASS; AI Coach safety PASS; AI Coach plan-preview safety PASS; canonical Planner V2 read-only safety PASS.
+> - New Coach-side automatic Preview, proposal creation, Confirm, Apply, task mutation, capacity mutation, and Planner mutation authority are all `0`.
+> - This checkpoint adds `0` migrations and performs `0` production deploy/mutation/migration actions. Planner Confirm remains OFF. Planner Apply remains OFF.
+> - **NEXT EXACT STEP:** Begin Evre 6F / Conversation Intelligence as one deliberately minimal V1 slice: bounded recent conversation context plus compact structured state/signals only. Do not build a generic long-term memory platform.
+> - This block supersedes every older current-state, active-status, remaining-work, and next-step statement below. Older checkpoint sections remain historical evidence only.
+
 > **Authoritative current state — PROACTIVE_COACH_6D_CLOSED_2026_09_19**
 >
 > - **Evre 6D Proactive Coach is CLOSED; `AIC-004` is DONE. Evre 6E Planner V2 Integration is `NOT_STARTED`.**
@@ -218,7 +230,8 @@ M1 is complete only when:
 - `CLOSED SUB-PHASE`: 6A Product / Authority / Cost Contract; final decisions accepted, docs only, runtime unchanged, production Confirm OFF, Apply OFF.
 - `CLOSED SUB-PHASE`: 6B CoachContextV1 and 6C Reactive Coach.
 - `CLOSED SUB-PHASE`: 6D Proactive Coach / AIC-004. Final implementation baseline `421de04e2c52c0bf7b0f296a679dfb9108db0030` and deterministic `39/39` shadow acceptance are accepted with zero false positives, wrong signal/evidence, unauthorized mutations, or provider/LLM calls.
-- `NOT_STARTED SUB-PHASE`: 6E Planner V2 Integration. It requires a separate checkpoint and grants no proposal, Confirm, Apply, deployment, migration, or production authority.
+- `CLOSED SUB-PHASE`: 6E Planner V2 Integration / AIC-005. Accepted implementation baseline `836e6443aa7072f674d0da452d952cfa072b7d7b`; canonical Planner evidence explanation and explicit existing-Preview CTA are accepted with no new Planner mutation authority.
+- `NOT_STARTED SUB-PHASE`: 6F Conversation Intelligence / AIC-006. V1 is intentionally bounded to recent conversation context plus compact structured state/signals; it is not a generic long-term memory platform.
 - `CONTINUING FOUNDATIONS`: natural `PLN-002` Extra Study acceptance and gated `PLN-003`/`PLN-004`/`MAT-001`/`PLN-005` maturity work.
 
 ## Evre 6 — AI Coach

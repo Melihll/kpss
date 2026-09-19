@@ -27,6 +27,7 @@ export type ReactiveCoachExecutionTierV1 =
 
 export type ReactiveCoachDeterministicKindV1 =
   | "today_progress"
+  | "planner_state_explanation"
   | "out_of_scope_teaching"
   | "out_of_scope_quiz"
   | "planning_change_unavailable"
@@ -37,6 +38,7 @@ export type ReactiveCoachDeterministicKindV1 =
 
 export type ReactiveCoachRouteReasonV1 =
   | "exact_today_progress_is_deterministic"
+  | "planner_state_uses_canonical_deterministic_explanation"
   | "teaching_is_out_of_scope"
   | "quiz_is_out_of_scope"
   | "chat_apply_has_no_authority"
@@ -234,7 +236,8 @@ export function routeReactiveCoachRequestV1(
 
   const chatApplyAttempt =
     /\b(uygula|onayla)\b/
-      .test(message);
+      .test(message)
+    || /^(evet|tamam)$/.test(message);
 
   if (chatApplyAttempt) {
     return decision({
@@ -354,6 +357,27 @@ export function routeReactiveCoachRequestV1(
       reasonCode:
         "planning_mutation_requires_future_canonical_flow",
       requiresCanonicalContext: false,
+      providerCallAllowed: false,
+    });
+  }
+
+  const plannerStateQuestion =
+    containsAny(message, [
+      "planimda sorun var mi",
+      "neden plan onizleme oneriyorsun",
+      "planner ne goruyor",
+      "bu hafta plani yenilemeli miyim",
+      "plani yenilemeli miyim",
+    ]);
+
+  if (plannerStateQuestion) {
+    return decision({
+      state: "EXPLANATION",
+      executionTier: "T0_DETERMINISTIC",
+      capability: "planner_explanation",
+      deterministicKind: "planner_state_explanation",
+      reasonCode: "planner_state_uses_canonical_deterministic_explanation",
+      requiresCanonicalContext: true,
       providerCallAllowed: false,
     });
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppApiError, callAppApi } from "../lib/app-api";
 import {
   canApplyPlannerV2Proposal,
@@ -78,6 +78,7 @@ function factLabel(fact: PlannerPreview["explanationFacts"][number]): string {
 }
 
 export function PlannerV2PreviewPanel() {
+  const panelRef = useRef<HTMLElement | null>(null);
   const [capability, setCapability] = useState<Capability | null>(null);
   const [payload, setPayload] = useState<PreviewResponse | null>(null);
   const [busy, setBusy] = useState(false);
@@ -93,6 +94,14 @@ export function PlannerV2PreviewPanel() {
       .catch(() => { if (active) setCapability(null); });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!capability?.enabled || window.location.hash !== "#planner-v2-preview") return;
+    window.requestAnimationFrame(() => {
+      panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      panelRef.current?.focus({ preventScroll: true });
+    });
+  }, [capability?.enabled]);
 
   if (!capability?.enabled) return null;
 
@@ -174,7 +183,13 @@ export function PlannerV2PreviewPanel() {
     }
   }
 
-  return <section className="planner-v2-preview" aria-labelledby="planner-v2-preview-title">
+  return <section
+    id="planner-v2-preview"
+    ref={panelRef}
+    tabIndex={-1}
+    className="planner-v2-preview"
+    aria-labelledby="planner-v2-preview-title"
+  >
     <div className="planner-v2-preview-head">
       <div>
         <span>Deneysel · işlem yapmaz</span>
