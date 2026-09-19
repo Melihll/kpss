@@ -42,6 +42,10 @@ import {
 import { handleReactiveCoachHttpV1 } from "../_shared/ai-coach/reactive-coach-http-v1.ts";
 import { handleProactiveCoachHttpV1 } from "../_shared/ai-coach/proactive-coach-http-v1.ts";
 import {
+  handleProactiveCoachActionHttpV1,
+  type ProactiveCoachWriteActionV1,
+} from "../_shared/ai-coach/proactive-coach-actions-http-v1.ts";
+import {
   createReactiveCoachDevProviderPreparationV1,
   REACTIVE_COACH_DEV_RUNTIME_SERVER_KEYS_V1,
   resolveReactiveCoachDeploymentEnvironmentV1,
@@ -902,6 +906,29 @@ Deno.serve(async (request) => {
       const result = await handleProactiveCoachHttpV1({
         body,
         contextClient: client,
+        userId,
+        examProfileId: profile.id,
+        currentDate: today,
+        requestId: crypto.randomUUID(),
+        requestedAt: new Date().toISOString(),
+      });
+      return json(result.body, result.status);
+    }
+
+    const proactiveActionByRoute: Readonly<Record<string, ProactiveCoachWriteActionV1>> = {
+      "/ai-coach/proactive/presented": "presented",
+      "/ai-coach/proactive/dismiss": "dismiss",
+      "/ai-coach/proactive/snooze": "snooze",
+      "/ai-coach/proactive/disable-category": "disable_category",
+    };
+    const proactiveAction = proactiveActionByRoute[route];
+    if (request.method === "POST" && proactiveAction) {
+      const body = await request.json().catch(() => null);
+      const result = await handleProactiveCoachActionHttpV1({
+        action: proactiveAction,
+        body,
+        contextClient: client,
+        serviceClient,
         userId,
         examProfileId: profile.id,
         currentDate: today,

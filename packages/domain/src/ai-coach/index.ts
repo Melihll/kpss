@@ -12,3 +12,4 @@ export * from "./proactive-coach-selection-v1";
 export * from "./proactive-coach-materiality-policy-v1";
 export * from "./proactive-coach-runtime-state-v1";
 export * from "./proactive-coach-hysteresis-v1";
+export * from "./proactive-coach-card-v1";

@@ -18,6 +18,7 @@ import {
   defaultTaskMaterialTab,
   taskMaterialResource,
 } from "../lib/today-material-actions";
+import { ProactiveCoachSurface } from "./ProactiveCoachSurface";
 
 interface ActiveSession {
   id: string;
@@ -356,6 +357,7 @@ export function StudyTodayPanel() {
 
     {error && <div className="inline-state error" role="alert"><span>Veriler yüklenemedi.</span><button type="button" onClick={() => void load()}>Tekrar Dene</button></div>}
     {completionNotice && <div className="inline-state" role="status"><span>{completionNotice}</span><button type="button" onClick={() => setCompletionNotice(null)}>Kapat</button></div>}
+    <ProactiveCoachSurface />
 
     <article className={`focus-now-card ${active ? "is-running" : ""} ${paused ? "is-paused" : ""}`} onPointerMove={moveSpotlight}>
       <div className="focus-spotlight" aria-hidden="true" />
