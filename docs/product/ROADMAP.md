@@ -1,19 +1,15 @@
 # KPSS Koçu Product Roadmap
 
-> **Active phase - REACTIVE_COACH_6C_FINAL_ACCEPTANCE_COMPLETE_2026_09_17**
+> **Active phase - PROACTIVE_COACH_6D_MATERIALITY_CHECKPOINT_2026_09_19**
 >
-> - **6B Runtime Foundation is CLOSED** at checkpoint `50ded37fe0426a2489a3112c197fbafe9d876f9b`.
-> - **6C Reactive Coach is CLOSED / AIC-003 is DONE.**
-> - **6C.1 request routing is CLOSED** at checkpoint `de972d6fd4ece0e6b1e6226232f28dcd3e7272dc`.
-> - **6C.2 reactive executor is CLOSED** at checkpoint `9a5bc840d8308a3426267ba7eb3c1b12b9b5a10b`.
-> - **6C.3A authenticated server/API boundary is CLOSED** at checkpoint `c78becfe5137b360437ef33af4932ef7733ba317`.
-> - **6C.3B controlled DEV provider-read-only binding is CLOSED** at checkpoint `f86824ca307d3f0bc8c6ce821dcd06f7f8ec0f63`; canonical 6C.3B docs checkpoint is `091252c031aa054d548e9a2033bb4a54abe0a09b`.
-> - **Final 6C acceptance code checkpoint:** `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`.
-> - The canonical 20-scenario product/authority matrix is accepted for the 6C boundary. Later-slice behaviors remain fail-closed or safely delegated without granting mutation authority.
-> - Final acceptance evidence: focused routing/executor `29/29`; complete AI Coach regression `205/205` across `20/20` files; full non-integration `1209/1209` across `161/161` files; workspace typecheck PASS; mutation-authority audit PASS.
-> - Planner/task/capacity mutation authority, Confirm authority, and Apply authority remain `false`.
-> - Production deployment is `0`, migration is `0`, main push is `0`, real provider calls during final acceptance are `0`, and production mutation is `0`.
-> - **6D Proactive Coach remains NOT_STARTED and is the next product slice.**
+> - **6B Runtime Foundation and 6C Reactive Coach are CLOSED; AIC-003 is DONE.**
+> - **6D Proactive Coach / AIC-004 is ACTIVE / IN_PROGRESS and is not complete.**
+> - Step 2A deterministic selector is accepted at `3481271b26fd0241d8ecd4a310e08ea85e5083c6`; its local-auth regression checkpoint is `888040011dc773a5a143b4d62d054623957495c3`.
+> - Step 2B.3 versioned materiality/actionability policy is accepted at `c3d8fbe60a8dae4474a5d67ec547010b7fcbbcb2`; Step 2B.4 selector gating is accepted at `a0db5d8d0d5d1a80026e2f6906ae70c3f868470c`.
+> - V1 launch-enabled signals are `today_completed_as_planned`, `repeated_task_miss`, `recent_recovery`, and `planner_warning_present`. `today_partial_completion`, `subject_recent_completion_drop`, `schedule_capacity_change`, and `material_progress_stalled` remain deterministic fail-closed silence because their materiality/unit/source thresholds are unresolved.
+> - Focused signal/materiality/selector tests pass `54/54`; full non-integration passes `1249/1249` across `163/163` files; workspace typecheck and AI Coach/Planner safety checks pass.
+> - Cooldown is not claimed as hysteresis. The current selector state has no authoritative persisted clear-condition observation; persistent hysteresis remains open until an approved server-owned state contract exists. Runtime state/user-control wiring, deterministic rendering/templates, and shadow precision/actionability acceptance also remain.
+> - Production deployment/mutation, migrations/resets, provider/LLM calls, and automatic Planner proposal/Preview/Confirm/Apply calls for this checkpoint are all `0`. Planner Confirm and Apply remain OFF.
 > - This block supersedes older current-state wording below it.
 
 
@@ -123,7 +119,7 @@
 
 Status: Active
 
-Last updated: 2026-09-16
+Last updated: 2026-09-19
 
 ## Roadmap rules
 
@@ -189,7 +185,8 @@ M1 is complete only when:
 - `CLOSED`: Evre 5 Planner V2 / Planner Truth engineering, exact-profile production acceptance, and final Week/Today real-user observation.
 - `ACTIVE MACRO PHASE`: Evre 6 AI Coach.
 - `CLOSED SUB-PHASE`: 6A Product / Authority / Cost Contract; final decisions accepted, docs only, runtime unchanged, production Confirm OFF, Apply OFF.
-- `ACTIVE SUB-PHASE`: 6B CoachContextV1. 6B.1–6B.6B.1 are accepted locally; 6B.6B.2 local acceptance is green and checkpointed on the feature branch. The controlled local-DEV authority chain, gateway, exact count identity, dedicated cost authorization, authoritative local catalogs, TCMB boundary, reconciliation policy, and full A→Z mocked smoke are verified while current Coach remains disconnected. `TEMP_DEV_COST_POLICY_2026_09_12` permits only a separately approved single observed-cost local-DEV smoke despite unresolved `/responses/input_tokens` billing; production eligibility remains false.
+- `CLOSED SUB-PHASE`: 6B CoachContextV1 and 6C Reactive Coach.
+- `ACTIVE SUB-PHASE`: 6D Proactive Coach. Step 2A deterministic selection and Step 2B versioned materiality/actionability gating are accepted; runtime state, real hysteresis, deterministic rendering, and shadow acceptance remain open.
 - `CONTINUING FOUNDATIONS`: natural `PLN-002` Extra Study acceptance and gated `PLN-003`/`PLN-004`/`MAT-001`/`PLN-005` maturity work.
 
 ## Evre 6 — AI Coach
@@ -221,8 +218,8 @@ The normative product, truth, authority, scenario, proactive, cost, and phase co
 | --- | --- | --- | --- |
 | 6A | Product / Authority / Cost Contract | `CLOSED` | Final product outcomes, truth sources, non-authority, 20 scenarios, proactive triggers, cost envelope, and phase gates accepted. |
 | 6B | CoachContextV1 | `CLOSED` | Controlled DEV runtime acceptance completed; canonical context/evidence, routing/pricing, telemetry, provider safety, and real controlled-DEV acceptance are closed. Production provider remains prohibited. |
-| 6C | Reactive Coach | `CLOSED - FINAL ACCEPTANCE COMPLETE` | Canonical 20-scenario authority acceptance is complete at `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`; Reactive Coach remains read-only with zero Planner/task/capacity/Confirm/Apply authority. 6D Proactive Coach is next and remains NOT_STARTED.
-| 6D | Proactive Coach | `NOT_STARTED` | Add deterministic in-app triggers, cooldowns, dedupe, attention controls, and valid silence. |
+| 6C | Reactive Coach | `CLOSED - FINAL ACCEPTANCE COMPLETE` | Canonical 20-scenario authority acceptance is complete at `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`; Reactive Coach remains read-only with zero Planner/task/capacity/Confirm/Apply authority. |
+| 6D | Proactive Coach | `ACTIVE / IN_PROGRESS` | Step 2A selector and Step 2B materiality gate are accepted. Four unresolved signal classes fail closed; persistent clear-condition hysteresis, runtime/user controls, deterministic rendering, and shadow acceptance remain. |
 | 6E | Planner V2 integration | `NOT_STARTED` | Route every Coach planning mutation to the one canonical Planner V2 lifecycle. |
 | 6F | Conversation Intelligence | `NOT_STARTED` | Add short recent context plus compact structured state/signals without long-term raw history or authority transfer. |
 | 6G | Eval / Cost / Production Acceptance | `NOT_STARTED` | Complete the 300 TL hard governor and prove safety, groundedness, UX, cost, observability, and limited production acceptance. |
