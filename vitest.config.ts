@@ -14,6 +14,7 @@ export default defineConfig({
       "supabase/functions/_shared/physical-study-lifecycle.test.ts",
       "supabase/functions/_shared/canonical-planner-v2-readonly.test.ts",
       "supabase/functions/_shared/coach-context-v1-readonly.test.ts",
+      "supabase/functions/_shared/proactive-coach-active-session-readonly.test.ts",
       "supabase/functions/_shared/planner-v2-proposal-capability.test.ts",
     ],
   },
