@@ -3,12 +3,18 @@ import type {
 } from "../../../../packages/domain/src/ai-coach/coach-context-v1.ts";
 
 import type {
+  CoachConversationInputV1,
+} from "../../../../packages/domain/src/ai-coach/conversation-intelligence-v1.ts";
+
+import type {
   PlannerCoachExplanationV1,
   PlannerCoachPreviewCapabilityV1,
 } from "../../../../packages/domain/src/ai-coach/planner-coach-explanation-v1.ts";
 
 import {
+  buildCoachConversationLanguageContextV1,
   buildPlannerCoachExplanationV1,
+  resolveCoachConversationReferentV1,
 } from "../ai-coach.bundle.js";
 
 import {
@@ -83,6 +89,9 @@ export interface ExecuteReactiveCoachRequestInputV1 {
 
   readonly rawMessage:
     string;
+
+  readonly conversation?:
+    CoachConversationInputV1 | null;
 
   readonly requestId:
     string;
@@ -822,6 +831,7 @@ export async function executeReactiveCoachRequestV1(
   const route =
     routeReactiveCoachRequestV1(
       input.rawMessage,
+      input.conversation ?? null,
     );
 
   const dependencies:
@@ -873,6 +883,16 @@ export async function executeReactiveCoachRequestV1(
     context,
     input,
   );
+
+  const conversationResolution =
+    await resolveCoachConversationReferentV1({
+      context,
+      currentMessage:
+        input.rawMessage,
+      conversation:
+        input.conversation
+        ?? null,
+    });
 
   if (
     route.executionTier
@@ -927,14 +947,33 @@ export async function executeReactiveCoachRequestV1(
     route.capability
       === "subject_analysis"
   ) {
-    const resolvedSubjectId =
+    const explicitSubjectId =
       resolveSubjectId(
         context,
         input.rawMessage,
       );
 
+    const conversationalSubjectId =
+      conversationResolution.status
+        === "resolved"
+      && conversationResolution
+        .referent.kind
+        === "subject"
+        ? conversationResolution
+          .referent.subjectId
+        : null;
+
+    const resolvedSubjectId =
+      explicitSubjectId
+      ?? conversationalSubjectId;
+
     if (
       resolvedSubjectId === null
+      || (
+        explicitSubjectId === null
+        && conversationResolution
+          .status === "ambiguous"
+      )
     ) {
       return subjectClarificationResult(
         route,
@@ -980,6 +1019,17 @@ export async function executeReactiveCoachRequestV1(
 
         requestedAt:
           input.requestedAt,
+
+        conversation:
+          buildCoachConversationLanguageContextV1({
+            currentMessage:
+              input.rawMessage,
+            conversation:
+              input.conversation
+              ?? null,
+            resolution:
+              conversationResolution,
+          }),
 
         dependencies: {
           ...input.provider.dependencies,

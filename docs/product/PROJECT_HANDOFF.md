@@ -1,5 +1,17 @@
 # KPSS Koçu — Project Handoff
 
+> **Authoritative current state - CONVERSATION_INTELLIGENCE_6F_CLOSED_2026_09_19**
+>
+> - **Evre 6D Proactive Coach is CLOSED; Evre 6E Planner V2 Integration is CLOSED; Evre 6F Conversation Intelligence is CLOSED. `AIC-006` is DONE. Evre 6G Eval/Cost/Production Acceptance is `NOT_STARTED`.**
+> - Accepted Evre 6F implementation baseline before closure commit: `deed1f41f2762e6874fba6f09501bd23e2f62f7b`.
+> - Evre 6F adds bounded browser-session conversation continuity only: at most three completed user/Coach exchanges are carried as non-authoritative language context. No long-term memory platform, embeddings, vector database, localStorage/sessionStorage, or conversation-history database persistence was introduced.
+> - Conversation referents are re-resolved against fresh server-loaded `CoachContextV1`; subject/planner referent fingerprints are bound to the current authenticated user/profile canonical context. Ambiguous references fail closed and explicit corrections can supersede the prior bounded referent.
+> - Natural-language chat still grants no Planner authority. `"tamam"`, `"evet"`, `"uygula"` and equivalent conversation text do not Confirm or Apply Planner changes. Automatic Planner Preview, conversation Confirm, conversation Apply, task mutation, capacity mutation, and Planner mutation authority remain `0`.
+> - Acceptance is GREEN: focused 6F regression `64/64`; workspace typecheck PASS; AI Coach safety PASS; AI Coach plan-preview safety PASS; canonical Planner V2 read-only safety PASS; full non-integration `1373/1373` across `179/179` test files.
+> - This checkpoint adds `0` migrations, `0` DB conversation persistence, and performs `0` production deploy/mutation/migration actions. Planner Confirm remains OFF. Planner Apply remains OFF.
+> - **NEXT EXACT STEP:** Begin Evre 6G / Eval, Cost & Production Acceptance as the final lean AI Coach V1 readiness slice. Production activation/deployment remains separately gated and must not be implied by 6G evaluation work.
+> - This block supersedes older current-state, active-status, remaining-work, and next-step statements below. Older checkpoint sections remain historical evidence only.
+
 > **Authoritative current state - PLANNER_V2_COACH_INTEGRATION_6E_CLOSED_2026_09_19**
 >
 > - **Evre 6D Proactive Coach is CLOSED; `AIC-004` is DONE. Evre 6E Planner V2 Integration is CLOSED; `AIC-005` is DONE. Evre 6F Conversation Intelligence is `NOT_STARTED`; Evre 6G is `NOT_STARTED`.**
@@ -21,7 +33,7 @@
 > - Verification: focused proactive `140/140`; final matrix harness `32/32`; full non-integration `1341/1341` across `173/173` files; loopback local persistence `8/8`; workspace typecheck, AI Coach safety, and Planner safety PASS.
 > - Unauthorized DB mutations, Planner/task/capacity mutations, provider calls, and LLM calls are all `0`. This closure checkpoint adds `0` migrations and performs `0` production deploy/mutation/migration actions. Planner Confirm and Apply remain OFF.
 > - The four unresolved signal classes remain fail-closed silence; closing 6D does not authorize new signals, provider activation, Planner proposals, deployment, migration, Confirm, or Apply.
-> - **NEXT EXACT STEP:** Begin Evre 6F / Conversation Intelligence as one deliberately minimal V1 slice using bounded recent conversation context plus compact structured state/signals; preserve canonical truth, user/profile isolation, and all Planner authority boundaries.
+> - **NEXT EXACT STEP:** Begin Evre 6G / Eval, Cost & Production Acceptance as the final lean AI Coach V1 readiness slice; preserve all canonical truth, cost telemetry, provider, Planner, production, Confirm and Apply gates.
 > - This block supersedes every older current-state, active-status, remaining-work, and next-step statement below. Older checkpoint sections remain historical evidence only.
 
 
@@ -168,7 +180,7 @@ Last updated: 2026-09-19
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Base branch: `main`
-- Local working branch: `develop`; accepted Evre 6E implementation baseline is `836e6443aa7072f674d0da452d952cfa072b7d7b`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
+- Local working branch: `develop`; accepted Evre 6F implementation baseline before closure commit is `deed1f41f2762e6874fba6f09501bd23e2f62f7b`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
 - 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - 6B.1 accepted checkpoint: `acd16ffb2263b5285b14bd7329ff4357d7971e00`
 - Last verified product checkpoint before W5: `fa46fd2`
@@ -229,7 +241,7 @@ Reactive Coach remains read-only. Planner/task/capacity mutation authority, Conf
 
 V1 may select only completed-as-planned, repeated task miss, recent recovery, and persisted Planner warning after independent evidence validation. Partial completion, completion drop, capacity change, and material stall remain explicit unresolved silence. The accepted implementation now includes persisted presentation/control/clear state, server-owned runtime assembly, authenticated read-only selection, deterministic post-surface cards, idempotent presentation recording, dismiss/snooze/disable controls, and the Today surface. Final shadow precision/actionability/silence acceptance passed `39/39` with zero false positives or wrong signal/evidence selections, so AIC-004 is complete at baseline `421de04e2c52c0bf7b0f296a679dfb9108db0030`.
 
-6E Planner integration is CLOSED at accepted implementation baseline `836e6443aa7072f674d0da452d952cfa072b7d7b`. 6F bounded conversation intelligence and 6G production acceptance remain NOT_STARTED.
+6E Planner integration and 6F bounded conversation intelligence are CLOSED. 6G Eval/Cost/Production Acceptance remains NOT_STARTED.
 
 ## Production guardrails
 
@@ -254,9 +266,9 @@ V1 may select only completed-as-planned, repeated task miss, recent recovery, an
 
 ## NEXT EXACT STEP
 
-Begin Evre 6F / Conversation Intelligence as one deliberately minimal V1 slice using bounded recent conversation context plus compact structured state/signals; preserve canonical truth, user/profile isolation, and all Planner authority boundaries.
+Begin Evre 6G / Eval, Cost & Production Acceptance as the final lean AI Coach V1 readiness slice. Keep this phase limited to evaluation, cost/governor, observability, rollback, and production-readiness evidence.
 
-Do not infer implementation authority from this handoff. Do not deploy, migrate, access or mutate production, activate provider traffic, create/apply Planner proposals, or change Planner V2 Confirm/Apply gates while preparing the separate 6F checkpoint.
+Do not infer production authority from this handoff. Do not deploy, migrate, access or mutate production, activate provider traffic, create/apply Planner proposals, or change Planner V2 Confirm/Apply gates while preparing the separate 6G checkpoint.
 
 ## 2026-09-10 Evre 6A final contract closure
 

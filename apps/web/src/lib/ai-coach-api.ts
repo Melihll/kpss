@@ -1,5 +1,6 @@
 import type {
   AiStudyMessageExecutionResultV1,
+  CoachConversationInputV1,
   PlannerCoachExplanationV1,
   ProactiveCoachCardActionV1,
   ProactiveCoachCardV1,
@@ -142,6 +143,7 @@ export interface ReactiveCoachResponseV1 {
 
 export async function callReactiveCoach(
   message: string,
+  conversation?: CoachConversationInputV1,
 ): Promise<ReactiveCoachResponseV1> {
   const normalizedMessage = message.trim();
   if (!normalizedMessage) {
@@ -149,7 +151,14 @@ export async function callReactiveCoach(
   }
   return callAppApi<ReactiveCoachResponseV1>("/ai-coach/reactive", {
     method: "POST",
-    body: { message: normalizedMessage },
+    body: {
+      message:
+        normalizedMessage,
+
+      ...(conversation
+        ? { conversation }
+        : {}),
+    },
   });
 }
 

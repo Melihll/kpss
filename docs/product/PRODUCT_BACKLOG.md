@@ -1,5 +1,17 @@
 # KPSS Koçu Product Backlog
 
+> **Authoritative current state - CONVERSATION_INTELLIGENCE_6F_CLOSED_2026_09_19**
+>
+> - **Evre 6D Proactive Coach is CLOSED; Evre 6E Planner V2 Integration is CLOSED; Evre 6F Conversation Intelligence is CLOSED. `AIC-006` is DONE. Evre 6G Eval/Cost/Production Acceptance is `NOT_STARTED`.**
+> - Accepted Evre 6F implementation baseline before closure commit: `deed1f41f2762e6874fba6f09501bd23e2f62f7b`.
+> - Evre 6F adds bounded browser-session conversation continuity only: at most three completed user/Coach exchanges are carried as non-authoritative language context. No long-term memory platform, embeddings, vector database, localStorage/sessionStorage, or conversation-history database persistence was introduced.
+> - Conversation referents are re-resolved against fresh server-loaded `CoachContextV1`; subject/planner referent fingerprints are bound to the current authenticated user/profile canonical context. Ambiguous references fail closed and explicit corrections can supersede the prior bounded referent.
+> - Natural-language chat still grants no Planner authority. `"tamam"`, `"evet"`, `"uygula"` and equivalent conversation text do not Confirm or Apply Planner changes. Automatic Planner Preview, conversation Confirm, conversation Apply, task mutation, capacity mutation, and Planner mutation authority remain `0`.
+> - Acceptance is GREEN: focused 6F regression `64/64`; workspace typecheck PASS; AI Coach safety PASS; AI Coach plan-preview safety PASS; canonical Planner V2 read-only safety PASS; full non-integration `1373/1373` across `179/179` test files.
+> - This checkpoint adds `0` migrations, `0` DB conversation persistence, and performs `0` production deploy/mutation/migration actions. Planner Confirm remains OFF. Planner Apply remains OFF.
+> - **NEXT EXACT STEP:** Begin Evre 6G / Eval, Cost & Production Acceptance as the final lean AI Coach V1 readiness slice. Production activation/deployment remains separately gated.
+> - This block supersedes older current-state, active-status, remaining-work, and next-step statements below. Older checkpoint sections remain historical evidence only.
+
 > **Authoritative current state - PLANNER_V2_COACH_INTEGRATION_6E_CLOSED_2026_09_19**
 >
 > - **Evre 6D Proactive Coach is CLOSED; `AIC-004` is DONE. Evre 6E Planner V2 Integration is CLOSED; `AIC-005` is DONE. Evre 6F Conversation Intelligence is `NOT_STARTED`; Evre 6G is `NOT_STARTED`.**
@@ -215,8 +227,8 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | `AIC-003` | 6C | `P1` | Reactive Coach | `DONE - FINAL ACCEPTANCE CLOSED` |
 | `AIC-004` | 6D | `P1` | Proactive Coach | `DONE - FINAL SHADOW ACCEPTANCE CLOSED` |
 | `AIC-005` | 6E | `P0` | Planner V2 Integration | `DONE - FINAL ACCEPTANCE CLOSED` |
-| `AIC-006` | 6F | `P1` | Conversation Intelligence | `NOT_STARTED` |
-| `AIC-007` | 6G | `P0` | Eval / Cost / Production Acceptance | `TODO` |
+| `AIC-006` | 6F | `P1` | Conversation Intelligence | `DONE - FINAL ACCEPTANCE CLOSED` |
+| `AIC-007` | 6G | `P0` | Eval / Cost / Production Acceptance | `NOT_STARTED` |
 
 The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, Authority & Cost Contract](specs/AI_COACH_EVRE_6_PRODUCT_AUTHORITY_COST_CONTRACT.md). AI teacher/tutoring/quiz/mastery features are outside every Evre 6 item. No backlog status grants runtime, deployment, migration, gate, Confirm, Apply, or production authority.
 
@@ -331,7 +343,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-006` / Evre 6F — Conversation Intelligence
 
 - Priority: `P1`
-- Status: `NOT_STARTED`
+- Status: `DONE - FINAL ACCEPTANCE CLOSED`
 - Dependency: stable reactive Coach and canonical proposal binding.
 - Desired outcome: Short recent context plus compact structured conversation state/signals resolve references and corrections without long-term raw-history storage, stale facts, privacy leakage, or authority transfer.
 - Acceptance criteria:
@@ -341,10 +353,12 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
   - Conversation summaries are metered, provenance-bearing, and non-authoritative.
   - “Tamam/evet/uygula” prose never substitutes for canonical confirmation or Apply.
 
+- 6F completion note (2026-09-19): bounded browser-session conversation context is limited to three completed exchanges / six turns and is explicitly non-authoritative. Subject/planner referents are re-resolved against fresh authenticated canonical context; ambiguity fails closed and explicit correction can supersede the bounded referent. No DB conversation history, localStorage, sessionStorage, embedding/vector memory, migration, or production action was introduced. Focused regression `64/64`, workspace typecheck PASS, all AI Coach/Planner safety gates PASS, and full non-integration `1373/1373` across `179/179` test files. Automatic Planner Preview, conversation Confirm and conversation Apply are `0`; Confirm and Apply remain OFF.
+
 ## `AIC-007` / Evre 6G — Eval / Cost / Production Acceptance
 
 - Priority: `P0`
-- Status: `TODO`
+- Status: `NOT_STARTED`
 - Dependency: relevant 6B–6F exits and a separate production release brief.
 - Desired outcome: Safety, groundedness, UX, cost, observability, and rollback are proven before any controlled production expansion.
 - Acceptance criteria:

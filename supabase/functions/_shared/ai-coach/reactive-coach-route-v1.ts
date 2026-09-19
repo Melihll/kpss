@@ -2,6 +2,14 @@ import type {
   OpenAiCoachSupportedCapabilityV1,
 } from "./openai-coach-request-v1.ts";
 
+import {
+  isCoachConversationFollowUpV1,
+} from "../ai-coach.bundle.js";
+
+import type {
+  CoachConversationInputV1,
+} from "../../../../packages/domain/src/ai-coach/conversation-intelligence-v1.ts";
+
 export const REACTIVE_COACH_ROUTE_V1_VERSION =
   "reactive-coach-route-v1" as const;
 
@@ -170,6 +178,7 @@ function decision(
 
 export function routeReactiveCoachRequestV1(
   rawMessage: string,
+  conversation: CoachConversationInputV1 | null = null,
 ): ReactiveCoachRouteDecisionV1 {
   if (
     typeof rawMessage !== "string"
@@ -188,6 +197,123 @@ export function routeReactiveCoachRequestV1(
 
   const message =
     searchableMessage(rawMessage);
+
+  if (
+    isCoachConversationFollowUpV1(message)
+    && conversation
+    && conversation.recentTurns.length > 0
+  ) {
+    const previousUser =
+      [...conversation.recentTurns]
+        .reverse()
+        .find(
+          (turn) =>
+            turn.role === "user",
+        );
+
+    if (previousUser) {
+      const previous =
+        searchableMessage(
+          previousUser.text,
+        );
+
+      if (
+        SUBJECT_TERMS.some(
+          (term) =>
+            previous.includes(term),
+        )
+      ) {
+        return decision({
+          state: "EXPLANATION",
+          executionTier:
+            "PROVIDER_READ_ONLY",
+          capability:
+            "subject_analysis",
+          deterministicKind:
+            null,
+          reasonCode:
+            "subject_question_requires_grounded_analysis",
+          requiresCanonicalContext:
+            true,
+          providerCallAllowed:
+            true,
+        });
+      }
+
+      if (
+        previous.includes("planner")
+        || previous.includes("plan")
+      ) {
+        return decision({
+          state: "EXPLANATION",
+          executionTier:
+            "T0_DETERMINISTIC",
+          capability:
+            null,
+          deterministicKind:
+            "planner_state_explanation",
+          reasonCode:
+            "planner_state_uses_canonical_deterministic_explanation",
+          requiresCanonicalContext:
+            true,
+          providerCallAllowed:
+            false,
+        });
+      }
+
+      if (previous.includes("bugun")) {
+        return decision({
+          state: "EXPLANATION",
+          executionTier:
+            "PROVIDER_READ_ONLY",
+          capability:
+            "today_analysis",
+          deterministicKind:
+            null,
+          reasonCode:
+            "today_question_requires_grounded_analysis",
+          requiresCanonicalContext:
+            true,
+          providerCallAllowed:
+            true,
+        });
+      }
+
+      if (previous.includes("hafta")) {
+        return decision({
+          state: "EXPLANATION",
+          executionTier:
+            "PROVIDER_READ_ONLY",
+          capability:
+            "week_analysis",
+          deterministicKind:
+            null,
+          reasonCode:
+            "week_question_requires_grounded_analysis",
+          requiresCanonicalContext:
+            true,
+          providerCallAllowed:
+            true,
+        });
+      }
+
+      return decision({
+        state: "EXPLANATION",
+        executionTier:
+          "PROVIDER_READ_ONLY",
+        capability:
+          "complex_status_analysis",
+        deterministicKind:
+          null,
+        reasonCode:
+          "general_question_requires_grounded_analysis",
+        requiresCanonicalContext:
+          true,
+        providerCallAllowed:
+          true,
+      });
+    }
+  }
 
   const quizRequest =
     containsAny(message, [

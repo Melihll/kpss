@@ -16,6 +16,7 @@ import type {
 } from "../../../../packages/domain/src/ai-coach/ai-economics-v1.ts";
 import type { CoachContextV1 } from "../../../../packages/domain/src/ai-coach/coach-context-v1.ts";
 import type { CoachEvidenceViewV1 } from "../../../../packages/domain/src/ai-coach/coach-evidence-view-v1.ts";
+import type { CoachConversationLanguageContextV1 } from "../../../../packages/domain/src/ai-coach/conversation-intelligence-v1.ts";
 import { loadCoachContextV1ReadOnly } from "../coach-context-v1-readonly.ts";
 import {
   markAiProviderAttemptStartedV1,
@@ -133,6 +134,7 @@ export interface RunReadOnlyCoachCapabilityInputV1 {
   readonly examProfileId: string;
   readonly capability: OpenAiCoachSupportedCapabilityV1;
   readonly subjectId?: string;
+  readonly conversation?: CoachConversationLanguageContextV1;
   readonly requestId: string;
   readonly correlationId: string;
   readonly reservationId: string;
@@ -330,7 +332,16 @@ export async function runReadOnlyCoachCapabilityV1(
     complexity: routeShape.complexity as AiComplexityClassV1,
     budgetState: input.routingBudgetState,
   }, input.routeCatalog);
-  const request = buildOpenAiCoachRequestV1({ route, capability: input.capability, evidence, locale: context.locale });
+  const request = buildOpenAiCoachRequestV1({
+    route,
+    capability:
+      input.capability,
+    evidence,
+    conversation:
+      input.conversation,
+    locale:
+      context.locale,
+  });
   const fingerprint = await fingerprintOpenAiCoachRequestV1(request);
   const countClientRequestId = `count:${input.requestId}`;
   const providerClientRequestId = `attempt:${input.providerAttemptId}`;

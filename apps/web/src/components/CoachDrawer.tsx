@@ -1,4 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import {
+  COACH_CONVERSATION_CONTEXT_V1_VERSION,
+  COACH_CONVERSATION_MAX_TURNS_V1,
+  COACH_CONVERSATION_TURN_MAX_LENGTH_V1,
+  type CoachConversationInputV1,
+  type CoachConversationTurnV1,
+} from "@kpss-coach/domain";
 import { AppApiError, FRIENDLY_API_ERRORS, callAppApi } from "../lib/app-api";
 import { callAiCoachPreview, callReactiveCoach, type AiCoachApplyResponse, type AiCoachPlanPreviewResponse, type ReactiveCoachResponseV1 } from "../lib/ai-coach-api";
 import { presentAiCoachPreview } from "../lib/ai-coach-presenter";
@@ -21,6 +28,70 @@ const QUICK_PROMPTS = [
   "Bu hafta planı yenilemeli miyim?",
 ] as const;
 
+interface ReactiveCoachExchange {
+  readonly userMessage: string;
+  readonly response: ReactiveCoachResponseV1;
+}
+
+function clipConversationText(
+  value: string,
+): string {
+  return Array.from(
+    value
+      .normalize("NFC")
+      .trim(),
+  )
+    .slice(
+      0,
+      COACH_CONVERSATION_TURN_MAX_LENGTH_V1,
+    )
+    .join("");
+}
+
+function buildReactiveConversationContext(
+  history: readonly ReactiveCoachExchange[],
+): CoachConversationInputV1 | undefined {
+  if (history.length === 0) {
+    return undefined;
+  }
+
+  const turns:
+    CoachConversationTurnV1[] =
+      history.flatMap(
+        (exchange) => [
+          {
+            role:
+              "user" as const,
+            text:
+              clipConversationText(
+                exchange.userMessage,
+              ),
+          },
+          {
+            role:
+              "assistant" as const,
+            text:
+              clipConversationText(
+                exchange.response
+                  .execution
+                  .response
+                  .answer,
+              ),
+          },
+        ],
+      );
+
+  return {
+    version:
+      COACH_CONVERSATION_CONTEXT_V1_VERSION,
+
+    recentTurns:
+      turns.slice(
+        -COACH_CONVERSATION_MAX_TURNS_V1,
+      ),
+  };
+}
+
 const CAPACITY_QUICK_PROMPTS = [
   "Bugün 1 saat daha az vaktim var.",
   "Yarın 60 dakika daha çalışabilirim.",
@@ -33,7 +104,7 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
   const [message, setMessage] = useState("");
   const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
   const [response, setResponse] = useState<AiCoachPlanPreviewResponse | null>(null);
-  const [reactiveResponse, setReactiveResponse] = useState<ReactiveCoachResponseV1 | null>(null);
+  const [reactiveHistory, setReactiveHistory] = useState<readonly ReactiveCoachExchange[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [sending, setSending] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -49,7 +120,7 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
     setMessage("");
     setSubmittedMessage(null);
     setResponse(null);
-    setReactiveResponse(null);
+    setReactiveHistory([]);
     setApplied(null);
     setDetailsOpen(false);
     setError(null);
@@ -116,11 +187,30 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
       if (mode === "capacity") {
         const result = await callAiCoachPreview(profileId!, normalized);
         setResponse(result);
-        setReactiveResponse(null);
+        setReactiveHistory([]);
       } else {
-        const result = await callReactiveCoach(normalized);
-        setReactiveResponse(result);
+        const result =
+          await callReactiveCoach(
+            normalized,
+            buildReactiveConversationContext(
+              reactiveHistory,
+            ),
+          );
+
+        setReactiveHistory(
+          (current) => [
+            ...current,
+            {
+              userMessage:
+                normalized,
+              response:
+                result,
+            },
+          ].slice(-3),
+        );
+
         setResponse(null);
+        setSubmittedMessage(null);
       }
       setMessage("");
     } catch (caught) {
@@ -172,7 +262,7 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
       </header>
 
       <div className="coach-drawer-body">
-        {!submittedMessage && <section className="coach-intro">
+        {!submittedMessage && (mode === "capacity" || reactiveHistory.length === 0) && <section className="coach-intro">
           <span className="coach-kicker">{mode === "capacity" ? "Vaktini plana yansıt" : "Planını birlikte değerlendirelim"}</span>
           <h2>{mode === "capacity" ? "Vaktin nasıl değişti?" : "Planner hakkında ne bilmek istiyorsun?"}</h2>
           <p>{mode === "capacity"
@@ -184,20 +274,30 @@ export function CoachDrawer({ open, onClose, mode = "default", onApplied }: Coac
           </div>
         </section>}
 
+        {mode === "default" && reactiveHistory.map((exchange, index) => <div
+          key={`${index}:${exchange.userMessage}`}
+          className="coach-conversation-exchange"
+        >
+          <div className="coach-user-message">
+            <span>Sen</span>
+            <p>{exchange.userMessage}</p>
+          </div>
+
+          {exchange.response.execution.response.plannerExplanation
+            ? <PlannerCoachExplanationCard
+                explanation={exchange.response.execution.response.plannerExplanation}
+                onOpenPreview={onClose}
+              />
+            : <article className="coach-result tone-neutral" aria-live="polite">
+                <span className="coach-result-eyebrow">KPSS Ko?u ? salt okunur</span>
+                <h3>Durum de?erlendirmesi</h3>
+                <p>{exchange.response.execution.response.answer}</p>
+              </article>}
+        </div>)}
+
         {submittedMessage && <div className="coach-user-message"><span>Sen</span><p>{submittedMessage}</p></div>}
 
         {sending && <div className="coach-thinking" aria-live="polite"><span><Icon name="spark" /></span><div><strong>Planını kontrol ediyorum</strong><p>{mode === "capacity" ? "Mesajını yorumlayıp Planning V2 önizlemesiyle karşılaştırıyorum." : "Mevcut Planner kanıtını salt okunur biçimde değerlendiriyorum."}</p></div></div>}
-
-        {reactiveResponse && !sending && reactiveResponse.execution.response.plannerExplanation && <PlannerCoachExplanationCard
-          explanation={reactiveResponse.execution.response.plannerExplanation}
-          onOpenPreview={onClose}
-        />}
-
-        {reactiveResponse && !sending && !reactiveResponse.execution.response.plannerExplanation && <article className="coach-result tone-neutral" aria-live="polite">
-          <span className="coach-result-eyebrow">KPSS Koçu · salt okunur</span>
-          <h3>Durum değerlendirmesi</h3>
-          <p>{reactiveResponse.execution.response.answer}</p>
-        </article>}
 
         {presentation && !sending && <article className={`coach-result tone-${presentation.tone}${presentation.previewState ? ` preview-${presentation.previewState.toLowerCase()}` : ""}`} aria-live="polite">
           <span className="coach-result-eyebrow">{presentation.eyebrow}</span>

@@ -5,6 +5,14 @@ import {
 } from "./reactive-coach-executor-v1.ts";
 
 import {
+  parseCoachConversationInputV1,
+} from "../ai-coach.bundle.js";
+
+import type {
+  CoachConversationInputV1,
+} from "../../../../packages/domain/src/ai-coach/conversation-intelligence-v1.ts";
+
+import {
   routeReactiveCoachRequestV1,
   type ReactiveCoachRouteDecisionV1,
 } from "./reactive-coach-route-v1.ts";
@@ -310,7 +318,8 @@ export async function handleReactiveCoachHttpV1(
   if (
     keys.some(
       (key) =>
-        key !== "message",
+        key !== "message"
+        && key !== "conversation",
     )
   ) {
     return errorResult(
@@ -353,14 +362,32 @@ export async function handleReactiveCoachHttpV1(
     );
   }
 
+  let conversation:
+    CoachConversationInputV1 | null;
+
+  try {
+    conversation =
+      parseCoachConversationInputV1(
+        input.body.conversation,
+      );
+  }
+  catch {
+    return errorResult(
+      "INVALID_CONVERSATION_CONTEXT",
+      "Bounded conversation context is invalid",
+      400,
+    );
+  }
+
   let route:
     ReactiveCoachRouteDecisionV1;
 
   try {
     route =
       routeReactiveCoachRequestV1(
-        message,
-      );
+      message,
+      conversation,
+    );
   }
   catch {
     return errorResult(
@@ -433,8 +460,8 @@ export async function handleReactiveCoachHttpV1(
         examProfileId:
           input.examProfileId,
 
-        rawMessage:
-          message,
+        rawMessage: message,
+        conversation,
 
         requestId:
           input.requestId,
