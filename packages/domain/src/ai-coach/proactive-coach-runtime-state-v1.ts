@@ -14,7 +14,8 @@ export type ProactiveCoachRuntimeSourceV1 =
   | "server_surface_session"
   | "study_sessions_active_readonly"
   | "proactive_presentation_store"
-  | "proactive_user_control_store";
+  | "proactive_user_control_store"
+  | "proactive_clear_condition_store";
 
 export interface ProactiveCoachRuntimeFactV1<T> {
   readonly availability: ProactiveCoachRuntimeAvailabilityV1;
@@ -53,6 +54,21 @@ export interface ProactiveCoachRuntimeCategorySnoozeV1 {
   readonly until: string;
 }
 
+export type ProactiveCoachClearConditionSignalTypeV1 =
+  | "today_completed_as_planned"
+  | "repeated_task_miss"
+  | "recent_recovery"
+  | "planner_warning_present";
+
+export interface ProactiveCoachClearConditionObservationV1 {
+  readonly signalType: ProactiveCoachClearConditionSignalTypeV1;
+  readonly conditionKey: string;
+  readonly state: "cleared" | "not_cleared";
+  readonly observedAt: string;
+  readonly reasonCode: string;
+  readonly sourceFactPaths: readonly string[];
+}
+
 export interface ProactiveCoachRuntimeStateV1 {
   readonly version: typeof PROACTIVE_COACH_RUNTIME_STATE_V1_VERSION;
   readonly now: string;
@@ -63,6 +79,7 @@ export interface ProactiveCoachRuntimeStateV1 {
   readonly dismissedFingerprints: ProactiveCoachRuntimeCollectionV1<string>;
   readonly snoozes: ProactiveCoachRuntimeCollectionV1<ProactiveCoachRuntimeCategorySnoozeV1>;
   readonly disabledCategories: ProactiveCoachRuntimeCollectionV1<CoachSignalAttentionCategoryV1>;
+  readonly clearConditions: ProactiveCoachRuntimeCollectionV1<ProactiveCoachClearConditionObservationV1>;
   readonly authority: {
     readonly mode: "server_owned_proactive_runtime_state";
     readonly clientActiveSessionOverrideAllowed: false;
@@ -86,6 +103,7 @@ export interface BuildProactiveCoachRuntimeStateV1Input {
   readonly dismissedFingerprints: ProactiveCoachRuntimeCollectionV1<string>;
   readonly snoozes: ProactiveCoachRuntimeCollectionV1<ProactiveCoachRuntimeCategorySnoozeV1>;
   readonly disabledCategories: ProactiveCoachRuntimeCollectionV1<CoachSignalAttentionCategoryV1>;
+  readonly clearConditions: ProactiveCoachRuntimeCollectionV1<ProactiveCoachClearConditionObservationV1>;
 }
 
 function deepFreeze<T>(value: T): T {
@@ -193,6 +211,7 @@ export function buildProactiveCoachRuntimeStateV1(
   assertRuntimeCollection(input.dismissedFingerprints, "DISMISSED_FINGERPRINTS");
   assertRuntimeCollection(input.snoozes, "SNOOZES");
   assertRuntimeCollection(input.disabledCategories, "DISABLED_CATEGORIES");
+  assertRuntimeCollection(input.clearConditions, "CLEAR_CONDITIONS");
 
   for (const presentation of input.presentations.values) {
     if (
@@ -208,6 +227,15 @@ export function buildProactiveCoachRuntimeStateV1(
   }
   if (input.dismissedFingerprints.values.some((value) => !value.trim())) {
     throw new Error("PROACTIVE_RUNTIME_DISMISSED_FINGERPRINT_INVALID");
+  }
+  for (const observation of input.clearConditions.values) {
+    if (
+      !observation.conditionKey.trim()
+      || !observation.reasonCode.trim()
+      || !validTimestamp(observation.observedAt)
+      || observation.sourceFactPaths.length === 0
+      || observation.sourceFactPaths.some((path) => !path.trim())
+    ) throw new Error("PROACTIVE_RUNTIME_CLEAR_CONDITION_INVALID");
   }
 
   return deepFreeze({
@@ -231,6 +259,13 @@ export function buildProactiveCoachRuntimeStateV1(
     disabledCategories: {
       ...structuredClone(input.disabledCategories),
       values: [...new Set(input.disabledCategories.values)].sort(),
+    },
+    clearConditions: {
+      ...structuredClone(input.clearConditions),
+      values: [...structuredClone(input.clearConditions.values)].sort(
+        (left, right) => left.observedAt.localeCompare(right.observedAt)
+          || left.conditionKey.localeCompare(right.conditionKey),
+      ),
     },
     authority: authority(),
   });

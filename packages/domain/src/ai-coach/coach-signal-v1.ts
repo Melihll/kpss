@@ -421,7 +421,14 @@ function addRecentProgressSignals(context: CoachContextV1, drafts: CandidateDraf
     if (misses.length >= 2) drafts.push({
       signalType: "repeated_task_miss", severity: "warning", importance: "high", subjectId: taskSubject(context, taskId), entityId: taskId,
       reasonCode: "same_task_missed_multiple_times_in_recent_window", sourceFactPaths: [`recentProgress.value.taskEvents[taskId=${taskId}]`], facts: [fact],
-      evidence: { distinctMissCount: misses.length, taskId, windowEnd: recentProgress.value.windowEnd, windowStart: recentProgress.value.windowStart },
+      evidence: {
+        distinctMissCount: misses.length,
+        latestMissedAt: misses.at(-1)!.occurredAt,
+        secondLatestMissedAt: misses.at(-2)!.occurredAt,
+        taskId,
+        windowEnd: recentProgress.value.windowEnd,
+        windowStart: recentProgress.value.windowStart,
+      },
     });
     const recovery = taskEvents.at(-1)?.status === "completed" ? taskEvents.at(-1) : undefined;
     const lastMissBeforeRecovery = recovery ? [...misses].reverse().find((event) => event.occurredAt < recovery.occurredAt) : undefined;

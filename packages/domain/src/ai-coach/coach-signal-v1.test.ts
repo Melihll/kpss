@@ -61,7 +61,11 @@ describe("CoachSignalCandidateV1 deterministic foundation", () => {
       );
     }));
     expect(result.candidates.find((candidate) => candidate.signalType === "repeated_task_miss")).toMatchObject({
-      evidence: { distinctMissCount: 2 },
+      evidence: {
+        distinctMissCount: 2,
+        secondLatestMissedAt: "2026-09-08T09:00:00.000Z",
+        latestMissedAt: "2026-09-09T09:00:00.000Z",
+      },
       confidence: "high",
     });
   });

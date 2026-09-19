@@ -9,7 +9,7 @@ const NOW = "2026-09-19T09:00:00.000Z";
 
 function knownCollection<T>(
   values: readonly T[],
-  source: "proactive_presentation_store" | "proactive_user_control_store",
+  source: "proactive_presentation_store" | "proactive_user_control_store" | "proactive_clear_condition_store",
 ): ProactiveCoachRuntimeCollectionV1<T> {
   return { availability: "known", values, source, asOf: NOW, unavailableReason: null };
 }
@@ -32,6 +32,7 @@ function input(
     dismissedFingerprints: knownCollection([], "proactive_user_control_store"),
     snoozes: knownCollection([], "proactive_user_control_store"),
     disabledCategories: knownCollection([], "proactive_user_control_store"),
+    clearConditions: knownCollection([], "proactive_clear_condition_store"),
     ...overrides,
   };
 }
