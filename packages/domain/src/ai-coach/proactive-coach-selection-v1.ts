@@ -3,6 +3,15 @@
   CoachSignalCandidateV1,
 } from "./coach-signal-v1";
 import { evaluateProactiveCoachMaterialityV1 } from "./proactive-coach-materiality-policy-v1";
+import {
+  buildProactiveCoachConditionKeyV1,
+  evaluateProactiveCoachHysteresisV1,
+} from "./proactive-coach-hysteresis-v1";
+import type {
+  ProactiveCoachRuntimeCategorySnoozeV1,
+  ProactiveCoachRuntimePresentationV1,
+  ProactiveCoachRuntimeStateV1,
+} from "./proactive-coach-runtime-state-v1";
 
 export const PROACTIVE_COACH_SELECTION_V1_VERSION =
   "proactive-coach-selection-v1" as const;
@@ -23,7 +32,13 @@ export type ProactiveCoachSuppressionReasonV1 =
   | "materiality_evidence_invalid"
   | "materiality_not_satisfied"
   | "materiality_not_actionable"
+  | "active_study_session_authority_unavailable"
   | "active_study_session"
+  | "user_controls_authority_unavailable"
+  | "presentation_history_authority_unavailable"
+  | "hysteresis_condition_already_presented"
+  | "hysteresis_clear_condition_unavailable"
+  | "hysteresis_rearm_not_proven"
   | "category_disabled"
   | "category_snoozed"
   | "fingerprint_dismissed"
@@ -32,47 +47,9 @@ export type ProactiveCoachSuppressionReasonV1 =
   | "daily_attention_budget"
   | "surface_session_attention_budget";
 
-export interface ProactiveCoachPresentationV1 {
-  readonly fingerprint: string;
-  readonly attentionCategory: CoachSignalAttentionCategoryV1;
-  readonly presentedAt: string;
-  readonly calendarDate: string;
-  readonly surfaceSessionId: string;
-}
-
-export interface ProactiveCoachCategorySnoozeV1 {
-  readonly attentionCategory: CoachSignalAttentionCategoryV1;
-  readonly until: string;
-}
-
-export interface ProactiveCoachPolicyStateV1 {
-  /**
-   * Server-owned evaluation clock.
-   * Client timestamps must not become trigger authority.
-   */
-  readonly now: string;
-
-  /**
-   * User-local calendar date resolved server-side.
-   */
-  readonly currentDate: string;
-
-  /**
-   * Stable identity for the current in-app surface/session.
-   */
-  readonly surfaceSessionId: string;
-
-  /**
-   * Must come from canonical active study-session authority.
-   * It is intentionally not inferred from CoachContextV1 recent sessions.
-   */
-  readonly activeStudySession: boolean;
-
-  readonly presentations: readonly ProactiveCoachPresentationV1[];
-  readonly disabledCategories: readonly CoachSignalAttentionCategoryV1[];
-  readonly snoozes: readonly ProactiveCoachCategorySnoozeV1[];
-  readonly dismissedFingerprints: readonly string[];
-}
+export type ProactiveCoachPresentationV1 = ProactiveCoachRuntimePresentationV1;
+export type ProactiveCoachCategorySnoozeV1 = ProactiveCoachRuntimeCategorySnoozeV1;
+export type ProactiveCoachPolicyStateV1 = ProactiveCoachRuntimeStateV1;
 
 export interface ProactiveCoachSuppressionV1 {
   readonly dedupeKey: string;
@@ -88,6 +65,7 @@ export interface ProactiveCoachSelectionV1 {
   readonly outcome: "selected" | "silence";
   readonly selectedCandidate: CoachSignalCandidateV1 | null;
   readonly selectedFingerprint: string | null;
+  readonly selectedConditionKey: string | null;
   readonly suppressions: readonly ProactiveCoachSuppressionV1[];
   readonly authority: {
     readonly mode: "deterministic_in_app_selection_only";
@@ -229,10 +207,10 @@ function compareCandidates(
 }
 
 function mostRecentPresentation(
-  presentations: readonly ProactiveCoachPresentationV1[],
-  predicate: (value: ProactiveCoachPresentationV1) => boolean,
-): ProactiveCoachPresentationV1 | undefined {
-  let mostRecent: ProactiveCoachPresentationV1 | undefined;
+  presentations: readonly ProactiveCoachRuntimePresentationV1[],
+  predicate: (value: ProactiveCoachRuntimePresentationV1) => boolean,
+): ProactiveCoachRuntimePresentationV1 | undefined {
+  let mostRecent: ProactiveCoachRuntimePresentationV1 | undefined;
   let mostRecentAt = Number.NEGATIVE_INFINITY;
 
   for (const presentation of presentations) {
@@ -302,19 +280,31 @@ function suppressionReason(
     return "materiality_not_actionable";
   }
 
-  if (state.activeStudySession) {
+  if (state.activeStudySession.availability !== "known" || state.activeStudySession.value === null) {
+    return "active_study_session_authority_unavailable";
+  }
+
+  if (state.activeStudySession.value.active) {
     return "active_study_session";
   }
 
   if (
-    state.disabledCategories.includes(
+    state.disabledCategories.availability !== "known"
+    || state.snoozes.availability !== "known"
+    || state.dismissedFingerprints.availability !== "known"
+  ) {
+    return "user_controls_authority_unavailable";
+  }
+
+  if (
+    state.disabledCategories.values.includes(
       candidate.eligibility.attentionCategory,
     )
   ) {
     return "category_disabled";
   }
 
-  const snooze = state.snoozes.find(
+  const snooze = state.snoozes.values.find(
     (item) =>
       item.attentionCategory === candidate.eligibility.attentionCategory &&
       nowMs < parseTimestamp(item.until, "PROACTIVE_SNOOZE_TIME_INVALID"),
@@ -324,12 +314,32 @@ function suppressionReason(
     return "category_snoozed";
   }
 
-  if (state.dismissedFingerprints.includes(fingerprint)) {
+  if (state.dismissedFingerprints.values.includes(fingerprint)) {
     return "fingerprint_dismissed";
   }
 
+  if (state.presentations.availability !== "known") {
+    return "presentation_history_authority_unavailable";
+  }
+
+  const hysteresis = evaluateProactiveCoachHysteresisV1({
+    candidate,
+    presentations: state.presentations,
+    clearConditions: state.clearConditions,
+  });
+  if (!hysteresis.allowed) {
+    if (hysteresis.reason === "clear_condition_authority_unavailable") {
+      return "hysteresis_clear_condition_unavailable";
+    }
+    if (hysteresis.reason === "rearm_not_proven_after_clear"
+      || hysteresis.reason === "persistent_condition_requires_clear_observation") {
+      return "hysteresis_rearm_not_proven";
+    }
+    return "hysteresis_condition_already_presented";
+  }
+
   const sameFingerprint = mostRecentPresentation(
-    state.presentations,
+    state.presentations.values,
     (item) => item.fingerprint === fingerprint,
   );
 
@@ -346,7 +356,7 @@ function suppressionReason(
   }
 
   const sameCategory = mostRecentPresentation(
-    state.presentations,
+    state.presentations.values,
     (item) =>
       item.attentionCategory === candidate.eligibility.attentionCategory,
   );
@@ -363,7 +373,7 @@ function suppressionReason(
     return "category_cooldown";
   }
 
-  const dailyCount = state.presentations.filter(
+  const dailyCount = state.presentations.values.filter(
     (item) => item.calendarDate === state.currentDate,
   ).length;
 
@@ -371,7 +381,7 @@ function suppressionReason(
     return "daily_attention_budget";
   }
 
-  const surfaceCount = state.presentations.filter(
+  const surfaceCount = state.presentations.values.filter(
     (item) => item.surfaceSessionId === state.surfaceSessionId,
   ).length;
 
@@ -396,6 +406,7 @@ export function selectProactiveCoachInsightV1(
 
   for (const candidate of ordered) {
     const fingerprint = buildProactiveCoachFingerprintV1(candidate);
+    const conditionKey = buildProactiveCoachConditionKeyV1(candidate);
     const reason = suppressionReason(
       candidate,
       fingerprint,
@@ -420,6 +431,7 @@ export function selectProactiveCoachInsightV1(
       outcome: "selected",
       selectedCandidate: structuredClone(candidate),
       selectedFingerprint: fingerprint,
+      selectedConditionKey: conditionKey,
       suppressions,
       authority: authority(),
     });
@@ -432,6 +444,7 @@ export function selectProactiveCoachInsightV1(
     outcome: "silence",
     selectedCandidate: null,
     selectedFingerprint: null,
+    selectedConditionKey: null,
     suppressions,
     authority: authority(),
   });

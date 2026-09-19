@@ -6,6 +6,14 @@ import {
   selectProactiveCoachInsightV1,
   type ProactiveCoachPolicyStateV1,
 } from "./proactive-coach-selection-v1";
+import {
+  buildProactiveCoachRuntimeStateV1,
+  type ProactiveCoachClearConditionObservationV1,
+  type ProactiveCoachRuntimeCollectionV1,
+  type ProactiveCoachRuntimeFactV1,
+  type ProactiveCoachRuntimePresentationV1,
+} from "./proactive-coach-runtime-state-v1";
+import { buildProactiveCoachConditionKeyV1 } from "./proactive-coach-hysteresis-v1";
 
 const NOW = "2026-09-17T09:00:00.000Z";
 const CURRENT_DATE = "2026-09-17";
@@ -33,6 +41,8 @@ function candidate(
     confidence: "high",
     evidence: {
       distinctMissCount: 2,
+      secondLatestMissedAt: "2026-09-15T08:00:00.000Z",
+      latestMissedAt: "2026-09-16T08:00:00.000Z",
       taskId: "task-1",
       windowStart: "2026-09-10T00:00:00.000Z",
       windowEnd: "2026-09-17T00:00:00.000Z",
@@ -70,19 +80,76 @@ function candidate(
   };
 }
 
-function state(
-  overrides: Partial<ProactiveCoachPolicyStateV1> = {},
-): ProactiveCoachPolicyStateV1 {
+type TestPresentation = Omit<ProactiveCoachRuntimePresentationV1, "signalType" | "conditionKey"> &
+  Partial<Pick<ProactiveCoachRuntimePresentationV1, "signalType" | "conditionKey">>;
+
+interface StateOverrides {
+  readonly now?: string;
+  readonly currentDate?: string;
+  readonly surfaceSessionId?: string;
+  readonly activeStudySession?: boolean;
+  readonly activeStudySessionFact?: ProactiveCoachRuntimeFactV1<{
+    readonly active: boolean;
+    readonly sessionId: string | null;
+    readonly startedAt: string | null;
+  }>;
+  readonly presentations?: readonly TestPresentation[];
+  readonly presentationsFact?: ProactiveCoachRuntimeCollectionV1<ProactiveCoachRuntimePresentationV1>;
+  readonly disabledCategories?: readonly CoachSignalCandidateV1["eligibility"]["attentionCategory"][];
+  readonly snoozes?: readonly { readonly attentionCategory: CoachSignalCandidateV1["eligibility"]["attentionCategory"]; readonly until: string }[];
+  readonly dismissedFingerprints?: readonly string[];
+  readonly clearConditions?: readonly ProactiveCoachClearConditionObservationV1[];
+  readonly clearConditionsFact?: ProactiveCoachRuntimeCollectionV1<ProactiveCoachClearConditionObservationV1>;
+}
+
+function collection<T>(
+  values: readonly T[],
+  source: "proactive_presentation_store" | "proactive_user_control_store" | "proactive_clear_condition_store",
+  asOf = NOW,
+): ProactiveCoachRuntimeCollectionV1<T> {
+  return { availability: "known", values, source, asOf, unavailableReason: null };
+}
+
+function state(overrides: StateOverrides = {}): ProactiveCoachPolicyStateV1 {
+  const now = overrides.now ?? NOW;
+  const presentations = (overrides.presentations ?? []).map((item) => ({
+    ...item,
+    signalType: item.signalType ?? "repeated_task_miss",
+    conditionKey: item.conditionKey ?? `legacy:${item.fingerprint}`,
+  }));
+  return buildProactiveCoachRuntimeStateV1({
+    now,
+    currentDate: overrides.currentDate ?? CURRENT_DATE,
+    surfaceSessionId: overrides.surfaceSessionId ?? "surface-1",
+    activeStudySession: overrides.activeStudySessionFact ?? {
+      availability: "known",
+      value: overrides.activeStudySession
+        ? { active: true, sessionId: "active-session-1", startedAt: "2026-09-17T08:00:00.000Z" }
+        : { active: false, sessionId: null, startedAt: null },
+      source: "study_sessions_active_readonly",
+      asOf: now,
+      unavailableReason: null,
+    },
+    presentations: overrides.presentationsFact ?? collection(presentations, "proactive_presentation_store", now),
+    disabledCategories: collection(overrides.disabledCategories ?? [], "proactive_user_control_store", now),
+    snoozes: collection(overrides.snoozes ?? [], "proactive_user_control_store", now),
+    dismissedFingerprints: collection(overrides.dismissedFingerprints ?? [], "proactive_user_control_store", now),
+    clearConditions: overrides.clearConditionsFact ?? collection(overrides.clearConditions ?? [], "proactive_clear_condition_store", now),
+  });
+}
+
+function presentationFor(
+  value: CoachSignalCandidateV1,
+  presentedAt = "2026-09-10T09:00:00.000Z",
+): ProactiveCoachRuntimePresentationV1 {
   return {
-    now: NOW,
-    currentDate: CURRENT_DATE,
-    surfaceSessionId: "surface-1",
-    activeStudySession: false,
-    presentations: [],
-    disabledCategories: [],
-    snoozes: [],
-    dismissedFingerprints: [],
-    ...overrides,
+    fingerprint: buildProactiveCoachFingerprintV1(value),
+    signalType: value.signalType,
+    conditionKey: buildProactiveCoachConditionKeyV1(value)!,
+    attentionCategory: value.eligibility.attentionCategory,
+    presentedAt,
+    calendarDate: presentedAt.slice(0, 10),
+    surfaceSessionId: "old-surface",
   };
 }
 
@@ -607,5 +674,109 @@ describe("Proactive Coach deterministic selection V1", () => {
 
     expect(result.outcome).toBe("silence");
     expect(result.suppressions[0]?.reason).toBe("surface_session_attention_budget");
+  });
+
+  it("U. fails closed when authoritative active-session state is unavailable", () => {
+    const result = selectProactiveCoachInsightV1([candidate()], state({
+      activeStudySessionFact: {
+        availability: "unavailable",
+        value: null,
+        source: "study_sessions_active_readonly",
+        asOf: NOW,
+        unavailableReason: "active_session_read_failed",
+      },
+    }));
+
+    expect(result.outcome).toBe("silence");
+    expect(result.suppressions[0]?.reason).toBe("active_study_session_authority_unavailable");
+  });
+
+  it("V. never re-fires completed-as-planned for the same local date", () => {
+    const value = candidate({
+      signalType: "today_completed_as_planned",
+      date: CURRENT_DATE,
+      reasonCode: "today_all_tasks_completed_with_planned_credit",
+      evidence: { completedTaskCount: 3, plannedCreditMinutes: 90, plannedMinutes: 90 },
+      eligibility: { reactiveExplanation: true, proactiveCandidate: true, attentionCategory: "progress", cooldownClass: "daily", silenceAllowed: true },
+    });
+    const result = selectProactiveCoachInsightV1([value], state({
+      presentations: [presentationFor(value)],
+    }));
+
+    expect(result.outcome).toBe("silence");
+    expect(result.suppressions[0]?.reason).toBe("hysteresis_condition_already_presented");
+  });
+
+  it("W. does not re-arm repeated miss merely because 72 hours elapsed", () => {
+    const value = candidate();
+    const result = selectProactiveCoachInsightV1([value], state({
+      presentations: [presentationFor(value)],
+    }));
+
+    expect(result.outcome).toBe("silence");
+    expect(result.suppressions[0]?.reason).toBe("hysteresis_rearm_not_proven");
+  });
+
+  it("X. re-arms repeated miss only after canonical clear plus two new misses", () => {
+    const value = candidate();
+    const conditionKey = buildProactiveCoachConditionKeyV1(value)!;
+    const result = selectProactiveCoachInsightV1([value], state({
+      presentations: [presentationFor(value)],
+      clearConditions: [{
+        signalType: "repeated_task_miss",
+        conditionKey,
+        state: "cleared",
+        observedAt: "2026-09-14T09:00:00.000Z",
+        reasonCode: "same_task_completion_observed",
+        sourceFactPaths: ["recentProgress.value.taskEvents[taskId=task-1]"],
+      }],
+    }));
+
+    expect(result.outcome).toBe("selected");
+    expect(result.selectedConditionKey).toBe(conditionKey);
+  });
+
+  it("Y. requires a canonical warning-clear observation before Planner warning re-arm", () => {
+    const value = candidate({
+      signalType: "planner_warning_present",
+      reasonCode: "persisted_planner_warning_count_present",
+      evidence: { lifecycleState: "previewed", warningCount: 1 },
+      provenance: [{ source: "planner_v2_lifecycle", recordIds: ["proposal-1"], asOf: NOW }],
+      eligibility: { reactiveExplanation: true, proactiveCandidate: true, attentionCategory: "planner", cooldownClass: "state_change", silenceAllowed: true },
+    });
+    const prior = presentationFor(value);
+    expect(selectProactiveCoachInsightV1([value], state({ presentations: [prior] })).suppressions[0]?.reason)
+      .toBe("hysteresis_rearm_not_proven");
+
+    const conditionKey = buildProactiveCoachConditionKeyV1(value)!;
+    expect(selectProactiveCoachInsightV1([value], state({
+      presentations: [prior],
+      clearConditions: [{
+        signalType: "planner_warning_present",
+        conditionKey,
+        state: "cleared",
+        observedAt: "2026-09-16T09:00:00.000Z",
+        reasonCode: "canonical_warning_count_zero_observed",
+        sourceFactPaths: ["planner.value.warnings"],
+      }],
+    })).outcome).toBe("selected");
+  });
+
+  it("Z. treats recent recovery as an exact factual event instance", () => {
+    const value = candidate({
+      signalType: "recent_recovery",
+      reasonCode: "completed_after_recent_miss",
+      evidence: { taskId: "task-1", missedAt: "2026-09-08T09:00:00.000Z", completedAt: "2026-09-09T09:00:00.000Z" },
+      eligibility: { reactiveExplanation: true, proactiveCandidate: true, attentionCategory: "consistency", cooldownClass: "state_change", silenceAllowed: true },
+    });
+    expect(selectProactiveCoachInsightV1([value], state({ presentations: [presentationFor(value)] })).suppressions[0]?.reason)
+      .toBe("hysteresis_condition_already_presented");
+
+    const later = candidate({
+      ...value,
+      evidence: { taskId: "task-1", missedAt: "2026-09-15T09:00:00.000Z", completedAt: "2026-09-16T09:00:00.000Z" },
+    });
+    expect(selectProactiveCoachInsightV1([later], state({ presentations: [presentationFor(value)] })).outcome)
+      .toBe("selected");
   });
 });

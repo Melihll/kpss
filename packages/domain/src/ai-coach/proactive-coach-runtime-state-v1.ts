@@ -214,11 +214,13 @@ export function buildProactiveCoachRuntimeStateV1(
   assertRuntimeCollection(input.clearConditions, "CLEAR_CONDITIONS");
 
   for (const presentation of input.presentations.values) {
+    if (!validTimestamp(presentation.presentedAt)) {
+      throw new Error("PROACTIVE_PRESENTATION_TIME_INVALID");
+    }
     if (
       !presentation.fingerprint.trim()
       || !presentation.conditionKey.trim()
       || !presentation.surfaceSessionId.trim()
-      || !validTimestamp(presentation.presentedAt)
       || !/^\d{4}-\d{2}-\d{2}$/.test(presentation.calendarDate)
     ) throw new Error("PROACTIVE_RUNTIME_PRESENTATION_INVALID");
   }
