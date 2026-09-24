@@ -1,5 +1,22 @@
 # KPSS Koçu Product Backlog
 
+> **Authoritative current state - AI_COACH_6G_B1_PROJECTED_P90_ACCEPTED_2026_09_24**
+>
+> - **Evre 6G / AIC-007 remains `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 ACCEPTED - PRODUCTION ACCEPTANCE PENDING`.**
+> - Evre 6G-A local readiness remains GREEN.
+> - Evre 6G-B1 projected cost acceptance is GREEN using a deterministic synthetic conservative replay against the current authoritative OpenAI route/pricing catalog.
+> - Acceptance FX is `60 TRY/USD`, cache discounts are not assumed, and a `1.10x` retry/fallback overhead is included.
+> - Historical controlled-DEV calibration remains grounded by the observed real call: actual TRY cost `0.211052`; repriced at the conservative acceptance FX it is `0.261 TRY`.
+> - Normal synthetic distribution: median `84.230748 TL/month`, projected p90 `120.32964 TL/month`, maximum `140.38458 TL/month`.
+> - Heavy synthetic distribution: projected p90 `236.95038 TL/month`, maximum `263.2782 TL/month`.
+> - Simulated paths above the hard `300 TL/month` ceiling: `0`.
+> - Therefore the contractual projected normal-user p90 `<= 200 TL/month`, heavy-user p90 `<= 250 TL/month`, and simulated hard-ceiling criteria are accepted.
+> - This is synthetic projected-cost acceptance, not observed production-cohort evidence. `OBSERVED_PRODUCTION_COHORT=false`.
+> - Exact-profile production acceptance remains `NOT_RUN`; production release authority remains `NOT_GRANTED`.
+> - Production billing/runtime remain fail-closed. This checkpoint performs `0` production deploys, `0` production migrations, and `0` provider production activations. Planner Confirm remains OFF. Planner Apply remains OFF.
+> - **NEXT EXACT STEP:** only the separately approved exact-profile production acceptance / final release evidence required to close AIC-007 and Evre 6.
+> - This block supersedes older current-status, cost-evidence, and next-step statements below. Historical checkpoint evidence remains historical.
+
 > **Authoritative current state - AI_COACH_6G_A_LOCAL_READINESS_ACCEPTED_2026_09_24**
 >
 > - **Evre 6G / AIC-007 is `IN_PROGRESS ? LOCAL READINESS ACCEPTED / PRODUCTION EVIDENCE PENDING`.**
@@ -242,7 +259,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | `AIC-004` | 6D | `P1` | Proactive Coach | `DONE - FINAL SHADOW ACCEPTANCE CLOSED` |
 | `AIC-005` | 6E | `P0` | Planner V2 Integration | `DONE - FINAL ACCEPTANCE CLOSED` |
 | `AIC-006` | 6F | `P1` | Conversation Intelligence | `DONE - FINAL ACCEPTANCE CLOSED` |
-| `AIC-007` | 6G | `P0` | Eval / Cost / Production Acceptance | `IN_PROGRESS ? LOCAL READINESS ACCEPTED / PRODUCTION EVIDENCE PENDING` |
+| `AIC-007` | 6G | `P0` | Eval / Cost / Production Acceptance | `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 ACCEPTED - PRODUCTION ACCEPTANCE PENDING` |
 
 The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, Authority & Cost Contract](specs/AI_COACH_EVRE_6_PRODUCT_AUTHORITY_COST_CONTRACT.md). AI teacher/tutoring/quiz/mastery features are outside every Evre 6 item. No backlog status grants runtime, deployment, migration, gate, Confirm, Apply, or production authority.
 
@@ -372,7 +389,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-007` / Evre 6G — Eval / Cost / Production Acceptance
 
 - Priority: `P0`
-- Status: `IN_PROGRESS ? LOCAL READINESS ACCEPTED / PRODUCTION EVIDENCE PENDING`
+- Status: `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 ACCEPTED - PRODUCTION ACCEPTANCE PENDING`
 - Dependency: relevant 6B–6F exits and a separate production release brief.
 - Desired outcome: Safety, groundedness, UX, cost, observability, and rollback are proven before any controlled production expansion.
 - Acceptance criteria:
@@ -385,6 +402,8 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
   - Limited exact-profile production acceptance, disable/rollback, and any independent capability activation receive separate approval.
 
 - 6G-A local readiness acceptance (2026-09-24): cross-layer acceptance GREEN; hard 300 TL/month governor, ledger/reconciliation, provider maximum authorization and observability locally accepted; focused economics regression `55/55`; AI economics, AI Coach, plan-preview and canonical Planner V2 read-only safety PASS; workspace typecheck PASS. Production billing/runtime remain fail-closed. Normal-user and heavy-user projected p90 remain UNPROVEN; exact-profile production acceptance is NOT_RUN; production release authority is NOT_GRANTED. No production action, migration, provider activation, Confirm or Apply change occurred.
+
+- 6G-B1 projected p90 acceptance (2026-09-24): deterministic synthetic conservative replay against the authoritative OpenAI route/pricing catalog is GREEN. Acceptance FX `60 TRY/USD`; no cache discount; retry/fallback overhead `1.10x`. Real controlled-DEV calibration is `0.211052 TRY`, conservatively repriced to `0.261 TRY`. Normal median `84.230748`, normal projected p90 `120.32964`, normal max `140.38458`; heavy projected p90 `236.95038`, heavy max `263.2782`; simulated paths above `300 TL/month` = `0`. Contractual projected p90 criteria are accepted. This does not represent observed production-cohort evidence and grants no production authority.
 
 
 ## `PLN-001` — Esra 7-day Planning Reality Audit

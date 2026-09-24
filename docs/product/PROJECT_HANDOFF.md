@@ -1,5 +1,22 @@
 # KPSS Koçu — Project Handoff
 
+> **Authoritative current state - AI_COACH_6G_B1_PROJECTED_P90_ACCEPTED_2026_09_24**
+>
+> - **Evre 6G / AIC-007 remains `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 ACCEPTED - PRODUCTION ACCEPTANCE PENDING`.**
+> - Evre 6G-A local readiness remains GREEN.
+> - Evre 6G-B1 projected cost acceptance is GREEN using a deterministic synthetic conservative replay against the current authoritative OpenAI route/pricing catalog.
+> - Acceptance FX is `60 TRY/USD`, cache discounts are not assumed, and a `1.10x` retry/fallback overhead is included.
+> - Historical controlled-DEV calibration remains grounded by the observed real call: actual TRY cost `0.211052`; repriced at the conservative acceptance FX it is `0.261 TRY`.
+> - Normal synthetic distribution: median `84.230748 TL/month`, projected p90 `120.32964 TL/month`, maximum `140.38458 TL/month`.
+> - Heavy synthetic distribution: projected p90 `236.95038 TL/month`, maximum `263.2782 TL/month`.
+> - Simulated paths above the hard `300 TL/month` ceiling: `0`.
+> - Therefore the contractual projected normal-user p90 `<= 200 TL/month`, heavy-user p90 `<= 250 TL/month`, and simulated hard-ceiling criteria are accepted.
+> - This is synthetic projected-cost acceptance, not observed production-cohort evidence. `OBSERVED_PRODUCTION_COHORT=false`.
+> - Exact-profile production acceptance remains `NOT_RUN`; production release authority remains `NOT_GRANTED`.
+> - Production billing/runtime remain fail-closed. This checkpoint performs `0` production deploys, `0` production migrations, and `0` provider production activations. Planner Confirm remains OFF. Planner Apply remains OFF.
+> - **NEXT EXACT STEP:** only the separately approved exact-profile production acceptance / final release evidence required to close AIC-007 and Evre 6.
+> - This block supersedes older current-status, cost-evidence, and next-step statements below. Historical checkpoint evidence remains historical.
+
 > **Authoritative current state - AI_COACH_6G_A_LOCAL_READINESS_ACCEPTED_2026_09_24**
 >
 > - **Evre 6G / AIC-007 is `IN_PROGRESS ? LOCAL READINESS ACCEPTED / PRODUCTION EVIDENCE PENDING`.**
@@ -280,9 +297,9 @@ V1 may select only completed-as-planned, repeated task miss, recent recovery, an
 
 ## NEXT EXACT STEP
 
-Complete the remaining Evre 6G production-evidence requirements only: projected p90 cost evidence and a separately approved exact-profile production acceptance/release step. Do not widen AI or Planner authority while doing so.
+Run only the separately approved exact-profile production acceptance / final release-evidence step required for AIC-007. Projected p90 cost acceptance is already GREEN and must not be reopened without new contradictory evidence.
 
-Production provider activation, deployment, migration, exact-profile acceptance, and any Planner Preview/Confirm/Apply activation remain separate explicit approvals. AIC-007 / Evre 6G must remain IN_PROGRESS until the outstanding evidence is actually proven.
+Do not infer production authority from this handoff. Production deployment, provider activation, migration, exact-profile acceptance, Planner Preview activation, Confirm, and Apply remain separately gated.
 
 ## 2026-09-10 Evre 6A final contract closure
 
