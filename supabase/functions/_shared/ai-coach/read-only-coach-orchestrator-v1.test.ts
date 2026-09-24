@@ -5,7 +5,13 @@ import { coachContextV1Fixture, type CoachContextV1FixtureKind } from "../../../
 import { blockedCoachContextV1Fact, unknownCoachContextV1Fact } from "../../../../packages/domain/src/ai-coach/coach-context-v1.ts";
 import { AI_OPENAI_PRICING_CATALOG_V1, AI_OPENAI_ROUTE_CATALOG_V1 } from "./provider-runtime-catalog-v1.ts";
 import { AI_PROVIDER_RUNTIME_SERVER_KEYS_V1, resolveAiProviderRuntimeActivationV1 } from "./provider-runtime-activation-v1.ts";
-import { runReadOnlyCoachCapabilityV1, type OpenAiGenerationTransportV1, type OpenAiInputCountTransportV1, type ReadOnlyCoachAccountingGatewayV1 } from "./read-only-coach-orchestrator-v1.ts";
+import {
+  prepareReadOnlyCoachProductionStaticBillingBoundV1,
+  runReadOnlyCoachCapabilityV1,
+  type OpenAiGenerationTransportV1,
+  type OpenAiInputCountTransportV1,
+  type ReadOnlyCoachAccountingGatewayV1,
+} from "./read-only-coach-orchestrator-v1.ts";
 
 const AT = "2026-09-10T09:00:00.000Z";
 const LOCAL_ROUTES: AiRouteCatalogV1 = {
@@ -522,4 +528,104 @@ describe("6B.6B.2 controlled local DEV orchestration authority", () => {
     expect(test.counters.count).toBe(0);
     expect(test.counters.provider).toBe(0);
   });
+
+  it(
+    "prepares a production static billing bound without any count transport dependency",
+    () => {
+      const bound =
+        prepareReadOnlyCoachProductionStaticBillingBoundV1({
+          tier:
+            "standard",
+
+          modelId:
+            "gpt-5.4-mini-2026-03-17",
+
+          requestFingerprint:
+            "sha256:production-static-request",
+
+          serializedProviderRequestBytes:
+            80_000,
+
+          evaluatedAt:
+            "2026-09-24T10:00:00.000Z",
+
+          source: {
+            authority:
+              "approved_server_config",
+
+            sourceId:
+              "ai-coach-production-static-bound",
+
+            verificationId:
+              "b2b-local-acceptance-v1",
+
+            verifiedAt:
+              "2026-09-24T09:00:00.000Z",
+
+            loadedAt:
+              "2026-09-24T09:05:00.000Z",
+          },
+        });
+
+      expect(
+        bound,
+      ).toMatchObject({
+        tier:
+          "standard",
+
+        provider:
+          "openai",
+
+        modelId:
+          "gpt-5.4-mini-2026-03-17",
+
+        inputTokenUpperBound:
+          200_000,
+
+        outputTokenUpperBound:
+          900,
+
+        requestFingerprint:
+          "sha256:production-static-request",
+
+        inputBoundMethod:
+          "approved_static_production_bound",
+
+        inputCountBillingTreatment:
+          "not_applicable_static_bound",
+
+        requestPayloadCoverage:
+          "complete",
+
+        inputBoundEnforcement:
+          "server_rejects_above_bound",
+
+        providerOutputLimitEnforced:
+          true,
+
+        uncoveredBillableTokenClasses:
+          [],
+      });
+    },
+  );
+
+  it(
+    "keeps the executable production Coach runtime disabled after static-bound preparation is available",
+    async () => {
+      await expect(
+        runReadOnlyCoachCapabilityV1({
+          /*
+           * Only runtimeEnvironment is relevant: the production guard must
+           * fail before any identity, transport, DB or provider dependency
+           * can be touched.
+           */
+          runtimeEnvironment:
+            "production",
+        } as any),
+      ).rejects.toThrow(
+        "READ_ONLY_COACH_PRODUCTION_RUNTIME_DISABLED",
+      );
+    },
+  );
+
 });

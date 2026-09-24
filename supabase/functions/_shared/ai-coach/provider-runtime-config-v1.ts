@@ -33,9 +33,9 @@ export interface AiProviderBillableBoundV1 {
   readonly inputTokenUpperBound: number;
   readonly outputTokenUpperBound: number;
   readonly requestFingerprint: string;
-  readonly inputBoundMethod: "openai_responses_input_tokens_exact" | "approved_static_test_bound";
+  readonly inputBoundMethod: "openai_responses_input_tokens_exact" | "approved_static_production_bound" | "approved_static_test_bound";
   readonly inputCountVersion: string;
-  readonly inputCountBillingTreatment: "documented_no_charge" | "unresolved" | "test_fixture_no_charge";
+  readonly inputCountBillingTreatment: "documented_no_charge" | "not_applicable_static_bound" | "unresolved" | "test_fixture_no_charge";
   readonly requestPayloadCoverage: "complete";
   readonly inputBoundEnforcement: "server_rejects_above_bound";
   readonly providerOutputLimitEnforced: true;
@@ -154,8 +154,20 @@ function billingBoundIsComplete(value: AiProviderBillableBoundV1, route: AiRoute
     && Boolean(value.requestFingerprint.trim())
     && typeof value.inputCountVersion === "string"
     && Boolean(value.inputCountVersion.trim())
-    && value.inputCountBillingTreatment === "documented_no_charge"
-    && (value.inputBoundMethod === "openai_responses_input_tokens_exact" || value.inputBoundMethod === "approved_static_test_bound")
+    && (
+      (
+        value.inputBoundMethod === "openai_responses_input_tokens_exact"
+        && value.inputCountBillingTreatment === "documented_no_charge"
+      )
+      || (
+        value.inputBoundMethod === "approved_static_production_bound"
+        && value.inputCountBillingTreatment === "not_applicable_static_bound"
+      )
+      || (
+        value.inputBoundMethod === "approved_static_test_bound"
+        && value.inputCountBillingTreatment === "documented_no_charge"
+      )
+    )
     && Number.isInteger(value.outputTokenUpperBound)
     && value.outputTokenUpperBound === route.maxOutputTokens
     && value.requestPayloadCoverage === "complete"
@@ -213,7 +225,17 @@ export function authorizeProductionProviderCostMaximumV1(
   const bound = resolution.config.billingBounds.find((item) => item.tier === route.tier && item.provider === route.provider && item.modelId === route.modelId);
   const price = resolution.config.pricingCatalog.entries.find((item) => item.provider === route.provider && item.modelId === route.modelId && Date.parse(item.effectiveFrom) <= Date.parse(resolution.evaluatedAt) && (item.effectiveTo === null || Date.parse(resolution.evaluatedAt) < Date.parse(item.effectiveTo)));
   if (!bound || !price) throw new Error("AI_PRODUCTION_COST_BOUND_UNAVAILABLE");
-  if (bound.inputCountBillingTreatment !== "documented_no_charge") {
+  const productionInputBoundBillingValid =
+    (
+      bound.inputBoundMethod === "openai_responses_input_tokens_exact"
+      && bound.inputCountBillingTreatment === "documented_no_charge"
+    )
+    || (
+      bound.inputBoundMethod === "approved_static_production_bound"
+      && bound.inputCountBillingTreatment === "not_applicable_static_bound"
+    );
+
+  if (!productionInputBoundBillingValid) {
     throw new Error("AI_PRODUCTION_INPUT_COUNT_BILLING_UNRESOLVED");
   }
   if (bound.cacheWriteBillingTreatment !== "documented_no_additional_charge") {
@@ -257,9 +279,30 @@ export function authorizeRequestProviderCostMaximumV1(input: {
     || bound.provider !== route.provider || bound.modelId !== route.modelId || bound.tier !== route.tier
     || bound.pricingVersion !== route.pricingVersion || pricingCatalog.version !== route.pricingVersion
     || bound.outputTokenUpperBound !== route.maxOutputTokens || bound.uncoveredBillableTokenClasses.length > 0
-    || !bound.requestFingerprint.trim() || bound.inputBoundMethod !== "openai_responses_input_tokens_exact"
+    || !bound.requestFingerprint.trim()
+    || (
+      route.runtimeEnvironment === "production"
+        ? (
+            bound.inputBoundMethod !== "openai_responses_input_tokens_exact"
+            && bound.inputBoundMethod !== "approved_static_production_bound"
+          )
+        : bound.inputBoundMethod !== "openai_responses_input_tokens_exact"
+    )
   ) throw new Error("AI_REQUEST_COST_BOUND_INVALID");
-  if (route.runtimeEnvironment === "production" && bound.inputCountBillingTreatment !== "documented_no_charge") {
+
+  if (
+    route.runtimeEnvironment === "production"
+    && !(
+      (
+        bound.inputBoundMethod === "openai_responses_input_tokens_exact"
+        && bound.inputCountBillingTreatment === "documented_no_charge"
+      )
+      || (
+        bound.inputBoundMethod === "approved_static_production_bound"
+        && bound.inputCountBillingTreatment === "not_applicable_static_bound"
+      )
+    )
+  ) {
     throw new Error("AI_PRODUCTION_INPUT_COUNT_BILLING_UNRESOLVED");
   }
   if (route.runtimeEnvironment === "production" && bound.cacheWriteBillingTreatment !== "documented_no_additional_charge") {

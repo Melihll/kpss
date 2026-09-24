@@ -6,7 +6,10 @@ import {
   AI_OPENAI_OUTPUT_BOUND_SEMANTICS_V1,
   AI_OPENAI_PRODUCTION_BILLING_BOUNDS_V1,
   AI_OPENAI_PRODUCTION_INPUT_BOUND_PROVEN_V1,
+  AI_OPENAI_STATIC_PRODUCTION_BOUND_V1_VERSION,
+  AI_OPENAI_STATIC_PRODUCTION_REQUEST_BYTE_LIMIT_V1,
   createOpenAiProductionBillingBoundV1,
+  createOpenAiStaticProductionBillingBoundV1,
   type AiOpenAiInputTokenBoundProofV1,
 } from "./provider-openai-billing-bound-v1.ts";
 
@@ -155,4 +158,118 @@ describe("OpenAI production billing bound V1", () => {
       bound.inputTokenUpperBound,
     ).toBe(200_000);
   });
+
+  it("builds conservative static production bounds for every OpenAI route without count-endpoint billing", () => {
+    const source = {
+      authority: "approved_server_config" as const,
+      sourceId: "openai-static-production-bound-test",
+      verificationId: "openai-static-bound-test-v1",
+      verifiedAt: "2026-09-11T20:00:00.000Z",
+      loadedAt: "2026-09-11T20:00:00.000Z",
+    };
+
+    const cases = [
+      ["economy", "gpt-5.4-nano-2026-03-17", 500],
+      ["standard", "gpt-5.4-mini-2026-03-17", 900],
+      ["strong", "gpt-5.4-2026-03-05", 1_400],
+    ] as const;
+
+    for (const [tier, modelId, outputLimit] of cases) {
+      const bound =
+        createOpenAiStaticProductionBillingBoundV1(
+          tier,
+          {
+            requestFingerprint:
+              `sha256:static-${tier}`,
+
+            modelId,
+
+            serializedProviderRequestBytes:
+              80_000,
+
+            source,
+          },
+          "2026-09-11T20:30:00.000Z",
+        );
+
+      expect(bound).toMatchObject({
+        tier,
+        provider: "openai",
+        modelId,
+        inputTokenUpperBound: 200_000,
+        outputTokenUpperBound: outputLimit,
+        inputBoundMethod:
+          "approved_static_production_bound",
+        inputCountVersion:
+          AI_OPENAI_STATIC_PRODUCTION_BOUND_V1_VERSION,
+        inputCountBillingTreatment:
+          "not_applicable_static_bound",
+        requestPayloadCoverage:
+          "complete",
+        inputBoundEnforcement:
+          "server_rejects_above_bound",
+        endpointClass:
+          "global_standard",
+        serviceTier:
+          "default",
+        cacheWriteBillingTreatment:
+          "documented_no_additional_charge",
+        uncoveredBillableTokenClasses: [],
+      });
+    }
+  });
+
+  it("rejects oversized or wrong-model static production requests", () => {
+    const source = {
+      authority: "approved_server_config" as const,
+      sourceId: "openai-static-production-bound-test",
+      verificationId: "openai-static-bound-test-v1",
+      verifiedAt: "2026-09-11T20:00:00.000Z",
+      loadedAt: "2026-09-11T20:00:00.000Z",
+    };
+
+    expect(() =>
+      createOpenAiStaticProductionBillingBoundV1(
+        "standard",
+        {
+          requestFingerprint:
+            "sha256:oversized",
+
+          modelId:
+            "gpt-5.4-mini-2026-03-17",
+
+          serializedProviderRequestBytes:
+            AI_OPENAI_STATIC_PRODUCTION_REQUEST_BYTE_LIMIT_V1
+            + 1,
+
+          source,
+        },
+        "2026-09-11T20:30:00.000Z",
+      ),
+    ).toThrow(
+      "AI_OPENAI_STATIC_BOUND_REQUEST_TOO_LARGE",
+    );
+
+    expect(() =>
+      createOpenAiStaticProductionBillingBoundV1(
+        "standard",
+        {
+          requestFingerprint:
+            "sha256:wrong-model",
+
+          modelId:
+            "gpt-5.4-nano-2026-03-17",
+
+          serializedProviderRequestBytes:
+            80_000,
+
+          source,
+        },
+        "2026-09-11T20:30:00.000Z",
+      ),
+    ).toThrow(
+      "AI_OPENAI_STATIC_BOUND_REQUEST_IDENTITY_INVALID",
+    );
+  });
+
 });

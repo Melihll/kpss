@@ -1,5 +1,24 @@
 # KPSS Koçu — Project Handoff
 
+> **Authoritative current state - AI_COACH_6G_B2_LOCAL_FOUNDATION_READY_2026_09_24**
+>
+> - **Evre 6G / AIC-007 remains `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 + PRODUCTION FOUNDATION ACCEPTED - EXACT-PROFILE PRODUCTION ACCEPTANCE PENDING`.**
+> - Evre 6G-A local readiness remains GREEN.
+> - Evre 6G-B1 projected p90 acceptance remains GREEN.
+> - Evre 6G-B2 local production foundation is GREEN.
+> - Production cost authorization now supports a server-owned static production input bound with `inputCountBillingTreatment = not_applicable_static_bound`; production cost accounting no longer needs to assume `/responses/input_tokens` is free.
+> - OpenAI static production bounds are locally supported for economy / standard / strong routes using the conservative `200000` input-token reservation ceiling and `100000` serialized-request byte guard.
+> - A pure orchestrator static-bound preparation seam exists and has no production count-endpoint dependency.
+> - Focused B2 regression is GREEN: `62/62`; AI economics safety PASS; AI Coach safety PASS; workspace typecheck PASS.
+> - Active production billing bounds remain EMPTY.
+> - `AI_OPENAI_PRODUCTION_INPUT_BOUND_PROVEN_V1` remains `false`.
+> - Provider production activation remains `production_prohibited`.
+> - Executable read-only Coach production runtime remains `READ_ONLY_COACH_PRODUCTION_RUNTIME_DISABLED`.
+> - Therefore this checkpoint grants **no production release authority** and performs `0` production SQL, `0` production deploys, `0` production migrations, `0` production secret changes and `0` provider activations.
+> - Planner Confirm remains OFF. Planner Apply remains OFF.
+> - **NEXT EXACT STEP:** separately approved exact-profile production acceptance / final release evidence only. Production authority must not be inferred from this local foundation.
+> - This block supersedes older current-status and next-step statements below. Historical checkpoints remain historical.
+
 > **Authoritative current state - AI_COACH_6G_B1_PROJECTED_P90_ACCEPTED_2026_09_24**
 >
 > - **Evre 6G / AIC-007 remains `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 ACCEPTED - PRODUCTION ACCEPTANCE PENDING`.**
@@ -297,9 +316,11 @@ V1 may select only completed-as-planned, repeated task miss, recent recovery, an
 
 ## NEXT EXACT STEP
 
-Run only the separately approved exact-profile production acceptance / final release-evidence step required for AIC-007. Projected p90 cost acceptance is already GREEN and must not be reopened without new contradictory evidence.
+Run only the separately approved exact-profile production acceptance / final release-evidence step required for AIC-007.
 
-Do not infer production authority from this handoff. Production deployment, provider activation, migration, exact-profile acceptance, Planner Preview activation, Confirm, and Apply remain separately gated.
+The local production foundation is already GREEN: static production billing bounds can be prepared without a production input-count endpoint dependency, but active production bounds remain empty and executable production runtime remains disabled.
+
+Do not deploy, activate a production provider, change production secrets, run production SQL/migrations, or change Planner Preview/Confirm/Apply authority without a separate explicit approval.
 
 ## 2026-09-10 Evre 6A final contract closure
 

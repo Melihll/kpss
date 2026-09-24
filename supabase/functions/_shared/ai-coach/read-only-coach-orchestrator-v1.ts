@@ -32,6 +32,7 @@ import {
 } from "./openai-input-token-count-v1.ts";
 import {
   createOpenAiRequestBillingBoundV1,
+  createOpenAiStaticProductionBillingBoundV1,
 } from "./provider-openai-billing-bound-v1.ts";
 import {
   authorizeControlledDevObservedProviderCostV1,
@@ -244,6 +245,79 @@ function assertReservationAllowed(decision: AiBudgetReservationDecisionV1): void
     throw new Error(`READ_ONLY_COACH_BUDGET_DENIED:${decision.reason}`);
   }
 }
+
+
+/**
+ * Pure production billing-bound preparation seam.
+ *
+ * Important:
+ * - does NOT call the OpenAI input-token count endpoint,
+ * - does NOT activate production runtime,
+ * - does NOT read provider secrets,
+ * - does NOT reserve budget,
+ * - does NOT perform a provider generation call.
+ *
+ * runReadOnlyCoachCapabilityV1 still rejects production before execution.
+ * This seam exists so the final exact-profile release can use a tested
+ * server-owned static bound instead of the count endpoint.
+ */
+export function prepareReadOnlyCoachProductionStaticBillingBoundV1(
+  input: {
+    readonly tier:
+      | "economy"
+      | "standard"
+      | "strong";
+
+    readonly modelId:
+      string;
+
+    readonly requestFingerprint:
+      string;
+
+    readonly serializedProviderRequestBytes:
+      number;
+
+    readonly evaluatedAt:
+      string;
+
+    readonly source:
+      Readonly<{
+        readonly authority:
+          "approved_server_config";
+
+        readonly sourceId:
+          string;
+
+        readonly verificationId:
+          string;
+
+        readonly verifiedAt:
+          string;
+
+        readonly loadedAt:
+          string;
+      }>;
+  },
+) {
+  return createOpenAiStaticProductionBillingBoundV1(
+    input.tier,
+    {
+      requestFingerprint:
+        input.requestFingerprint,
+
+      modelId:
+        input.modelId,
+
+      serializedProviderRequestBytes:
+        input.serializedProviderRequestBytes,
+
+      source:
+        input.source,
+    },
+    input.evaluatedAt,
+  );
+}
+
 
 export async function runReadOnlyCoachCapabilityV1(
   input: RunReadOnlyCoachCapabilityInputV1,

@@ -1,5 +1,24 @@
 # Current Sprint
 
+> **Authoritative current state - AI_COACH_6G_B2_LOCAL_FOUNDATION_READY_2026_09_24**
+>
+> - **Evre 6G / AIC-007 remains `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 + PRODUCTION FOUNDATION ACCEPTED - EXACT-PROFILE PRODUCTION ACCEPTANCE PENDING`.**
+> - Evre 6G-A local readiness remains GREEN.
+> - Evre 6G-B1 projected p90 acceptance remains GREEN.
+> - Evre 6G-B2 local production foundation is GREEN.
+> - Production cost authorization now supports a server-owned static production input bound with `inputCountBillingTreatment = not_applicable_static_bound`; production cost accounting no longer needs to assume `/responses/input_tokens` is free.
+> - OpenAI static production bounds are locally supported for economy / standard / strong routes using the conservative `200000` input-token reservation ceiling and `100000` serialized-request byte guard.
+> - A pure orchestrator static-bound preparation seam exists and has no production count-endpoint dependency.
+> - Focused B2 regression is GREEN: `62/62`; AI economics safety PASS; AI Coach safety PASS; workspace typecheck PASS.
+> - Active production billing bounds remain EMPTY.
+> - `AI_OPENAI_PRODUCTION_INPUT_BOUND_PROVEN_V1` remains `false`.
+> - Provider production activation remains `production_prohibited`.
+> - Executable read-only Coach production runtime remains `READ_ONLY_COACH_PRODUCTION_RUNTIME_DISABLED`.
+> - Therefore this checkpoint grants **no production release authority** and performs `0` production SQL, `0` production deploys, `0` production migrations, `0` production secret changes and `0` provider activations.
+> - Planner Confirm remains OFF. Planner Apply remains OFF.
+> - **NEXT EXACT STEP:** separately approved exact-profile production acceptance / final release evidence only. Production authority must not be inferred from this local foundation.
+> - This block supersedes older current-status and next-step statements below. Historical checkpoints remain historical.
+
 > **Authoritative current state - AI_COACH_6G_B1_PROJECTED_P90_ACCEPTED_2026_09_24**
 >
 > - **Evre 6G / AIC-007 remains `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 ACCEPTED - PRODUCTION ACCEPTANCE PENDING`.**
@@ -208,9 +227,9 @@ Last updated: 2026-09-19
 
 ## Sprint 02 — Evre 6B & Continuing Planning Foundations
 
-Sprint status: `EVRE_6G_IN_PROGRESS - LOCAL_READINESS_AND_PROJECTED_P90_ACCEPTED - PRODUCTION_ACCEPTANCE_PENDING`
+Sprint status: `EVRE_6G_IN_PROGRESS - LOCAL_READINESS_P90_AND_PRODUCTION_FOUNDATION_ACCEPTED - EXACT_PROFILE_PRODUCTION_ACCEPTANCE_PENDING`
 
-Sprint objective: Preserve GREEN local readiness and projected p90 cost acceptance; complete only the separately approved exact-profile production acceptance / final release evidence required to close AIC-007.
+Sprint objective: Preserve the GREEN local readiness, projected p90 and fail-closed production foundation; complete only the separately approved exact-profile production acceptance / final release evidence required to close AIC-007.
 
 Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.1 are accepted locally. 6B.6B.2 local acceptance is green and checkpointed on the feature branch: the controlled local-DEV authority chain, authoritative local route/pricing envelope, TCMB FX boundary, server-only credential boundary, real gateway adapter, exact-count billing identity, dedicated controlled-DEV cost authorization, and full A→Z mocked smoke are verified. No real provider call has been executed. Official `/responses/input_tokens` billing remains unresolved; `TEMP_DEV_COST_POLICY_2026_09_12` permits only a separately approved, observed-cost, single controlled local-DEV smoke while production remains prohibited. Current Coach runtime, production schema/data, deployments, and Planner gates remain unchanged. PLN-002 remains `IN_PROGRESS` pending natural Extra Study acceptance evidence.
 
@@ -228,7 +247,7 @@ Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.
 - Focused regression `64/64`; workspace typecheck PASS; AI Coach, plan-preview and canonical Planner V2 safety gates PASS; full non-integration `1373/1373` across `179/179` test files.
 - DB conversation persistence, localStorage/sessionStorage, migration, production action, automatic Planner Preview, conversation Confirm and conversation Apply are `0`.
 - Confirm and Apply remain OFF.
-- Next safe work: separately approved `AIC-007 / Evre 6G` exact-profile production acceptance and final release evidence only.
+- Next safe work: separately approved `AIC-007 / Evre 6G` exact-profile production acceptance / final release evidence only.
 
 
 ### `AIC-005` / Evre 6E - Planner V2 Integration
@@ -272,7 +291,7 @@ Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.
 - Canonical subject resolution, clarification, `COST_LIMITED`, `UNKNOWN_OR_BLOCKED`, and provider no-mutation guards are implemented.
 - Final 6C acceptance evidence: canonical scenarios `20/20`; focused routing/executor `29/29`; complete AI Coach regression `205/205` across `20/20` files; full non-integration `1209/1209` across `161/161` files; workspace typecheck and mutation-authority audit PASS.
 - Reactive Coach final acceptance is checkpointed and undeployed. Production provider activation, Planner/task/capacity mutation, Confirm, Apply, deploy, migration, and main push remain `0`.
-- Current product slice: `AIC-007 / Evre 6G` is `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 ACCEPTED - PRODUCTION ACCEPTANCE PENDING`. Production release authority is not granted.
+- Current product slice: `AIC-007 / Evre 6G` is `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 + PRODUCTION FOUNDATION ACCEPTED - EXACT-PROFILE PRODUCTION ACCEPTANCE PENDING`. Production release authority is not granted.
 
 
 ### `AIC-002` / Evre 6B — CoachContextV1

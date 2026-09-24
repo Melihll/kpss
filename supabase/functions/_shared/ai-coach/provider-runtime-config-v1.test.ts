@@ -11,6 +11,7 @@ import {
   AI_PROVIDER_BILLABLE_BOUND_V1_VERSION,
   AI_PROVIDER_RUNTIME_CONFIG_V1_VERSION,
   authorizeProductionProviderCostMaximumV1,
+  authorizeRequestProviderCostMaximumV1,
   resolveProductionAiRuntimeConfigV1,
   routeProductionAiCapabilityV1,
   type AiProductionRuntimeConfigCandidateV1,
@@ -54,9 +55,9 @@ function candidate(): AiProductionRuntimeConfigCandidateV1 {
       inputTokenUpperBound: 50_000,
       outputTokenUpperBound: route.maxOutputTokens,
       requestFingerprint: `sha256:test-${route.tier}`,
-      inputBoundMethod: "approved_static_test_bound",
+      inputBoundMethod: "approved_static_production_bound",
       inputCountVersion: "test-input-count-v1",
-      inputCountBillingTreatment: "documented_no_charge",
+      inputCountBillingTreatment: "not_applicable_static_bound",
       requestPayloadCoverage: "complete",
       inputBoundEnforcement: "server_rejects_above_bound",
       providerOutputLimitEnforced: true,
@@ -96,7 +97,50 @@ describe("6B.6A production provider runtime configuration boundary", () => {
     expect(resolved).toMatchObject({ availability: "available" });
     const route = routeProductionAiCapabilityV1({ capability: "today_analysis", evidence: estimateAiEvidenceV1(10_000), expectedResponse: "medium", budgetState: "normal" }, resolved);
     expect(route).toMatchObject({ runtimeEnvironment: "production", disposition: "model", tier: "standard", provider: "fixture-provider" });
-    expect(authorizeProductionProviderCostMaximumV1(route, resolved)).toMatchObject({ authority: "production_runtime_config", runtimeEnvironment: "production", provider: route.provider, modelId: route.modelId, modelTier: route.tier, inputTokenUpperBound: 50_000, outputTokenUpperBound: 900 });
+    expect(authorizeProductionProviderCostMaximumV1(route, resolved)).toMatchObject({
+      authority: "production_runtime_config",
+      runtimeEnvironment: "production",
+      provider: route.provider,
+      modelId: route.modelId,
+      modelTier: route.tier,
+      inputTokenUpperBound: 50_000,
+      outputTokenUpperBound: 900,
+    });
+
+    if (resolved.availability !== "available") {
+      throw new Error("TEST_PRODUCTION_RUNTIME_RESOLUTION_REQUIRED");
+    }
+
+    const bound = resolved.config.billingBounds.find(
+      (item) =>
+        item.tier === route.tier
+        && item.provider === route.provider
+        && item.modelId === route.modelId,
+    );
+
+    if (!bound) {
+      throw new Error("TEST_PRODUCTION_STATIC_BOUND_REQUIRED");
+    }
+
+    expect(
+      authorizeRequestProviderCostMaximumV1({
+        route,
+        bound,
+        pricingCatalog: resolved.config.pricingCatalog,
+        fxSnapshot: resolved.config.fxSnapshot,
+        evaluatedAt: NOW,
+      }),
+    ).toMatchObject({
+      authority: "production_runtime_config",
+      runtimeEnvironment: "production",
+      inputTokenUpperBound: 50_000,
+      outputTokenUpperBound: 900,
+    });
+
+    expect(bound).toMatchObject({
+      inputBoundMethod: "approved_static_production_bound",
+      inputCountBillingTreatment: "not_applicable_static_bound",
+    });
 
     const base = candidate();
     const denied: AiProductionRuntimeConfigCandidateV1 = { ...base, capabilityRoutes: { ...base.capabilityRoutes, today_analysis: ["economy"] } };

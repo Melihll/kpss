@@ -1,5 +1,24 @@
 # KPSS Koçu Product Roadmap
 
+> **Authoritative current state - AI_COACH_6G_B2_LOCAL_FOUNDATION_READY_2026_09_24**
+>
+> - **Evre 6G / AIC-007 remains `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 + PRODUCTION FOUNDATION ACCEPTED - EXACT-PROFILE PRODUCTION ACCEPTANCE PENDING`.**
+> - Evre 6G-A local readiness remains GREEN.
+> - Evre 6G-B1 projected p90 acceptance remains GREEN.
+> - Evre 6G-B2 local production foundation is GREEN.
+> - Production cost authorization now supports a server-owned static production input bound with `inputCountBillingTreatment = not_applicable_static_bound`; production cost accounting no longer needs to assume `/responses/input_tokens` is free.
+> - OpenAI static production bounds are locally supported for economy / standard / strong routes using the conservative `200000` input-token reservation ceiling and `100000` serialized-request byte guard.
+> - A pure orchestrator static-bound preparation seam exists and has no production count-endpoint dependency.
+> - Focused B2 regression is GREEN: `62/62`; AI economics safety PASS; AI Coach safety PASS; workspace typecheck PASS.
+> - Active production billing bounds remain EMPTY.
+> - `AI_OPENAI_PRODUCTION_INPUT_BOUND_PROVEN_V1` remains `false`.
+> - Provider production activation remains `production_prohibited`.
+> - Executable read-only Coach production runtime remains `READ_ONLY_COACH_PRODUCTION_RUNTIME_DISABLED`.
+> - Therefore this checkpoint grants **no production release authority** and performs `0` production SQL, `0` production deploys, `0` production migrations, `0` production secret changes and `0` provider activations.
+> - Planner Confirm remains OFF. Planner Apply remains OFF.
+> - **NEXT EXACT STEP:** separately approved exact-profile production acceptance / final release evidence only. Production authority must not be inferred from this local foundation.
+> - This block supersedes older current-status and next-step statements below. Historical checkpoints remain historical.
+
 > **Authoritative current state - AI_COACH_6G_B1_PROJECTED_P90_ACCEPTED_2026_09_24**
 >
 > - **Evre 6G / AIC-007 remains `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 ACCEPTED - PRODUCTION ACCEPTANCE PENDING`.**
@@ -275,7 +294,7 @@ M1 is complete only when:
 - `CLOSED SUB-PHASE`: 6D Proactive Coach / AIC-004. Final implementation baseline `421de04e2c52c0bf7b0f296a679dfb9108db0030` and deterministic `39/39` shadow acceptance are accepted with zero false positives, wrong signal/evidence, unauthorized mutations, or provider/LLM calls.
 - `CLOSED SUB-PHASE`: 6E Planner V2 Integration / AIC-005. Accepted implementation baseline `836e6443aa7072f674d0da452d952cfa072b7d7b`; canonical Planner evidence explanation and explicit existing-Preview CTA are accepted with no new Planner mutation authority.
 - `CLOSED SUB-PHASE`: 6F Conversation Intelligence / AIC-006. Accepted as bounded browser-session conversation continuity with fresh canonical referent re-resolution, fail-closed ambiguity handling, explicit correction handling, and zero conversation persistence or Planner authority expansion.
-- `IN_PROGRESS SUB-PHASE`: 6G Eval / Cost / Production Acceptance / AIC-007. Local readiness and projected p90 cost acceptance are GREEN; only separately approved exact-profile production acceptance / final release evidence remains before closure.
+- `IN_PROGRESS SUB-PHASE`: 6G Eval / Cost / Production Acceptance / AIC-007. Local readiness, projected p90 cost acceptance, and the fail-closed production foundation are GREEN. Only separately approved exact-profile production acceptance / final release evidence remains before closure.
 - `CONTINUING FOUNDATIONS`: natural `PLN-002` Extra Study acceptance and gated `PLN-003`/`PLN-004`/`MAT-001`/`PLN-005` maturity work.
 
 ## Evre 6 — AI Coach
@@ -311,7 +330,7 @@ The normative product, truth, authority, scenario, proactive, cost, and phase co
 | 6D | Proactive Coach | `CLOSED - FINAL ACCEPTANCE COMPLETE` | Deterministic selector/cards, materiality, runtime state, hysteresis, active-study protection, persistence, user controls, Today rendering, and `39/39` shadow acceptance are complete at `421de04e2c52c0bf7b0f296a679dfb9108db0030`. |
 | 6E | Planner V2 integration | `CLOSED` | Route every Coach planning mutation to the one canonical Planner V2 lifecycle. |
 | 6F | Conversation Intelligence | `CLOSED` | Add short recent context plus compact structured state/signals without long-term raw history or authority transfer. |
-| 6G | Eval / Cost / Production Acceptance | `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 ACCEPTED - PRODUCTION ACCEPTANCE PENDING` | Complete the 300 TL hard governor and prove safety, groundedness, UX, cost, observability, and limited production acceptance. |
+| 6G | Eval / Cost / Production Acceptance | `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 + PRODUCTION FOUNDATION ACCEPTED - EXACT-PROFILE PRODUCTION ACCEPTANCE PENDING` | Complete the 300 TL hard governor and prove safety, groundedness, UX, cost, observability, and limited production acceptance. |
 
 Phase progression is gated by reviewed exit evidence. Listing a later phase does not authorize implementation, deployment, production access, or gate activation.
 

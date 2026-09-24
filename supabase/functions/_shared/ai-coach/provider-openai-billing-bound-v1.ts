@@ -42,6 +42,21 @@ export const AI_OPENAI_CONTEXT_WINDOWS_V1 = Object.freeze({
 export const AI_OPENAI_COACH_INPUT_TOKEN_LIMIT_V1 = 200_000 as const;
 
 /**
+ * Static production requests must remain materially smaller than the
+ * conservative token ceiling.
+ *
+ * JSON byte size is evaluated over the exact generation request body by the
+ * server-owned caller. The 100 KB byte ceiling leaves a large margin below the
+ * 200K token reservation ceiling while retaining the existing bounded Coach
+ * evidence/conversation contract.
+ */
+export const AI_OPENAI_STATIC_PRODUCTION_REQUEST_BYTE_LIMIT_V1 =
+  100_000 as const;
+
+export const AI_OPENAI_STATIC_PRODUCTION_BOUND_V1_VERSION =
+  "ai-openai-static-production-bound-v1" as const;
+
+/**
  * Responses API max_output_tokens covers visible output + reasoning tokens.
  *
  * Therefore one enforced product-level max_output_tokens value bounds both
@@ -110,6 +125,176 @@ function sourceIsApproved(
     && Date.parse(source.verifiedAt) <= Date.parse(source.loadedAt)
     && Date.parse(source.loadedAt) <= Date.parse(evaluatedAt);
 }
+
+
+export interface AiOpenAiStaticProductionBoundInputV1 {
+  readonly requestFingerprint: string;
+  readonly modelId: string;
+  readonly serializedProviderRequestBytes: number;
+  readonly source: AiAuthoritativeConfigSourceV1;
+}
+
+/**
+ * Builds a production-cost upper bound without calling
+ * POST /responses/input_tokens.
+ *
+ * The input-token reservation is deliberately the full Coach product ceiling
+ * (200K), not an estimate derived from the request.
+ *
+ * The request itself must first satisfy a strict server-side serialized byte
+ * bound. This keeps the generation request far below both the product token
+ * ceiling and each selected model context window.
+ */
+export function createOpenAiStaticProductionBillingBoundV1(
+  tier: Exclude<AiModelTierV1, "no_model">,
+  input: AiOpenAiStaticProductionBoundInputV1,
+  evaluatedAt: string,
+): AiProviderBillableBoundV1 {
+  if (!isIsoInstant(evaluatedAt)) {
+    throw new Error(
+      "AI_OPENAI_STATIC_BOUND_EVALUATED_AT_INVALID",
+    );
+  }
+
+  const route =
+    AI_OPENAI_ROUTE_CATALOG_V1.routes.find(
+      (item) =>
+        item.tier === tier
+        && item.provider === "openai",
+    );
+
+  if (!route) {
+    throw new Error(
+      "AI_OPENAI_STATIC_BOUND_ROUTE_UNAVAILABLE",
+    );
+  }
+
+  if (
+    input.modelId !== route.modelId
+    || !input.requestFingerprint.trim()
+  ) {
+    throw new Error(
+      "AI_OPENAI_STATIC_BOUND_REQUEST_IDENTITY_INVALID",
+    );
+  }
+
+  if (
+    !Number.isInteger(
+      input.serializedProviderRequestBytes,
+    )
+    || input.serializedProviderRequestBytes <= 0
+    || input.serializedProviderRequestBytes
+      > AI_OPENAI_STATIC_PRODUCTION_REQUEST_BYTE_LIMIT_V1
+  ) {
+    throw new Error(
+      "AI_OPENAI_STATIC_BOUND_REQUEST_TOO_LARGE",
+    );
+  }
+
+  if (
+    !sourceIsApproved(
+      input.source,
+      evaluatedAt,
+    )
+  ) {
+    throw new Error(
+      "AI_OPENAI_STATIC_BOUND_SOURCE_INVALID",
+    );
+  }
+
+  const contextWindow =
+    AI_OPENAI_CONTEXT_WINDOWS_V1[
+      route.modelId as keyof typeof AI_OPENAI_CONTEXT_WINDOWS_V1
+    ];
+
+  if (
+    !contextWindow
+    || AI_OPENAI_COACH_INPUT_TOKEN_LIMIT_V1
+      + route.maxOutputTokens
+      > contextWindow
+  ) {
+    throw new Error(
+      "AI_OPENAI_STATIC_BOUND_CONTEXT_EXCEEDED",
+    );
+  }
+
+  return Object.freeze({
+    version:
+      AI_PROVIDER_BILLABLE_BOUND_V1_VERSION,
+
+    tier:
+      route.tier,
+
+    provider:
+      "openai",
+
+    modelId:
+      route.modelId,
+
+    pricingVersion:
+      AI_OPENAI_PRICING_CATALOG_V1_VERSION,
+
+    effectiveFrom:
+      input.source.verifiedAt,
+
+    source:
+      input.source,
+
+    /*
+     * Reserve the full product input ceiling.
+     * No count-endpoint result participates in production accounting.
+     */
+    inputTokenUpperBound:
+      AI_OPENAI_COACH_INPUT_TOKEN_LIMIT_V1,
+
+    outputTokenUpperBound:
+      route.maxOutputTokens,
+
+    requestFingerprint:
+      input.requestFingerprint,
+
+    inputBoundMethod:
+      "approved_static_production_bound",
+
+    inputCountVersion:
+      AI_OPENAI_STATIC_PRODUCTION_BOUND_V1_VERSION,
+
+    inputCountBillingTreatment:
+      "not_applicable_static_bound",
+
+    requestPayloadCoverage:
+      "complete",
+
+    inputBoundEnforcement:
+      "server_rejects_above_bound",
+
+    providerOutputLimitEnforced:
+      true,
+
+    reasoningTokensPricedAs:
+      "output",
+
+    endpointClass:
+      "global_standard",
+
+    serviceTier:
+      "default",
+
+    cacheWriteBillingTreatment:
+      "documented_no_additional_charge",
+
+    coveredBillableTokenClasses: [
+      "input",
+      "cached_input",
+      "output",
+      "reasoning_output",
+    ] as const,
+
+    uncoveredBillableTokenClasses:
+      [] as const,
+  });
+}
+
 
 export function createOpenAiProductionBillingBoundV1(
   tier: Exclude<AiModelTierV1, "no_model">,
