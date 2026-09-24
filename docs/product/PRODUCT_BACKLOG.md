@@ -1,5 +1,19 @@
 # KPSS Koçu Product Backlog
 
+> **Authoritative current state - AI_COACH_6G_A_LOCAL_READINESS_ACCEPTED_2026_09_24**
+>
+> - **Evre 6G / AIC-007 is `IN_PROGRESS ? LOCAL READINESS ACCEPTED / PRODUCTION EVIDENCE PENDING`.**
+> - Evre 6G-A local production-readiness acceptance is GREEN.
+> - Cross-layer acceptance proves the local hard `300 TL/month` governor, user/month reservation authority, fail-closed unknown/reconciliation behavior, ledger/settlement lifecycle, cost observability, and provider maximum authorization.
+> - Focused economics suites are GREEN: `55/55` tests across provider runtime config, controlled DEV cost, OpenAI billing-bound, and read-only Coach orchestration.
+> - AI economics safety PASS; AI Coach safety PASS; AI Coach plan-preview safety PASS; canonical Planner V2 read-only safety PASS; workspace typecheck PASS.
+> - Production remains deliberately fail-closed: production billing eligibility is `false`, production input-bound proof is `false`, production runtime is prohibited, and no provider production activation occurred.
+> - Normal-user projected p90 `? 200 TL/month` remains `UNPROVEN`; heavy-user projected p90 `? 250 TL/month` remains `UNPROVEN`.
+> - Exact-profile production acceptance is `NOT_RUN`; production release authority is `NOT_GRANTED`.
+> - This checkpoint performs `0` production deploys, `0` production migrations, `0` production provider activations, and changes no Planner authority. Confirm remains OFF. Apply remains OFF.
+> - **NEXT EXACT STEP:** complete only the remaining 6G production-evidence requirements under a separately approved release/measurement step; do not mark AIC-007 or Evre 6G CLOSED until those facts are actually proven.
+> - This block supersedes older current-status and next-step statements below; historical checkpoint evidence remains historical.
+
 > **Authoritative current state - CONVERSATION_INTELLIGENCE_6F_CLOSED_2026_09_19**
 >
 > - **Evre 6D Proactive Coach is CLOSED; Evre 6E Planner V2 Integration is CLOSED; Evre 6F Conversation Intelligence is CLOSED. `AIC-006` is DONE. Evre 6G Eval/Cost/Production Acceptance is `NOT_STARTED`.**
@@ -228,7 +242,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | `AIC-004` | 6D | `P1` | Proactive Coach | `DONE - FINAL SHADOW ACCEPTANCE CLOSED` |
 | `AIC-005` | 6E | `P0` | Planner V2 Integration | `DONE - FINAL ACCEPTANCE CLOSED` |
 | `AIC-006` | 6F | `P1` | Conversation Intelligence | `DONE - FINAL ACCEPTANCE CLOSED` |
-| `AIC-007` | 6G | `P0` | Eval / Cost / Production Acceptance | `NOT_STARTED` |
+| `AIC-007` | 6G | `P0` | Eval / Cost / Production Acceptance | `IN_PROGRESS ? LOCAL READINESS ACCEPTED / PRODUCTION EVIDENCE PENDING` |
 
 The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, Authority & Cost Contract](specs/AI_COACH_EVRE_6_PRODUCT_AUTHORITY_COST_CONTRACT.md). AI teacher/tutoring/quiz/mastery features are outside every Evre 6 item. No backlog status grants runtime, deployment, migration, gate, Confirm, Apply, or production authority.
 
@@ -358,7 +372,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-007` / Evre 6G — Eval / Cost / Production Acceptance
 
 - Priority: `P0`
-- Status: `NOT_STARTED`
+- Status: `IN_PROGRESS ? LOCAL READINESS ACCEPTED / PRODUCTION EVIDENCE PENDING`
 - Dependency: relevant 6B–6F exits and a separate production release brief.
 - Desired outcome: Safety, groundedness, UX, cost, observability, and rollback are proven before any controlled production expansion.
 - Acceptance criteria:
@@ -369,6 +383,9 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
   - Every model call is ledgered/reconciled with provider cost, provider-pricing version, versioned TRY estimate, and centralized server-side model-router version; deterministic-only cases produce zero model calls.
   - The automatic pre-call budget governor enforces the hard `300 TL/month` per-user ceiling while deterministic/template product behavior remains available.
   - Limited exact-profile production acceptance, disable/rollback, and any independent capability activation receive separate approval.
+
+- 6G-A local readiness acceptance (2026-09-24): cross-layer acceptance GREEN; hard 300 TL/month governor, ledger/reconciliation, provider maximum authorization and observability locally accepted; focused economics regression `55/55`; AI economics, AI Coach, plan-preview and canonical Planner V2 read-only safety PASS; workspace typecheck PASS. Production billing/runtime remain fail-closed. Normal-user and heavy-user projected p90 remain UNPROVEN; exact-profile production acceptance is NOT_RUN; production release authority is NOT_GRANTED. No production action, migration, provider activation, Confirm or Apply change occurred.
+
 
 ## `PLN-001` — Esra 7-day Planning Reality Audit
 

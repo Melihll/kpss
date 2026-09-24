@@ -1,5 +1,19 @@
 # Current Sprint
 
+> **Authoritative current state - AI_COACH_6G_A_LOCAL_READINESS_ACCEPTED_2026_09_24**
+>
+> - **Evre 6G / AIC-007 is `IN_PROGRESS ? LOCAL READINESS ACCEPTED / PRODUCTION EVIDENCE PENDING`.**
+> - Evre 6G-A local production-readiness acceptance is GREEN.
+> - Cross-layer acceptance proves the local hard `300 TL/month` governor, user/month reservation authority, fail-closed unknown/reconciliation behavior, ledger/settlement lifecycle, cost observability, and provider maximum authorization.
+> - Focused economics suites are GREEN: `55/55` tests across provider runtime config, controlled DEV cost, OpenAI billing-bound, and read-only Coach orchestration.
+> - AI economics safety PASS; AI Coach safety PASS; AI Coach plan-preview safety PASS; canonical Planner V2 read-only safety PASS; workspace typecheck PASS.
+> - Production remains deliberately fail-closed: production billing eligibility is `false`, production input-bound proof is `false`, production runtime is prohibited, and no provider production activation occurred.
+> - Normal-user projected p90 `? 200 TL/month` remains `UNPROVEN`; heavy-user projected p90 `? 250 TL/month` remains `UNPROVEN`.
+> - Exact-profile production acceptance is `NOT_RUN`; production release authority is `NOT_GRANTED`.
+> - This checkpoint performs `0` production deploys, `0` production migrations, `0` production provider activations, and changes no Planner authority. Confirm remains OFF. Apply remains OFF.
+> - **NEXT EXACT STEP:** complete only the remaining 6G production-evidence requirements under a separately approved release/measurement step; do not mark AIC-007 or Evre 6G CLOSED until those facts are actually proven.
+> - This block supersedes older current-status and next-step statements below; historical checkpoint evidence remains historical.
+
 > **Authoritative current state - CONVERSATION_INTELLIGENCE_6F_CLOSED_2026_09_19**
 >
 > - **Evre 6D Proactive Coach is CLOSED; Evre 6E Planner V2 Integration is CLOSED; Evre 6F Conversation Intelligence is CLOSED. `AIC-006` is DONE. Evre 6G Eval/Cost/Production Acceptance is `NOT_STARTED`.**
@@ -177,9 +191,9 @@ Last updated: 2026-09-19
 
 ## Sprint 02 — Evre 6B & Continuing Planning Foundations
 
-Sprint status: `EVRE_6F_CLOSED ? 6G_NOT_STARTED`
+Sprint status: `EVRE_6G_IN_PROGRESS ? LOCAL_READINESS_ACCEPTED ? PRODUCTION_EVIDENCE_PENDING`
 
-Sprint objective: Record the completed AIC-006 / Evre 6F Conversation Intelligence acceptance and begin only the lean Evre 6G Eval/Cost/Production Acceptance readiness slice next.
+Sprint objective: Preserve the GREEN 6G-A local readiness checkpoint and complete only the remaining measured cost and separately approved production-evidence gates required to close AIC-007.
 
 Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.1 are accepted locally. 6B.6B.2 local acceptance is green and checkpointed on the feature branch: the controlled local-DEV authority chain, authoritative local route/pricing envelope, TCMB FX boundary, server-only credential boundary, real gateway adapter, exact-count billing identity, dedicated controlled-DEV cost authorization, and full A→Z mocked smoke are verified. No real provider call has been executed. Official `/responses/input_tokens` billing remains unresolved; `TEMP_DEV_COST_POLICY_2026_09_12` permits only a separately approved, observed-cost, single controlled local-DEV smoke while production remains prohibited. Current Coach runtime, production schema/data, deployments, and Planner gates remain unchanged. PLN-002 remains `IN_PROGRESS` pending natural Extra Study acceptance evidence.
 
@@ -197,7 +211,7 @@ Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.
 - Focused regression `64/64`; workspace typecheck PASS; AI Coach, plan-preview and canonical Planner V2 safety gates PASS; full non-integration `1373/1373` across `179/179` test files.
 - DB conversation persistence, localStorage/sessionStorage, migration, production action, automatic Planner Preview, conversation Confirm and conversation Apply are `0`.
 - Confirm and Apply remain OFF.
-- Next safe work: `AIC-007 / Evre 6G`.
+- Next safe work: remaining `AIC-007 / Evre 6G` production evidence only; projected p90 cost evidence plus separately approved exact-profile production acceptance.
 
 
 ### `AIC-005` / Evre 6E - Planner V2 Integration
@@ -241,7 +255,7 @@ Evre 5 Planner V2 / Planner Truth is closed. Evre 6A is closed and 6B.1–6B.6B.
 - Canonical subject resolution, clarification, `COST_LIMITED`, `UNKNOWN_OR_BLOCKED`, and provider no-mutation guards are implemented.
 - Final 6C acceptance evidence: canonical scenarios `20/20`; focused routing/executor `29/29`; complete AI Coach regression `205/205` across `20/20` files; full non-integration `1209/1209` across `161/161` files; workspace typecheck and mutation-authority audit PASS.
 - Reactive Coach final acceptance is checkpointed and undeployed. Production provider activation, Planner/task/capacity mutation, Confirm, Apply, deploy, migration, and main push remain `0`.
-- Current product slice: `AIC-006 / Evre 6F Conversation Intelligence` is `DONE / CLOSED`. `AIC-007 / Evre 6G` is `NOT_STARTED`; production provider activation and Planner Confirm/Apply remain separately gated and OFF.
+- Current product slice: `AIC-007 / Evre 6G` is `IN_PROGRESS ? LOCAL READINESS ACCEPTED / PRODUCTION EVIDENCE PENDING`. No production release authority is granted.
 
 
 ### `AIC-002` / Evre 6B — CoachContextV1
