@@ -610,21 +610,194 @@ describe("6B.6B.2 controlled local DEV orchestration authority", () => {
   );
 
   it(
-    "keeps the executable production Coach runtime disabled after static-bound preparation is available",
+    "rejects production execution without exact production activation authority",
     async () => {
+      const value =
+        harness();
+
+      value.input.runtimeEnvironment =
+        "production";
+
       await expect(
-        runReadOnlyCoachCapabilityV1({
-          /*
-           * Only runtimeEnvironment is relevant: the production guard must
-           * fail before any identity, transport, DB or provider dependency
-           * can be touched.
-           */
-          runtimeEnvironment:
-            "production",
-        } as any),
+        runReadOnlyCoachCapabilityV1(
+          value.input,
+        ),
       ).rejects.toThrow(
-        "READ_ONLY_COACH_PRODUCTION_RUNTIME_DISABLED",
+        "READ_ONLY_COACH_PRODUCTION_AUTHORITY_INVALID",
       );
+
+      expect(
+        value.counters,
+      ).toMatchObject({
+        count: 0,
+        reserve: 0,
+        provider: 0,
+      });
+    },
+  );
+
+  it(
+    "runs exact-profile production with static bound and zero input-count calls",
+    async () => {
+      const value =
+        harness({
+          generationTransportAuthority:
+            "openai_production_gateway",
+        });
+
+      const requestedAt =
+        "2026-09-24T10:00:00.000Z";
+
+      value.input.runtimeEnvironment =
+        "production";
+
+      value.input.requestedAt =
+        requestedAt;
+
+      value.input.reservationExpiresAt =
+        "2026-09-24T10:10:00.000Z";
+
+      value.input.routeCatalog =
+        AI_OPENAI_ROUTE_CATALOG_V1;
+
+      value.input.pricingCatalog =
+        AI_OPENAI_PRICING_CATALOG_V1;
+
+      value.input.fxSnapshot = {
+        ...LOCAL_FX,
+
+        snapshotVersion:
+          "fx-production-pilot-test-v1",
+
+        source:
+          "tcmb-production-pilot-test",
+
+        sourceKind:
+          "authoritative_config",
+
+        rate:
+          40,
+
+        effectiveAt:
+          "2026-09-24T09:00:00.000Z",
+
+        loadedAt:
+          "2026-09-24T09:05:00.000Z",
+
+        maxAgeSeconds:
+          86_400,
+      };
+
+      delete value.input.dependencies
+        .inputCountTransport;
+
+      const keys =
+        AI_PROVIDER_RUNTIME_SERVER_KEYS_V1;
+
+      const activation =
+        resolveAiProviderRuntimeActivationV1({
+          deploymentEnvironment:
+            "production",
+
+          productionPilotApproved:
+            true,
+
+          serverConfig: {
+            [keys.enabled]:
+              "true",
+
+            [keys.environment]:
+              "production",
+
+            [keys.scope]:
+              "reactive_coach_production_pilot_v1",
+
+            [keys.allowedUserId]:
+              value.input.userId,
+
+            [keys.allowedProfileId]:
+              value.input.examProfileId,
+          },
+
+          userId:
+            value.input.userId,
+
+          examProfileId:
+            value.input.examProfileId,
+
+          billingGate: {
+            authority:
+              "official_audit",
+
+            auditVersion:
+              "test_fixture",
+
+            inputCountEndpointBilling:
+              "unresolved",
+
+            productionStaticBoundReady:
+              true,
+          },
+        });
+
+      if (
+        activation.availability
+        !== "available"
+      ) {
+        throw new Error(
+          `TEST_PRODUCTION_ACTIVATION_FAILED:${activation.reason}`,
+        );
+      }
+
+      value.input.providerRuntimeActivation =
+        activation;
+
+      value.input.productionStaticBoundSource = {
+        authority:
+          "approved_server_config",
+
+        sourceId:
+          "production-static-bound-test",
+
+        verificationId:
+          "production-static-bound-test-v1",
+
+        verifiedAt:
+          "2026-09-24T09:00:00.000Z",
+
+        loadedAt:
+          "2026-09-24T09:05:00.000Z",
+      };
+
+      const result =
+        await runReadOnlyCoachCapabilityV1(
+          value.input,
+        );
+
+      expect(
+        result.noMutationPerformed,
+      ).toBe(true);
+
+      expect(
+        value.counters,
+      ).toMatchObject({
+        count: 0,
+        reserve: 1,
+        mark: 1,
+        provider: 1,
+        settle: 1,
+        reconcile: 0,
+      });
+
+      expect(
+        result.observability,
+      ).toMatchObject({
+        countClientRequestId:
+          "not_applicable_static_bound",
+
+        countProviderRequestId:
+          null,
+      });
     },
   );
 

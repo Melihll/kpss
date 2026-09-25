@@ -84,7 +84,10 @@ export interface OpenAiInputCountTransportV1 {
 }
 
 export interface OpenAiGenerationTransportV1 {
-  readonly authority: "test_fixture" | "openai_dev_gateway";
+  readonly authority:
+    | "test_fixture"
+    | "openai_dev_gateway"
+    | "openai_production_gateway";
   readonly execute: (input: {
     readonly request: OpenAiCoachRequestV1;
     readonly fingerprint: OpenAiCoachRequestFingerprintV1;
@@ -123,7 +126,13 @@ export interface ReadOnlyCoachAccountingGatewayV1 {
 
 export interface ReadOnlyCoachOrchestratorDependenciesV1 {
   readonly loadContext: typeof loadCoachContextV1ReadOnly;
-  readonly inputCountTransport: OpenAiInputCountTransportV1;
+
+  /**
+   * Required in test and controlled local DEV.
+   * Production static-bound execution must not receive this transport.
+   */
+  readonly inputCountTransport?: OpenAiInputCountTransportV1;
+
   readonly generationTransport: OpenAiGenerationTransportV1;
   readonly accounting: ReadOnlyCoachAccountingGatewayV1;
 }
@@ -147,15 +156,38 @@ export interface RunReadOnlyCoachCapabilityInputV1 {
   readonly runtimeEnvironment: AiRuntimeEnvironmentV1;
 
   /**
-   * Required only for the real controlled local DEV path.
+   * Required for controlled local DEV and the exact-profile production pilot.
    * Mock test execution does not need provider activation.
    */
   readonly providerRuntimeActivation?: AiProviderRuntimeActivationV1;
+
+  /**
+   * Server-owned proof metadata for the production static-bound path.
+   * This is never sourced from the user HTTP payload.
+   */
+  readonly productionStaticBoundSource?: Readonly<{
+    readonly authority: "approved_server_config";
+    readonly sourceId: string;
+    readonly verificationId: string;
+    readonly verifiedAt: string;
+    readonly loadedAt: string;
+  }>;
+
   readonly routingBudgetState: AiBudgetStateV1;
   readonly routeCatalog: AiRouteCatalogV1;
   readonly pricingCatalog: AiPricingCatalogV1;
   readonly fxSnapshot: AiFxSnapshotV1;
-  readonly dependencies: Pick<ReadOnlyCoachOrchestratorDependenciesV1, "inputCountTransport" | "generationTransport"> & Partial<Pick<ReadOnlyCoachOrchestratorDependenciesV1, "loadContext" | "accounting">>;
+  readonly dependencies:
+    Pick<
+      ReadOnlyCoachOrchestratorDependenciesV1,
+      "generationTransport"
+    >
+    & Partial<
+      Pick<
+        ReadOnlyCoachOrchestratorDependenciesV1,
+        "inputCountTransport" | "loadContext" | "accounting"
+      >
+    >;
 }
 
 export interface ReadOnlyCoachCapabilityResultV1 {
@@ -257,9 +289,11 @@ function assertReservationAllowed(decision: AiBudgetReservationDecisionV1): void
  * - does NOT reserve budget,
  * - does NOT perform a provider generation call.
  *
- * runReadOnlyCoachCapabilityV1 still rejects production before execution.
- * This seam exists so the final exact-profile release can use a tested
- * server-owned static bound instead of the count endpoint.
+ * Production execution may use this seam only after exact server-owned
+ * activation, identity allowlisting and dedicated production transport
+ * authority have all passed.
+ *
+ * The production path never calls the input-token count endpoint.
  */
 export function prepareReadOnlyCoachProductionStaticBillingBoundV1(
   input: {
@@ -322,30 +356,44 @@ export function prepareReadOnlyCoachProductionStaticBillingBoundV1(
 export async function runReadOnlyCoachCapabilityV1(
   input: RunReadOnlyCoachCapabilityInputV1,
 ): Promise<ReadOnlyCoachCapabilityResultV1> {
-  if (input.runtimeEnvironment === "production") {
-    throw new Error("READ_ONLY_COACH_PRODUCTION_RUNTIME_DISABLED");
-  }
   if (!input.userId.trim() || !input.examProfileId.trim() || !input.requestId.trim() || !input.correlationId.trim()) {
     throw new Error("READ_ONLY_COACH_IDENTITY_REQUIRED");
   }
 
-  const isTestRuntime = input.runtimeEnvironment === "test";
-  const isControlledLocalDev = input.runtimeEnvironment === "local";
+  const isTestRuntime =
+    input.runtimeEnvironment === "test";
+
+  const isControlledLocalDev =
+    input.runtimeEnvironment === "local";
+
+  const isProductionRuntime =
+    input.runtimeEnvironment === "production";
 
   if (isTestRuntime) {
+    const inputCountTransport =
+      input.dependencies.inputCountTransport;
+
     if (
-      input.dependencies.inputCountTransport.authority !== "test_fixture"
+      !inputCountTransport
+      || inputCountTransport.authority !== "test_fixture"
       || input.dependencies.generationTransport.authority !== "test_fixture"
     ) {
-      throw new Error("READ_ONLY_COACH_TEST_TRANSPORT_AUTHORITY_INVALID");
+      throw new Error(
+        "READ_ONLY_COACH_TEST_TRANSPORT_AUTHORITY_INVALID",
+      );
     }
   }
 
   if (isControlledLocalDev) {
-    const activation = input.providerRuntimeActivation;
+    const activation =
+      input.providerRuntimeActivation;
+
+    const inputCountTransport =
+      input.dependencies.inputCountTransport;
 
     if (
-      !activation
+      !inputCountTransport
+      || !activation
       || activation.availability !== "available"
       || activation.deploymentEnvironment !== "local_dev"
       || (
@@ -356,20 +404,34 @@ export async function runReadOnlyCoachCapabilityV1(
       || activation.examProfileId !== input.examProfileId
       || activation.serverOwned !== true
       || activation.productionAllowed !== false
-      || activation.inputCountBillingAuthority !== "explicitly_accepted_unresolved_dev"
-      || input.dependencies.inputCountTransport.authority !== "openai_dev_gateway"
-      || input.dependencies.generationTransport.authority !== "openai_dev_gateway"
+      || activation.inputCountBillingAuthority
+        !== "explicitly_accepted_unresolved_dev"
+      || inputCountTransport.authority
+        !== "openai_dev_gateway"
+      || input.dependencies.generationTransport.authority
+        !== "openai_dev_gateway"
       || input.routeCatalog.environment !== "local"
       || input.pricingCatalog.environment !== "local"
-      || input.pricingCatalog.entries.some((entry) => entry.sourceKind !== "authoritative_config")
-      || input.fxSnapshot.sourceKind !== "authoritative_config"
+      || input.pricingCatalog.entries.some(
+        (entry) =>
+          entry.sourceKind !== "authoritative_config",
+      )
+      || input.fxSnapshot.sourceKind
+        !== "authoritative_config"
     ) {
-      throw new Error("READ_ONLY_COACH_CONTROLLED_DEV_AUTHORITY_INVALID");
+      throw new Error(
+        "READ_ONLY_COACH_CONTROLLED_DEV_AUTHORITY_INVALID",
+      );
     }
 
-    const evaluatedAt = Date.parse(input.requestedAt);
-    const fxEffectiveAt = Date.parse(input.fxSnapshot.effectiveAt);
-    const fxLoadedAt = Date.parse(input.fxSnapshot.loadedAt);
+    const evaluatedAt =
+      Date.parse(input.requestedAt);
+
+    const fxEffectiveAt =
+      Date.parse(input.fxSnapshot.effectiveAt);
+
+    const fxLoadedAt =
+      Date.parse(input.fxSnapshot.loadedAt);
 
     if (
       !Number.isFinite(evaluatedAt)
@@ -380,11 +442,49 @@ export async function runReadOnlyCoachCapabilityV1(
       || fxLoadedAt < fxEffectiveAt
       || fxLoadedAt > evaluatedAt
       || evaluatedAt < fxEffectiveAt
-      || evaluatedAt - fxEffectiveAt > input.fxSnapshot.maxAgeSeconds * 1_000
+      || evaluatedAt - fxEffectiveAt
+        > input.fxSnapshot.maxAgeSeconds * 1_000
     ) {
-      throw new Error("READ_ONLY_COACH_CONTROLLED_DEV_FX_INVALID");
+      throw new Error(
+        "READ_ONLY_COACH_CONTROLLED_DEV_FX_INVALID",
+      );
     }
   }
+
+  if (isProductionRuntime) {
+    const activation =
+      input.providerRuntimeActivation;
+
+    if (
+      !activation
+      || activation.availability !== "available"
+      || activation.deploymentEnvironment !== "production"
+      || activation.scope !== "reactive_coach_production_pilot_v1"
+      || activation.userId !== input.userId
+      || activation.examProfileId !== input.examProfileId
+      || activation.serverOwned !== true
+      || activation.productionAllowed !== true
+      || activation.inputCountBillingAuthority
+        !== "not_applicable_static_bound"
+      || input.dependencies.generationTransport.authority
+        !== "openai_production_gateway"
+      || input.dependencies.inputCountTransport !== undefined
+      || !input.productionStaticBoundSource
+      || input.routeCatalog.environment !== "production"
+      || input.pricingCatalog.environment !== "production"
+      || input.pricingCatalog.entries.some(
+        (entry) =>
+          entry.sourceKind !== "authoritative_config",
+      )
+      || input.fxSnapshot.sourceKind
+        !== "authoritative_config"
+    ) {
+      throw new Error(
+        "READ_ONLY_COACH_PRODUCTION_AUTHORITY_INVALID",
+      );
+    }
+  }
+
   const loadContext = input.dependencies.loadContext ?? loadCoachContextV1ReadOnly;
   const accounting = input.dependencies.accounting ?? DEFAULT_ACCOUNTING;
   const context = await loadContext({
@@ -416,70 +516,253 @@ export async function runReadOnlyCoachCapabilityV1(
     locale:
       context.locale,
   });
-  const fingerprint = await fingerprintOpenAiCoachRequestV1(request);
-  const countClientRequestId = `count:${input.requestId}`;
-  const providerClientRequestId = `attempt:${input.providerAttemptId}`;
+  const fingerprint =
+    await fingerprintOpenAiCoachRequestV1(
+      request,
+    );
 
-  const counted = await input.dependencies.inputCountTransport.count({ request, fingerprint, clientRequestId: countClientRequestId });
-  if (counted.object !== "response.input_tokens" || counted.clientRequestId !== countClientRequestId) throw new Error("OPENAI_INPUT_COUNT_RESPONSE_INVALID");
-  const countIsTestFixture =
-    input.dependencies.inputCountTransport.authority === "test_fixture";
+  const providerClientRequestId =
+    `attempt:${input.providerAttemptId}`;
 
-  const countResult: AiOpenAiInputTokenCountResultV1 =
-    createOpenAiInputTokenCountResultV1({
-      request: {
-        requestFingerprint: counted.requestFingerprint,
-        modelId: counted.modelId,
-        coverage: "complete_generation_request",
-      },
-      inputTokens: counted.inputTokens,
-      countedAt: counted.countedAt,
-      providerRequestId: counted.providerRequestId,
-      authority: countIsTestFixture
-        ? "test_fixture"
-        : "openai_responses_input_token_count",
-      billingTreatment: countIsTestFixture
-        ? "test_fixture_no_charge"
-        : "production_billing_status_unverified",
-    });
+  let countClientRequestId:
+    string;
 
-  const bound = createOpenAiRequestBillingBoundV1(route, {
-    authority: countIsTestFixture
-      ? "test_fixture"
-      : "approved_server_config",
-    routeCatalogVersion: route.catalogVersion,
-    pricingVersion: route.pricingVersion,
-    provider: "openai",
-    modelId: route.modelId as any,
-    requestPayloadCoverage: "complete",
-    tokenBoundMethod: "openai_responses_input_tokens_exact",
-    enforcement: "server_rejects_above_bound",
-    request: { requestFingerprint: fingerprint.value, modelId: fingerprint.modelId, coverage: "complete_generation_request" },
-    count: countResult,
-    source: proofSource(counted.countedAt, input.dependencies.inputCountTransport.authority),
-  }, counted.countedAt);
-  const authorization = isControlledLocalDev
-    ? authorizeControlledDevObservedProviderCostV1({
-        route,
-        bound,
-        pricingCatalog: input.pricingCatalog,
-        fxSnapshot: input.fxSnapshot,
-        // The exact count proof only exists at countedAt. In a real network
-        // call countedAt is necessarily later than requestedAt, so cost
-        // authorization must evaluate the proof at its observation time.
-        evaluatedAt: counted.countedAt,
-        activation: input.providerRuntimeActivation!,
-        userId: input.userId,
-        examProfileId: input.examProfileId,
-      })
-    : authorizeRequestProviderCostMaximumV1({
-        route,
-        bound,
-        pricingCatalog: input.pricingCatalog,
-        fxSnapshot: input.fxSnapshot,
-        evaluatedAt: input.requestedAt,
+  let countProviderRequestId:
+    string | null;
+
+  let bound:
+    ReturnType<
+      typeof createOpenAiRequestBillingBoundV1
+    >;
+
+  let authorization:
+    ReturnType<
+      typeof authorizeRequestProviderCostMaximumV1
+    >;
+
+  if (isProductionRuntime) {
+    countClientRequestId =
+      "not_applicable_static_bound";
+
+    countProviderRequestId =
+      null;
+
+    const serializedProviderRequestBytes =
+      new TextEncoder()
+        .encode(
+          JSON.stringify(
+            request,
+          ),
+        )
+        .byteLength;
+
+    bound =
+      prepareReadOnlyCoachProductionStaticBillingBoundV1({
+        tier:
+          route.tier as
+            | "economy"
+            | "standard"
+            | "strong",
+
+        modelId:
+          route.modelId as string,
+
+        requestFingerprint:
+          fingerprint.value,
+
+        serializedProviderRequestBytes,
+
+        evaluatedAt:
+          input.requestedAt,
+
+        source:
+          input.productionStaticBoundSource!,
       });
-  await assertRequestStillIdentical(request, fingerprint);
+
+    authorization =
+      authorizeRequestProviderCostMaximumV1({
+        route,
+        bound,
+
+        pricingCatalog:
+          input.pricingCatalog,
+
+        fxSnapshot:
+          input.fxSnapshot,
+
+        evaluatedAt:
+          input.requestedAt,
+      });
+  }
+  else {
+    const inputCountTransport =
+      input.dependencies.inputCountTransport;
+
+    if (!inputCountTransport) {
+      throw new Error(
+        "READ_ONLY_COACH_INPUT_COUNT_TRANSPORT_REQUIRED",
+      );
+    }
+
+    countClientRequestId =
+      `count:${input.requestId}`;
+
+    const counted =
+      await inputCountTransport.count({
+        request,
+        fingerprint,
+
+        clientRequestId:
+          countClientRequestId,
+      });
+
+    if (
+      counted.object !== "response.input_tokens"
+      || counted.clientRequestId
+        !== countClientRequestId
+    ) {
+      throw new Error(
+        "OPENAI_INPUT_COUNT_RESPONSE_INVALID",
+      );
+    }
+
+    countProviderRequestId =
+      counted.providerRequestId;
+
+    const countIsTestFixture =
+      inputCountTransport.authority
+        === "test_fixture";
+
+    const countResult:
+      AiOpenAiInputTokenCountResultV1 =
+        createOpenAiInputTokenCountResultV1({
+          request: {
+            requestFingerprint:
+              counted.requestFingerprint,
+
+            modelId:
+              counted.modelId,
+
+            coverage:
+              "complete_generation_request",
+          },
+
+          inputTokens:
+            counted.inputTokens,
+
+          countedAt:
+            counted.countedAt,
+
+          providerRequestId:
+            counted.providerRequestId,
+
+          authority:
+            countIsTestFixture
+              ? "test_fixture"
+              : "openai_responses_input_token_count",
+
+          billingTreatment:
+            countIsTestFixture
+              ? "test_fixture_no_charge"
+              : "production_billing_status_unverified",
+        });
+
+    bound =
+      createOpenAiRequestBillingBoundV1(
+        route,
+        {
+          authority:
+            countIsTestFixture
+              ? "test_fixture"
+              : "approved_server_config",
+
+          routeCatalogVersion:
+            route.catalogVersion,
+
+          pricingVersion:
+            route.pricingVersion,
+
+          provider:
+            "openai",
+
+          modelId:
+            route.modelId as any,
+
+          requestPayloadCoverage:
+            "complete",
+
+          tokenBoundMethod:
+            "openai_responses_input_tokens_exact",
+
+          enforcement:
+            "server_rejects_above_bound",
+
+          request: {
+            requestFingerprint:
+              fingerprint.value,
+
+            modelId:
+              fingerprint.modelId,
+
+            coverage:
+              "complete_generation_request",
+          },
+
+          count:
+            countResult,
+
+          source:
+            proofSource(
+              counted.countedAt,
+              inputCountTransport.authority,
+            ),
+        },
+        counted.countedAt,
+      );
+
+    authorization =
+      isControlledLocalDev
+        ? authorizeControlledDevObservedProviderCostV1({
+            route,
+            bound,
+
+            pricingCatalog:
+              input.pricingCatalog,
+
+            fxSnapshot:
+              input.fxSnapshot,
+
+            evaluatedAt:
+              counted.countedAt,
+
+            activation:
+              input.providerRuntimeActivation!,
+
+            userId:
+              input.userId,
+
+            examProfileId:
+              input.examProfileId,
+          })
+        : authorizeRequestProviderCostMaximumV1({
+            route,
+            bound,
+
+            pricingCatalog:
+              input.pricingCatalog,
+
+            fxSnapshot:
+              input.fxSnapshot,
+
+            evaluatedAt:
+              input.requestedAt,
+          });
+  }
+
+  await assertRequestStillIdentical(
+    request,
+    fingerprint,
+  );
 
   const reservation = await accounting.reserve({
     serviceClient: input.serviceClient,
@@ -566,10 +849,21 @@ export async function runReadOnlyCoachCapabilityV1(
     }
     providerResponseId = observation.providerResponseId;
     const attempt = providerObservationToUsageEventAttemptV1(observation);
-    const inputBoundViolated = attempt.usage.availability === "reported"
-      && attempt.usage.inputTokens !== bound.inputTokenUpperBound;
-    const outputBoundViolated = attempt.usage.availability === "reported"
-      && attempt.usage.outputTokens! > bound.outputTokenUpperBound;
+    const inputBoundViolated =
+      attempt.usage.availability === "reported"
+      && (
+        bound.inputBoundMethod
+          === "approved_static_production_bound"
+          ? attempt.usage.inputTokens!
+            > bound.inputTokenUpperBound
+          : attempt.usage.inputTokens
+            !== bound.inputTokenUpperBound
+      );
+
+    const outputBoundViolated =
+      attempt.usage.availability === "reported"
+      && attempt.usage.outputTokens!
+        > bound.outputTokenUpperBound;
     const usageForLedger = inputBoundViolated || outputBoundViolated
       ? { availability: "unavailable", inputTokens: null, cachedInputTokens: null, outputTokens: null, totalTokens: null, source: "provider_usage_unavailable" } as const
       : attempt.usage;
@@ -616,7 +910,7 @@ export async function runReadOnlyCoachCapabilityV1(
       modelId: route.modelId,
       requestFingerprint: fingerprint.value,
       countClientRequestId,
-      countProviderRequestId: counted.providerRequestId,
+      countProviderRequestId,
       reservationId: input.reservationId,
       providerAttemptId: input.providerAttemptId,
       providerClientRequestId,

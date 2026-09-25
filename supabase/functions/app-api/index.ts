@@ -51,6 +51,10 @@ import {
   resolveReactiveCoachDeploymentEnvironmentV1,
 } from "../_shared/ai-coach/reactive-coach-dev-runtime-v1.ts";
 import {
+  createReactiveCoachProductionProviderPreparationV1,
+  REACTIVE_COACH_PRODUCTION_RUNTIME_SERVER_KEYS_V1,
+} from "../_shared/ai-coach/reactive-coach-production-runtime-v1.ts";
+import {
   buildPlannerV2ApplyPlanCandidate,
   buildPlannerV2Preview,
   fingerprintPlannerV2SnapshotComponents,
@@ -830,56 +834,122 @@ Deno.serve(async (request) => {
     const plannerV2ConfirmationEnabled = plannerV2Capabilities.confirmationEnabled;
     const plannerV2ApplyEnabled = plannerV2Capabilities.applyEnabled;
 
+    const reactiveCoachDeploymentEnvironment =
+      resolveReactiveCoachDeploymentEnvironmentV1(
+        Deno.env.get("SUPABASE_URL"),
+      );
+
     const reactiveCoachDevKeys =
       REACTIVE_COACH_DEV_RUNTIME_SERVER_KEYS_V1;
 
+    const reactiveCoachProductionKeys =
+      REACTIVE_COACH_PRODUCTION_RUNTIME_SERVER_KEYS_V1;
+
+    /*
+     * Server-owned environment selection:
+     *
+     * local_dev  -> existing dedicated DEV runtime
+     * production -> exact-profile production pilot runtime
+     *
+     * Neither branch receives authority from the HTTP body.
+     */
     const reactiveCoachProviderPreparation =
-      createReactiveCoachDevProviderPreparationV1({
-        deploymentEnvironment:
-          resolveReactiveCoachDeploymentEnvironmentV1(
-            Deno.env.get("SUPABASE_URL"),
-          ),
+      reactiveCoachDeploymentEnvironment
+        === "production"
+        ? createReactiveCoachProductionProviderPreparationV1({
+            serverConfig: {
+              [reactiveCoachProductionKeys.enabled]:
+                Deno.env.get(
+                  reactiveCoachProductionKeys.enabled,
+                ),
 
-        serverConfig: {
-          [reactiveCoachDevKeys.enabled]:
-            Deno.env.get(
-              reactiveCoachDevKeys.enabled,
-            ),
+              [reactiveCoachProductionKeys.approved]:
+                Deno.env.get(
+                  reactiveCoachProductionKeys.approved,
+                ),
 
-          [reactiveCoachDevKeys.environment]:
-            Deno.env.get(
-              reactiveCoachDevKeys.environment,
-            ),
+              [reactiveCoachProductionKeys.staticBoundReady]:
+                Deno.env.get(
+                  reactiveCoachProductionKeys.staticBoundReady,
+                ),
 
-          [reactiveCoachDevKeys.allowedUserId]:
-            Deno.env.get(
-              reactiveCoachDevKeys.allowedUserId,
-            ),
+              [reactiveCoachProductionKeys.environment]:
+                Deno.env.get(
+                  reactiveCoachProductionKeys.environment,
+                ),
 
-          [reactiveCoachDevKeys.allowedProfileId]:
-            Deno.env.get(
-              reactiveCoachDevKeys.allowedProfileId,
-            ),
+              [reactiveCoachProductionKeys.allowedUserId]:
+                Deno.env.get(
+                  reactiveCoachProductionKeys.allowedUserId,
+                ),
 
-          [reactiveCoachDevKeys.acceptUnresolvedCountBillingRisk]:
-            Deno.env.get(
-              reactiveCoachDevKeys.acceptUnresolvedCountBillingRisk,
-            ),
-        },
+              [reactiveCoachProductionKeys.allowedProfileId]:
+                Deno.env.get(
+                  reactiveCoachProductionKeys.allowedProfileId,
+                ),
+            },
 
-        openAiApiKey:
-          () =>
-            Deno.env.get("OPENAI_API_KEY"),
+            openAiApiKey:
+              () =>
+                Deno.env.get(
+                  "OPENAI_API_KEY",
+                ),
 
-        serviceClient,
-        userId,
+            serviceClient,
+            userId,
 
-        examProfileId:
-          profile.id,
+            examProfileId:
+              profile.id,
 
-        fetchImpl:
-          fetch,
-      });
+            fetchImpl:
+              fetch,
+          })
+        : createReactiveCoachDevProviderPreparationV1({
+            deploymentEnvironment:
+              reactiveCoachDeploymentEnvironment,
+
+            serverConfig: {
+              [reactiveCoachDevKeys.enabled]:
+                Deno.env.get(
+                  reactiveCoachDevKeys.enabled,
+                ),
+
+              [reactiveCoachDevKeys.environment]:
+                Deno.env.get(
+                  reactiveCoachDevKeys.environment,
+                ),
+
+              [reactiveCoachDevKeys.allowedUserId]:
+                Deno.env.get(
+                  reactiveCoachDevKeys.allowedUserId,
+                ),
+
+              [reactiveCoachDevKeys.allowedProfileId]:
+                Deno.env.get(
+                  reactiveCoachDevKeys.allowedProfileId,
+                ),
+
+              [reactiveCoachDevKeys.acceptUnresolvedCountBillingRisk]:
+                Deno.env.get(
+                  reactiveCoachDevKeys.acceptUnresolvedCountBillingRisk,
+                ),
+            },
+
+            openAiApiKey:
+              () =>
+                Deno.env.get(
+                  "OPENAI_API_KEY",
+                ),
+
+            serviceClient,
+            userId,
+
+            examProfileId:
+              profile.id,
+
+            fetchImpl:
+              fetch,
+          });
 
     if (request.method === "POST" && route === "/ai-coach/reactive") {
       const body = await request.json().catch(() => null);

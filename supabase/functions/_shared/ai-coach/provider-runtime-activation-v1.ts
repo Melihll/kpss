@@ -19,17 +19,18 @@ export type AiProviderRuntimeActivationV1 =
   | Readonly<{
       version: typeof AI_PROVIDER_RUNTIME_ACTIVATION_V1_VERSION;
       availability: "available";
-      deploymentEnvironment: "local_dev" | "test";
-      scope: "one_controlled_dev_smoke_v1" | "reactive_coach_dev_v1" | "mock_test_only";
+      deploymentEnvironment: "local_dev" | "test" | "production";
+      scope: "one_controlled_dev_smoke_v1" | "reactive_coach_dev_v1" | "mock_test_only" | "reactive_coach_production_pilot_v1";
       userId: string;
       examProfileId: string;
       billingAuditVersion: typeof AI_OPENAI_BILLING_AUDIT_V1_VERSION | "test_fixture";
       inputCountBillingAuthority:
         | "documented_no_charge"
         | "explicitly_accepted_unresolved_dev"
-        | "test_fixture_no_charge";
+        | "test_fixture_no_charge"
+        | "not_applicable_static_bound";
       serverOwned: true;
-      productionAllowed: false;
+      productionAllowed: boolean;
     }>
   | Readonly<{
       version: typeof AI_PROVIDER_RUNTIME_ACTIVATION_V1_VERSION;
@@ -51,12 +52,21 @@ export interface AiProviderRuntimeBillingGateV1 {
   readonly authority: "official_audit" | "test_fixture";
   readonly auditVersion: typeof AI_OPENAI_BILLING_AUDIT_V1_VERSION | "test_fixture";
   readonly inputCountEndpointBilling: "documented_no_charge" | "unresolved" | "test_fixture_no_charge";
+
+  /**
+   * Independent server-owned production authority.
+   *
+   * Production uses the conservative static request bound and therefore does
+   * not depend on /responses/input_tokens billing treatment.
+   */
+  readonly productionStaticBoundReady?: boolean;
 }
 
 export const AI_PROVIDER_RUNTIME_BILLING_GATE_V1: AiProviderRuntimeBillingGateV1 = Object.freeze({
   authority: "official_audit",
   auditVersion: AI_OPENAI_BILLING_AUDIT_V1.version,
   inputCountEndpointBilling: AI_OPENAI_BILLING_AUDIT_V1.inputCountEndpointBilling,
+  productionStaticBoundReady: false,
 });
 
 function unavailable(reason: Extract<AiProviderRuntimeActivationV1, { availability: "unavailable" }>["reason"]): AiProviderRuntimeActivationV1 {
@@ -81,20 +91,40 @@ export function resolveAiProviderRuntimeActivationV1(input: {
   readonly localDevScope?:
     | "one_controlled_dev_smoke_v1"
     | "reactive_coach_dev_v1";
+
+  /**
+   * This authority must come from the server-side release path.
+   * Existing DEV callers never supply it.
+   */
+  readonly productionPilotApproved?: boolean;
+
   readonly billingGate?: AiProviderRuntimeBillingGateV1;
 }): AiProviderRuntimeActivationV1 {
-  if (input.deploymentEnvironment === "production") return unavailable("production_prohibited");
+  if (
+    input.deploymentEnvironment === "production"
+    && input.productionPilotApproved !== true
+  ) {
+    return unavailable("production_prohibited");
+  }
   const enabled = input.serverConfig[AI_PROVIDER_RUNTIME_SERVER_KEYS_V1.enabled];
   if (enabled === undefined || enabled === "false") return unavailable("runtime_switch_off");
   if (enabled !== "true") return unavailable("runtime_switch_malformed");
 
-  const expectedEnvironment = input.deploymentEnvironment === "test" ? "test" : "local_dev";
+  const expectedEnvironment =
+    input.deploymentEnvironment === "production"
+      ? "production"
+      : input.deploymentEnvironment === "test"
+        ? "test"
+        : "local_dev";
   if (input.serverConfig[AI_PROVIDER_RUNTIME_SERVER_KEYS_V1.environment] !== expectedEnvironment) {
     return unavailable("environment_mismatch");
   }
-  const expectedScope = input.deploymentEnvironment === "test"
-    ? "mock_test_only"
-    : input.localDevScope ?? "one_controlled_dev_smoke_v1";
+  const expectedScope =
+    input.deploymentEnvironment === "production"
+      ? "reactive_coach_production_pilot_v1"
+      : input.deploymentEnvironment === "test"
+        ? "mock_test_only"
+        : input.localDevScope ?? "one_controlled_dev_smoke_v1";
   if (input.serverConfig[AI_PROVIDER_RUNTIME_SERVER_KEYS_V1.scope] !== expectedScope) {
     return unavailable("scope_invalid");
   }
@@ -105,29 +135,51 @@ export function resolveAiProviderRuntimeActivationV1(input: {
     return unavailable("identity_not_allowlisted");
   }
 
-  const billingGate = input.billingGate ?? AI_PROVIDER_RUNTIME_BILLING_GATE_V1;
+  const billingGate =
+    input.billingGate
+    ?? AI_PROVIDER_RUNTIME_BILLING_GATE_V1;
 
-  // Official billing truth remains unresolved. LOCAL DEV use requires
-  // an explicit server-owned scope plus explicit unresolved-cost risk
-  // acceptance. Production is rejected above and cannot use either
-  // the historical one-smoke scope or the Reactive Coach DEV scope.
+  /*
+   * LOCAL DEV may retain its explicit unresolved-count risk acceptance.
+   *
+   * Production cannot use that relaxation. Production requires the separate
+   * static-bound readiness gate instead.
+   */
   const unresolvedDevBillingRiskAccepted =
     input.deploymentEnvironment === "local_dev"
     && billingGate.authority === "official_audit"
     && billingGate.inputCountEndpointBilling === "unresolved"
     && input.serverConfig[
-      AI_PROVIDER_RUNTIME_SERVER_KEYS_V1.acceptUnresolvedCountBillingRisk
+      AI_PROVIDER_RUNTIME_SERVER_KEYS_V1
+        .acceptUnresolvedCountBillingRisk
     ] === "true";
 
-  const billingAllowed = input.deploymentEnvironment === "test"
-    ? billingGate.authority === "test_fixture" && billingGate.inputCountEndpointBilling === "test_fixture_no_charge"
-    : billingGate.authority === "official_audit"
-      && (
-        billingGate.inputCountEndpointBilling === "documented_no_charge"
-        || unresolvedDevBillingRiskAccepted
-      );
+  const productionStaticBoundAllowed =
+    input.deploymentEnvironment === "production"
+    && billingGate.authority === "official_audit"
+    && billingGate.productionStaticBoundReady === true;
 
-  if (!billingAllowed) return unavailable("billing_gate_unavailable");
+  const billingAllowed =
+    input.deploymentEnvironment === "production"
+      ? productionStaticBoundAllowed
+      : input.deploymentEnvironment === "test"
+        ? (
+            billingGate.authority === "test_fixture"
+            && billingGate.inputCountEndpointBilling
+              === "test_fixture_no_charge"
+          )
+        : (
+            billingGate.authority === "official_audit"
+            && (
+              billingGate.inputCountEndpointBilling
+                === "documented_no_charge"
+              || unresolvedDevBillingRiskAccepted
+            )
+          );
+
+  if (!billingAllowed) {
+    return unavailable("billing_gate_unavailable");
+  }
 
   return Object.freeze({
     version: AI_PROVIDER_RUNTIME_ACTIVATION_V1_VERSION,
@@ -138,13 +190,18 @@ export function resolveAiProviderRuntimeActivationV1(input: {
     examProfileId: input.examProfileId,
     billingAuditVersion: billingGate.auditVersion,
     inputCountBillingAuthority:
-      input.deploymentEnvironment === "test"
-        ? "test_fixture_no_charge"
-        : billingGate.inputCountEndpointBilling === "documented_no_charge"
-          ? "documented_no_charge"
-          : "explicitly_accepted_unresolved_dev",
+      input.deploymentEnvironment === "production"
+        ? "not_applicable_static_bound"
+        : input.deploymentEnvironment === "test"
+          ? "test_fixture_no_charge"
+          : billingGate.inputCountEndpointBilling === "documented_no_charge"
+            ? "documented_no_charge"
+            : "explicitly_accepted_unresolved_dev",
+
     serverOwned: true,
-    productionAllowed: false,
+
+    productionAllowed:
+      input.deploymentEnvironment === "production",
   });
 }
 

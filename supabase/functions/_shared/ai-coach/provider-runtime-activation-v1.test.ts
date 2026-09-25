@@ -33,9 +33,161 @@ describe("6B.6B.2 centralized provider activation and secret authority", () => {
       .toMatchObject({ reason: "runtime_switch_malformed" });
   });
 
-  it("prohibits production regardless of server switch values", () => {
-    expect(resolveAiProviderRuntimeActivationV1({ deploymentEnvironment: "production", serverConfig: TEST_CONFIG, ...IDENTITY, billingGate: TEST_GATE }))
-      .toMatchObject({ availability: "unavailable", reason: "production_prohibited", productionAllowed: false });
+  it("keeps production prohibited unless the server explicitly approves the exact-profile pilot", () => {
+    expect(
+      resolveAiProviderRuntimeActivationV1({
+        deploymentEnvironment:
+          "production",
+
+        serverConfig:
+          TEST_CONFIG,
+
+        ...IDENTITY,
+
+        billingGate:
+          TEST_GATE,
+      }),
+    ).toMatchObject({
+      availability:
+        "unavailable",
+
+      reason:
+        "production_prohibited",
+
+      productionAllowed:
+        false,
+    });
+  });
+
+  it("requires static-bound readiness plus exact production environment, scope and identity", () => {
+    const productionConfig = {
+      ...TEST_CONFIG,
+
+      AI_PROVIDER_RUNTIME_ENVIRONMENT:
+        "production",
+
+      AI_PROVIDER_RUNTIME_SCOPE:
+        "reactive_coach_production_pilot_v1",
+    };
+
+    const notReadyGate:
+      AiProviderRuntimeBillingGateV1 = {
+        ...TEST_GATE,
+
+        authority:
+          "official_audit",
+
+        productionStaticBoundReady:
+          false,
+      };
+
+    expect(
+      resolveAiProviderRuntimeActivationV1({
+        deploymentEnvironment:
+          "production",
+
+        productionPilotApproved:
+          true,
+
+        serverConfig:
+          productionConfig,
+
+        ...IDENTITY,
+
+        billingGate:
+          notReadyGate,
+      }),
+    ).toMatchObject({
+      availability:
+        "unavailable",
+
+      reason:
+        "billing_gate_unavailable",
+
+      productionAllowed:
+        false,
+    });
+
+    const readyGate:
+      AiProviderRuntimeBillingGateV1 = {
+        ...notReadyGate,
+
+        productionStaticBoundReady:
+          true,
+      };
+
+    expect(
+      resolveAiProviderRuntimeActivationV1({
+        deploymentEnvironment:
+          "production",
+
+        productionPilotApproved:
+          true,
+
+        serverConfig:
+          productionConfig,
+
+        ...IDENTITY,
+
+        billingGate:
+          readyGate,
+      }),
+    ).toMatchObject({
+      availability:
+        "available",
+
+      deploymentEnvironment:
+        "production",
+
+      scope:
+        "reactive_coach_production_pilot_v1",
+
+      userId:
+        IDENTITY.userId,
+
+      examProfileId:
+        IDENTITY.examProfileId,
+
+      inputCountBillingAuthority:
+        "not_applicable_static_bound",
+
+      serverOwned:
+        true,
+
+      productionAllowed:
+        true,
+    });
+
+    expect(
+      resolveAiProviderRuntimeActivationV1({
+        deploymentEnvironment:
+          "production",
+
+        productionPilotApproved:
+          true,
+
+        serverConfig: {
+          ...productionConfig,
+
+          AI_PROVIDER_RUNTIME_ALLOWED_PROFILE_ID:
+            "another-profile",
+        },
+
+        ...IDENTITY,
+
+        billingGate:
+          readyGate,
+      }),
+    ).toMatchObject({
+      availability:
+        "unavailable",
+
+      reason:
+        "identity_not_allowlisted",
+
+      productionAllowed:
+        false,
+    });
   });
 
   it("requires exact server-owned environment, scope, and identity allowlist", () => {
