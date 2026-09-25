@@ -9,7 +9,9 @@ import {
   COACH_EVIDENCE_DETAIL_V1_LIMITS,
   COACH_EVIDENCE_SCOPE_CAPABILITY_V1,
   COACH_EVIDENCE_SCOPES_V1,
+  COACH_EVIDENCE_SCOPE_RULES_V1,
   COACH_EVIDENCE_VIEW_V1_LIMITS,
+  COACH_CONTEXT_V1_LIMITS,
   COACH_SIGNAL_V1_LIMITS,
   buildCoachSignalSetV1,
   projectCoachEvidenceViewV1,
@@ -138,7 +140,8 @@ describe("CoachContextV1 read-only adapter", () => {
     const second = await loadCoachContextV1ReadOnly({ client, userId: USER, requestId: "request-1", now: NOW, dependencies });
     expect(second).toEqual(first);
     expect(JSON.stringify(tables)).toBe(before);
-    expect(first.week.value?.tasks).toHaveLength(42);
+    expect(first.week.value?.tasks).toHaveLength(COACH_EVIDENCE_DETAIL_V1_LIMITS.week_tasks);
+    expect(first.week.value?.summary.totalTaskCount).toBe(42);
     expect(first.today.value?.tasks).toHaveLength(6);
     expect(first.subjects).toHaveLength(3);
     expect(first.recentProgress.value?.sessions).toHaveLength(9);
@@ -284,6 +287,77 @@ describe("CoachContextV1 read-only adapter", () => {
       },
     });
     expect(detail.collection).toMatchObject({ availableCount: 3, returnedCount: 3, truncated: false });
+  });
+
+  it("deterministically bounds material detail while preserving full canonical summaries", async () => {
+    const units = Array.from({ length: COACH_CONTEXT_V1_LIMITS.provenanceRecordIdsPerFact + 8 }, (_, index) => ({
+      id: `material-${String(index).padStart(2, "0")}`,
+      sourceKind: "physical",
+      resourceId: "resource-0",
+      curriculumNodeId: `topic-${index}`,
+      title: `Materyal ${index}`,
+      unitType: "page_range",
+      progressState: "not_started",
+      completedThroughPage: 0,
+      durationSeconds: null,
+      watchedSeconds: null,
+      mappingStatus: "validated",
+      mappingProvenance: "reviewed_catalog",
+      isActive: true,
+    }));
+    const estimates = units.map((unit) => ({
+      materialViewId: unit.id,
+      remainingAmount: 10,
+      remainingUnit: "page",
+      estimatedMinutes: 25,
+      authority: "calibrated",
+      confidence: "high",
+      plannerEligible: true,
+      reason: "canonical",
+    }));
+    const dependencies = materialDependencies({
+      loadCanonicalMaterials: async () => units,
+      loadCanonicalWorkload: async () => ({
+        estimates,
+        summary: {
+          totalMaterialViews: units.length,
+          exactWorkloadViews: 0,
+          calibratedWorkloadViews: units.length,
+          unknownWorkloadViews: 0,
+          plannerEligibleViews: units.length,
+          exactYoutubeRemainingMinutes: 0,
+          physicalPagesWithCalibratedWorkload: units.length * 10,
+          physicalPagesWithUnknownWorkload: 0,
+          physicalEstimatedRemainingMinutes: units.length * 25,
+          blockedByReason: {},
+          workloadMinutesBySubject: {},
+          workloadMinutesByResource: {},
+        },
+      }),
+    });
+
+    const context = await loadCoachContextV1ReadOnly({
+      client: new ReadOnlyFakeClient(productionShapedTables()),
+      userId: USER,
+      requestId: "request-material-bound",
+      now: NOW,
+      dependencies,
+    });
+
+    const materialDetailLimit = COACH_EVIDENCE_SCOPE_RULES_V1.canonical_work
+      .collectionLimits["canonicalWork.materials"]!;
+    expect(context.materials.value).toHaveLength(materialDetailLimit);
+    expect(context.materials.value?.map((material) => material.materialViewId))
+      .toEqual(units
+        .slice(0, materialDetailLimit)
+        .sort((left, right) => left.resourceId.localeCompare(right.resourceId) || left.id.localeCompare(right.id))
+        .map((unit) => unit.id));
+    expect(context.materials.provenance[0]?.recordIds).toHaveLength(materialDetailLimit);
+    expect(context.workload.value?.totalMaterialViews).toBe(units.length);
+    expect(context.subjects.reduce((sum, subject) => sum + (subject.material.value?.totalMaterialViews ?? 0), 0))
+      .toBe(units.length);
+    expect(context.subjects.find((subject) => subject.subjectId === SUBJECTS[0].id)?.material.provenance[0]?.recordIds)
+      .toEqual([]);
   });
 
   it("preserves the extracted canonical capacity calculation and P48 reserve semantics", async () => {

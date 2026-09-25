@@ -1,4 +1,7 @@
 import {
+  COACH_CONTEXT_V1_LIMITS,
+  COACH_EVIDENCE_DETAIL_V1_LIMITS,
+  COACH_EVIDENCE_SCOPE_RULES_V1,
   blockedCoachContextV1Fact,
   buildCoachContextV1,
   knownCoachContextV1Fact,
@@ -389,6 +392,13 @@ export async function loadCoachContextV1ReadOnly(input: CoachContextV1ReadOnlyIn
       .in("task_id", taskIds)) : [];
   }
   const tasks = taskProjection(rawTasks, progressRows);
+  const orderedTasks = [...tasks].sort((left, right) =>
+    (left.plannedDate ?? "~").localeCompare(right.plannedDate ?? "~")
+    || left.taskId.localeCompare(right.taskId));
+  const boundedWeekTasks = orderedTasks.slice(0, COACH_EVIDENCE_DETAIL_V1_LIMITS.week_tasks);
+  const boundedTodayTasks = orderedTasks
+    .filter((task) => task.plannedDate === currentDate)
+    .slice(0, COACH_CONTEXT_V1_LIMITS.todayTasks);
   const allocations = allocationsSettled.status === "fulfilled" ? allocationsSettled.value ?? [] : [];
   const sessionById = new Map(sessions.map((row: any) => [String(row.id), row]));
   const sessionsToday = sessions.filter((row: any) => currentDateAt(new Date(row.started_at), timezone) === currentDate);
@@ -397,8 +407,7 @@ export async function loadCoachContextV1ReadOnly(input: CoachContextV1ReadOnlyIn
     return session && currentDateAt(new Date(session.started_at), timezone) === currentDate;
   });
 
-  const taskIds = rawTasks.map((row: any) => String(row.id));
-  const taskProv = [...taskIds, ...progressRows.map((row: any) => String(row.task_id))];
+  const boundedTaskIds = boundedWeekTasks.map((task) => task.taskId);
   const taskReadFailed = tasksSettled.status === "rejected";
   const allocationReadFailed = allocationsSettled.status === "rejected";
   const planFactSources = ["weekly_plans", "planning_task_state_v1"] as const;
@@ -413,11 +422,11 @@ export async function loadCoachContextV1ReadOnly(input: CoachContextV1ReadOnlyIn
           planGenerationVersion: Number(plan.generation_version),
           summary: summarizeTasks(tasks.filter((task) => task.plannedDate === currentDate)),
           study: studyAccounting(sessionsToday, allocationsToday),
-          tasks: tasks.filter((task) => task.plannedDate === currentDate),
+          tasks: boundedTodayTasks,
         }, [
           { source: "weekly_plans", recordIds: [String(plan.id)] },
-          { source: "planning_task_state_v1", recordIds: tasks.filter((task) => task.plannedDate === currentDate).map((task) => task.taskId) },
-          { source: "study_intent_ledger", recordIds: [...sessionsToday.map((row: any) => String(row.id)), ...allocationsToday.map((row: any) => String(row.id))] },
+          { source: "planning_task_state_v1", recordIds: boundedTodayTasks.map((task) => task.taskId) },
+          { source: "study_intent_ledger", recordIds: [] },
         ], asOf);
 
   const progressPosition = blockedCoachContextV1Fact<any>("pln002_completeness_unresolved", ["study_intent_ledger", "planning_task_state_v1"], asOf);
@@ -428,22 +437,41 @@ export async function loadCoachContextV1ReadOnly(input: CoachContextV1ReadOnlyIn
       : knownFrom({
           weeklyPlanId: String(plan.id), generationVersion: Number(plan.generation_version),
           startDate: String(plan.week_start_date), endDate: String(plan.week_end_date), status: plan.status,
-          summary: summarizeTasks(tasks), study: studyAccounting(sessions, allocations), tasks,
+          summary: summarizeTasks(tasks), study: studyAccounting(sessions, allocations), tasks: boundedWeekTasks,
           studyIntentCoverage: "partial" as const, progressPosition,
         }, [
           { source: "weekly_plans", recordIds: [String(plan.id)] },
-          { source: "planning_task_state_v1", recordIds: taskProv },
-          { source: "study_intent_ledger", recordIds: [...sessionIds, ...allocations.map((row: any) => String(row.id))] },
+          { source: "planning_task_state_v1", recordIds: boundedTaskIds },
+          { source: "study_intent_ledger", recordIds: [] },
         ], asOf);
 
+  const allMaterialProgress = materialsSettled.status === "fulfilled"
+    ? materialProjection(
+        materialsSettled.value ?? [],
+        workloadSettled.status === "fulfilled" ? workloadSettled.value : null,
+        subjectByResource,
+        asOf,
+      )
+    : [];
+  const materialDetailLimit = Math.min(
+    COACH_CONTEXT_V1_LIMITS.materials,
+    COACH_EVIDENCE_SCOPE_RULES_V1.canonical_work.collectionLimits["canonicalWork.materials"]!,
+  );
+  const boundedMaterialProgress = allMaterialProgress.slice(0, materialDetailLimit);
+  const boundedMaterialRecordIds = boundedMaterialProgress.map((row) => row.materialViewId);
   const materials = materialsSettled.status === "fulfilled" && workloadSettled.status === "fulfilled"
-    ? known(materialProjection(materialsSettled.value ?? [], workloadSettled.value, subjectByResource, asOf), "canonical_material_truth_v1", (materialsSettled.value ?? []).map((row: any) => String(row.id)), asOf)
+    ? known(boundedMaterialProgress, "canonical_material_truth_v1", boundedMaterialRecordIds, asOf)
     : materialsSettled.status === "rejected"
       ? unknownCoachContextV1Fact<readonly CoachContextV1MaterialProgress[]>("canonical_material_read_failed", ["canonical_material_truth_v1"])
-      : known(materialProjection(materialsSettled.value ?? [], null, subjectByResource, asOf), "canonical_material_truth_v1", (materialsSettled.value ?? []).map((row: any) => String(row.id)), asOf);
+      : known(boundedMaterialProgress, "canonical_material_truth_v1", boundedMaterialRecordIds, asOf);
   const parsedWorkloadSummary = workloadSettled.status === "fulfilled" ? workloadSummary(workloadSettled.value.summary) : null;
   const workload = workloadSettled.status === "fulfilled" && parsedWorkloadSummary
-    ? known(parsedWorkloadSummary, "canonical_workload_engine_v1", (workloadSettled.value.estimates ?? []).map((row: any) => String(row.materialViewId)), asOf)
+    ? known(
+        parsedWorkloadSummary,
+        "canonical_workload_engine_v1",
+        boundedMaterialRecordIds,
+        asOf,
+      )
     : unknownCoachContextV1Fact<any>(workloadSettled.status === "fulfilled" ? "canonical_workload_payload_invalid" : "canonical_workload_read_failed", ["canonical_workload_engine_v1"]);
 
   const subjects: CoachContextV1SubjectSummary[] = subjectRows.map((row: any) => {
@@ -452,19 +480,19 @@ export async function loadCoachContextV1ReadOnly(input: CoachContextV1ReadOnlyIn
     const subjectAllocations = allocations.filter((allocation: any) => String(allocation.subject_id ?? "") === subjectId);
     const subjectSessionIds = new Set<string>(subjectAllocations.map((allocation: any) => String(allocation.session_id)));
     const subjectSessions = sessions.filter((session: any) => subjectSessionIds.has(String(session.id)) || (!subjectSessionIds.size && String(session.subject_id ?? "") === subjectId));
-    const subjectMaterials = materials.value?.filter((material) => material.subjectId === subjectId) ?? [];
+    const subjectMaterials = allMaterialProgress.filter((material) => material.subjectId === subjectId);
     return {
       subjectId,
       subjectName: String(row.subjects?.name ?? row.subjects?.[0]?.name ?? subjectId),
       status: row.status,
-      tasks: taskReadFailed ? unknownCoachContextV1Fact("planning_task_state_read_failed", ["planning_task_state_v1"]) : known(summarizeTasks(subjectTasks), "planning_task_state_v1", subjectTasks.map((task) => task.taskId), asOf),
-      study: allocationReadFailed ? unknownCoachContextV1Fact("study_intent_ledger_read_failed", ["study_intent_ledger"]) : known(studyAccounting(subjectSessions, subjectAllocations), "study_intent_ledger", [...subjectSessionIds], asOf),
+      tasks: taskReadFailed ? unknownCoachContextV1Fact("planning_task_state_read_failed", ["planning_task_state_v1"]) : known(summarizeTasks(subjectTasks), "planning_task_state_v1", [], asOf),
+      study: allocationReadFailed ? unknownCoachContextV1Fact("study_intent_ledger_read_failed", ["study_intent_ledger"]) : known(studyAccounting(subjectSessions, subjectAllocations), "study_intent_ledger", [], asOf),
       material: materials.availability === "known" ? known({
         totalMaterialViews: subjectMaterials.length,
         completedMaterialViews: subjectMaterials.filter((item) => item.progressState === "completed").length,
         inProgressMaterialViews: subjectMaterials.filter((item) => item.progressState === "in_progress").length,
         unknownWorkloadViews: subjectMaterials.filter((item) => item.workload.availability !== "known" || item.workload.value?.authority === "unknown").length,
-      }, "canonical_material_truth_v1", subjectMaterials.map((item) => item.materialViewId), asOf) : unknownCoachContextV1Fact("canonical_material_read_failed", ["canonical_material_truth_v1"]),
+      }, "canonical_material_truth_v1", [], asOf) : unknownCoachContextV1Fact("canonical_material_read_failed", ["canonical_material_truth_v1"]),
     };
   });
 
@@ -475,14 +503,15 @@ export async function loadCoachContextV1ReadOnly(input: CoachContextV1ReadOnlyIn
     })
     .map((row: any) => ({ taskId: String(row.id), occurredAt: String(row.completed_at ?? row.updated_at), status: row.status, completedMinutes: finiteMinutes(progressRows.find((progress: any) => progress.task_id === row.id)?.completed_minutes) }))
     .sort((left: any, right: any) => right.occurredAt.localeCompare(left.occurredAt) || left.taskId.localeCompare(right.taskId))
-    .slice(0, 32);
+    .slice(0, COACH_EVIDENCE_DETAIL_V1_LIMITS.week_tasks);
   const recentSessions = [
     ...allocations.map((allocation: any) => {
       const session: any = sessionById.get(String(allocation.session_id));
       return { sessionId: String(allocation.session_id), allocationId: String(allocation.id), startedAt: String(session.started_at), endedAt: String(session.ended_at), actualMinutes: finiteMinutes(allocation.actual_minutes), accountingIntent: allocation.accounting_intent, plannedCreditMinutes: finiteMinutes(allocation.planned_credit_minutes), taskId: allocation.target_task_id == null ? null : String(allocation.target_task_id), subjectId: allocation.subject_id == null ? null : String(allocation.subject_id), resourceId: allocation.resource_id == null ? null : String(allocation.resource_id), entrySource: session.entry_source };
     }),
     ...sessions.filter((session: any) => !allocations.some((allocation: any) => String(allocation.session_id) === String(session.id))).map((session: any) => ({ sessionId: String(session.id), allocationId: null, startedAt: String(session.started_at), endedAt: String(session.ended_at), actualMinutes: finiteMinutes(session.duration_minutes), accountingIntent: "unknown" as const, plannedCreditMinutes: 0, taskId: session.task_id == null ? null : String(session.task_id), subjectId: session.subject_id == null ? null : String(session.subject_id), resourceId: session.resource_id == null ? null : String(session.resource_id), entrySource: session.entry_source })),
-  ].sort((left, right) => right.startedAt.localeCompare(left.startedAt) || left.sessionId.localeCompare(right.sessionId)).slice(0, 24);
+  ].sort((left, right) => right.startedAt.localeCompare(left.startedAt) || left.sessionId.localeCompare(right.sessionId))
+    .slice(0, COACH_EVIDENCE_DETAIL_V1_LIMITS.recent_sessions);
   const recentTransitions = substitutionsSettled.status === "fulfilled" && carryoversSettled.status === "fulfilled" ? [
     ...(substitutionsSettled.value ?? []).map((row: any) => ({ kind: "substitution" as const, transitionId: String(row.id), status: row.status, sourceTaskId: String(row.source_task_id), replacementTaskId: row.replacement_task_id == null ? null : String(row.replacement_task_id), replacementSessionId: row.replacement_session_id == null ? null : String(row.replacement_session_id), sourceMinutesRelieved: finiteMinutes(row.source_minutes_replaced), occurredAt: String(row.applied_at ?? row.proposed_at) })),
     ...(carryoversSettled.value ?? []).map((row: any) => ({ kind: "carryover" as const, transitionId: String(row.id), status: row.status, sourceTaskId: String(row.source_task_id), successorTaskId: row.successor_task_id == null ? null : String(row.successor_task_id), fromDate: String(row.from_date), toDate: String(row.to_date), remainingMinutes: finiteMinutes(row.remaining_minutes), occurredAt: String(row.applied_at ?? row.proposed_at) })),
@@ -496,8 +525,8 @@ export async function loadCoachContextV1ReadOnly(input: CoachContextV1ReadOnlyIn
         sessions: recentSessions,
         transitions: recentTransitions,
       }, [
-        { source: "planning_task_state_v1", recordIds: recentTaskEvents.map((row) => row.taskId) },
-        { source: "study_intent_ledger", recordIds: [...sessionIds, ...allocations.map((row: any) => String(row.id)), ...recentTransitions.map((row) => row.transitionId)] },
+        { source: "planning_task_state_v1", recordIds: [] },
+        { source: "study_intent_ledger", recordIds: [] },
       ], asOf);
 
   let planner: CoachContextV1Fact<CoachContextV1PlannerState>;
