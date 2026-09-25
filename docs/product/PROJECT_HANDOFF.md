@@ -1,3 +1,27 @@
+> **Authoritative current state - AI_COACH_6G_PRODUCTION_AI_ECONOMICS_MIGRATIONS_GREEN_2026_09_25**
+>
+> - **Evre 6G / AIC-007 remains `IN_PROGRESS ? EXACT-PROFILE APP-API / PROVIDER ACCEPTANCE PENDING`.**
+> - Production AI economics prerequisite is now GREEN.
+> - Explicitly approved production migrations were applied in dependency order:
+>   - `20260911150000_ai_usage_ledger_v1.sql`
+>   - `20260911170000_ai_provider_runtime_reservations_v1.sql`
+> - The separate Proactive Coach persistence migration `20260919120000_ai_coach_proactive_state_v1.sql` was explicitly excluded and remains the only pending linked migration.
+> - Production migration history now contains exactly `20260911150000` and `20260911170000` for this reviewed target set.
+> - Physical production verification is GREEN: `ai_usage_events`, `ai_budget_reservations`, `ai_budget_reservation_events`, governor views and all reviewed accounting/governor RPCs exist.
+> - `provider_request_id`, `provider_request_id_source`, and `ai_usage_events_provider_request_valid` are present.
+> - RLS is enabled on the ledger and both reservation tables.
+> - Authenticated users retain ownership-scoped SELECT access where designed; anon has no SELECT; authenticated/anon cannot execute usage-recording, reservation, or settlement mutation RPCs; service role retains the required accounting mutation authority.
+> - Proactive persistence tables remain physically absent in production.
+> - Initial production accounting state after migration is clean: `ai_usage_events=0`, `ai_budget_reservations=0`, `ai_budget_reservation_events=0`.
+> - Repository remained clean and `origin/main` remained unchanged at `cbc209fdf34f217b6d1419612199ee8c8370fe4b`.
+> - No app-api deploy occurred, no production secret changed, and no production provider call occurred during this migration checkpoint.
+> - Planner Preview remains the existing pilot surface. Planner Confirm remains OFF. Planner Apply remains OFF. Canonical Planner and evidence-shadow remain OFF.
+> - Production Proactive Coach HTTP surfaces remain hard-OFF via accepted scope guard `5641d925cd53d1800b4ad8e5e5202032d290ef4a`.
+> - The prior active production app-api rollback target remains version `47`; its executable source still needs to be captured read-only before deploying the new app-api.
+> - **NEXT EXACT STEP:** preserve the currently active production `app-api v47` source as a read-only executable rollback artifact outside the repository, verify its identity, then re-run deployment/secret preflight. Do not call the provider yet.
+> - `AIC-007` and Evre 6G remain open until controlled exact-profile app-api/provider activation, real provider + ledger smoke, cross-profile isolation, zero product-truth mutation evidence, and rollback/disable verification pass.
+> - This block supersedes older 6G migration-status and next-step wording below it. Historical checkpoints remain evidence only.
+>
 > **Authoritative current state - AI_COACH_6G_PROACTIVE_PRODUCTION_SCOPE_GUARD_ACCEPTED_2026_09_25**
 >
 > - **Evre 6G / AIC-007 remains `IN_PROGRESS ? PRODUCTION MIGRATION + EXACT-PROFILE ACCEPTANCE PENDING`.**

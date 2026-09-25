@@ -2,6 +2,44 @@
 
 Date: 2026-09-25
 
+## Production DB prerequisite accepted ? AI_COACH_6G_PRODUCTION_AI_ECONOMICS_MIGRATIONS_GREEN_2026_09_25
+
+The separately approved AI economics production migration pair has been applied successfully.
+
+Applied:
+
+1. `20260911150000_ai_usage_ledger_v1.sql`
+2. `20260911170000_ai_provider_runtime_reservations_v1.sql`
+
+Explicitly excluded and still pending:
+
+- `20260919120000_ai_coach_proactive_state_v1.sql`
+
+Postflight evidence:
+
+- target migration history = `20260911150000`, `20260911170000`;
+- linked dry-run now reports only `20260919120000_ai_coach_proactive_state_v1.sql`;
+- usage ledger table present;
+- reservation and reservation-event tables present;
+- governor health/monthly/route-model views present;
+- reviewed accounting/governor RPCs present;
+- provider request ID columns and validation constraint present;
+- RLS enabled on all three accounting tables;
+- anon SELECT denied;
+- authenticated mutation RPC execution denied;
+- service-role mutation RPC execution granted;
+- proactive persistence tables absent;
+- initial rows: usage events `0`, reservations `0`, reservation events `0`.
+
+No app-api production deployment, production secret mutation, or production provider execution occurred in this DB checkpoint.
+
+Planner Confirm remains OFF. Planner Apply remains OFF.
+
+Production Proactive Coach HTTP surfaces remain hard-disabled by the accepted production scope guard.
+
+The next release action is read-only preservation of the currently active production `app-api v47` source as the executable rollback artifact, followed by a fresh activation preflight. Provider execution must not occur before those checks are complete.
+
+
 ## Scope-guard update ? AI_COACH_6G_PROACTIVE_PRODUCTION_SCOPE_GUARD_ACCEPTED_2026_09_25
 
 Accepted checkpoint:
