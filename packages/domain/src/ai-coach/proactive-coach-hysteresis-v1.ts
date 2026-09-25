@@ -1,10 +1,10 @@
-import type { CoachSignalCandidateV1 } from "./coach-signal-v1";
+import type { CoachSignalCandidateV1 } from "./coach-signal-v1.ts";
 import type {
   ProactiveCoachClearConditionObservationV1,
   ProactiveCoachClearConditionSignalTypeV1,
   ProactiveCoachRuntimeCollectionV1,
   ProactiveCoachRuntimePresentationV1,
-} from "./proactive-coach-runtime-state-v1";
+} from "./proactive-coach-runtime-state-v1.ts";
 
 export const PROACTIVE_COACH_HYSTERESIS_V1_VERSION =
   "proactive-coach-hysteresis-v1" as const;

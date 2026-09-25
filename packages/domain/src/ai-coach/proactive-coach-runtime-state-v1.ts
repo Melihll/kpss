@@ -1,4 +1,4 @@
-import type { CoachSignalAttentionCategoryV1, CoachSignalTypeV1 } from "./coach-signal-v1";
+import type { CoachSignalAttentionCategoryV1, CoachSignalTypeV1 } from "./coach-signal-v1.ts";
 
 export const PROACTIVE_COACH_RUNTIME_STATE_V1_VERSION =
   "proactive-coach-runtime-state-v1" as const;

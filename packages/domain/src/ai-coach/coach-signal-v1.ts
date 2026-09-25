@@ -5,7 +5,7 @@ import type {
   CoachContextV1Freshness,
   CoachContextV1Provenance,
   CoachContextV1SignalInput,
-} from "./coach-context-v1";
+} from "./coach-context-v1.ts";
 
 export const COACH_SIGNAL_CANDIDATE_V1_VERSION = "coach-signal-candidate-v1" as const;
 export const COACH_SIGNAL_SET_V1_VERSION = "coach-signal-set-v1" as const;

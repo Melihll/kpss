@@ -1,17 +1,19 @@
 ﻿import type {
   CoachSignalAttentionCategoryV1,
   CoachSignalCandidateV1,
-} from "./coach-signal-v1";
-import { evaluateProactiveCoachMaterialityV1 } from "./proactive-coach-materiality-policy-v1";
+} from "./coach-signal-v1.ts";
+// @ts-expect-error Supabase Deno requires the explicit local TypeScript extension.
+import { evaluateProactiveCoachMaterialityV1 } from "./proactive-coach-materiality-policy-v1.ts";
 import {
   buildProactiveCoachConditionKeyV1,
   evaluateProactiveCoachHysteresisV1,
-} from "./proactive-coach-hysteresis-v1";
+// @ts-expect-error Supabase Deno requires the explicit local TypeScript extension.
+} from "./proactive-coach-hysteresis-v1.ts";
 import type {
   ProactiveCoachRuntimeCategorySnoozeV1,
   ProactiveCoachRuntimePresentationV1,
   ProactiveCoachRuntimeStateV1,
-} from "./proactive-coach-runtime-state-v1";
+} from "./proactive-coach-runtime-state-v1.ts";
 
 export const PROACTIVE_COACH_SELECTION_V1_VERSION =
   "proactive-coach-selection-v1" as const;

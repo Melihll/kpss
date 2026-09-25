@@ -1,5 +1,5 @@
-import type { CoachSignalCandidateV1 } from "./coach-signal-v1";
-import type { ProactiveCoachSelectionV1 } from "./proactive-coach-selection-v1";
+import type { CoachSignalCandidateV1 } from "./coach-signal-v1.ts";
+import type { ProactiveCoachSelectionV1 } from "./proactive-coach-selection-v1.ts";
 
 export const PROACTIVE_COACH_CARD_V1_VERSION = "proactive-coach-card-v1" as const;
 export const PROACTIVE_COACH_CARD_TEMPLATE_V1_VERSION = "proactive-coach-card-template-v1" as const;

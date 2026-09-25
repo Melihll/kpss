@@ -4,7 +4,7 @@ import type {
   CoachSignalConfidenceV1,
   CoachSignalReasonCodeV1,
   CoachSignalTypeV1,
-} from "./coach-signal-v1";
+} from "./coach-signal-v1.ts";
 
 export const PROACTIVE_COACH_MATERIALITY_POLICY_V1_VERSION =
   "proactive-coach-materiality-policy-v1" as const;
