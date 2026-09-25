@@ -982,6 +982,34 @@ Deno.serve(async (request) => {
       return json(result.body, result.status);
     }
 
+    /*
+     * 6G exact-profile production scope guard.
+     *
+     * Proactive Coach persistence/actions are a separate production
+     * release. They remain available in local DEV, but every proactive
+     * HTTP surface is hard-disabled when app-api is running against the
+     * production Supabase environment.
+     */
+    const proactiveCoachProductionRouteBlocked =
+      reactiveCoachDeploymentEnvironment === "production"
+      && request.method === "POST"
+      && (
+        route === "/ai-coach/proactive"
+        || route.startsWith("/ai-coach/proactive/")
+      );
+
+    if (proactiveCoachProductionRouteBlocked) {
+      return json(
+        {
+          error: {
+            code:
+              "PROACTIVE_COACH_PRODUCTION_DISABLED",
+          },
+        },
+        404,
+      );
+    }
+
     if (request.method === "POST" && route === "/ai-coach/proactive") {
       const body = await request.json().catch(() => null);
       const result = await handleProactiveCoachHttpV1({

@@ -165,4 +165,71 @@ describe("Proactive Coach HTTP boundary V1", () => {
       expect(source).not.toMatch(/ai_coach_proactive_presentations[\s\S]*\.(insert|update|upsert|delete)\s*\(/);
     }
   });
+
+  it(
+    "hard-disables proactive HTTP surfaces in production before either handler",
+    () => {
+      const source =
+        fs.readFileSync(
+          new URL(
+            "../../app-api/index.ts",
+            import.meta.url,
+          ),
+          "utf8",
+        );
+
+      const gateIndex =
+        source.indexOf(
+          "const proactiveCoachProductionRouteBlocked",
+        );
+
+      const reactiveHandlerIndex =
+        source.indexOf(
+          'if (request.method === "POST" && route === "/ai-coach/proactive") {',
+          gateIndex + 1,
+        );
+
+      const actionIndex =
+        source.indexOf(
+          "const proactiveActionByRoute",
+          gateIndex + 1,
+        );
+
+      expect(gateIndex)
+        .toBeGreaterThanOrEqual(0);
+
+      expect(reactiveHandlerIndex)
+        .toBeGreaterThan(gateIndex);
+
+      expect(actionIndex)
+        .toBeGreaterThan(gateIndex);
+
+      const gate =
+        source.slice(
+          gateIndex,
+          reactiveHandlerIndex,
+        );
+
+      expect(gate)
+        .toContain(
+          'reactiveCoachDeploymentEnvironment === "production"',
+        );
+
+      expect(gate)
+        .toContain(
+          'route.startsWith("/ai-coach/proactive/")',
+        );
+
+      expect(gate)
+        .toContain(
+          "PROACTIVE_COACH_PRODUCTION_DISABLED",
+        );
+
+      expect(gate)
+        .toContain(
+          "404",
+        );
+    },
+  );
+
 });
