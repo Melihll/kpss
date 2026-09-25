@@ -1,3 +1,19 @@
+> **Authoritative current state - AI_COACH_6G_PRODUCTION_PILOT_LOCAL_RELEASE_READY_2026_09_25**
+>
+> - **Evre 6G / AIC-007 remains `IN_PROGRESS ? EXACT-PROFILE PRODUCTION ROLLOUT PENDING`.**
+> - Accepted production-pilot implementation checkpoint: `6f99016ef293fe82ff29bfef377afeb8addf10d9`.
+> - Local production-pilot release patch is GREEN: exact-profile activation contract, production static-bound orchestrator path, dedicated generation-only OpenAI production gateway, dedicated production runtime preparation, and server-owned app-api environment binding are implemented.
+> - Focused release acceptance: `110/110` tests PASS. Full non-integration acceptance: `1386/1386` tests across `181/181` files PASS. app-api local bundle/import check PASS. AI economics safety PASS. AI Coach safety PASS. Workspace typecheck PASS.
+> - Production generation uses only the fixed Responses generation path; the production input-token count transport/endpoint is absent. Static input cost authorization uses conservative upper-bound semantics.
+> - Production runtime is independently fail-closed behind server-owned enabled, explicit approval, static-bound-ready, exact user allowlist, and exact profile allowlist gates. OFF or ownership mismatch stops before OpenAI secret access and before TCMB/OpenAI network work.
+> - Existing local DEV runtime remains separate. HTTP request content grants no provider authority.
+> - Melih has explicitly approved the exact-profile AI Coach production acceptance scope for app-api deployment/provider activation with exact user/profile allowlisting. Planner Confirm remains OFF. Planner Apply remains OFF.
+> - **No production action has occurred at this checkpoint:** provider production calls `0`, app-api production deploys `0`, production secret changes `0`, production SQL `0`, production migrations `0`.
+> - Production database migration is **not** implicitly authorized by this checkpoint. If production preflight finds a required pending migration, stop and obtain separate explicit migration approval before applying it.
+> - `AIC-007` and Evre 6G are **NOT CLOSED** until read-only production preflight, controlled exact-profile rollout, real production smoke/ledger evidence, isolation checks, and rollback/disable verification pass.
+> - **NEXT EXACT STEP:** run read-only production preflight only: verify repository/remote identities, current app-api version and JWT enforcement, linked migration state, required secret/gate presence without exposing values, exact allowlist readiness, accounting/governor schema availability, and the rollback target. Then perform only the already approved app-api/provider activation scope if no migration or other new production authority is required.
+> - This block supersedes older 6G current-status/release-authority wording below it. Historical checkpoint evidence remains historical.
+>
 # Current Sprint
 
 > **Authoritative current state - AI_COACH_6G_B2_LOCAL_FOUNDATION_READY_2026_09_24**
