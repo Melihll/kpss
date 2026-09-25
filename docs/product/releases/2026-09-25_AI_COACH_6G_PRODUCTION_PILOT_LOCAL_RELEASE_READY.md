@@ -2,6 +2,55 @@
 
 Date: 2026-09-25
 
+## Scope-guard update ? AI_COACH_6G_PROACTIVE_PRODUCTION_SCOPE_GUARD_ACCEPTED_2026_09_25
+
+Accepted checkpoint:
+
+`5641d925cd53d1800b4ad8e5e5202032d290ef4a`
+
+The production release package now explicitly hard-disables every Proactive Coach POST surface before its read/action handlers when `app-api` runs in production.
+
+Local DEV proactive behavior remains unchanged. The exact-profile Reactive Coach production path remains unchanged.
+
+Updated acceptance:
+
+- proactive focused: `27/27` PASS;
+- 6G production/reactive focused: `110/110` PASS;
+- full non-integration: `181/181` files, `1387/1387` tests PASS;
+- app-api bundle: PASS;
+- AI economics safety: PASS;
+- AI Coach safety: PASS;
+- workspace typecheck: PASS.
+
+Read-only production preflight evidence:
+
+- active app-api rollback target: `v47`;
+- unauthenticated app-api probe: HTTP `401`;
+- `OPENAI_API_KEY`: present;
+- Reactive Coach production-pilot keys: all absent/OFF;
+- Planner Preview: present;
+- Planner Confirm: OFF;
+- Planner Apply: OFF;
+- canonical Planner: OFF;
+- evidence-shadow: OFF.
+
+Pending linked migrations:
+
+1. `20260911150000_ai_usage_ledger_v1.sql`
+2. `20260911170000_ai_provider_runtime_reservations_v1.sql`
+3. `20260919120000_ai_coach_proactive_state_v1.sql`
+
+The third migration is a separate Proactive Coach persistence release and is not included in this exact-profile Reactive Coach production pilot.
+
+The reviewed production DB prerequisite for this pilot is therefore only the AI economics dependency pair `20260911150000 ? 20260911170000`.
+
+Those two production migrations still require separate explicit approval before execution.
+
+An ordinary migration push must not be used if it would also apply the proactive migration. The next release step is to verify an isolated execution procedure for only the two AI economics migrations, without executing it.
+
+No production migration, deployment, secret mutation, provider call, Planner Confirm, or Planner Apply occurred during this checkpoint.
+
+
 ## Status
 
 `LOCAL_RELEASE_READY / PRODUCTION_NOT_YET_EXECUTED`

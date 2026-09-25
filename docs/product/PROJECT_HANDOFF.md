@@ -1,3 +1,20 @@
+> **Authoritative current state - AI_COACH_6G_PROACTIVE_PRODUCTION_SCOPE_GUARD_ACCEPTED_2026_09_25**
+>
+> - **Evre 6G / AIC-007 remains `IN_PROGRESS ? PRODUCTION MIGRATION + EXACT-PROFILE ACCEPTANCE PENDING`.**
+> - Accepted proactive-production scope guard checkpoint: `5641d925cd53d1800b4ad8e5e5202032d290ef4a`.
+> - Production `app-api` now has an explicit hard fail-closed boundary for every `/ai-coach/proactive` POST surface whenever the deployment environment is production. The guard executes before the proactive read handler and before presentation/dismiss/snooze/category-disable action handlers.
+> - Local DEV proactive behavior remains wired and unchanged. The exact-profile Reactive Coach production path remains unchanged.
+> - Guard acceptance is GREEN: focused proactive `27/27`; focused 6G production/reactive `110/110`; full non-integration `1387/1387` across `181/181` files; app-api bundle PASS; AI economics safety PASS; AI Coach safety PASS; workspace typecheck PASS.
+> - Read-only production preflight has established: current app-api rollback target `v47`; unauthenticated live app-api returns `401`; `OPENAI_API_KEY` is present; all six new Reactive Coach production-pilot keys remain absent/OFF; Planner Preview remains present while Planner Confirm, Apply, canonical Planner and evidence-shadow remain OFF.
+> - Linked migration dry-run currently contains three pending files: `20260911150000_ai_usage_ledger_v1.sql`, `20260911170000_ai_provider_runtime_reservations_v1.sql`, and `20260919120000_ai_coach_proactive_state_v1.sql`.
+> - The proactive persistence migration `20260919120000_ai_coach_proactive_state_v1.sql` remains outside this exact-profile Reactive Coach production pilot. It is **NOT authorized for production** by the current release scope and must remain pending.
+> - The Reactive Coach production cost/governor dependency chain is the separately reviewed AI economics pair `20260911150000 ? 20260911170000`. These production DB migrations are still **NOT authorized** until Melih gives explicit migration approval.
+> - Do **not** use an ordinary production migration push that would also apply `20260919120000`. Before requesting migration approval, prepare and verify an isolated execution procedure that can apply only the reviewed AI economics pair in dependency order while leaving proactive persistence unapplied.
+> - No production mutation occurred at this checkpoint: production migration apply `0`, production deploy `0`, production secret changes `0`, production provider calls `0`. Planner Confirm remains OFF. Planner Apply remains OFF.
+> - `AIC-007` and Evre 6G remain open until the isolated DB prerequisite, controlled exact-profile production rollout, real provider/ledger smoke, isolation evidence, and rollback/disable verification pass.
+> - **NEXT EXACT STEP:** verify an isolated, auditable production migration procedure for exactly `20260911150000_ai_usage_ledger_v1.sql` followed by `20260911170000_ai_provider_runtime_reservations_v1.sql`, with `20260919120000_ai_coach_proactive_state_v1.sql` explicitly excluded. Do not execute it yet; after that verification, request separate explicit production migration approval.
+> - This block supersedes older 6G current-state and next-step wording below it. Historical checkpoints remain evidence only.
+>
 > **Authoritative current state - AI_COACH_6G_PRODUCTION_PILOT_LOCAL_RELEASE_READY_2026_09_25**
 >
 > - **Evre 6G / AIC-007 remains `IN_PROGRESS ? EXACT-PROFILE PRODUCTION ROLLOUT PENDING`.**
