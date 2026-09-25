@@ -1,3 +1,21 @@
+> **Authoritative current state - AI_COACH_6G_PRODUCTION_ACCEPTANCE_CLOSED_2026_09_25**
+>
+> - **`AIC-007`, Evre 6G, and Evre 6 are `CLOSED`; production acceptance is GREEN.** Evre 7 is `NEXT / NOT_STARTED`; Evre 8 and Evre 9 are `WAITING`.
+> - Accepted source chain on `develop`: `f977e469` (Deno-safe imports), `f3588e1` (bounded production context), and `735de8d` (bounded production request). `origin/main` remained unchanged at `cbc209fdf34f217b6d1419612199ee8c8370fe4b`.
+> - Only `app-api` was deployed. The code deployment became ACTIVE as v75; the controlled gate disable/re-enable cycle ended with `app-api` ACTIVE v78 and the exact-profile production pilot enabled.
+> - Exact production payload bounds passed: `CoachContextV1=62,796` bytes, evidence `31,979` bytes, and the actual OpenAI Responses request body `84,200` bytes, all below their enforced limits.
+> - Exactly one approved exact-profile Reactive Coach provider smoke reached OpenAI Responses and returned HTTP `200`. No second provider request was sent.
+> - Production accounting closed at `1` usage event / `1` reservation / `3` reservation events with lifecycle `reserved -> attempt_started -> settled`; provider request ID was captured, actual usage stayed within the reserved bound, and no reservation leak or stuck reconciliation remained.
+> - Actual and month-to-date committed cost are both `2.953209 TRY`, below the active hard `300 TRY` per-user monthly governor.
+> - Read-only before/after hashes match for all 14 reviewed product-truth tables; product-truth mutation delta is zero. Raw prompt, CoachContext, provider answer, API key, and secrets were not persisted to product truth or ledger storage.
+> - Negative isolation is GREEN: wrong-profile, wrong-user, and unauthenticated probes produced zero provider activity; the unauthenticated probe returned HTTP `401`.
+> - Production Proactive Coach remains hard-OFF (`404`). Kill-switch OFF acceptance passed, and final state was deliberately restored to the exact-profile Reactive Coach pilot enabled state.
+> - Planner Confirm and Apply remain OFF; canonical Planner and evidence-shadow remain OFF. `20260919120000_ai_coach_proactive_state_v1.sql` remains pending and outside this release.
+> - Final verification: `181/181` test files and `1389/1389` tests PASS; workspace typecheck, AI Coach safety, AI economics safety, and the 64-file app-api local import graph are GREEN.
+> - The pre-deploy app-api v47 executable rollback artifact remains preserved outside the repository; the dedicated pilot gate remains the immediate disable path.
+> - **NEXT EXACT STEP:** begin Evre 7 discovery/planning only; no Evre 7 implementation or wider production exposure is authorized by this closure.
+> - This block supersedes older 6G current-state, rollout-pending, and next-step wording below it. Those sections remain historical evidence only.
+>
 > **Authoritative current state - AI_COACH_6G_PRODUCTION_AI_ECONOMICS_MIGRATIONS_GREEN_2026_09_25**
 >
 > - **Evre 6G / AIC-007 remains `IN_PROGRESS ? EXACT-PROFILE APP-API / PROVIDER ACCEPTANCE PENDING`.**
@@ -281,13 +299,13 @@
 > - This current-state block supersedes older pre-smoke wording later in this document.
 
 
-Last updated: 2026-09-19
+Last updated: 2026-09-25
 
 ## Canonical source
 
 - Repository: `https://github.com/Melihll/kpss.git`
 - Base branch: `main`
-- Local working branch: `develop`; accepted Evre 6F implementation baseline before closure commit is `deed1f41f2762e6874fba6f09501bd23e2f62f7b`. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
+- Local working branch: `develop`; accepted Evre 6G production source chain is `f977e469` -> `f3588e1` -> `735de8d`, with the closing documentation commit recorded by Git history immediately after those checkpoints. Always verify `git status -sb` and `git log -1` before any push, deployment, migration, or runtime activation.
 - 6B.1 base commit: `cbc209fdf34f217b6d1419612199ee8c8370fe4b`
 - 6B.1 accepted checkpoint: `acd16ffb2263b5285b14bd7329ff4357d7971e00`
 - Last verified product checkpoint before W5: `fa46fd2`
@@ -315,7 +333,7 @@ The architecture is subject-agnostic across all KPSS subjects. Do not create Mat
 - P48 planned-credit accounting correction: deployed and observing.
 - `PLN-004`: `IMPLEMENTED_LOCAL_VERIFIED`; production-authoritative activation gated.
 - Planner V2 / Planner Truth Evre 5: `CLOSED`. Engineering, exact-profile production acceptance, and final Week/Today real-user observation are complete. Confirm and Apply are OFF.
-- Evre 6 AI Coach: 6A is `CLOSED`; 6B.1–6B.6B.1 are accepted locally; 6B.6B.2 local acceptance is green and checkpointed on the feature branch. The controlled local-DEV authority chain now includes the default-OFF/prod-prohibited switch, server-only credential, fixed-origin injected-fetch gateway, real/mock transport authority separation, exact OpenAI count identity with unresolved billing preserved, dedicated controlled-DEV cost authorization, authoritative local route/pricing, TCMB acquisition/freshness, and full A→Z mocked smoke. `TEMP_DEV_COST_POLICY_2026_09_12` allows one separately approved observed-cost local-DEV smoke despite unresolved count billing; no real provider call has occurred. Both AI migrations remain local-only; current Coach runtime, deployment, gates, and production are unchanged.
+- Evre 6 AI Coach: `CLOSED`. 6A-6G are complete, including exact-profile production acceptance with one provider smoke, settled ledger, zero product-truth mutation, negative isolation, and kill-switch validation. The exact-profile Reactive Coach pilot remains enabled; Planner Confirm/Apply and production Proactive Coach remain OFF. Evre 7 is `NEXT / NOT_STARTED`; Evre 8 and Evre 9 are `WAITING`.
 
 PLN-004 verification:
 - targeted domain tests `22/22` PASS;
@@ -336,7 +354,7 @@ PLN-004 verification:
 
 ## Current phase boundary
 
-`AIC-004 / Evre 6D — Proactive Coach (DONE / CLOSED)`
+`AIC-007 / Evre 6G — Eval / Cost / Production Acceptance (DONE / CLOSED)`
 
 `AIC-003 / Evre 6C Reactive Coach` is CLOSED at final acceptance checkpoint `d6ac4f5370cffbbd6667b45d3790cd5f4971dea2`.
 
@@ -348,7 +366,7 @@ Reactive Coach remains read-only. Planner/task/capacity mutation authority, Conf
 
 V1 may select only completed-as-planned, repeated task miss, recent recovery, and persisted Planner warning after independent evidence validation. Partial completion, completion drop, capacity change, and material stall remain explicit unresolved silence. The accepted implementation now includes persisted presentation/control/clear state, server-owned runtime assembly, authenticated read-only selection, deterministic post-surface cards, idempotent presentation recording, dismiss/snooze/disable controls, and the Today surface. Final shadow precision/actionability/silence acceptance passed `39/39` with zero false positives or wrong signal/evidence selections, so AIC-004 is complete at baseline `421de04e2c52c0bf7b0f296a679dfb9108db0030`.
 
-6E Planner integration and 6F bounded conversation intelligence are CLOSED. 6G Eval/Cost/Production Acceptance remains NOT_STARTED.
+6E Planner integration, 6F bounded conversation intelligence, and 6G production acceptance are CLOSED. Evre 7 is NEXT / NOT_STARTED; Evre 8 and Evre 9 are WAITING.
 
 ## Production guardrails
 
@@ -373,11 +391,7 @@ V1 may select only completed-as-planned, repeated task miss, recent recovery, an
 
 ## NEXT EXACT STEP
 
-Run only the separately approved exact-profile production acceptance / final release-evidence step required for AIC-007.
-
-The local production foundation is already GREEN: static production billing bounds can be prepared without a production input-count endpoint dependency, but active production bounds remain empty and executable production runtime remains disabled.
-
-Do not deploy, activate a production provider, change production secrets, run production SQL/migrations, or change Planner Preview/Confirm/Apply authority without a separate explicit approval.
+Begin Evre 7 discovery/planning only under a new explicit scope. Do not widen the exact-profile production pilot, start Evre 7 implementation, apply the pending Proactive Coach migration, or change Planner Preview/Confirm/Apply authority from this closure alone.
 
 ## 2026-09-10 Evre 6A final contract closure
 

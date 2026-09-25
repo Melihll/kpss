@@ -1,6 +1,55 @@
-# AI Coach 6G Exact-Profile Production Pilot ? Local Release Ready
+# AI Coach 6G Exact-Profile Production Pilot - Production Acceptance Closed
 
 Date: 2026-09-25
+
+## Final production acceptance - GREEN
+
+`PRODUCTION_ACCEPTANCE=GREEN`
+
+`AIC-007`, Evre 6G, and Evre 6 are CLOSED. Evre 7 is `NEXT / NOT_STARTED`; Evre 8 and Evre 9 are `WAITING`.
+
+Accepted source chain on `develop`:
+
+1. `f977e469` - Deno-safe proactive imports;
+2. `f3588e1` - bounded production CoachContext details;
+3. `735de8d` - bounded production evidence/request serialization.
+
+Only `app-api` was deployed. The code deployment became ACTIVE as v75. The controlled kill-switch disable/re-enable cycle advanced the service configuration to ACTIVE v78 and left the exact-profile Reactive Coach pilot enabled. `origin/main` remained unchanged at `cbc209fdf34f217b6d1419612199ee8c8370fe4b`.
+
+The single approved exact-profile smoke used production-derived read-only task, study-session, plan, capacity, and material truth. It sent one bounded request to the OpenAI Responses API and returned HTTP `200`:
+
+- CoachContextV1: `62,796` bytes;
+- evidence: `31,979` bytes;
+- actual Responses API request body: `84,200` bytes;
+- provider requests: exactly `1`; retries/fallbacks: `0`.
+
+Accounting and governor evidence:
+
+- usage events / reservations / reservation events: `1 / 1 / 3`;
+- lifecycle: `reserved -> attempt_started -> settled`;
+- provider request ID captured: yes;
+- actual usage within reserved bound: yes;
+- actual TRY cost: `2.953209`;
+- month-to-date committed TRY: `2.953209`;
+- reservation leaks: `0`;
+- stuck reconciliation: `0`;
+- hard monthly per-user governor: `300 TRY`, active.
+
+Safety and isolation evidence:
+
+- before/after hashes match for all 14 reviewed product-truth tables;
+- product-truth mutation delta: `ZERO`;
+- raw prompt/CoachContext/provider answer persisted to product DB or ledger: `false`;
+- wrong-profile provider activity: `0`;
+- wrong-user provider activity: `0`;
+- unauthenticated provider activity: `0`, HTTP `401`;
+- production Proactive Coach guard: `404`, before any provider work;
+- kill-switch OFF acceptance: GREEN;
+- final pilot state: exact-profile enabled.
+
+Final verification is GREEN: `181/181` test files and `1389/1389` tests, workspace typecheck, AI Coach safety, AI economics safety, and the 64-file app-api import graph. Planner Confirm and Apply remain OFF; canonical Planner and evidence-shadow remain OFF. `20260919120000_ai_coach_proactive_state_v1.sql` remains pending and was not applied. The pre-deploy v47 executable rollback artifact remains preserved outside the repository, and the dedicated pilot gate remains the immediate disable path.
+
+This closure section supersedes the earlier local-ready and rollout-pending sections below; those sections are retained as chronological release evidence.
 
 ## Production DB prerequisite accepted ? AI_COACH_6G_PRODUCTION_AI_ECONOMICS_MIGRATIONS_GREEN_2026_09_25
 
@@ -91,13 +140,13 @@ No production migration, deployment, secret mutation, provider call, Planner Con
 
 ## Status
 
-`LOCAL_RELEASE_READY / PRODUCTION_NOT_YET_EXECUTED`
+`PRODUCTION_ACCEPTANCE_GREEN / CLOSED`
 
 Implementation checkpoint:
 
 `6f99016ef293fe82ff29bfef377afeb8addf10d9`
 
-Evre 6G / AIC-007 remains `IN_PROGRESS`.
+Evre 6G / AIC-007 is `DONE / CLOSED`.
 
 ## Accepted local evidence
 
@@ -192,17 +241,4 @@ Disable immediately for:
 
 ## Next exact step
 
-Run read-only production preflight.
-
-Verify:
-
-- repository and remote identities;
-- current app-api version and JWT enforcement;
-- linked migration state;
-- accounting/governor schema availability;
-- required production secret/gate presence without printing values;
-- exact allowlist readiness;
-- Planner Confirm/Apply OFF state;
-- current executable rollback target.
-
-If no migration or other new authority is required, proceed only with the already approved exact-profile app-api/provider activation rollout and collect real smoke, ledger, isolation, and rollback evidence.
+Begin Evre 7 discovery/planning only under a new explicit scope. Do not widen the exact-profile production pilot or start Evre 7 implementation from this closure alone.

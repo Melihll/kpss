@@ -1,3 +1,15 @@
+> **Authoritative current state - AI_COACH_6G_PRODUCTION_ACCEPTANCE_CLOSED_2026_09_25**
+>
+> - **`AIC-007`, Evre 6G, and the Evre 6 AI Coach macro phase are `CLOSED`; production acceptance is GREEN.** Evre 7 is `NEXT / NOT_STARTED`; Evre 8 and Evre 9 are `WAITING`.
+> - Accepted source chain: `f977e469`, `f3588e1`, `735de8d`; only `app-api` was deployed (code v75 ACTIVE, final configuration v78 ACTIVE), and `origin/main` remained unchanged.
+> - One exact-profile production-derived read-only CoachContext smoke reached OpenAI Responses and returned HTTP `200`; bounded context/evidence/request sizes were `62,796` / `31,979` / `84,200` bytes.
+> - Accounting is settled at `1/1/3`, cost `2.953209 TRY`, provider request ID captured, no leak/reconciliation, and the `300 TRY` hard governor active.
+> - Product-truth mutation across 14 tables is zero; prompt/context persistence is zero; wrong-profile, wrong-user, and unauthenticated provider activity is zero.
+> - Proactive production stays hard-OFF, kill-switch acceptance is GREEN, and final exact-profile Reactive Coach pilot state is enabled. Planner Confirm/Apply and related canonical gates stay OFF; proactive persistence remains pending.
+> - Final regression is `1389/1389` across `181/181` files with typecheck, safety, and app-api graph GREEN.
+> - **NEXT EXACT STEP:** scope Evre 7 in a new, explicitly authorized discovery/planning checkpoint; Evre 8 and Evre 9 remain waiting.
+> - This block supersedes older 6G phase/status/next-step wording below it; older blocks remain historical evidence.
+>
 > **Authoritative current state - AI_COACH_6G_PRODUCTION_AI_ECONOMICS_MIGRATIONS_GREEN_2026_09_25**
 >
 > - **Evre 6G / AIC-007 remains `IN_PROGRESS ? EXACT-PROFILE APP-API / PROVIDER ACCEPTANCE PENDING`.**
@@ -281,7 +293,7 @@
 
 Status: Active
 
-Last updated: 2026-09-19
+Last updated: 2026-09-25
 
 ## Roadmap rules
 
@@ -345,13 +357,14 @@ M1 is complete only when:
 [Current sprint](CURRENT_SPRINT.md)
 
 - `CLOSED`: Evre 5 Planner V2 / Planner Truth engineering, exact-profile production acceptance, and final Week/Today real-user observation.
-- `ACTIVE MACRO PHASE`: Evre 6 AI Coach.
+- `CLOSED MACRO PHASE`: Evre 6 AI Coach; `AIC-007 / 6G` production acceptance is GREEN.
 - `CLOSED SUB-PHASE`: 6A Product / Authority / Cost Contract; final decisions accepted, docs only, runtime unchanged, production Confirm OFF, Apply OFF.
 - `CLOSED SUB-PHASE`: 6B CoachContextV1 and 6C Reactive Coach.
 - `CLOSED SUB-PHASE`: 6D Proactive Coach / AIC-004. Final implementation baseline `421de04e2c52c0bf7b0f296a679dfb9108db0030` and deterministic `39/39` shadow acceptance are accepted with zero false positives, wrong signal/evidence, unauthorized mutations, or provider/LLM calls.
 - `CLOSED SUB-PHASE`: 6E Planner V2 Integration / AIC-005. Accepted implementation baseline `836e6443aa7072f674d0da452d952cfa072b7d7b`; canonical Planner evidence explanation and explicit existing-Preview CTA are accepted with no new Planner mutation authority.
 - `CLOSED SUB-PHASE`: 6F Conversation Intelligence / AIC-006. Accepted as bounded browser-session conversation continuity with fresh canonical referent re-resolution, fail-closed ambiguity handling, explicit correction handling, and zero conversation persistence or Planner authority expansion.
-- `IN_PROGRESS SUB-PHASE`: 6G Eval / Cost / Production Acceptance / AIC-007. Local readiness, projected p90 cost acceptance, and the fail-closed production foundation are GREEN. Only separately approved exact-profile production acceptance / final release evidence remains before closure.
+- `CLOSED SUB-PHASE`: 6G Eval / Cost / Production Acceptance / AIC-007. Exact-profile provider, ledger, isolation, zero-mutation, governor, and kill-switch acceptance are GREEN.
+- `NEXT / NOT_STARTED`: Evre 7. Evre 8 and Evre 9 remain `WAITING`.
 - `CONTINUING FOUNDATIONS`: natural `PLN-002` Extra Study acceptance and gated `PLN-003`/`PLN-004`/`MAT-001`/`PLN-005` maturity work.
 
 ## Evre 6 — AI Coach
@@ -387,7 +400,7 @@ The normative product, truth, authority, scenario, proactive, cost, and phase co
 | 6D | Proactive Coach | `CLOSED - FINAL ACCEPTANCE COMPLETE` | Deterministic selector/cards, materiality, runtime state, hysteresis, active-study protection, persistence, user controls, Today rendering, and `39/39` shadow acceptance are complete at `421de04e2c52c0bf7b0f296a679dfb9108db0030`. |
 | 6E | Planner V2 integration | `CLOSED` | Route every Coach planning mutation to the one canonical Planner V2 lifecycle. |
 | 6F | Conversation Intelligence | `CLOSED` | Add short recent context plus compact structured state/signals without long-term raw history or authority transfer. |
-| 6G | Eval / Cost / Production Acceptance | `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 + PRODUCTION FOUNDATION ACCEPTED - EXACT-PROFILE PRODUCTION ACCEPTANCE PENDING` | Complete the 300 TL hard governor and prove safety, groundedness, UX, cost, observability, and limited production acceptance. |
+| 6G | Eval / Cost / Production Acceptance | `CLOSED - PRODUCTION ACCEPTANCE GREEN` | The 300 TL hard governor, safety, groundedness, cost, observability, isolation, and limited exact-profile production acceptance are proven. |
 
 Phase progression is gated by reviewed exit evidence. Listing a later phase does not authorize implementation, deployment, production access, or gate activation.
 

@@ -1,3 +1,15 @@
+> **Authoritative current state - AI_COACH_6G_PRODUCTION_ACCEPTANCE_CLOSED_2026_09_25**
+>
+> - **`AIC-007`, Evre 6G, and Evre 6 are `CLOSED`; production acceptance is GREEN.** Evre 7 is `NEXT / NOT_STARTED`; Evre 8 and Evre 9 are `WAITING`.
+> - Accepted source chain: `f977e469`, `f3588e1`, `735de8d`. Only `app-api` was deployed: code v75 ACTIVE, final post-kill-switch configuration v78 ACTIVE, exact-profile pilot enabled; `origin/main` stayed at `cbc209fdf34f217b6d1419612199ee8c8370fe4b`.
+> - One exact-profile Responses provider smoke returned `200`; context/evidence/request bodies were `62,796` / `31,979` / `84,200` bytes.
+> - Accounting closed at usage/reservation/events `1/1/3`, lifecycle `reserved -> attempt_started -> settled`, cost `2.953209 TRY`, no leak/reconciliation, provider request ID captured, under the active `300 TRY` hard governor.
+> - Fourteen production product-truth snapshots remained byte-hash equivalent; prompt/context was not persisted. Wrong-profile, wrong-user, and unauthenticated provider activity stayed zero.
+> - Proactive production surfaces remain guarded (`404`); kill-switch acceptance passed and the exact-profile pilot was restored enabled. Planner Confirm/Apply, canonical Planner, and evidence-shadow remain OFF; the proactive migration remains pending.
+> - Final validation: `1389/1389` tests across `181/181` files plus typecheck, safety gates, and app-api import graph PASS.
+> - **NEXT EXACT STEP:** Evre 7 discovery/planning only. No later-phase implementation or broader rollout is implied.
+> - This block supersedes older 6G status and next-step wording below it; older blocks remain historical evidence.
+>
 > **Authoritative current state - AI_COACH_6G_PRODUCTION_AI_ECONOMICS_MIGRATIONS_GREEN_2026_09_25**
 >
 > - **Evre 6G / AIC-007 remains `IN_PROGRESS ? EXACT-PROFILE APP-API / PROVIDER ACCEPTANCE PENDING`.**
@@ -282,7 +294,7 @@
 
 Status: Active
 
-Last updated: 2026-09-19
+Last updated: 2026-09-25
 
 ## Workflow
 
@@ -335,7 +347,7 @@ Priority describes impact, not implementation order. Dependencies and safety gat
 | `AIC-004` | 6D | `P1` | Proactive Coach | `DONE - FINAL SHADOW ACCEPTANCE CLOSED` |
 | `AIC-005` | 6E | `P0` | Planner V2 Integration | `DONE - FINAL ACCEPTANCE CLOSED` |
 | `AIC-006` | 6F | `P1` | Conversation Intelligence | `DONE - FINAL ACCEPTANCE CLOSED` |
-| `AIC-007` | 6G | `P0` | Eval / Cost / Production Acceptance | `IN_PROGRESS - LOCAL READINESS + PROJECTED P90 + PRODUCTION FOUNDATION ACCEPTED - EXACT-PROFILE PRODUCTION ACCEPTANCE PENDING` |
+| `AIC-007` | 6G | `P0` | Eval / Cost / Production Acceptance | `DONE - PRODUCTION ACCEPTANCE CLOSED` |
 
 The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, Authority & Cost Contract](specs/AI_COACH_EVRE_6_PRODUCT_AUTHORITY_COST_CONTRACT.md). AI teacher/tutoring/quiz/mastery features are outside every Evre 6 item. No backlog status grants runtime, deployment, migration, gate, Confirm, Apply, or production authority.
 
@@ -465,7 +477,7 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 ## `AIC-007` / Evre 6G — Eval / Cost / Production Acceptance
 
 - Priority: `P0`
-- Status: `IN_PROGRESS`
+- Status: `DONE - PRODUCTION ACCEPTANCE CLOSED`
 - Dependency: relevant 6B–6F exits and a separate production release brief.
 - Desired outcome: Safety, groundedness, UX, cost, observability, and rollback are proven before any controlled production expansion.
 - Acceptance criteria:
@@ -482,6 +494,8 @@ The normative Evre 6 scope and phase contract is [AI Coach Evre 6 — Product, A
 - 6G-B1 projected p90 acceptance (2026-09-24): deterministic synthetic conservative replay against the authoritative OpenAI route/pricing catalog is GREEN. Acceptance FX `60 TRY/USD`; no cache discount; retry/fallback overhead `1.10x`. Real controlled-DEV calibration is `0.211052 TRY`, conservatively repriced to `0.261 TRY`. Normal median `84.230748`, normal projected p90 `120.32964`, normal max `140.38458`; heavy projected p90 `236.95038`, heavy max `263.2782`; simulated paths above `300 TL/month` = `0`. Contractual projected p90 criteria are accepted. This does not represent observed production-cohort evidence and grants no production authority.
 
 - 6G-B2 local production foundation (2026-09-24): GREEN. Production static-bound semantics, real OpenAI static-bound builder, and orchestrator static-bound preparation seam are locally implemented and accepted. Focused B2 regression `62/62`; economics safety PASS; AI Coach safety PASS; workspace typecheck PASS. Production count-endpoint dependency is absent from the static-bound seam. Active production billing bounds remain empty, production input-bound proven remains false, provider production activation remains prohibited, and executable Coach production runtime remains disabled. This checkpoint grants no production authority and performs no production action.
+
+- 6G production acceptance closure (2026-09-25): GREEN. Source chain `f977e469` -> `f3588e1` -> `735de8d`; only app-api deployed, code v75 ACTIVE and final post-kill-switch configuration v78 ACTIVE. One exact-profile Responses smoke returned HTTP `200`; context/evidence/request sizes were `62,796` / `31,979` / `84,200` bytes. Ledger settled at `1/1/3`, actual cost `2.953209 TRY`, no leak or reconciliation, and the hard `300 TRY` governor remained active. All 14 product-truth hashes were unchanged; raw prompt/context persistence and cross-user/profile provider activity were zero. Proactive production guard and kill-switch acceptance passed. Final suite: `1389/1389` across `181/181` files plus typecheck/safety/app-api graph GREEN. AIC-007 and Evre 6 are closed; Evre 7 is next/not started.
 
 
 ## `PLN-001` — Esra 7-day Planning Reality Audit
