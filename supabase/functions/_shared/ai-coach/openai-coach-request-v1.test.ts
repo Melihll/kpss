@@ -15,6 +15,7 @@ import {
   OPENAI_COACH_RESPONSE_SCHEMA_V1,
   buildOpenAiCoachRequestV1,
   fingerprintOpenAiCoachRequestV1,
+  serializedOpenAiGenerationRequestBytesV1,
   stableCanonicalJsonV1,
   suppliedCoachEvidenceFactPathsV1,
   validateGroundedCoachResponseV1,
@@ -78,6 +79,19 @@ describe("immutable OpenAI Coach request V1", () => {
       truncation: "disabled",
     }));
     expect(value.authority).toMatchObject({ toolsAllowed: false, mutationAllowed: false, storedByProvider: false });
+  });
+
+  it("measures the exact generation body without duplicate internal count metadata", () => {
+    const value = request();
+    const generationBytes = new TextEncoder()
+      .encode(JSON.stringify(value.responseBody))
+      .byteLength;
+    const internalEnvelopeBytes = new TextEncoder()
+      .encode(JSON.stringify(value))
+      .byteLength;
+
+    expect(serializedOpenAiGenerationRequestBytesV1(value)).toBe(generationBytes);
+    expect(generationBytes).toBeLessThan(internalEnvelopeBytes);
   });
 
   it("keeps provider schema minimal while preserving local response bounds", () => {

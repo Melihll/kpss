@@ -112,7 +112,7 @@ export const COACH_EVIDENCE_SCOPE_RULES_V1 = Object.freeze({
     capability: "progress_analysis",
     allowedContextPaths: ["week", "subjects", "capacity", "recentProgress", "signalCandidates"],
     excludedContextPaths: ["identity", "today.tasks", "week.tasks", "nextWork", "materials", "workload", "planner", "signalInputs"],
-    collectionLimits: { subjects: 12, "capacity.days": 7, "recentProgress.taskEvents": 8, "recentProgress.sessions": 6, "recentProgress.transitions": 4, signalCandidates: 6 },
+    collectionLimits: { subjects: 12, "capacity.days": 7, "recentProgress.taskEvents": 6, "recentProgress.sessions": 6, "recentProgress.transitions": 4, signalCandidates: 2 },
     detailKinds: ["week_tasks", "subject_tasks", "recent_sessions"],
   },
   subject_progress: {

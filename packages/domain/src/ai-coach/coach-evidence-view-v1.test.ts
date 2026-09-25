@@ -92,6 +92,9 @@ describe("CoachEvidenceViewV1 6B.3 contract", () => {
     const today = projectCoachEvidenceViewV1(context, selection("today_explain"));
     expect(today.evidence.signalCandidates?.every((candidate) => candidate.signalType.startsWith("today_"))).toBe(true);
     expect(today.collections.find((item) => item.path === "signalCandidates")?.limit).toBe(6);
+    const week = projectCoachEvidenceViewV1(context, selection("week_progress"));
+    expect(week.collections.find((item) => item.path === "recentProgress.taskEvents")?.limit).toBe(6);
+    expect(week.collections.find((item) => item.path === "signalCandidates")?.limit).toBe(2);
 
     const subject = projectCoachEvidenceViewV1(context, selection("subject_progress"));
     expect(subject.evidence.signalCandidates?.every((candidate) => candidate.subjectId === SUBJECT_ID)).toBe(true);

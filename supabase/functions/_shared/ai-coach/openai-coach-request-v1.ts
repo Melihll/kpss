@@ -333,6 +333,24 @@ export async function fingerprintOpenAiCoachRequestV1(
   });
 }
 
+
+/** Exact serialized body sent to POST /responses; excludes internal count/audit copies. */
+export function serializedOpenAiGenerationRequestBytesV1(
+  request: OpenAiCoachRequestV1,
+): number {
+  if (request.version !== OPENAI_COACH_REQUEST_V1_VERSION) {
+    throw new Error("OPENAI_COACH_REQUEST_VERSION_UNSUPPORTED");
+  }
+
+  return new TextEncoder()
+    .encode(
+      JSON.stringify(
+        request.responseBody,
+      ),
+    )
+    .byteLength;
+}
+
 function collectSuppliedPaths(value: unknown, path: string, output: Set<string>): void {
   if (
     path

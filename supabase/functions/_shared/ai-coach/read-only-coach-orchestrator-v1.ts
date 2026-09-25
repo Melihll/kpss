@@ -47,6 +47,7 @@ import {
   buildOpenAiCoachRequestV1,
   extractOpenAiStructuredResponseValueV1,
   fingerprintOpenAiCoachRequestV1,
+  serializedOpenAiGenerationRequestBytesV1,
   validateGroundedCoachResponseV1,
   type GroundedCoachResponseV1,
   type OpenAiCoachRequestFingerprintV1,
@@ -548,13 +549,9 @@ export async function runReadOnlyCoachCapabilityV1(
       null;
 
     const serializedProviderRequestBytes =
-      new TextEncoder()
-        .encode(
-          JSON.stringify(
-            request,
-          ),
-        )
-        .byteLength;
+      serializedOpenAiGenerationRequestBytesV1(
+        request,
+      );
 
     bound =
       prepareReadOnlyCoachProductionStaticBillingBoundV1({
