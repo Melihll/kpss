@@ -343,6 +343,8 @@ export function StudyTodayPanel() {
       .catch(() => setMaterialPageProgress(null));
   };
   const todayPlanned = summary.dailyPlan.totalCommittedMinutes;
+  const todayCompletedTaskCount = summary.dailyPlan.completedTaskIds.length;
+  const todayTaskCount = dailyTaskIds.size;
   const activePlanned = active?.task_id ? dailyMinutes.get(active.task_id) ?? 0 : 0;
   const formattedDate = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", weekday: "long", day: "numeric", month: "long" }).format(new Date());
   const animatedDays = useAnimatedNumber(roadmap?.strategy?.daysToExam ?? 0);
@@ -385,6 +387,28 @@ export function StudyTodayPanel() {
         <button className="focus-action" type="button" disabled={busy} onClick={() => void act(() => callAppApi("/study-sessions/start", { method: "POST", body: { taskId: focusTask.id, entrySource: "web" } }))}><Icon name="play" weight="fill" />Çalışmaya Başla</button>        <TaskMaterialActions task={focusTask} onOpen={openTaskMaterial} />
       </div> : <div className="focus-state focus-empty"><span className="focus-label">Şimdi</span><Icon name="check" size={32} /><h2>Sıradaki görev yok.</h2><p>Haftalık plan oluşturulduğunda burada görünecek.</p></div>}
     </article>
+
+    <section className="today-progress-summary" aria-labelledby="today-progress-title">
+      <div className="today-progress-copy">
+        <span className="page-eyebrow">Bugünün durumu</span>
+        <h2 id="today-progress-title">Bugün nasıl gidiyor?</h2>
+      </div>
+
+      <dl className="today-progress-metrics">
+        <div>
+          <dt>Çalışılan</dt>
+          <dd>{compactMinutesLabel(summary.todayStudyMinutes)}</dd>
+        </div>
+        <div>
+          <dt>Bugünkü plan</dt>
+          <dd>{compactMinutesLabel(todayPlanned)}</dd>
+        </div>
+        <div>
+          <dt>Tamamlanan</dt>
+          <dd>{todayCompletedTaskCount}/{todayTaskCount} görev</dd>
+        </div>
+      </dl>
+    </section>
 
     <ProactiveCoachSurface />
 

@@ -10,9 +10,12 @@ const source = readFileSync(
 );
 
 describe("Evre 7B Today daily-home hierarchy", () => {
-  it("keeps the primary focus before proactive coaching", () => {
+  it("orders daily focus, factual progress, proactive coaching, then remaining work", () => {
     const focusIndex =
       source.indexOf('className={`focus-now-card');
+
+    const progressIndex =
+      source.indexOf('className="today-progress-summary"');
 
     const proactiveIndex =
       source.indexOf("<ProactiveCoachSurface />");
@@ -21,14 +24,42 @@ describe("Evre 7B Today daily-home hierarchy", () => {
       source.indexOf('className="today-remaining"');
 
     expect(focusIndex).toBeGreaterThan(-1);
+    expect(progressIndex).toBeGreaterThan(-1);
     expect(proactiveIndex).toBeGreaterThan(-1);
     expect(remainingIndex).toBeGreaterThan(-1);
 
-    expect(focusIndex).toBeLessThan(proactiveIndex);
+    expect(focusIndex).toBeLessThan(progressIndex);
+    expect(progressIndex).toBeLessThan(proactiveIndex);
     expect(proactiveIndex).toBeLessThan(remainingIndex);
   });
 
-  it("preserves the four existing daily-home action surfaces", () => {
+  it("uses existing canonical daily facts without inventing a progress score", () => {
+    expect(source).toContain(
+      "summary.dailyPlan.totalCommittedMinutes",
+    );
+
+    expect(source).toContain(
+      "summary.dailyPlan.completedTaskIds.length",
+    );
+
+    expect(source).toContain(
+      "compactMinutesLabel(summary.todayStudyMinutes)",
+    );
+
+    expect(source).toContain(
+      "todayTaskCount = dailyTaskIds.size",
+    );
+
+    expect(source).not.toContain(
+      "todayProgressPercent",
+    );
+
+    expect(source).not.toContain(
+      "progressScore",
+    );
+  });
+
+  it("preserves the existing daily-home action surfaces", () => {
     expect(source).toContain("today-quick-add-trigger");
     expect(source).toContain("today-capacity-trigger");
     expect(source).toContain("today-coach-trigger");
