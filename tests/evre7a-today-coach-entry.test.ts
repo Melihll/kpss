@@ -15,16 +15,27 @@ describe("Evre 7A Coach web convergence", () => {
   it("routes both Today actions to one Coach surface", () => {
     expect(todaySource).toContain("today-capacity-trigger");
     expect(todaySource).toContain("today-coach-trigger");
+
+    expect(todaySource).toContain(
+      'setCoachEntryContext("capacity")',
+    );
+
+    expect(todaySource).toContain(
+      'setCoachEntryContext("general")',
+    );
+
+    expect(todaySource).toContain(
+      "entryContext={coachEntryContext}",
+    );
+
+    const coachSurfaces =
+      todaySource.match(/<CoachDrawer /g) ?? [];
+
+    expect(coachSurfaces).toHaveLength(1);
+
     expect(todaySource).not.toContain("CoachDrawerMode");
     expect(todaySource).not.toContain("setCoachMode");
     expect(todaySource).not.toContain("mode={coachMode}");
-
-    const openers =
-      todaySource.match(
-        /onClick=\{\(\) => setCoachOpen\(true\)\}/g,
-      ) ?? [];
-
-    expect(openers.length).toBeGreaterThanOrEqual(2);
   });
 
   it("removes legacy capacity mode", () => {

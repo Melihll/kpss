@@ -12,7 +12,10 @@ import { Icon } from "./Icon";
 import { PlannerCoachExplanationCard } from "./PlannerCoachExplanationCard";
 
 
+export type CoachDrawerEntryContext = "general" | "capacity";
+
 interface CoachDrawerProps {
+  readonly entryContext?: CoachDrawerEntryContext;
   readonly open: boolean;
   readonly onClose: () => void;
 }
@@ -87,7 +90,7 @@ function buildReactiveConversationContext(
   };
 }
 
-export function CoachDrawer({ open, onClose }: CoachDrawerProps) {
+export function CoachDrawer({ open, entryContext = "general", onClose }: CoachDrawerProps) {
   const [message, setMessage] = useState("");
   const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
   const [reactiveHistory, setReactiveHistory] = useState<readonly ReactiveCoachExchange[]>([]);
@@ -95,7 +98,24 @@ export function CoachDrawer({ open, onClose }: CoachDrawerProps) {
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const quickPrompts = QUICK_PROMPTS;
+  // Presentation-only entry intent. It must never select API or mutation authority.
+  const capacityEntry = entryContext === "capacity";
+
+  const quickPrompts = capacityEntry
+    ? [
+        "Bugün vaktim azaldı, ne yapmalıyım?",
+        "Bugün daha fazla vaktim var; planım ne durumda?",
+        "Vaktim değişti; Planner açısından ne anlama geliyor?",
+      ]
+    : QUICK_PROMPTS;
+
+  const introKicker = capacityEntry
+    ? "Bugünkü zamanını birlikte değerlendirelim"
+    : "Planını birlikte değerlendirelim";
+
+  const introTitle = capacityEntry
+    ? "Vaktin değiştiyse ne yapabilirsin?"
+    : "Planner hakkında ne bilmek istiyorsun?";
 
   useEffect(() => {
     if (!open) return;
@@ -186,8 +206,8 @@ export function CoachDrawer({ open, onClose }: CoachDrawerProps) {
 
       <div className="coach-drawer-body">
         {!submittedMessage && reactiveHistory.length === 0 && <section className="coach-intro">
-          <span className="coach-kicker">Planını birlikte değerlendirelim</span>
-          <h2>Planner hakkında ne bilmek istiyorsun?</h2>
+          <span className="coach-kicker">{introKicker}</span>
+          <h2>{introTitle}</h2>
           <p>Koç mevcut canonical Planner kanıtını açıklar. Sohbet mesajı planını onaylamaz, uygulamaz veya değiştirmez.</p>
           <div className="coach-quick-prompts">
             {quickPrompts.map((prompt) => <button type="button" key={prompt} onClick={() => { setMessage(prompt); textareaRef.current?.focus(); }}>{prompt}</button>)}
