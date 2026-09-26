@@ -5,7 +5,7 @@ import { mergeMovableTaskOrder, moveTaskId } from "../lib/today-task-order";
 import { resolveTodayFocus } from "../lib/today-focus";
 import { activeStudyElapsedMinutes } from "../lib/study-session-timer";
 import { compactMinutesLabel, taskName, WORK_MODE_LABELS, type RoadmapTask } from "../lib/roadmap";
-import { CoachDrawer, type CoachDrawerMode } from "./CoachDrawer";
+import { CoachDrawer } from "./CoachDrawer";
 import { QuickAddTaskDrawer } from "./QuickAddTaskDrawer";
 import { TaskActionPreviewDrawer } from "./TaskActionPreviewDrawer";
 import type { TaskActionPreviewAction } from "../lib/task-action-preview-ui";
@@ -150,7 +150,6 @@ export function StudyTodayPanel() {
   const [error, setError] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [coachOpen, setCoachOpen] = useState(false);
-  const [coachMode, setCoachMode] = useState<CoachDrawerMode>("default");
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [manualContinuationOrder, setManualContinuationOrder] = useState<string[]>([]);
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
@@ -352,7 +351,7 @@ export function StudyTodayPanel() {
   return <section className="today-page page-frame">
     <header className="page-header today-page-header">
       <div><span className="page-eyebrow">Bugün</span><h1>{formattedDate}</h1></div>
-      <div className="today-header-side"><div className="today-editorial-stats"><div><strong className="settling-number">{roadmap?.strategy ? animatedDays : "—"}</strong><span>gün kaldı</span></div><div><strong className="settling-number">{compactMinutesLabel(animatedPlannedMinutes)}</strong><span>bugün</span></div></div><button className="today-quick-add-trigger" type="button" onClick={() => setQuickAddOpen(true)}><span aria-hidden="true">＋</span><strong>Görev Ekle</strong></button><button className="today-capacity-trigger" type="button" onClick={() => { setCoachMode("default"); setCoachOpen(true); }}><span>Vaktim Değişti</span></button><button className="today-coach-trigger" type="button" onClick={() => { setCoachMode("default"); setCoachOpen(true); }}><Icon name="spark" weight="fill" /><span>Koça Yaz</span></button></div>
+      <div className="today-header-side"><div className="today-editorial-stats"><div><strong className="settling-number">{roadmap?.strategy ? animatedDays : "—"}</strong><span>gün kaldı</span></div><div><strong className="settling-number">{compactMinutesLabel(animatedPlannedMinutes)}</strong><span>bugün</span></div></div><button className="today-quick-add-trigger" type="button" onClick={() => setQuickAddOpen(true)}><span aria-hidden="true">＋</span><strong>Görev Ekle</strong></button><button className="today-capacity-trigger" type="button" onClick={() => setCoachOpen(true)}><span>Vaktim Değişti</span></button><button className="today-coach-trigger" type="button" onClick={() => setCoachOpen(true)}><Icon name="spark" weight="fill" /><span>Koça Yaz</span></button></div>
     </header>
 
     {error && <div className="inline-state error" role="alert"><span>Veriler yüklenemedi.</span><button type="button" onClick={() => void load()}>Tekrar Dene</button></div>}
@@ -479,6 +478,6 @@ export function StudyTodayPanel() {
         onPageSaved={(progress) => setMaterialPageProgress(progress)}
       />
       <QuickAddTaskDrawer open={quickAddOpen} onClose={() => setQuickAddOpen(false)} onApplied={() => void load()} />
-      <CoachDrawer open={coachOpen} mode={coachMode} onClose={() => setCoachOpen(false)} onApplied={() => void load()} />
+      <CoachDrawer open={coachOpen} onClose={() => setCoachOpen(false)} />
   </section>;
 }
