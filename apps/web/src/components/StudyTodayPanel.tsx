@@ -488,7 +488,7 @@ export function StudyTodayPanel() {
       </article>})}</div> : <div className="plain-empty">Bugün için başka görev yok.</div>}
     </section>
 
-    <div className="today-summary-line"><span>Bugün çalışılan</span><strong>{compactMinutesLabel(summary.todayStudyMinutes)}</strong></div>
+
           <TaskActionPreviewDrawer
         request={taskActionRequest}
         onClose={() => setTaskActionRequest(null)}

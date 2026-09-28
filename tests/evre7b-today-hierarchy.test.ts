@@ -57,6 +57,10 @@ describe("Evre 7B Today daily-home hierarchy", () => {
     expect(source).not.toContain(
       "progressScore",
     );
+
+    expect(source).not.toContain(
+      'className="today-summary-line"',
+    );
   });
 
   it("preserves the existing daily-home action surfaces", () => {
