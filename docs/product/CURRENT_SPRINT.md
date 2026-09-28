@@ -1,3 +1,18 @@
+> **Authoritative current state - EVRE_7B_TODAY_AS_DAILY_HOME_CLOSED_2026_09_28**
+>
+> - **Evre 7 Product UX / Daily Coach Experience is `ACTIVE`. Evre 7A UX Reality Audit & Daily Experience Contract is `CLOSED`; Evre 7B Today as Daily Home is `CLOSED`; Evre 7C Coach x Planner UX is `ACTIVE / DISCOVERY`. Evre 8 and Evre 9 remain `WAITING`.**
+> - Accepted Evre 7B checkpoints on `develop`: `7cedf9aa6f7140628b2b1aa3cf8e133c666abad2` (7B.1: Today focus promoted ahead of Coach), `c53af165f69f9e29d15932e3f3a61222adef688f` (7B.2: factual daily progress summary), `704bac6d8947b13df14a253954c733d6586e5ec1` (7B.3: contextual general/capacity Coach entry with one Reactive Coach authority), and `2142c96b2ff54e3aa514adfe80e7d7799863503e` (7B.4: duplicate Today summary cleanup).
+> - Today is the accepted daily home / command center. Its product hierarchy is `Focus -> factual progress -> proactive Coach signal -> remaining work`.
+> - The daily experience answers four product questions: `What do I do today? -> Why this? -> How am I progressing? -> What can I do if something changes?`.
+> - Progress remains factual rather than synthetic: worked minutes, today's committed plan, and completed-task count are shown without inventing a score or percentage.
+> - `Vaktim Değişti` and `Koça Yaz` preserve different presentation intent but converge on one `CoachDrawer` and one Reactive Coach authority. Entry context cannot choose another API, Confirm path, Apply path, or mutation authority.
+> - Task-specific problem solving remains on explicit product surfaces. Task actions keep their preview / explicit carryover-confirmation semantics, and Quick Add keeps preview / explicit apply semantics.
+> - Legacy Coach capacity mode remains removed. Coach has zero `/planner-v2/confirm`, `/planner-v2/apply`, legacy `/plans/current/apply-confirmed`, or `callAiCoachPreview` authority. Week remains owner of canonical Planner V2 Preview.
+> - Evre 7B acceptance is GREEN: final focused Today regression `22/22`; workspace typecheck PASS; post-commit full non-integration regression `1401/1401` across `184/184` files.
+> - Evre 7B introduced no backend/API authority change, production deploy, production mutation, migration, provider activation, or Planner gate change. Planner Confirm remains OFF; Planner Apply remains OFF; canonical Planner and evidence-shadow production gates remain OFF; production Proactive Coach remains hard-OFF; exact-profile Reactive Coach pilot state is unchanged.
+> - `origin/main` remains protected at `cbc209fdf34f217b6d1419612199ee8c8370fe4b`.
+> - **NEXT EXACT STEP:** begin Evre 7C / Coach x Planner UX with a read-only DEV audit of the user-visible handoff from Coach explanation to the existing canonical Planner V2 Preview. Improve continuity and clarity only; do not create a second planning lifecycle, automatic Preview, conversation Confirm/Apply, or new mutation authority.
+> - This block supersedes older Evre 7A / Evre 7B `NEXT / NOT_STARTED` and next-step wording below it. Historical blocks remain evidence only.
 > **Authoritative current state - EVRE_7A_PRODUCT_UX_REALITY_AUDIT_CLOSED_2026_09_26**
 >
 > - **Evre 7 Product UX / Daily Coach Experience is `ACTIVE`. Evre 7A UX Reality Audit & Daily Experience Contract is `CLOSED`; Evre 7B Today as Daily Home is `NEXT / NOT_STARTED`. Evre 8 and Evre 9 remain `WAITING`.**
@@ -312,11 +327,11 @@ Last updated: 2026-09-25
 
 ## Sprint 02 — Evre 6B & Continuing Planning Foundations
 
-Sprint status: `EVRE_7_ACTIVE - EVRE_7A_CLOSED - EVRE_7B_NEXT_NOT_STARTED`
+Sprint status: `EVRE_7_ACTIVE - EVRE_7A_CLOSED - EVRE_7B_CLOSED - EVRE_7C_ACTIVE_DISCOVERY`
 
-Sprint objective: Execute Evre 7 Product UX / Daily Coach Experience in DEV, beginning with Evre 7B Today as Daily Home, while preserving the closed Evre 6 and Planner authority/safety envelope.
+Sprint objective: Execute Evre 7C Coach x Planner UX in DEV. Make the user-visible handoff from Reactive Coach explanation to the existing canonical Planner V2 Preview coherent and explicit while preserving Planner ownership, proposal-before-mutation, user approval, Confirm OFF, Apply OFF, and all closed Evre 6 / Evre 7B safety boundaries.
 
-Evre 5 Planner V2 / Planner Truth and Evre 6 AI Coach are closed. AIC-007 production acceptance completed with one exact-profile Responses smoke, settled accounting, zero product-truth mutation, negative isolation, active governor, and a successful kill-switch cycle. The exact-profile Reactive Coach pilot remains enabled; Planner Confirm/Apply and production Proactive Coach remain OFF. Evre 7 is ACTIVE: Evre 7A is CLOSED and Evre 7B Today as Daily Home is NEXT / NOT_STARTED. PLN-002 remains `IN_PROGRESS` pending natural Extra Study acceptance evidence.
+Evre 5 Planner V2 / Planner Truth and Evre 6 AI Coach are closed. Evre 7 Product UX / Daily Coach Experience is ACTIVE: Evre 7A and Evre 7B are CLOSED, and Evre 7C Coach x Planner UX is ACTIVE / DISCOVERY. Today is the accepted daily home with Focus -> factual progress -> proactive Coach -> remaining work. The exact-profile Reactive Coach pilot remains enabled; Planner Confirm/Apply and production Proactive Coach remain OFF. PLN-002 remains `IN_PROGRESS` pending natural Extra Study acceptance evidence.
 
 ## NOW
 
