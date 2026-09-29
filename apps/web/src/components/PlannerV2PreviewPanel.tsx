@@ -87,6 +87,11 @@ export function PlannerV2PreviewPanel() {
   const [application, setApplication] = useState<AppliedPlannerV2Proposal | null>(null);
   const [error, setError] = useState("");
 
+  // Presentation-only handoff context. This must never trigger Preview itself.
+  const coachHandoffTarget =
+    typeof window !== "undefined"
+    && window.location.hash === "#planner-v2-preview";
+
   useEffect(() => {
     let active = true;
     void callAppApi<Capability>("/planner-v2/capability")
@@ -194,6 +199,9 @@ export function PlannerV2PreviewPanel() {
       <div>
         <span>Deneysel · işlem yapmaz</span>
         <h2 id="planner-v2-preview-title">Planner V2 haftalık öneri</h2>
+        {coachHandoffTarget && !payload && <p className="planner-v2-handoff-copy">
+          Koçtan Planner'a geçtin. Henüz yeni bir öneri oluşturulmadı. Önizleme yalnız "Planner V2 önizlemesi oluştur" düğmesine bastığında hazırlanır.
+        </p>}
         <p>{capability.confirmationEnabled
           ? "Önizleme ve açık onay yereldir. Uygulama yetkisi kapalıdır."
           : "Pilot önizleme modu. Öneri yalnızca incelenebilir."}</p>
