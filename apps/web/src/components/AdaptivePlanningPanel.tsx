@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type CSSProperties, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { AppApiError, callAppApi, FRIENDLY_API_ERRORS } from "../lib/app-api";
 import { Icon } from "./Icon";
 
@@ -34,7 +34,7 @@ export function AdaptivePlanningPanel() {
   const [minimum, setMinimum] = useState<Minimum | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+
 
   const load = useCallback(async () => {
     try {
@@ -58,44 +58,7 @@ export function AdaptivePlanningPanel() {
 
   useEffect(() => { void load(); }, [load]);
 
-  async function replan(trigger = "manual_request") {
-    setBusy(true);
-    try {
-      await callAppApi("/plans/current/recalculate", { method: "POST", body: { trigger } });
-      await load();
-      window.dispatchEvent(new Event("kpss:execution-changed"));
-    } catch (caught) {
-      setError(errorText(caught));
-    } finally {
-      setBusy(false);
-    }
-  }
 
-  async function special(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const fields = new FormData(form);
-    const mode = String(fields.get("mode"));
-    const value = Number(fields.get("minutes"));
-    const normal = minimum?.availableMinutes ?? 0;
-    setBusy(true);
-    try {
-      await callAppApi("/schedule-exceptions", {
-        method: "POST",
-        body: {
-          date: new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date()),
-          type: mode === "extra_available" ? "extra_available" : "custom",
-          minutesDelta: mode === "extra_available" ? value : value - normal,
-          note: "Web özel durum",
-        },
-      });
-      await replan("capacity_change");
-      form.reset();
-    } catch (caught) {
-      setError(errorText(caught));
-      setBusy(false);
-    }
-  }
 
   const totalTopics = projection ? projection.completed + projection.inProgress + projection.remaining : 0;
   const completionPercent = projection && totalTopics > 0 ? Math.round((projection.completed / totalTopics) * 100) : 0;
@@ -122,12 +85,9 @@ export function AdaptivePlanningPanel() {
           <div><span>Kalan iş yükü</span><strong>{backlog ? `${backlog.open_task_count} görev` : "Henüz hesaplanmadı"}</strong>{backlog && <small>{duration(backlog.estimated_remaining_minutes)}</small>}</div>
           <div><span>Minimum çalışma hedefi</span><strong>{minimum ? `${minimum.totalMinutes} / ${minimum.availableMinutes} dk` : "Henüz hesaplanmadı"}</strong>{minimum && <div className="projection-mini-line" role="progressbar" aria-label="Minimum çalışma hedefi" aria-valuemin={0} aria-valuemax={100} aria-valuenow={minimumPercent}><i style={{ "--analysis-progress": `${minimumPercent}%` } as CSSProperties} /></div>}</div>
         </div>
-        <form className="special-form projection-capacity-form" onSubmit={special}>
-          <label>Bugünkü durum<select name="mode"><option value="less">Bugün daha az vaktim var</option><option value="extra_available">Ekstra vaktim var</option></select></label>
-          <label>Dakika<input name="minutes" min="0" type="number" required /></label>
-          <button className="secondary-action" disabled={busy}>Kaydet ve Güncelle</button>
-        </form>
-        <button className="ghost-action" type="button" disabled={busy} onClick={() => void replan()}><Icon name="repeat" />Planı yeniden hesapla</button>
+        <p className="projection-attention-note">
+          Vaktin değiştiyse Bugün ekranındaki “Vaktim Değişti” ile Koç üzerinden Planner önizlemesine geç.
+        </p>
       </details>
     </>}
   </section>;
