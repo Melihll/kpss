@@ -30,7 +30,23 @@ describe("Evre 7C Coach -> Planner handoff", () => {
     );
 
     expect(panelSource).toContain(
-      "Henüz yeni bir öneri oluşturulmadı.",
+      "henüz yeni bir Planner önerisi oluşturulmadı.",
+    );
+
+    expect(panelSource).toContain(
+      'coachHandoffTarget && payload',
+    );
+
+    expect(panelSource).toContain(
+      "Planner'ın güncel canonical önizlemesi oluşturuldu.",
+    );
+
+    expect(panelSource).toContain(
+      "Aşağıdaki sonuç Koç yorumundan değil, Planner'ın mevcut kanıtlardan yaptığı hesaptan gelir",
+    );
+
+    expect(panelSource).toContain(
+      "planına uygulanmamıştır.",
     );
 
     expect(panelSource).toContain(

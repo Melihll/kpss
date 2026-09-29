@@ -200,7 +200,10 @@ export function PlannerV2PreviewPanel() {
         <span>Deneysel · işlem yapmaz</span>
         <h2 id="planner-v2-preview-title">Planner V2 haftalık öneri</h2>
         {coachHandoffTarget && !payload && <p className="planner-v2-handoff-copy">
-          Koçtan Planner'a geçtin. Henüz yeni bir öneri oluşturulmadı. Önizleme yalnız "Planner V2 önizlemesi oluştur" düğmesine bastığında hazırlanır.
+          Koçtan Planner'a geçtin. Koç yalnız mevcut durumu yorumladı; henüz yeni bir Planner önerisi oluşturulmadı. Önizleme yalnız "Planner V2 önizlemesi oluştur" düğmesine bastığında hazırlanır.
+        </p>}
+        {coachHandoffTarget && payload && <p className="planner-v2-handoff-copy">
+          Planner'ın güncel canonical önizlemesi oluşturuldu. Aşağıdaki sonuç Koç yorumundan değil, Planner'ın mevcut kanıtlardan yaptığı hesaptan gelir ve planına uygulanmamıştır.
         </p>}
         <p>{capability.confirmationEnabled
           ? "Önizleme ve açık onay yereldir. Uygulama yetkisi kapalıdır."
