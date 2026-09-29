@@ -6,6 +6,7 @@ import {
   type ResourcePageProgress,
   type ResourceProgressResponse,
 } from "../lib/resource-progress-ui";
+import { useDialogAccessibility } from "../hooks/useDialogAccessibility";
 
 interface ResourceProgressPanelProps {
   readonly resource: ResourceForecast;
@@ -141,14 +142,7 @@ export function ResourceProgressDrawer({
   onClose,
   onSaved,
 }: ResourceProgressDrawerProps) {
-  useEffect(() => {
-    if (!resource) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [onClose, resource]);
+  const dialogRef = useDialogAccessibility<HTMLElement>(Boolean(resource), onClose);
 
   if (!resource) return null;
 
@@ -160,6 +154,8 @@ export function ResourceProgressDrawer({
       onClick={onClose}
     />
     <aside
+      ref={dialogRef}
+      tabIndex={-1}
       className="resource-progress-drawer"
       role="dialog"
       aria-modal="true"

@@ -45,7 +45,7 @@ export function exactPlannerV2ProposalIdentity(value: unknown): PlannerV2Proposa
 export function confirmationFailureMessage(code: string): string {
   if (code === "ACTION_PROPOSAL_EXPIRED") return "Önerinin süresi doldu. Yeni önizleme oluştur.";
   if (code === "ACTION_PROPOSAL_STALE") return "Plan koşulları değişti. Yeni önizleme oluştur.";
-  if (code === "PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH") return "Öneri kimliği değişti. Yeni önizleme oluştur.";
+  if (code === "PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH") return "Öneri doğrulanamadı. Yeni önizleme oluştur.";
   if (code === "ACTION_PROPOSAL_NOT_PENDING" || code === "ACTION_PROPOSAL_NOT_APPLYABLE") {
     return "Öneri artık onaylanabilir değil. Yeni önizleme oluştur.";
   }

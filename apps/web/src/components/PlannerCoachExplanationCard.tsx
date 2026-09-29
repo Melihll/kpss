@@ -23,16 +23,16 @@ export function PlannerCoachExplanationCard({
     && action.appliesProposal === false;
 
   return <article className="coach-result tone-neutral" aria-live="polite">
-    <span className="coach-result-eyebrow">Planner V2 · salt okunur</span>
+    <span className="coach-result-eyebrow">Planlayıcı · yalnızca öneri</span>
     <h3>{explanation.state === "CURRENT_PREVIEW"
       ? "Planner'ın gördüğü durum"
       : explanation.state === "STALE_OR_EXPIRED"
-        ? "Planner kanıtı güncel değil"
-        : "Planner durumu"}</h3>
+        ? "Plan önerisi güncel değil"
+        : "Planlayıcının durumu"}</h3>
     <p>{explanation.answer}</p>
     {explanation.canonicalWarningCodes.length > 0 && <p className="coach-preview-note">
       <Icon name="warning" />
-      <span>{explanation.canonicalWarningCodes.length} canonical Planner uyarısı var.</span>
+      <span>Planlayıcının dikkat etmeni istediği {explanation.canonicalWarningCodes.length} nokta var.</span>
     </p>}
     {canOpenPreview && <Link
       className="secondary-action"

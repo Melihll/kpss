@@ -4,6 +4,7 @@ import type { ResourcePageProgress } from "../lib/resource-progress-ui";
 import { callAppApi } from "../lib/app-api";
 import { summarizeResourceVideoProgress } from "../lib/resource-material-progress";
 import { youtubeTimeLabel } from "../lib/youtube-player-progress";
+import { useDialogAccessibility } from "../hooks/useDialogAccessibility";
 import {
   ResourceProgressPanel,
 } from "./ResourceProgressDrawer";
@@ -56,6 +57,7 @@ export function ResourceDetailDrawer({
   const [videoLibrary, setVideoLibrary] = useState<ResourceVideoLibraryResponse | null>(null);
   const [videoSummaryError, setVideoSummaryError] = useState(false);
   const [presentedScope, setPresentedScope] = useState<TaskMaterialScope | null>(materialScope);
+  const dialogRef = useDialogAccessibility<HTMLElement>(Boolean(resource), onClose);
 
   useEffect(() => {
     if (!resource) return;
@@ -88,15 +90,6 @@ export function ResourceDetailDrawer({
       cancelled = true;
     };
   }, [resource?.resourceId]);
-
-  useEffect(() => {
-    if (!resource) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [onClose, resource]);
 
   const videoSummary = useMemo(
     () => summarizeResourceVideoProgress(videoLibrary?.playlists ?? []),
@@ -131,6 +124,8 @@ export function ResourceDetailDrawer({
       onClick={onClose}
     />
     <aside
+      ref={dialogRef}
+      tabIndex={-1}
       className="resource-detail-drawer"
       role="dialog"
       aria-modal="true"

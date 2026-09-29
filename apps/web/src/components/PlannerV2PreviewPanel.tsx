@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AppApiError, callAppApi } from "../lib/app-api";
+import { AppApiError, callAppApi, FRIENDLY_API_ERRORS } from "../lib/app-api";
 import {
   canApplyPlannerV2Proposal,
   confirmationFailureMessage,
@@ -10,6 +10,12 @@ import {
   type ConfirmedPlannerV2Proposal,
   type PlannerV2ProposalIdentity,
 } from "../lib/planner-v2-lifecycle-ui";
+import {
+  plannerBlockedReasonLabel,
+  plannerBoundaryLabel,
+  plannerFactLabel,
+  plannerMaterialLabel,
+} from "../lib/planner-v2-presentation";
 
 type Capability = {
   enabled: boolean;
@@ -67,14 +73,9 @@ type PreviewResponse = {
 
 type LocalProposalState = "previewed" | "confirmed" | "applied" | "expired" | "stale" | "invalid";
 
-function factLabel(fact: PlannerPreview["explanationFacts"][number]): string {
-  if (fact.kind === "day_capacity") return `${fact.date}: ${fact.availableMinutes} dk kullanılabilir.`;
-  if (fact.kind === "continuation_selected") return `${fact.canonicalWorkloadIdentity} devam işi olduğu için öne alındı.`;
-  if (fact.kind === "blocked_workload") return `${fact.canonicalWorkloadIdentity} engelli: ${fact.reason}.`;
-  if (fact.kind === "current_day_protected") return `${fact.date}: bugünkü görevler korunuyor.`;
-  if (fact.kind === "unused_capacity") return `${fact.date}: bölünemeyen sonraki iş sığmadığı için ${fact.unusedMinutes} dk boş.`;
-  if (fact.kind === "replacement_scope") return "Yalnızca açıkça listelenen gelecek Planner V2 görevleri değiştirilebilir.";
-  return fact.kind;
+function requestFailureMessage(caught: unknown, fallback: string): string {
+  if (!(caught instanceof AppApiError)) return fallback;
+  return FRIENDLY_API_ERRORS[caught.code] ?? fallback;
 }
 
 export function PlannerV2PreviewPanel() {
@@ -122,7 +123,7 @@ export function PlannerV2PreviewPanel() {
       setPayload({ ...next, confirmation: exactPlannerV2ProposalIdentity(next.confirmation) });
       setProposalState("previewed");
     } catch (caught) {
-      setError(caught instanceof AppApiError ? caught.message : "Planner V2 önizlemesi oluşturulamadı.");
+      setError(requestFailureMessage(caught, "Plan önerisi oluşturulamadı. Lütfen tekrar deneyin."));
     } finally {
       setBusy(false);
     }
@@ -182,7 +183,7 @@ export function PlannerV2PreviewPanel() {
     try {
       setCapability(await callAppApi<Capability>("/planner-v2/capability"));
     } catch (caught) {
-      setError(caught instanceof AppApiError ? caught.message : "Planner V2 yetkisi denetlenemedi.");
+      setError(requestFailureMessage(caught, "Plan uygulama durumu denetlenemedi. Lütfen tekrar deneyin."));
     } finally {
       setBusy(false);
     }
@@ -197,20 +198,20 @@ export function PlannerV2PreviewPanel() {
   >
     <div className="planner-v2-preview-head">
       <div>
-        <span>Deneysel · işlem yapmaz</span>
-        <h2 id="planner-v2-preview-title">Planner V2 haftalık öneri</h2>
+        <span>Önizleme · planını değiştirmez</span>
+        <h2 id="planner-v2-preview-title">Haftalık plan önerisi</h2>
         {coachHandoffTarget && !payload && <p className="planner-v2-handoff-copy">
-          Koçtan Planner'a geçtin. Koç yalnız mevcut durumu yorumladı; henüz yeni bir Planner önerisi oluşturulmadı. Önizleme yalnız "Planner V2 önizlemesi oluştur" düğmesine bastığında hazırlanır.
+          Koçtan planlayıcıya geçtin. Koç yalnız mevcut durumu yorumladı; henüz yeni bir öneri oluşturulmadı. Öneri yalnız aşağıdaki düğmeye bastığında hazırlanır.
         </p>}
         {coachHandoffTarget && payload && <p className="planner-v2-handoff-copy">
-          Planner'ın güncel canonical önizlemesi oluşturuldu. Aşağıdaki sonuç Koç yorumundan değil, Planner'ın mevcut kanıtlardan yaptığı hesaptan gelir ve planına uygulanmamıştır.
+          Planlayıcının güncel önerisi hazır. Aşağıdaki sonuç, mevcut program ve çalışma verilerine göre hesaplandı; planına henüz uygulanmadı.
         </p>}
         <p>{capability.confirmationEnabled
-          ? "Önizleme ve açık onay yereldir. Uygulama yetkisi kapalıdır."
+          ? "Öneriyi inceleyebilir ve onaylayabilirsin; plana uygulama şu anda kapalı."
           : "Pilot önizleme modu. Öneri yalnızca incelenebilir."}</p>
       </div>
       <button type="button" className="secondary-button" disabled={busy} onClick={() => void generate()}>
-        {busy && !payload ? "Hazırlanıyor…" : payload ? "Yeniden oluştur" : "Planner V2 önizlemesi oluştur"}
+        {busy && !payload ? "Hazırlanıyor…" : payload ? "Yeniden oluştur" : "Öneriyi hesapla"}
       </button>
     </div>
     {error && <p className="inline-state error" role="alert">{error}</p>}
@@ -225,30 +226,31 @@ export function PlannerV2PreviewPanel() {
         {payload.preview.days.map((day) => <article key={day.date}>
           <strong>{day.date}</strong>
           <small>{day.proposedMinutes} dk öneri · {day.protectedMinutes} dk korunan · {day.unusedMinutes} dk boş</small>
-          {day.items.map((item) => <p key={item.canonicalWorkloadIdentity}>
-            <b>{item.canonicalWorkloadIdentity}</b><span>{item.materialType} · {item.estimatedMinutes} dk · {item.boundary.kind}</span>
+          {day.items.map((item, index) => <p key={item.canonicalWorkloadIdentity}>
+            <b>{plannerMaterialLabel(item.materialType)} {index + 1}</b>
+            <span>{item.estimatedMinutes} dk · {plannerBoundaryLabel(item.boundary.kind)}</span>
           </p>)}
         </article>)}
       </div>
       {payload.preview.blocked.length > 0 && <div className="planner-v2-blocked">
-        <strong>Planlanamayan kanonik işler</strong>
-        {payload.preview.blocked.map((item) => <p key={`${item.canonicalWorkloadIdentity}:${item.blockedReason}`}>
-          {item.canonicalWorkloadIdentity} · {item.blockedReason}
+        <strong>Şimdilik plana eklenemeyen çalışmalar</strong>
+        {payload.preview.blocked.map((item, index) => <p key={`${item.canonicalWorkloadIdentity}:${item.blockedReason}`}>
+          <b>Çalışma {index + 1}</b> · {plannerBlockedReasonLabel(item.blockedReason)}
         </p>)}
       </div>}
       <details className="planner-v2-facts"><summary>Nedenler ve değişim kapsamı</summary>
-        <ul>{payload.preview.explanationFacts.map((fact, index) => <li key={`${fact.kind}:${index}`}>{factLabel(fact)}</li>)}</ul>
+        <ul>{payload.preview.explanationFacts.map((fact, index) => <li key={`${fact.kind}:${index}`}>{plannerFactLabel(fact)}</li>)}</ul>
       </details>
       {capability.confirmationEnabled || confirmation || proposalState === "applied" ? <div className="planner-v2-confirm">
           <p>{proposalState === "confirmed"
-            ? `Bu tam öneri kimliği kalıcı olarak onaylandı. ${capability.applyEnabled ? "Uygulanmaya hazır." : "Apply yetkisi kapalıdır."}`
+            ? `Bu öneri onaylandı. ${capability.applyEnabled ? "Uygulanmaya hazır." : "Plana uygulama şu anda kapalı."}`
             : proposalState === "applied"
               ? `${application?.createdTaskIds.length ?? 0} görev güvenli işlemle uygulandı.`
             : `${payload.preview.differences.createCanonicalWorkloadIdentities.length} yeni iş · ${payload.preview.differences.replaceableTaskIds.length} değiştirilebilir gelecek görev`}</p>
           {capability.confirmationEnabled && proposalState !== "applied" && <button type="button"
             disabled={busy || proposalState !== "previewed"}
             onClick={() => void confirmExactProposal()}>
-            {proposalState === "confirmed" ? "Tam öneri onaylandı" : "Bu tam öneriyi onayla"}
+            {proposalState === "confirmed" ? "Öneri onaylandı" : "Bu öneriyi onayla"}
           </button>}
           {canApplyPlannerV2Proposal(capability, confirmation) && proposalState === "confirmed" &&
             <button type="button" disabled={busy} onClick={() => void applyExactProposal()}>
@@ -256,7 +258,7 @@ export function PlannerV2PreviewPanel() {
             </button>}
           {confirmation && proposalState === "confirmed" && !capability.applyEnabled &&
             <button type="button" className="secondary-button" disabled={busy} onClick={() => void refreshCapability()}>
-              Apply yetkisini denetle
+              Uygulama durumunu yenile
             </button>}
         </div> : <div className="planner-v2-preview-only">
           <p>{payload.preview.differences.createCanonicalWorkloadIdentities.length} yeni iş · {payload.preview.differences.replaceableTaskIds.length} değiştirilebilir gelecek görev</p>

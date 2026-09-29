@@ -13,6 +13,7 @@ import {
   type QuickAddOptions,
   type QuickAddPreviewResponse,
 } from "../lib/quick-add-task-ui";
+import { useDialogAccessibility } from "../hooks/useDialogAccessibility";
 import { Icon } from "./Icon";
 
 interface QuickAddTaskDrawerProps {
@@ -41,6 +42,7 @@ export function QuickAddTaskDrawer({
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState<QuickAddApplyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useDialogAccessibility<HTMLElement>(open, onClose);
 
   useEffect(() => {
     if (!open) return;
@@ -70,15 +72,6 @@ export function QuickAddTaskDrawer({
       cancelled = true;
     };
   }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [onClose, open]);
 
   const bounds = useMemo(
     () => options ? quickAddDateBounds(options) : null,
@@ -171,6 +164,8 @@ export function QuickAddTaskDrawer({
       onClick={onClose}
     />
     <aside
+      ref={dialogRef}
+      tabIndex={-1}
       className="quick-add-drawer"
       role="dialog"
       aria-modal="true"

@@ -3,6 +3,7 @@ import {
   validatePhysicalFinishBoundary,
   type PhysicalFinishCapture,
 } from "../lib/physical-study-finish";
+import { useDialogAccessibility } from "../hooks/useDialogAccessibility";
 
 interface Props {
   readonly capture: PhysicalFinishCapture | null;
@@ -20,6 +21,7 @@ const ERROR_MESSAGES = {
 export function PhysicalStudyFinishDialog({ capture, busy, onCancel, onFinish }: Props) {
   const [rawBoundary, setRawBoundary] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useDialogAccessibility<HTMLElement>(Boolean(capture), onCancel);
 
   useEffect(() => {
     setRawBoundary("");
@@ -45,7 +47,7 @@ export function PhysicalStudyFinishDialog({ capture, busy, onCancel, onFinish }:
 
   return <>
     <button className="physical-finish-backdrop" type="button" aria-label="Bitirme penceresini kapat" onClick={onCancel} />
-    <aside className="physical-finish-dialog" role="dialog" aria-modal="true" aria-labelledby="physical-finish-title">
+    <aside ref={dialogRef} tabIndex={-1} className="physical-finish-dialog" role="dialog" aria-modal="true" aria-labelledby="physical-finish-title">
       <header>
         <div><span>Çalışmayı bitir</span><h2 id="physical-finish-title">Kaçıncı sayfaya kadar tamamladın?</h2></div>
         <button type="button" aria-label="Kapat" onClick={onCancel}>×</button>

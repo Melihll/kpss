@@ -17,6 +17,7 @@ import {
   shouldCheckpointYouTubeProgress,
   youtubeTimeLabel,
 } from "../lib/youtube-player-progress";
+import { useDialogAccessibility } from "../hooks/useDialogAccessibility";
 
 export interface VideoProgress {
   readonly youtubePlaylistVideoId: string;
@@ -569,14 +570,7 @@ export function VideoPlayerDrawer({
   resource,
   onClose,
 }: VideoPlayerDrawerProps) {
-  useEffect(() => {
-    if (!resource) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [onClose, resource]);
+  const dialogRef = useDialogAccessibility<HTMLElement>(Boolean(resource), onClose);
 
   if (!resource) return null;
 
@@ -588,6 +582,8 @@ export function VideoPlayerDrawer({
       onClick={onClose}
     />
     <aside
+      ref={dialogRef}
+      tabIndex={-1}
       className="youtube-player-drawer"
       role="dialog"
       aria-modal="true"

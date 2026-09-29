@@ -22,7 +22,7 @@ describe("Evre 7C Coach -> Planner handoff", () => {
     );
 
     expect(panelSource).toContain(
-      "Koçtan Planner'a geçtin.",
+      "Koçtan planlayıcıya geçtin.",
     );
 
     expect(panelSource).toContain(
@@ -30,7 +30,7 @@ describe("Evre 7C Coach -> Planner handoff", () => {
     );
 
     expect(panelSource).toContain(
-      "henüz yeni bir Planner önerisi oluşturulmadı.",
+      "henüz yeni bir öneri oluşturulmadı.",
     );
 
     expect(panelSource).toContain(
@@ -38,15 +38,15 @@ describe("Evre 7C Coach -> Planner handoff", () => {
     );
 
     expect(panelSource).toContain(
-      "Planner'ın güncel canonical önizlemesi oluşturuldu.",
+      "Planlayıcının güncel önerisi hazır.",
     );
 
     expect(panelSource).toContain(
-      "Aşağıdaki sonuç Koç yorumundan değil, Planner'ın mevcut kanıtlardan yaptığı hesaptan gelir",
+      "mevcut program ve çalışma verilerine göre hesaplandı",
     );
 
     expect(panelSource).toContain(
-      "planına uygulanmamıştır.",
+      "planına henüz uygulanmadı.",
     );
 
     expect(panelSource).toContain(

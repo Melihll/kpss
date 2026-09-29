@@ -8,6 +8,7 @@ import {
 } from "@kpss-coach/domain";
 import { AppApiError } from "../lib/app-api";
 import { callReactiveCoach, type ReactiveCoachResponseV1 } from "../lib/ai-coach-api";
+import { useDialogAccessibility } from "../hooks/useDialogAccessibility";
 import { Icon } from "./Icon";
 import { PlannerCoachExplanationCard } from "./PlannerCoachExplanationCard";
 
@@ -97,6 +98,7 @@ export function CoachDrawer({ open, entryContext = "general", onClose }: CoachDr
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const dialogRef = useDialogAccessibility<HTMLElement>(open, onClose);
 
   // Presentation-only entry intent. It must never select API or mutation authority.
   const capacityEntry = entryContext === "capacity";
@@ -128,13 +130,9 @@ export function CoachDrawer({ open, entryContext = "general", onClose }: CoachDr
 
   useEffect(() => {
     if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    window.setTimeout(() => textareaRef.current?.focus(), 120);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
+    const focusTimer = window.setTimeout(() => textareaRef.current?.focus(), 120);
+    return () => window.clearTimeout(focusTimer);
+  }, [open]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -198,7 +196,7 @@ export function CoachDrawer({ open, entryContext = "general", onClose }: CoachDr
       tabIndex={open ? 0 : -1}
       onClick={onClose}
     />
-    <aside className={`coach-drawer ${open ? "is-open" : ""}`} role="dialog" aria-modal="true" aria-hidden={!open} aria-labelledby="coach-drawer-title">
+    <aside ref={dialogRef} tabIndex={-1} inert={!open} className={`coach-drawer ${open ? "is-open" : ""}`} role="dialog" aria-modal="true" aria-hidden={!open} aria-labelledby="coach-drawer-title">
       <header className="coach-drawer-header">
         <div className="coach-drawer-brand"><span><Icon name="spark" weight="fill" /></span><div><small>AI destekli</small><strong id="coach-drawer-title">KPSS Koçu</strong></div></div>
         <button className="coach-close" type="button" aria-label="Koçu kapat" onClick={onClose}><Icon name="close" /></button>
@@ -208,7 +206,7 @@ export function CoachDrawer({ open, entryContext = "general", onClose }: CoachDr
         {!submittedMessage && reactiveHistory.length === 0 && <section className="coach-intro">
           <span className="coach-kicker">{introKicker}</span>
           <h2>{introTitle}</h2>
-          <p>Koç mevcut canonical Planner kanıtını açıklar. Sohbet mesajı planını onaylamaz, uygulamaz veya değiştirmez.</p>
+          <p>Koç, planındaki güncel verileri açıklar. Sohbet mesajı planını onaylamaz, uygulamaz veya değiştirmez.</p>
           <div className="coach-quick-prompts">
             {quickPrompts.map((prompt) => <button type="button" key={prompt} onClick={() => { setMessage(prompt); textareaRef.current?.focus(); }}>{prompt}</button>)}
           </div>
@@ -241,7 +239,7 @@ export function CoachDrawer({ open, entryContext = "general", onClose }: CoachDr
           <span><Icon name="spark" /></span>
           <div>
             <strong>Planını kontrol ediyorum</strong>
-            <p>Mevcut Planner kanıtını salt okunur biçimde değerlendiriyorum.</p>
+            <p>Planındaki güncel bilgileri değerlendiriyorum.</p>
           </div>
         </div>}
 

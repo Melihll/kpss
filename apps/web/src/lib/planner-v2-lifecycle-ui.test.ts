@@ -29,7 +29,7 @@ describe("Planner V2 authoritative lifecycle UI", () => {
 
   it.each([
     ["ACTION_PROPOSAL_STALE", "Plan koşulları değişti. Yeni önizleme oluştur."],
-    ["PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH", "Öneri kimliği değişti. Yeni önizleme oluştur."],
+    ["PLANNER_V2_CONFIRMATION_IDENTITY_MISMATCH", "Öneri doğrulanamadı. Yeni önizleme oluştur."],
     ["ACTION_PROPOSAL_NOT_PENDING", "Öneri artık onaylanabilir değil. Yeni önizleme oluştur."],
   ])("renders deterministic failure for %s", (code, message) => {
     expect(confirmationFailureMessage(code)).toBe(message);

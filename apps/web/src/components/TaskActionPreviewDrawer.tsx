@@ -8,6 +8,7 @@ import {
   type TaskActionPreviewAction,
   type TaskActionPreviewResponse,
 } from "../lib/task-action-preview-ui";
+import { useDialogAccessibility } from "../hooks/useDialogAccessibility";
 import { Icon } from "./Icon";
 
 interface TaskActionRequest {
@@ -29,6 +30,7 @@ export function TaskActionPreviewDrawer({
   const [loading, setLoading] = useState(false);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useDialogAccessibility<HTMLElement>(Boolean(request), onClose);
 
   useEffect(() => {
     if (!request) {
@@ -79,15 +81,6 @@ export function TaskActionPreviewDrawer({
     };
   }, [action, request]);
 
-  useEffect(() => {
-    if (!request) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [onClose, request]);
-
   if (!request) return null;
 
   const applyCarryover=async()=>{
@@ -115,6 +108,8 @@ export function TaskActionPreviewDrawer({
       onClick={onClose}
     />
     <aside
+      ref={dialogRef}
+      tabIndex={-1}
       className="task-action-drawer"
       role="dialog"
       aria-modal="true"
