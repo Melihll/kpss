@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ResourceForecast } from "../lib/roadmap";
+import type { ResourceForecast, TaskMaterialScope } from "../lib/roadmap";
 import type { ResourcePageProgress } from "../lib/resource-progress-ui";
 import { callAppApi } from "../lib/app-api";
 import { summarizeResourceVideoProgress } from "../lib/resource-material-progress";
@@ -17,10 +17,12 @@ export type ResourceDetailTab = "page" | "video";
 
 interface ResourceDetailDrawerProps {
   readonly resource: ResourceForecast | null;
+  readonly materialScope?: TaskMaterialScope | null;
   readonly pageProgress: ResourcePageProgress | null;
   readonly initialTab: ResourceDetailTab;
   readonly onClose: () => void;
   readonly onPageSaved: (progress: ResourcePageProgress) => void;
+  readonly onMaterialProgressChanged?: () => void;
 }
 
 function updateVideoProgress(
@@ -43,19 +45,23 @@ function updateVideoProgress(
 
 export function ResourceDetailDrawer({
   resource,
+  materialScope = null,
   pageProgress,
   initialTab,
   onClose,
   onPageSaved,
+  onMaterialProgressChanged,
 }: ResourceDetailDrawerProps) {
   const [activeTab, setActiveTab] = useState<ResourceDetailTab>(initialTab);
   const [videoLibrary, setVideoLibrary] = useState<ResourceVideoLibraryResponse | null>(null);
   const [videoSummaryError, setVideoSummaryError] = useState(false);
+  const [presentedScope, setPresentedScope] = useState<TaskMaterialScope | null>(materialScope);
 
   useEffect(() => {
     if (!resource) return;
     setActiveTab(initialTab);
-  }, [initialTab, resource?.resourceId]);
+    setPresentedScope(materialScope);
+  }, [initialTab, materialScope, resource?.resourceId]);
 
   useEffect(() => {
     if (!resource) {
@@ -98,6 +104,24 @@ export function ResourceDetailDrawer({
   );
 
   if (!resource) return null;
+
+  const scopeSummary = presentedScope?.kind === "page_range"
+    ? {
+        label: `Sayfa ${presentedScope.pageStart}–${presentedScope.pageEnd}`,
+        progress: presentedScope.completed
+          ? "Bu görev kapsamı tamamlandı"
+          : presentedScope.completedThroughPage !== null && presentedScope.completedThroughPage >= presentedScope.pageStart
+            ? `Sayfa ${Math.min(presentedScope.pageEnd, presentedScope.completedThroughPage)} seviyesine ulaşıldı`
+            : "Bu görev için ayrılan sayfa aralığı",
+      }
+    : presentedScope?.kind === "full_video"
+      ? {
+          label: `${presentedScope.position > 0 ? `Video ${presentedScope.position}` : "Video"} · ${presentedScope.title}`,
+          progress: presentedScope.completed
+            ? "Video tamamlandı"
+            : `${Math.round(presentedScope.watchedSeconds / 60)} / ${Math.round(presentedScope.durationSeconds / 60)} dk izlendi`,
+        }
+      : null;
 
   return <>
     <button
@@ -163,6 +187,12 @@ export function ResourceDetailDrawer({
         </button>
       </nav>
 
+      {scopeSummary && <section className="resource-detail-task-scope" aria-label="Görev kapsamı">
+        <span>Bu görevde</span>
+        <strong>{scopeSummary.label}</strong>
+        <small>{scopeSummary.progress}</small>
+      </section>}
+
       <div className="resource-detail-body">
         {activeTab === "page" ? (
           <section
@@ -184,8 +214,20 @@ export function ResourceDetailDrawer({
           >
             <VideoPlayerPanel
               resource={resource}
+              initialVideoId={presentedScope?.kind === "full_video"
+                ? presentedScope.youtubePlaylistVideoId
+                : null}
               onProgressChanged={(progress) => {
                 setVideoLibrary((current) => updateVideoProgress(current, progress));
+                setPresentedScope((current) => current?.kind === "full_video" &&
+                  current.youtubePlaylistVideoId === progress.youtubePlaylistVideoId
+                  ? {
+                      ...current,
+                      watchedSeconds: progress.watchedSeconds,
+                      completed: progress.completed,
+                    }
+                  : current);
+                onMaterialProgressChanged?.();
               }}
             />
           </section>

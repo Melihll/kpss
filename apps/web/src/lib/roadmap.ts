@@ -1,5 +1,30 @@
 import { remainingTaskMinutes as calculateRemainingTaskMinutes, type RecommendationTask } from "@kpss-coach/domain";
 
+export type TaskMaterialScope =
+  | {
+      kind: "page_range";
+      resourceId: string;
+      resourceUnitId: string;
+      pageStart: number;
+      pageEnd: number;
+      completedThroughPage: number | null;
+      completed: boolean;
+    }
+  | {
+      kind: "full_video";
+      resourceId: string;
+      youtubePlaylistVideoId: string;
+      title: string;
+      position: number;
+      durationSeconds: number;
+      watchedSeconds: number;
+      completed: boolean;
+    }
+  | {
+      kind: "resource";
+      resourceId: string;
+    };
+
 export interface RoadmapTask {
   id: string;
   title: string;
@@ -11,6 +36,7 @@ export interface RoadmapTask {
   source_reason?: string;
   resource_id?: string | null;
   material_resource_id?: string | null;
+  material_scope?: TaskMaterialScope | null;
   subjects?: { name: string } | null;
   resources?: { id?: string; name: string; resource_type: string } | null;
   task_progress?: Array<{ completed_minutes: number; actual_study_minutes: number }>;

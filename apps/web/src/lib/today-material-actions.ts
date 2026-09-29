@@ -29,5 +29,7 @@ export function taskMaterialResource(task: RoadmapTask): ResourceForecast | null
 }
 
 export function defaultTaskMaterialTab(task: RoadmapTask): TaskMaterialTab {
+  if (task.material_scope?.kind === "full_video") return "video";
+  if (task.material_scope?.kind === "page_range") return "page";
   return task.work_mode === "video" ? "video" : "page";
 }

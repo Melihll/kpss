@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type Keyboard
 import { Icon } from "../components/Icon";
 import { PlanningPanel } from "../components/PlanningPanel";
 import { PlannerV2PreviewPanel } from "../components/PlannerV2PreviewPanel";
+import { TaskMaterialOpenButton, TaskMaterialSummary } from "../components/TaskMaterialSummary";
 import { useRoadmap } from "../hooks/useRoadmap";
+import { useTaskMaterialDrawer } from "../hooks/useTaskMaterialDrawer";
 import { addDays, compactMinutesLabel, dateLabel, DAY_NAMES, isoToday, taskName, taskRemainingMinutes, totalTaskRemainingMinutes, WORK_MODE_LABELS } from "../lib/roadmap";
 
 function weekRangeLabel(start: string, end: string) {
@@ -24,10 +26,12 @@ export function WeekPage() {
   const [displayedDate, setDisplayedDate] = useState(isoToday());
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [changingDay, setChangingDay] = useState(false);
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const transitionTimer = useRef<number | null>(null);
   const dayButtons = useRef<Array<HTMLButtonElement | null>>([]);
   const plan = data?.currentWeek?.plan;
   const tasks = useMemo(() => (data?.currentWeek?.tasks ?? []).filter((task) => task.status !== "cancelled"), [data]);
+  const { openTaskMaterial, materialDrawer } = useTaskMaterialDrawer(() => void retry());
 
   useEffect(() => {
     if (!plan) return;
@@ -36,6 +40,7 @@ export function WeekPage() {
     if (transitionTimer.current) window.clearTimeout(transitionTimer.current);
     setSelectedDate(initialDate);
     setDisplayedDate(initialDate);
+    setExpandedTaskId(null);
     setChangingDay(false);
   }, [plan]);
 
@@ -68,6 +73,7 @@ export function WeekPage() {
     if (transitionTimer.current) window.clearTimeout(transitionTimer.current);
     setDirection(nextDate > displayedDate ? "forward" : "backward");
     setSelectedDate(nextDate);
+    setExpandedTaskId(null);
     if (reducedMotion()) {
       setDisplayedDate(nextDate);
       setChangingDay(false);
@@ -157,20 +163,35 @@ export function WeekPage() {
           const completed = task.status === "completed";
           const active = task.status === "in_progress" || task.status === "partially_completed";
           const replanned = task.source_reason === "dynamic_replan" || task.status === "rescheduled";
-          return <article className={`${completed ? "complete" : ""} ${active ? "active-task" : ""} ${replanned ? "replanned-task" : ""}`} style={{ animationDelay: `${index * 40}ms` }} key={task.id}>
+          const expanded = expandedTaskId === task.id;
+          return <article className={`${completed ? "complete" : ""} ${active ? "active-task" : ""} ${replanned ? "replanned-task" : ""} ${expanded ? "is-expanded" : ""}`} style={{ animationDelay: `${index * 40}ms` }} key={task.id}>
             <span className="timeline-node" aria-hidden="true">{completed ? <Icon name="check" weight="bold" /> : String(index + 1).padStart(2, "0")}</span>
-            <div className="timeline-task-copy">
-              <div className="timeline-task-kicker"><span>{task.subjects?.name ?? "Ders"}</span>{active && <em>{task.status === "in_progress" ? "Şimdi" : "Devam"}</em>}</div>
-              <strong title={task.resources?.name ?? taskName(task)}>{task.resources?.name ?? taskName(task)}</strong>
-              <small>{task.work_mode ? WORK_MODE_LABELS[task.work_mode] ?? "Çalışma" : task.description ?? "Çalışma"}<i aria-hidden="true">·</i><b>{taskRemainingMinutes(task)} dk</b></small>
-              {replanned && replannedTaskCount <= 1 && <span className="task-plan-change"><Icon name="arrow" />Plan güncellendi</span>}
-            </div>
+            <button
+              className="timeline-task-toggle"
+              type="button"
+              aria-expanded={expanded}
+              aria-controls={`week-task-detail-${task.id}`}
+              onClick={() => setExpandedTaskId((current) => current === task.id ? null : task.id)}
+            >
+              <span className="timeline-task-copy">
+                <span className="timeline-task-kicker"><span>{task.subjects?.name ?? "Ders"}</span>{active && <em>{task.status === "in_progress" ? "Şimdi" : "Devam"}</em>}</span>
+                <strong title={task.resources?.name ?? taskName(task)}>{task.resources?.name ?? taskName(task)}</strong>
+                <small>{task.work_mode ? WORK_MODE_LABELS[task.work_mode] ?? "Çalışma" : task.description ?? "Çalışma"}<i aria-hidden="true">·</i><b>{taskRemainingMinutes(task)} dk</b></small>
+                {replanned && replannedTaskCount <= 1 && <span className="task-plan-change"><Icon name="arrow" />Plan güncellendi</span>}
+              </span>
+              <Icon className="timeline-task-chevron" name="arrow" />
+            </button>
+            {expanded && <div className="week-task-detail" id={`week-task-detail-${task.id}`}>
+              <TaskMaterialSummary task={task} />
+              <TaskMaterialOpenButton task={task} onOpen={openTaskMaterial} />
+            </div>}
           </article>;
         })}</div> : <div className="plain-empty">Bu gün için planlanmış çalışma yok.</div>}
       </section>
 
       <PlannerV2PreviewPanel />
       <details className="week-edit-tools"><summary><span><Icon name="settings" />Planı düzenle</span><Icon name="arrow" /></summary><PlanningPanel /></details>
+      {materialDrawer}
     </> : <div className="plain-empty action-empty"><span>Bu hafta henüz plan oluşturulmadı.</span></div>}
   </section>;
 }

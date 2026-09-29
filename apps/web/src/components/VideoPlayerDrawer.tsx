@@ -373,11 +373,13 @@ function EmbeddedYouTubePlayer({
 
 interface VideoPlayerPanelProps {
   readonly resource: ResourceForecast;
+  readonly initialVideoId?: string | null;
   readonly onProgressChanged?: (progress: VideoProgress) => void;
 }
 
 export function VideoPlayerPanel({
   resource,
+  initialVideoId = null,
   onProgressChanged,
 }: VideoPlayerPanelProps) {
   const [library, setLibrary] = useState<ResourceVideoLibraryResponse | null>(null);
@@ -405,9 +407,10 @@ export function VideoPlayerPanel({
       .then((payload) => {
         if (cancelled) return;
         setLibrary(payload);
-        const first = flattenVideos(payload.playlists)[0] ?? null;
-        setSelectedVideoId(first?.id ?? null);
-        setProgress(first?.progress ?? null);
+        const videos = flattenVideos(payload.playlists);
+        const selected = videos.find((video) => video.id === initialVideoId) ?? videos[0] ?? null;
+        setSelectedVideoId(selected?.id ?? null);
+        setProgress(selected?.progress ?? null);
       })
       .catch((caught) => {
         if (!cancelled) {
@@ -421,7 +424,7 @@ export function VideoPlayerPanel({
     return () => {
       cancelled = true;
     };
-  }, [resource.resourceId]);
+  }, [initialVideoId, resource.resourceId]);
 
   useEffect(() => {
     if (!selectedVideo) {

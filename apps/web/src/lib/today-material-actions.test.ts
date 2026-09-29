@@ -59,4 +59,20 @@ describe("P1-13 Today material actions", () => {
     expect(defaultTaskMaterialTab(task({ work_mode: "book" }))).toBe("page");
     expect(defaultTaskMaterialTab(task({ work_mode: null }))).toBe("page");
   });
+
+  it("prefers authoritative material scope over a generic work mode", () => {
+    expect(defaultTaskMaterialTab(task({
+      work_mode: "book",
+      material_scope: {
+        kind: "full_video",
+        resourceId: "resource-1",
+        youtubePlaylistVideoId: "video-8",
+        title: "Video",
+        position: 8,
+        durationSeconds: 600,
+        watchedSeconds: 0,
+        completed: false,
+      },
+    }))).toBe("video");
+  });
 });

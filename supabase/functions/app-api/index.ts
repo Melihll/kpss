@@ -25,6 +25,7 @@ import { loadMaterialWorkloads } from "../_shared/material-workload.ts";
 import { normalizeTopicResourceLinkInput } from "../_shared/topic-resource-link.ts";
 import { fetchYouTubePlaylistCatalog } from "../_shared/youtube-playlist.ts";
 import { normalizeYouTubeVideoProgressInput, presentYouTubeVideoProgress } from "../_shared/youtube-video-progress.ts";
+import { projectTaskMaterialScope } from "../_shared/task-material-scope.ts";
 import {
   isPhysicalPaceCaptureEnabled,
   PhysicalStudyLifecycleService,
@@ -353,14 +354,58 @@ async function planWithTasks(client: SupabaseClient, plan: any) {
   if (!plan) return { plan: null, tasks: [] };
   const { data: tasks, error } = await client
     .from("tasks")
-    .select("*, subjects(name), resources(id,name,resource_type), resource_sections(resource_id,resources(id,name,resource_type)), task_progress(completed_minutes, actual_study_minutes), task_resource_units(id, resource_unit_id, status, completed_at, resource_units(resource_id,name,unit_type,estimated_minutes,resources(id,name,resource_type)))")
+    .select("*, subjects(name), resources(id,name,resource_type), resource_sections(resource_id,resources(id,name,resource_type)), task_progress(completed_minutes, actual_study_minutes), task_resource_units(id, resource_unit_id, status, completed_at, resource_units(id,resource_id,name,unit_type,estimated_minutes,page_start,page_end,resources(id,name,resource_type)))")
     .eq("weekly_plan_id", plan.id)
     .order("planned_date")
     .order("priority_score", { ascending: false });
   if (error) throw error;
 
   const firstRelation = (value: any) => Array.isArray(value) ? value[0] ?? null : value ?? null;
-  const plannerOrderedTasks = (tasks ?? []).map((task: any) => {
+  const taskRows = tasks ?? [];
+  const resourceUnitIds = [...new Set(taskRows.flatMap((task: any) => (
+    (task.task_resource_units ?? [])
+      .map((link: any) => link?.resource_unit_id)
+      .filter((value: unknown): value is string => typeof value === "string" && value.length > 0)
+  )))];
+  const videoIds = [...new Set(taskRows.flatMap((task: any) => (
+    task?.canonical_boundary?.kind === "full_video" &&
+    typeof task.canonical_boundary.videoId === "string"
+      ? [task.canonical_boundary.videoId]
+      : []
+  )))];
+  const [unitProgressResult, videosResult, videoProgressResult] = await Promise.all([
+    resourceUnitIds.length
+      ? client.from("resource_unit_progress")
+          .select("resource_unit_id,status,completed_through_page")
+          .in("resource_unit_id", resourceUnitIds)
+      : Promise.resolve({ data: [], error: null }),
+    videoIds.length
+      ? client.from("youtube_playlist_videos")
+          .select("id,title,position,duration_seconds")
+          .in("id", videoIds)
+      : Promise.resolve({ data: [], error: null }),
+    videoIds.length
+      ? client.from("youtube_video_progress")
+          .select("youtube_playlist_video_id,watched_seconds,completed_at")
+          .in("youtube_playlist_video_id", videoIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  for (const result of [unitProgressResult, videosResult, videoProgressResult]) {
+    if (result.error) throw result.error;
+  }
+  const materialEvidence = {
+    unitProgressById: new Map(
+      (unitProgressResult.data ?? []).map((row: any) => [String(row.resource_unit_id), row]),
+    ),
+    videoById: new Map(
+      (videosResult.data ?? []).map((row: any) => [String(row.id), row]),
+    ),
+    videoProgressById: new Map(
+      (videoProgressResult.data ?? []).map((row: any) => [String(row.youtube_playlist_video_id), row]),
+    ),
+  };
+
+  const plannerOrderedTasks = taskRows.map((task: any) => {
     const directResource = firstRelation(task.resources);
     const section = firstRelation(task.resource_sections);
     const sectionResource = firstRelation(section?.resources);
@@ -389,6 +434,7 @@ async function planWithTasks(client: SupabaseClient, plan: any) {
     return {
       ...task,
       material_resource_id: materialResourceId,
+      material_scope: projectTaskMaterialScope(task, materialResourceId, materialEvidence),
       resources: materialResource ?? task.resources,
     };
   });

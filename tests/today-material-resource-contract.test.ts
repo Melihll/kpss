@@ -16,8 +16,10 @@ describe("P1-13 weekly task material resource contract", () => {
     const body = appApi.slice(start, end);
     expect(body).toContain("resources(id,name,resource_type)");
     expect(body).toContain("resource_sections(resource_id,resources(id,name,resource_type))");
-    expect(body).toContain("resource_units(resource_id,name,unit_type,estimated_minutes,resources(id,name,resource_type))");
+    expect(body).toContain("resource_units(id,resource_id,name,unit_type,estimated_minutes,page_start,page_end,resources(id,name,resource_type))");
     expect(body).toContain("material_resource_id");
+    expect(body).toContain("material_scope");
+    expect(body).toContain("projectTaskMaterialScope");
     expect(body).toContain("section?.resource_id");
     expect(body).toContain("unit.resource_id");
   });
