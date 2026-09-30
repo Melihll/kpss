@@ -1,7 +1,7 @@
 > **Authoritative current state - EVRE_7_PRODUCT_UX_CLOSED_2026_09_29**
 >
 > - **Evre 7 Product UX / Daily Coach Experience is `CLOSED`. Evre 7A UX Reality Audit & Daily Experience Contract, 7B Today as Daily Home, 7C Coach x Planner UX, 7D Week + Material Continuity, and 7E Product Polish & Real-user UX Acceptance are all `CLOSED`. Evre 8 and Evre 9 remain `WAITING`.**
-> - Accepted local `develop` implementation checkpoints: `b585ed6` (7D Week + Today material continuity) and `876d837` (7E interaction, accessibility, motion, and product-language polish). Remote publication remains operationally pending; `origin/develop` is still `52febc06564c5afdc16f324290c11b1185dc272a`.
+> - Accepted Evre 7 implementation checkpoints include `b585ed6` (7D Week + Today material continuity) and `876d837` (7E interaction, accessibility, motion, and product-language polish). Evre 7 closure docs are committed at `ae2c930`; the local Edge/Deno compatibility repair is committed and published in `develop` history at `311cb737b027ca054c884ab56aa39152e9558f80`.
 > - 7D projects persisted task/material truth read-only into one product contract. Exact physical scope comes from persisted page boundaries and linked resource units; exact video scope comes from the persisted video boundary; unit/video progress comes from the existing progress records. Titles, descriptions, and opaque workload identities are never parsed to invent scope.
 > - Today and Week now consume the same material projection, summary, actions, and `ResourceDetailDrawer`. Week tasks progressively disclose authoritative page/video scope and real progress, open the same material surface as Today, and fall back to resource-level presentation when exact scope is unavailable.
 > - 7E keeps the established visual system while making dialogs and drawers consistent: shared Escape handling, keyboard focus containment, opening focus, focus restoration, background scroll lock, visible textarea focus, responsive entrance motion, and global reduced-motion support.
@@ -10,10 +10,20 @@
 > - Acceptance is GREEN: focused 7E regression `16/16`; full non-integration regression `1425/1425` across `192/192` files; direct workspace TypeScript checks PASS; Vite production build PASS; AI Coach safety PASS; AI Coach plan-preview safety PASS; canonical Planner V2 read-only safety PASS. The pnpm wrapper could not bootstrap locally because package-manager registry-signature verification failed, so the installed TypeScript binaries were invoked directly for the equivalent domain + web checks.
 > - Evre 7D/7E performed no production deployment, production data access or mutation, migration, provider activation, secret change, Planner gate change, or `main` merge. Planner Confirm remains OFF; Planner Apply remains OFF; canonical Planner and evidence-shadow production gates remain OFF; production Proactive Coach remains hard-OFF; the exact-profile Reactive Coach pilot state is unchanged.
 > - `origin/main` remains protected at `cbc209fdf34f217b6d1419612199ee8c8370fe4b`.
-> - **NEXT EXACT STEP:** stop at the Evre 7 boundary. Do not begin Evre 8, deploy production, change gates, or merge `main` without new explicit authorization. Publish the accepted local `develop` commits only when remote push authorization is available.
+> - **NEXT EXACT STEP:** stop at the Evre 7 boundary. Evre 7 closure and the local Edge/Deno recovery are recorded in `develop` history. Do not begin Evre 8, deploy production, change gates, or merge `main` without new explicit authorization.
 > - This block supersedes all older Evre 7 active/discovery/waiting and next-step wording below it. Historical blocks remain evidence only.
 >
 
+## 2026-09-30 local DEV Today / Edge runtime recovery
+
+- Local Today initially failed with `Veriler yüklenemedi.` because all three required app-api reads (`/weekly-plan/current`, `/study-sessions/active`, `/execution/summary`) returned HTTP 503.
+- The app-api Deno graph exposed raw AI Coach domain imports that required explicit local `.ts` extensions. TypeScript 5.9 `rewriteRelativeImportExtensions` now keeps source imports Deno-compatible while rewriting emitted relative TypeScript paths to JavaScript paths. Obsolete import-only `@ts-expect-error` directives were removed.
+- A second local-only cause was a stale Supabase Edge dependency mount graph: required domain files existed on the host but were not mounted into the Edge container. Recreating the Functions runtime through the canonical local serve flow restored the required mounts.
+- Local Supabase Auth currently issues ES256 user JWTs while the local Edge built-in `verify_jwt` path fails with the runtime `CryptoKey` / `Uint8Array` ES256 incompatibility. Acceptance therefore used `functions serve --no-verify-jwt` locally only. `supabase/config.toml` remains `verify_jwt = true`; production JWT policy was not changed.
+- App-api still performs its own authenticated `auth.getUser()` validation. Local acceptance returned HTTP 200 for all three Today endpoints and HTTP 401 for an intentionally invalid bearer token.
+- Browser Today acceptance passed after the local web and Functions runtimes were started: the daily plan, task/material presentation, summary, and study action loaded normally.
+- Final engineering acceptance: full workspace typecheck PASS; full non-integration regression `1425/1425` across `192/192` files PASS; domain/web build PASS; exact five-file implementation commit `311cb737b027ca054c884ab56aa39152e9558f80` is published to `origin/develop`.
+- Production deployment, production migration/data mutation, secret/gate change, `main` merge/push, Planner Confirm change, and Planner Apply change are all `0`.
 > **Authoritative current state - EVRE_7C_COACH_PLANNER_UX_CLOSED_2026_09_29**
 >
 > - **Evre 7 Product UX / Daily Coach Experience is `ACTIVE`. Evre 7A UX Reality Audit & Daily Experience Contract is `CLOSED`; Evre 7B Today as Daily Home is `CLOSED`; Evre 7C Coach x Planner UX is `CLOSED`; Evre 7D Week + Material Continuity is `ACTIVE / DISCOVERY`; Evre 7E Product Polish & Real-user UX Acceptance is `WAITING`. Evre 8 and Evre 9 remain `WAITING`.**
