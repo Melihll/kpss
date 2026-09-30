@@ -1,6 +1,6 @@
 import type {
   CoachContextV1,
-} from "./coach-context-v1";
+} from "./coach-context-v1.ts";
 
 export const COACH_CONVERSATION_CONTEXT_V1_VERSION =
   "coach-conversation-context-v1" as const;

@@ -1,13 +1,11 @@
-﻿import type {
+import type {
   CoachSignalAttentionCategoryV1,
   CoachSignalCandidateV1,
 } from "./coach-signal-v1.ts";
-// @ts-expect-error Supabase Deno requires the explicit local TypeScript extension.
 import { evaluateProactiveCoachMaterialityV1 } from "./proactive-coach-materiality-policy-v1.ts";
 import {
   buildProactiveCoachConditionKeyV1,
   evaluateProactiveCoachHysteresisV1,
-// @ts-expect-error Supabase Deno requires the explicit local TypeScript extension.
 } from "./proactive-coach-hysteresis-v1.ts";
 import type {
   ProactiveCoachRuntimeCategorySnoozeV1,

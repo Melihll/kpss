@@ -20,13 +20,13 @@ import type {
   CoachContextV1TaskSummary,
   CoachContextV1TruthSource,
   CoachContextV1Unknown,
-} from "./coach-context-v1";
+} from "./coach-context-v1.ts";
 import {
   COACH_SIGNAL_TYPES_V1,
   buildCoachSignalSetV1,
   type CoachSignalCandidateV1,
   type CoachSignalTypeV1,
-} from "./coach-signal-v1";
+} from "./coach-signal-v1.ts";
 
 export const COACH_EVIDENCE_VIEW_V1_VERSION = "coach-evidence-view-v1" as const;
 export const COACH_EVIDENCE_DETAIL_REQUEST_V1_VERSION = "coach-evidence-detail-request-v1" as const;

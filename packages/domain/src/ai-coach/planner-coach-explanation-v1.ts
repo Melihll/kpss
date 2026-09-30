@@ -3,7 +3,7 @@ import type {
   CoachContextV1PlannerExplanationFact,
   CoachContextV1PlannerState,
   CoachContextV1Provenance,
-} from "./coach-context-v1";
+} from "./coach-context-v1.ts";
 
 export const PLANNER_COACH_EXPLANATION_V1_VERSION =
   "planner-coach-explanation-v1" as const;
