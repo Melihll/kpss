@@ -1,0 +1,24 @@
+[
+  {
+    "Path": "apps/web/public/brand/kpss-kocu-logo.svg",
+    "XMLValid": true,
+    "ViewBox": "220 142 728 304",
+    "BackgroundRects": 0,
+    "MissingInternalRefs": [],
+    "Gradients": 6,
+    "Masks": 1,
+    "ExternalOrExecutableNodes": 0,
+    "NonInternalLinks": 0
+  },
+  {
+    "Path": "apps/web/public/brand/kpss-kocu-mark.svg",
+    "XMLValid": true,
+    "ViewBox": "220 142 289 304",
+    "BackgroundRects": 0,
+    "MissingInternalRefs": [],
+    "Gradients": 3,
+    "Masks": 0,
+    "ExternalOrExecutableNodes": 0,
+    "NonInternalLinks": 0
+  }
+]

@@ -1,0 +1,51 @@
+{
+  "sourceOriginalPath": "C:/Users/drlme/Downloads/kpss-kocu-logo.svg",
+  "sourceRepositoryPath": "assets/brand/source/kpss-kocu-logo.svg",
+  "sourceSha256": "8c4fcc1aa2f3f60d45da5db5874df88f0392a0a84e6f5f08e77c874824778895",
+  "sourceByteForBytePreserved": true,
+  "sourceBytes": 8190,
+  "full": {
+    "path": "apps/web/public/brand/kpss-kocu-logo.svg",
+    "bytes": 7837,
+    "viewBox": [
+      220,
+      142,
+      728,
+      304
+    ],
+    "geometryPreserved": true,
+    "allSixGradientsPreserved": true,
+    "rgbaComparisonAt4x": {
+      "pixels": 3540992,
+      "differingVisiblePixels": 137,
+      "maxAlphaDelta": 13,
+      "maxVisibleChannelDelta": 11,
+      "meanVisibleChannelDelta": 0.00006975446428571428
+    }
+  },
+  "mark": {
+    "path": "apps/web/public/brand/kpss-kocu-mark.svg",
+    "bytes": 1764,
+    "viewBox": [
+      220,
+      142,
+      289,
+      304
+    ],
+    "existingMarkGeometryPreserved": true,
+    "rgbaComparisonAt4x": {
+      "pixels": 1405696,
+      "differingVisiblePixels": 4,
+      "maxAlphaDelta": 7,
+      "maxVisibleChannelDelta": 3,
+      "meanVisibleChannelDelta": 0.000002608435014872822
+    }
+  },
+  "renderComparison": "Direct 288dpi SVG renders; crop changes subpixel edge antialiasing in the renderer, geometry/gradient attributes remain identical",
+  "padding": "2 source units around rendered paint bounds",
+  "background": "transparent; only white canvas rectangle removed",
+  "xlink": "Both modern href and original xlink:href on the existing internal use",
+  "webFormat": "SVG only",
+  "qaPngs": "Evidence only; no PNG web assets",
+  "production": "NOT DEPLOYED"
+}

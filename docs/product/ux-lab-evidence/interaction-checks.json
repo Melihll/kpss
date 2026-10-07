@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-01",
+  "study": [
+    {
+      "direction": "focus",
+      "savedCorrectPage": true,
+      "completed": true
+    },
+    {
+      "direction": "coach",
+      "overflow": false,
+      "scrollTop": 0,
+      "savedCorrectPage": true,
+      "completed": true
+    },
+    {
+      "direction": "product",
+      "overflow": false,
+      "scrollTop": 0,
+      "savedCorrectPage": true,
+      "completed": true
+    }
+  ],
+  "pauseClockStable": true,
+  "addTask": true,
+  "cancelRetainsTask": true,
+  "confirmedRemoval": true,
+  "coachProposalAndWeekResult": true,
+  "capacityRejectsOverflow": true,
+  "capacityUpdatesDailyAndWeeklyTotals": true,
+  "videoControls": true,
+  "loadingEmptyErrorBlocked": true,
+  "focusForwardWrap": {
+    "active": "Kapat",
+    "inside": true
+  },
+  "focusBackwardWrap": {
+    "active": "Geri dön",
+    "inside": true
+  },
+  "escapeRestoresOpener": true
+}

@@ -109,7 +109,7 @@ export function ResourceDetailDrawer({
       }
     : presentedScope?.kind === "full_video"
       ? {
-          label: `${presentedScope.position > 0 ? `Video ${presentedScope.position}` : "Video"} · ${presentedScope.title}`,
+          label: `Video ${presentedScope.position + 1} · ${presentedScope.title}`,
           progress: presentedScope.completed
             ? "Video tamamlandı"
             : `${Math.round(presentedScope.watchedSeconds / 60)} / ${Math.round(presentedScope.durationSeconds / 60)} dk izlendi`,
@@ -209,9 +209,7 @@ export function ResourceDetailDrawer({
           >
             <VideoPlayerPanel
               resource={resource}
-              initialVideoId={presentedScope?.kind === "full_video"
-                ? presentedScope.youtubePlaylistVideoId
-                : null}
+              taskScope={materialScope ?? undefined}
               onProgressChanged={(progress) => {
                 setVideoLibrary((current) => updateVideoProgress(current, progress));
                 setPresentedScope((current) => current?.kind === "full_video" &&

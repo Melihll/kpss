@@ -43,7 +43,7 @@ describe("task material presentation", () => {
       watchedSeconds: 720,
       completed: false,
     }))).toMatchObject({
-      scopeLabel: "Video 8 · Sayı Basamakları",
+      scopeLabel: "Video 9 · Sayı Basamakları",
       progressLabel: "12 / 28 dk izlendi",
       exact: true,
     });

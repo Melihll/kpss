@@ -1,0 +1,18 @@
+[
+  {
+    "Asset": "kpss-kocu-logo.svg",
+    "Status": 200,
+    "ContentType": [
+      "image/svg+xml"
+    ],
+    "Bytes": 7837
+  },
+  {
+    "Asset": "kpss-kocu-mark.svg",
+    "Status": 200,
+    "ContentType": [
+      "image/svg+xml"
+    ],
+    "Bytes": 1764
+  }
+]

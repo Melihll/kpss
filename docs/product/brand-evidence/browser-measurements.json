@@ -1,0 +1,1669 @@
+{
+  "capturedAt": "2026-10-06T17:14:44.429Z",
+  "observations": [
+    {
+      "label": "Lab desktop 1440",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 36,
+        "width": 146.85000610351562,
+        "x": 1197.550048828125,
+        "y": 69.5999984741211
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 80.4000015258789,
+        "y": 60.60000228881836
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 63.20000076293945,
+        "width": 856,
+        "x": 284.3999938964844,
+        "y": 56
+      },
+      "centerVisible": "flex",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 1425,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 1424.800048828125,
+        "x": 0,
+        "y": 56
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 80.4000015258789,
+        "y": 60.60000228881836
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 1320,
+        "x": 52.400001525878906,
+        "y": 56
+      },
+      "links": [
+        {
+          "height": 63.20000076293945,
+          "text": "Bugün",
+          "width": 42.4375,
+          "x": 536.3500366210938,
+          "y": 56
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Haftam",
+          "width": 47.78750228881836,
+          "x": 598.7875366210938,
+          "y": 56
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Yol Haritası",
+          "width": 68.73750305175781,
+          "x": 666.5750122070312,
+          "y": 56
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Kaynaklar",
+          "width": 61.8125,
+          "x": 755.3125,
+          "y": 56
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "İlerleme",
+          "width": 51.32500076293945,
+          "x": 837.125,
+          "y": 56
+        }
+      ],
+      "naturalSize": [
+        728,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 1425
+    },
+    {
+      "label": "Product desktop 1440",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 36,
+        "width": 146.85000610351562,
+        "x": 1089.9500732421875,
+        "y": 13.600000381469728
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 28,
+        "y": 4.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 63.20000076293945,
+        "width": 800.7999877929688,
+        "x": 232,
+        "y": 0
+      },
+      "centerVisible": "flex",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 1265,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 1264.800048828125,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 28,
+        "y": 4.599999904632568
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 1264.800048828125,
+        "x": 0,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 63.20000076293945,
+          "text": "Bugün",
+          "width": 42.4375,
+          "x": 456.3500061035156,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Haftam",
+          "width": 47.78750228881836,
+          "x": 518.7875366210938,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Yol Haritası",
+          "width": 68.73750305175781,
+          "x": 586.5750122070312,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Kaynaklar",
+          "width": 61.8125,
+          "x": 675.3125,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "İlerleme",
+          "width": 51.32500076293945,
+          "x": 757.125,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        728,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 1265
+    },
+    {
+      "label": "Product desktop 1440 confirmed",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 36,
+        "width": 146.85000610351562,
+        "x": 1205.1500244140625,
+        "y": 13.600000381469728
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 88,
+        "y": 4.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 63.20000076293945,
+        "width": 856,
+        "x": 292,
+        "y": 0
+      },
+      "centerVisible": "flex",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 1440,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 88,
+        "y": 4.599999904632568
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 1320,
+        "x": 60,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 63.20000076293945,
+          "text": "Bugün",
+          "width": 42.4375,
+          "x": 543.9500122070312,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Haftam",
+          "width": 47.78750228881836,
+          "x": 606.3875122070312,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Yol Haritası",
+          "width": 68.73750305175781,
+          "x": 674.1749877929688,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Kaynaklar",
+          "width": 61.8125,
+          "x": 762.9125366210938,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "İlerleme",
+          "width": 51.32500076293945,
+          "x": 844.7250366210938,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        728,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 1440
+    },
+    {
+      "label": "Product desktop Today after logo link",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 36,
+        "width": 146.85000610351562,
+        "x": 1197.550048828125,
+        "y": 13.600000381469728
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 80.4000015258789,
+        "y": 4.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 63.20000076293945,
+        "width": 856,
+        "x": 284.3999938964844,
+        "y": 0
+      },
+      "centerVisible": "flex",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 1425,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 1424.800048828125,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 80.4000015258789,
+        "y": 4.599999904632568
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 1320,
+        "x": 52.400001525878906,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 63.20000076293945,
+          "text": "Bugün",
+          "width": 42.4375,
+          "x": 536.3500366210938,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Haftam",
+          "width": 47.78750228881836,
+          "x": 598.7875366210938,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Yol Haritası",
+          "width": 68.73750305175781,
+          "x": 666.5750122070312,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Kaynaklar",
+          "width": 61.8125,
+          "x": 755.3125,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "İlerleme",
+          "width": 51.32500076293945,
+          "x": 837.125,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        728,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 1425
+    },
+    {
+      "label": "Product tablet 834",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 44,
+        "width": 204.8500061035156,
+        "x": 594.3500366210938,
+        "y": 9.600000381469728
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 20,
+        "y": 4.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "centerVisible": "none",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 819,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 819.2000122070312,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 20,
+        "y": 4.599999904632568
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 819.2000122070312,
+        "x": 0,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 0,
+          "text": "Bugün",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Haftam",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Yol Haritası",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Kaynaklar",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "İlerleme",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        728,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 819
+    },
+    {
+      "label": "Product mobile 390",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 44,
+        "width": 135.15000915527344,
+        "x": 224.0500030517578,
+        "y": 7.599999904632568
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 44,
+        "width": 44,
+        "x": 16,
+        "y": 7.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "centerVisible": "none",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-mark.svg",
+      "documentWidth": 375,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 60,
+        "width": 375.2000122070313,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 36,
+        "width": 34.212501525878906,
+        "x": 20.887500762939453,
+        "y": 11.600000381469728
+      },
+      "inner": {
+        "height": 59.20000076293945,
+        "width": 375.2000122070313,
+        "x": 0,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 0,
+          "text": "Bugün",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Haftam",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Yol Haritası",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Kaynaklar",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "İlerleme",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        289,
+        304
+      ],
+      "reservedRatio": "289 / 304",
+      "viewport": 375
+    },
+    {
+      "label": "Product breakpoint 320",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 44,
+        "width": 135.15000915527344,
+        "x": 168.85000610351562,
+        "y": 7.599999904632568
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 44,
+        "width": 44,
+        "x": 16,
+        "y": 7.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "centerVisible": "none",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-mark.svg",
+      "documentWidth": 320,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 60,
+        "width": 320,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 36,
+        "width": 34.212501525878906,
+        "x": 20.887500762939453,
+        "y": 11.600000381469728
+      },
+      "inner": {
+        "height": 59.20000076293945,
+        "width": 320,
+        "x": 0,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 0,
+          "text": "Bugün",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Haftam",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Yol Haritası",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Kaynaklar",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "İlerleme",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        289,
+        304
+      ],
+      "reservedRatio": "289 / 304",
+      "viewport": 305
+    },
+    {
+      "label": "Product breakpoint 600",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 44,
+        "width": 135.15000915527344,
+        "x": 433.6499938964844,
+        "y": 7.599999904632568
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 44,
+        "width": 44,
+        "x": 16,
+        "y": 7.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "centerVisible": "none",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-mark.svg",
+      "documentWidth": 585,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 60,
+        "width": 584.7999877929688,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 36,
+        "width": 34.212501525878906,
+        "x": 20.887500762939453,
+        "y": 11.600000381469728
+      },
+      "inner": {
+        "height": 59.20000076293945,
+        "width": 584.7999877929688,
+        "x": 0,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 0,
+          "text": "Bugün",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Haftam",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Yol Haritası",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Kaynaklar",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "İlerleme",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        289,
+        304
+      ],
+      "reservedRatio": "289 / 304",
+      "viewport": 585
+    },
+    {
+      "label": "Product breakpoint 601",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 44,
+        "width": 204.8500061035156,
+        "x": 361.5500183105469,
+        "y": 9.600000381469728
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 20,
+        "y": 4.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "centerVisible": "none",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-mark.svg",
+      "documentWidth": 586,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 586.4000244140625,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 20,
+        "y": 4.599999904632568
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 586.4000244140625,
+        "x": 0,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 0,
+          "text": "Bugün",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Haftam",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Yol Haritası",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Kaynaklar",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "İlerleme",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        289,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 586
+    },
+    {
+      "label": "Product breakpoint 1000",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 44,
+        "width": 204.8500061035156,
+        "x": 759.9500122070312,
+        "y": 9.600000381469728
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 20,
+        "y": 4.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "centerVisible": "none",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-mark.svg",
+      "documentWidth": 985,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 984.7999877929688,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 20,
+        "y": 4.599999904632568
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 984.7999877929688,
+        "x": 0,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 0,
+          "text": "Bugün",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Haftam",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Yol Haritası",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Kaynaklar",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "İlerleme",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        289,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 985
+    },
+    {
+      "label": "Product breakpoint 1001",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 36,
+        "width": 146.85000610351562,
+        "x": 811.5499877929688,
+        "y": 13.600000381469728
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 28,
+        "y": 4.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 63.20000076293945,
+        "width": 522.4000244140625,
+        "x": 232,
+        "y": 0
+      },
+      "centerVisible": "flex",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-mark.svg",
+      "documentWidth": 986,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 986.4000244140624,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 28,
+        "y": 4.599999904632568
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 986.4000244140624,
+        "x": 0,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 63.20000076293945,
+          "text": "Bugün",
+          "width": 42.4375,
+          "x": 317.1499938964844,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Haftam",
+          "width": 47.78750228881836,
+          "x": 379.5874938964844,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Yol Haritası",
+          "width": 68.73750305175781,
+          "x": 447.375,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Kaynaklar",
+          "width": 61.8125,
+          "x": 536.1124877929688,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "İlerleme",
+          "width": 51.32500076293945,
+          "x": 617.9249877929688,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        289,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 986
+    },
+    {
+      "label": "Product breakpoint 1024",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 36,
+        "width": 146.85000610351562,
+        "x": 833.9500122070312,
+        "y": 13.600000381469728
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 28,
+        "y": 4.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 63.20000076293945,
+        "width": 544.7999877929688,
+        "x": 232,
+        "y": 0
+      },
+      "centerVisible": "flex",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-mark.svg",
+      "documentWidth": 1009,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 1008.7999877929688,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 28,
+        "y": 4.599999904632568
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 1008.7999877929688,
+        "x": 0,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 63.20000076293945,
+          "text": "Bugün",
+          "width": 42.4375,
+          "x": 328.3500061035156,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Haftam",
+          "width": 47.78750228881836,
+          "x": 390.7875061035156,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Yol Haritası",
+          "width": 68.73750305175781,
+          "x": 458.5750122070313,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Kaynaklar",
+          "width": 61.8125,
+          "x": 547.3125,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "İlerleme",
+          "width": 51.32500076293945,
+          "x": 629.125,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        289,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 1009
+    },
+    {
+      "label": "Product 1024 settled",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 36,
+        "width": 146.85000610351562,
+        "x": 833.9500122070312,
+        "y": 13.600000381469728
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 28,
+        "y": 4.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 63.20000076293945,
+        "width": 544.7999877929688,
+        "x": 232,
+        "y": 0
+      },
+      "centerVisible": "flex",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 1009,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 1008.7999877929688,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 28,
+        "y": 4.599999904632568
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 1008.7999877929688,
+        "x": 0,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 63.20000076293945,
+          "text": "Bugün",
+          "width": 42.4375,
+          "x": 328.3500061035156,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Haftam",
+          "width": 47.78750228881836,
+          "x": 390.7875061035156,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Yol Haritası",
+          "width": 68.73750305175781,
+          "x": 458.5750122070313,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Kaynaklar",
+          "width": 61.8125,
+          "x": 547.3125,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "İlerleme",
+          "width": 51.32500076293945,
+          "x": 629.125,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        728,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 1009
+    },
+    {
+      "label": "Login desktop 1440",
+      "alt": "KPSS Koçu",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 1440,
+      "image": {
+        "height": 82,
+        "width": 196.3625030517578
+      },
+      "naturalSize": [
+        728,
+        304
+      ],
+      "viewport": 1440
+    },
+    {
+      "label": "Login mobile 320",
+      "alt": "KPSS Koçu",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 320,
+      "image": {
+        "height": 82,
+        "width": 196.3625030517578
+      },
+      "naturalSize": [
+        728,
+        304
+      ],
+      "viewport": 320
+    },
+    {
+      "label": "Login mobile 390",
+      "alt": "KPSS Koçu",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 390,
+      "image": {
+        "height": 82,
+        "width": 196.3625030517578
+      },
+      "naturalSize": [
+        728,
+        304
+      ],
+      "viewport": 390
+    },
+    {
+      "label": "Register mobile 390",
+      "alt": "KPSS Koçu",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 390,
+      "image": {
+        "height": 82,
+        "width": 196.3625030517578
+      },
+      "naturalSize": [
+        728,
+        304
+      ],
+      "viewport": 390
+    },
+    {
+      "label": "Lab mobile 390",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 44,
+        "width": 135.15000915527344,
+        "x": 224.0500030517578,
+        "y": 132
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 44,
+        "width": 44,
+        "x": 16,
+        "y": 132
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "centerVisible": "none",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-mark.svg",
+      "documentWidth": 375,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 60,
+        "width": 375.2000122070313,
+        "x": 0,
+        "y": 124.4000015258789
+      },
+      "image": {
+        "height": 36,
+        "width": 34.212501525878906,
+        "x": 20.887500762939453,
+        "y": 136
+      },
+      "inner": {
+        "height": 59.20000076293945,
+        "width": 375.2000122070313,
+        "x": 0,
+        "y": 124.4000015258789
+      },
+      "links": [
+        {
+          "height": 0,
+          "text": "Bugün",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Haftam",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Yol Haritası",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Kaynaklar",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "İlerleme",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        289,
+        304
+      ],
+      "reservedRatio": "289 / 304",
+      "viewport": 375
+    },
+    {
+      "label": "Lab Focus mobile 390",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 18,
+        "width": 90.13750457763672,
+        "x": 269.0625,
+        "y": 145
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 44,
+        "width": 44,
+        "x": 16,
+        "y": 132
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": null,
+      "centerVisible": null,
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-mark.svg",
+      "documentWidth": 375,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 60,
+        "width": 375.2000122070313,
+        "x": 0,
+        "y": 124.4000015258789
+      },
+      "image": {
+        "height": 36,
+        "width": 34.212501525878906,
+        "x": 20.887500762939453,
+        "y": 136
+      },
+      "inner": {
+        "height": 59.20000076293945,
+        "width": 375.2000122070313,
+        "x": 0,
+        "y": 124.4000015258789
+      },
+      "links": [],
+      "naturalSize": [
+        289,
+        304
+      ],
+      "reservedRatio": "289 / 304",
+      "viewport": 375
+    },
+    {
+      "label": "Lab Focus desktop 1440",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 36,
+        "width": 200.9875030517578,
+        "x": 1143.4124755859375,
+        "y": 69.5999984741211
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 80.4000015258789,
+        "y": 60.60000228881836
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": null,
+      "centerVisible": null,
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 1425,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 1424.800048828125,
+        "x": 0,
+        "y": 56
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 80.4000015258789,
+        "y": 60.60000228881836
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 1320,
+        "x": 52.400001525878906,
+        "y": 56
+      },
+      "links": [],
+      "naturalSize": [
+        728,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 1425
+    },
+    {
+      "label": "Lab tablet 834",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 44,
+        "width": 204.8500061035156,
+        "x": 594.3500366210938,
+        "y": 65.5999984741211
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 20,
+        "y": 60.60000228881836
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "centerVisible": "none",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 819,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 819.2000122070312,
+        "x": 0,
+        "y": 56
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 20,
+        "y": 60.60000228881836
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 819.2000122070312,
+        "x": 0,
+        "y": 56
+      },
+      "links": [
+        {
+          "height": 0,
+          "text": "Bugün",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Haftam",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Yol Haritası",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "Kaynaklar",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 0,
+          "text": "İlerleme",
+          "width": 0,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        728,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 819
+    },
+    {
+      "label": "Final product desktop 1440",
+      "accessibleName": "KPSS Koçu — Bugün",
+      "actions": {
+        "height": 36,
+        "width": 146.85000610351562,
+        "x": 1205.1500244140625,
+        "y": 13.600000381469728
+      },
+      "alt": "",
+      "ariaHidden": "true",
+      "background": "rgb(255, 255, 255)",
+      "brand": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 88,
+        "y": 4.599999904632568
+      },
+      "brandCount": 1,
+      "brandText": "",
+      "center": {
+        "height": 63.20000076293945,
+        "width": 856,
+        "x": 292,
+        "y": 0
+      },
+      "centerVisible": "flex",
+      "complete": true,
+      "currentSrc": "http://127.0.0.1:5174/brand/kpss-kocu-logo.svg",
+      "documentWidth": 1440,
+      "favicon": "/brand/kpss-kocu-mark.svg",
+      "header": {
+        "height": 64,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "image": {
+        "height": 54,
+        "width": 129.3125,
+        "x": 88,
+        "y": 4.599999904632568
+      },
+      "inner": {
+        "height": 63.20000076293945,
+        "width": 1320,
+        "x": 60,
+        "y": 0
+      },
+      "links": [
+        {
+          "height": 63.20000076293945,
+          "text": "Bugün",
+          "width": 42.4375,
+          "x": 543.9500122070312,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Haftam",
+          "width": 47.78750228881836,
+          "x": 606.3875122070312,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Yol Haritası",
+          "width": 68.73750305175781,
+          "x": 674.1749877929688,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "Kaynaklar",
+          "width": 61.8125,
+          "x": 762.9125366210938,
+          "y": 0
+        },
+        {
+          "height": 63.20000076293945,
+          "text": "İlerleme",
+          "width": 51.32500076293945,
+          "x": 844.7250366210938,
+          "y": 0
+        }
+      ],
+      "naturalSize": [
+        728,
+        304
+      ],
+      "reservedRatio": "728 / 304",
+      "viewport": 1440
+    }
+  ],
+  "brandRelatedConsoleErrors": 0,
+  "notes": [
+    "Dimensions use document clientWidth; a visible scrollbar reserves approximately 15px.",
+    "The initial Product desktop observation labelled 1440 was at a 1280px default viewport; confirmed 1440 observations supersede it.",
+    "Rapid breakpoint probes can report the previous picture currentSrc before image selection settles; settled primary viewport measurements verify final assets.",
+    "At requested 320px on the scrollable product page, existing body min-width 320px exceeds client viewport (305px); no logo or navigation overlap.",
+    "No numerical PerformanceObserver CLS measurement was collected. Intrinsic dimensions, CSS reserved aspect ratios and stable logo boxes were checked."
+  ]
+}

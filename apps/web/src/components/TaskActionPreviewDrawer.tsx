@@ -12,6 +12,7 @@ import { useDialogAccessibility } from "../hooks/useDialogAccessibility";
 import { Icon } from "./Icon";
 
 interface TaskActionRequest {
+  readonly targetDate?: string;
   readonly task: RoadmapTask;
   readonly action: TaskActionPreviewAction;
 }
@@ -54,11 +55,17 @@ export function TaskActionPreviewDrawer({
       `/tasks/${request.task.id}/action-preview`,
       {
         method: "POST",
-        body: { action, idempotencyKey: `carryover-preview:${crypto.randomUUID()}` },
+        body: { action, ...(request.targetDate ? { targetDate: request.targetDate } : {}), idempotencyKey: `carryover-preview:${crypto.randomUUID()}` },
       },
     )
       .then((result) => {
-        if (!cancelled) setPreview(result);
+        if (!cancelled) {
+          if (result.task.id !== request.task.id || (request.targetDate && action === "DEFER" && result.status === "READY" && result.changes[0]?.toDate !== request.targetDate)) {
+            setError("Önizleme seçtiğin görev veya günle eşleşmiyor. Yeniden incele.");
+            return;
+          }
+          setPreview(result);
+        }
       })
       .catch((caught) => {
         if (cancelled) return;
@@ -85,7 +92,7 @@ export function TaskActionPreviewDrawer({
 
   const applyCarryover=async()=>{
     const change=preview?.changes[0];
-    if(!preview||preview.action!=="DEFER"||preview.status!=="READY"||change?.changeType!=="MOVE"||!change.toDate)return;
+    if(!preview||preview.task.id!==request.task.id||preview.action!=="DEFER"||preview.status!=="READY"||change?.changeType!=="MOVE"||!change.toDate||(request.targetDate&&change.toDate!==request.targetDate))return;
     setApplying(true);setError(null);
     try{
       await callAppApi("/study-intent/carryovers/confirm",{method:"POST",body:{
@@ -195,10 +202,10 @@ export function TaskActionPreviewDrawer({
 
             {preview.changes.map((change) => (
               <div className="task-action-change-card" key={`${change.changeType}-${change.taskId}`}>
-                <strong>{change.changeType}</strong>
+                <strong>{change.changeType === "MOVE" ? "Taşıma" : "Bugünden çıkarma"}</strong>
                 <span>
                   {change.fromDate}
-                  {change.toDate ? ` → ${change.toDate}` : " → backlog"}
+                  {change.toDate ? ` → ${change.toDate}` : " → bekleyen çalışmalar"}
                 </span>
                 <small>{change.remainingMinutes} dk kalan çalışma</small>
               </div>

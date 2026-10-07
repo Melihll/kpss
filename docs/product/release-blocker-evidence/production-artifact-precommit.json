@@ -1,0 +1,294 @@
+{
+  "sourceHead": "ea17ee281cb192304abfb518ff4f50b1ab3ecfdd",
+  "publicInputSource": "explicit process environment",
+  "inputNames": [
+    "VITE_SUPABASE_URL",
+    "VITE_SUPABASE_ANON_KEY"
+  ],
+  "expectedOrigin": "https://disnqptbhrdwqcjnfusm.supabase.co",
+  "findings": [
+    {
+      "file": "assets/AppShell-C2nZaIMu.css",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/AppShell-Ds56qPmu.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/auth-validation-mYNUHAmY.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/HomePage-CsICJc1p.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/index-D4hx8eBa.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/LoginPage-BJvjqf5e.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/OnboardingPage-Ccig9iTS.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/PhysicalStudyFinishDialog-BVI_s9Sq.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/proactive-coach-materiality-policy-v1-CStjCkhS.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/product-entry-CFpldKfk.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [
+        "http://localhost:9999"
+      ],
+      "routerParserReferences": [
+        "http://localhost"
+      ]
+    },
+    {
+      "file": "assets/product-entry-D2thTVyh.css",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/ProgressPage-DqWEVzsv.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/RegisterPage-E_RbW_aH.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/ResourcesPage-ja42yWwU.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/roadmap-D792OTgt.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/RoadmapPage-AnhgasHT.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/SettingsPage-BISBKMHa.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/today-material-actions-ChiiRpmX.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/useDialogAccessibility-DAuQrn2T.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/useTaskMaterialDrawer-MdXRi69a.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "assets/WeekPage-BlXpPXm9.js",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    },
+    {
+      "file": "index.html",
+      "hits": [],
+      "rejected": [],
+      "sdkDefaultReferences": [],
+      "routerParserReferences": []
+    }
+  ],
+  "manifest": [
+    {
+      "path": "assets/AppShell-C2nZaIMu.css",
+      "bytes": 5193,
+      "sha256": "4012507e7b297b4873e26f66fd0f47ee9ee3188dc800776db34e93de5e0276a0"
+    },
+    {
+      "path": "assets/AppShell-Ds56qPmu.js",
+      "bytes": 39032,
+      "sha256": "216b9aac09b574220ac4408cab3c1032a34d38b7c38513dad7912b5b0e689911"
+    },
+    {
+      "path": "assets/HomePage-CsICJc1p.js",
+      "bytes": 48,
+      "sha256": "4520035bf5cef646956f0051f3ff06f0b2b8e6eca1c007220f451be0b1f53c70"
+    },
+    {
+      "path": "assets/LoginPage-BJvjqf5e.js",
+      "bytes": 1640,
+      "sha256": "926d31758bdb51945d2b3b1d1ccc7fb09b7d6eeb60ef1cc9f58358ed9f762c6b"
+    },
+    {
+      "path": "assets/OnboardingPage-Ccig9iTS.js",
+      "bytes": 17523,
+      "sha256": "aa024cf5a8c260d489d4c9243cef7cd17411133ac94b0d2a12590dc16332410d"
+    },
+    {
+      "path": "assets/PhysicalStudyFinishDialog-BVI_s9Sq.js",
+      "bytes": 2613,
+      "sha256": "d4db3bffa02d5a103b99c5683ea0d181c5f703019c2de8ab34b8371891d52f39"
+    },
+    {
+      "path": "assets/ProgressPage-DqWEVzsv.js",
+      "bytes": 33252,
+      "sha256": "85c41dddd706ac2d24c4a92bdf41ef9b08b96b6efbd471b2a4785c33e6734802"
+    },
+    {
+      "path": "assets/RegisterPage-E_RbW_aH.js",
+      "bytes": 1942,
+      "sha256": "9f0b07f534f41eecaf1657ce8cc50634d5a0dd0a7da63892e9b70ff43026b6e2"
+    },
+    {
+      "path": "assets/ResourcesPage-ja42yWwU.js",
+      "bytes": 8823,
+      "sha256": "0c1427defd44895e9ca1c238c18a9126d120b3286a62b859d57989eb1b193bfc"
+    },
+    {
+      "path": "assets/RoadmapPage-AnhgasHT.js",
+      "bytes": 9117,
+      "sha256": "d301cbac3df115c1a84069a29147868b53ae99e4dbb2bf26e455d7967a0eae62"
+    },
+    {
+      "path": "assets/SettingsPage-BISBKMHa.js",
+      "bytes": 7258,
+      "sha256": "5fb3b40097750f3eaaed780be608b55462f6c03243c807cf63e7006bcd819670"
+    },
+    {
+      "path": "assets/WeekPage-BlXpPXm9.js",
+      "bytes": 32366,
+      "sha256": "61c9ad36ca56bfe847d3ae949539536cffbd783ddad69b17806cb298147e5f37"
+    },
+    {
+      "path": "assets/auth-validation-mYNUHAmY.js",
+      "bytes": 60514,
+      "sha256": "354082bf2389f78671a19190e879ccf8b99a0af5c1b7bc3869d50ee6d90bd482"
+    },
+    {
+      "path": "assets/index-D4hx8eBa.js",
+      "bytes": 2050,
+      "sha256": "9a301790cccc22c62c27d5928fc954e32af787c857e17571cd413405a42f5f85"
+    },
+    {
+      "path": "assets/proactive-coach-materiality-policy-v1-CStjCkhS.js",
+      "bytes": 10937,
+      "sha256": "9433ad7b1cf968bc6f22670349024309fb104f9b049b9037e704b52d26a38e2d"
+    },
+    {
+      "path": "assets/product-entry-CFpldKfk.js",
+      "bytes": 452275,
+      "sha256": "1d735e484f97bfb6b20784252f0ec17d4cbed6c6a2a7fca33a5a9c928e480328"
+    },
+    {
+      "path": "assets/product-entry-D2thTVyh.css",
+      "bytes": 162248,
+      "sha256": "8db9c4ae3c5483c36c14b1909cb51fd603a8b09f0a8690ecac5417444205bd25"
+    },
+    {
+      "path": "assets/roadmap-D792OTgt.js",
+      "bytes": 57322,
+      "sha256": "317ea885ee73d6e44806d26cd192a56233726884004ecf9b8d565802a56efb55"
+    },
+    {
+      "path": "assets/today-material-actions-ChiiRpmX.js",
+      "bytes": 20951,
+      "sha256": "66aae0ef257350180d5559cbf968343d9d8b17a2c8ee0ef87f6fd6295ea77df3"
+    },
+    {
+      "path": "assets/useDialogAccessibility-DAuQrn2T.js",
+      "bytes": 1292,
+      "sha256": "ca6e2f5aff7fca86de3695faa2a8fe6d183c2a586189f5c109e7663286561f4d"
+    },
+    {
+      "path": "assets/useTaskMaterialDrawer-MdXRi69a.js",
+      "bytes": 16608,
+      "sha256": "e1ad934bbb8be78e0789504a702dae358ba272725477672339cb69d4562ef3a9"
+    },
+    {
+      "path": "brand/kpss-kocu-logo.svg",
+      "bytes": 7837,
+      "sha256": "78471a201942d2a4634088d55487f2ea7c64f31700809361627b58db98eb254b"
+    },
+    {
+      "path": "brand/kpss-kocu-mark.svg",
+      "bytes": 1764,
+      "sha256": "296887f0fd299aca44d9e92caf450ccd50b4a4ea234e873f11805c1212a68080"
+    },
+    {
+      "path": "index.html",
+      "bytes": 411,
+      "sha256": "4feed3d329e2c39ae13d85c6ca6ab1e547122a5581730d4faff4f1c4fc05b791"
+    }
+  ],
+  "manifestSha256": "9fef4610f5b574a3cbdc8ce298494ac868e40b212da6af5007a81104596530bc",
+  "production": "NOT DEPLOYED",
+  "note": "Fresh validated production-input artifact before the authorized local commit. Postcommit fresh artifact is written to ignored .release/production-artifact.json with exact HEAD; no postcommit source edit."
+}

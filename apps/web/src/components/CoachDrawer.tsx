@@ -198,7 +198,7 @@ export function CoachDrawer({ open, entryContext = "general", onClose }: CoachDr
     />
     <aside ref={dialogRef} tabIndex={-1} inert={!open} className={`coach-drawer ${open ? "is-open" : ""}`} role="dialog" aria-modal="true" aria-hidden={!open} aria-labelledby="coach-drawer-title">
       <header className="coach-drawer-header">
-        <div className="coach-drawer-brand"><span><Icon name="spark" weight="fill" /></span><div><small>AI destekli</small><strong id="coach-drawer-title">KPSS Koçu</strong></div></div>
+        <div className="coach-drawer-brand"><span><Icon name="user" /></span><div><small>Çalışma desteği</small><strong id="coach-drawer-title">KPSS Koçu</strong></div></div>
         <button className="coach-close" type="button" aria-label="Koçu kapat" onClick={onClose}><Icon name="close" /></button>
       </header>
 
@@ -236,7 +236,7 @@ export function CoachDrawer({ open, entryContext = "general", onClose }: CoachDr
         {submittedMessage && <div className="coach-user-message"><span>Sen</span><p>{submittedMessage}</p></div>}
 
         {sending && <div className="coach-thinking" aria-live="polite">
-          <span><Icon name="spark" /></span>
+          <span><Icon name="user" /></span>
           <div>
             <strong>Planını kontrol ediyorum</strong>
             <p>Planındaki güncel bilgileri değerlendiriyorum.</p>

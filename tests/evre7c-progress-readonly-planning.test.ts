@@ -66,7 +66,7 @@ describe("Evre 7C Progress planning authority", () => {
     );
 
     expect(todaySource).toContain(
-      'setCoachEntryContext("capacity")',
+      'onCoach("capacity")',
     );
 
     expect(plannerSource).toContain(

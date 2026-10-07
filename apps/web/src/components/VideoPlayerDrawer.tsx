@@ -1,23 +1,26 @@
 import {
   useEffect,
+  useCallback,
   useRef,
   useState,
   type MutableRefObject,
 } from "react";
-import type { ResourceForecast } from "../lib/roadmap";
+import type { ResourceForecast, TaskMaterialScope } from "../lib/roadmap";
+import { playableCatalogVideo, resolveTaskVideo, verifiedVideoProgress } from "../lib/task-video";
 import {
   AppApiError,
   FRIENDLY_API_ERRORS,
   callAppApi,
 } from "../lib/app-api";
 import {
-  YOUTUBE_PROGRESS_CHECKPOINT_MS,
   clampYouTubeWatchedSeconds,
   countedYouTubeWatchDelta,
-  shouldCheckpointYouTubeProgress,
+  youtubeResumeIntentOnSessionPause,
   youtubeTimeLabel,
 } from "../lib/youtube-player-progress";
 import { useDialogAccessibility } from "../hooks/useDialogAccessibility";
+import { useAuth } from "../auth/AuthContext";
+import { sharedYouTubeProgressWriter } from "../lib/youtube-progress-writer";
 
 export interface VideoProgress {
   readonly youtubePlaylistVideoId: string;
@@ -64,7 +67,7 @@ export interface ResourceVideoLibraryResponse {
   readonly playlists: readonly PlaylistItem[];
 }
 
-interface VideoProgressResponse {
+export interface VideoProgressResponse {
   readonly video: {
     readonly id: string;
     readonly youtubePlaylistId: string;
@@ -77,6 +80,8 @@ interface VideoProgressResponse {
 }
 
 interface YTPlayer {
+  playVideo(): void;
+  pauseVideo(): void;
   destroy(): void;
   getCurrentTime(): number;
   getPlaybackRate(): number;
@@ -159,6 +164,10 @@ function flattenVideos(playlists: readonly PlaylistItem[]): VideoItem[] {
 }
 
 interface EmbeddedYouTubePlayerProps {
+  readonly userId: string;
+  readonly checkpointContext?: string;
+  readonly playlistId: string;
+  readonly playback?: "running" | "paused" | "ready";
   readonly video: VideoItem;
   readonly initialProgress: VideoProgress | null;
   readonly onSaved: (progress: VideoProgress) => void;
@@ -167,6 +176,10 @@ interface EmbeddedYouTubePlayerProps {
 }
 
 function EmbeddedYouTubePlayer({
+  userId,
+  checkpointContext,
+  playlistId,
+  playback = "ready",
   video,
   initialProgress,
   onSaved,
@@ -179,21 +192,46 @@ function EmbeddedYouTubePlayer({
   const positionRef = useRef(initialProgress?.lastPositionSeconds ?? 0);
   const previousPositionRef = useRef(initialProgress?.lastPositionSeconds ?? 0);
   const previousWallRef = useRef(performance.now());
-  const lastSavedAtRef = useRef(performance.now());
-  const saveChainRef = useRef<Promise<void>>(Promise.resolve());
+  const flushRef = useRef<() => void>(() => undefined);
   const destroyedRef = useRef(false);
-
+  const initialRef = useRef(initialProgress);
+  const playbackRef = useRef(playback);
+  const playingRef = useRef(false);
+  const resumeVideoRef = useRef(true);
+  useEffect(() => { flushRef.current(); }, [checkpointContext]);
   useEffect(() => {
-    watchedRef.current = initialProgress?.watchedSeconds ?? 0;
-    positionRef.current = initialProgress?.lastPositionSeconds ?? 0;
-    previousPositionRef.current = initialProgress?.lastPositionSeconds ?? 0;
-    previousWallRef.current = performance.now();
-    lastSavedAtRef.current = performance.now();
-  }, [initialProgress, video.id]);
+    const previousPlayback = playbackRef.current;
+    playbackRef.current = playback;
+    if (previousPlayback === "running" && playback !== "running") flushRef.current();
+    if (playback === "paused") {
+      resumeVideoRef.current = youtubeResumeIntentOnSessionPause(Boolean(playerRef.current), playingRef.current, resumeVideoRef.current);
+      playerRef.current?.pauseVideo();
+    }
+    else if (playback === "ready" && previousPlayback !== "ready") playerRef.current?.pauseVideo();
+    else if (playback === "running" && resumeVideoRef.current) playerRef.current?.playVideo();
+  }, [playback, playerRef]);
 
   useEffect(() => {
     destroyedRef.current = false;
+    let cancelled = false;
     let localPlayer: YTPlayer | null = null;
+    let playerReady = false;
+    let pauseAfterRestoreSeek = false;
+    const writer = sharedYouTubeProgressWriter<VideoProgress>(`${userId}:${video.id}`, {
+      send: async (body) => {
+        const payload = await callAppApi<VideoProgressResponse>(
+          `/youtube-videos/${video.id}/progress`,
+          { method: "PUT", body, expectedUserId: userId },
+        );
+        const saved = verifiedVideoProgress(video, playlistId, payload);
+        if (!saved) throw new Error("VIDEO_PROGRESS_SAVE_MISSING");
+        return saved;
+      },
+    });
+    const unsubscribe = writer.subscribe(
+      (saved) => { if (!cancelled && !destroyedRef.current) onSaved(saved); },
+      () => { if (!cancelled && !destroyedRef.current) onError("Video ilerlemesi kaydedilemedi."); },
+    );
 
     const stopTicking = () => {
       if (tickTimerRef.current !== null) {
@@ -202,39 +240,17 @@ function EmbeddedYouTubePlayer({
       }
     };
 
+    const snapshot = () => ({
+      lastPositionSeconds: Math.max(0, Math.min(video.durationSeconds, Math.floor(positionRef.current))),
+      watchedSeconds: Math.max(0, Math.min(video.durationSeconds, Math.floor(watchedRef.current))),
+    });
     const save = () => {
-      const body = {
-        lastPositionSeconds: Math.max(
-          0,
-          Math.min(video.durationSeconds, Math.floor(positionRef.current)),
-        ),
-        watchedSeconds: Math.max(
-          0,
-          Math.min(video.durationSeconds, Math.floor(watchedRef.current)),
-        ),
-      };
-
-      saveChainRef.current = saveChainRef.current
-        .catch(() => undefined)
-        .then(async () => {
-          const payload = await callAppApi<VideoProgressResponse>(
-            `/youtube-videos/${video.id}/progress`,
-            { method: "PUT", body },
-          );
-          if (!destroyedRef.current && payload.progress) {
-            onSaved(payload.progress);
-          }
-          lastSavedAtRef.current = performance.now();
-        })
-        .catch(() => {
-          if (!destroyedRef.current) {
-            onError("Video ilerlemesi kaydedilemedi.");
-          }
-        });
+      if (!localPlayer || !playerReady) return;
+      writer.flush(snapshot());
     };
 
     const tick = () => {
-      if (!localPlayer) return;
+      if (!localPlayer || !playerReady) return;
       const now = performance.now();
       const currentPosition = Math.max(
         0,
@@ -260,19 +276,13 @@ function EmbeddedYouTubePlayer({
       previousPositionRef.current = currentPosition;
       previousWallRef.current = now;
 
-      if (
-        shouldCheckpointYouTubeProgress(
-          now,
-          lastSavedAtRef.current,
-          YOUTUBE_PROGRESS_CHECKPOINT_MS,
-        )
-      ) {
-        save();
-      }
+      writer.checkpoint(snapshot());
     };
+    const flush = () => { tick(); save(); };
+    flushRef.current = flush;
 
     const startTicking = () => {
-      if (tickTimerRef.current !== null) return;
+      if (!playerReady || tickTimerRef.current !== null) return;
       previousWallRef.current = performance.now();
       previousPositionRef.current = localPlayer?.getCurrentTime() ?? positionRef.current;
       tickTimerRef.current = window.setInterval(tick, 1000);
@@ -280,7 +290,7 @@ function EmbeddedYouTubePlayer({
 
     void loadYouTubeIframeApi()
       .then((YT) => {
-        if (destroyedRef.current || !hostRef.current) return;
+        if (cancelled || destroyedRef.current || !hostRef.current) return;
 
         localPlayer = new YT.Player(hostRef.current, {
           videoId: video.youtubeVideoId,
@@ -291,16 +301,31 @@ function EmbeddedYouTubePlayer({
           },
           events: {
             onReady: ({ target }) => {
+              if (cancelled || destroyedRef.current) return;
+              playerReady = true;
               playerRef.current = target;
-              const resume = initialProgress?.lastPositionSeconds ?? 0;
+              const resume = initialRef.current?.lastPositionSeconds ?? 0;
               if (resume > 0 && resume < video.durationSeconds - 2) {
+                pauseAfterRestoreSeek = playbackRef.current !== "running";
                 target.seekTo(resume, true);
                 positionRef.current = resume;
                 previousPositionRef.current = resume;
               }
+              if (playbackRef.current === "running") target.playVideo();
+              else target.pauseVideo();
             },
             onStateChange: (event) => {
+              playingRef.current = event.data === YT.PlayerState.PLAYING;
               if (event.data === YT.PlayerState.PLAYING) {
+                // seekTo can finish asynchronously after the initial pause.
+                if (playbackRef.current === "paused" || (pauseAfterRestoreSeek && playbackRef.current === "ready")) {
+                  pauseAfterRestoreSeek = false;
+                  playingRef.current = false;
+                  stopTicking();
+                  event.target.pauseVideo();
+                  return;
+                }
+                pauseAfterRestoreSeek = false;
                 startTicking();
                 return;
               }
@@ -331,7 +356,6 @@ function EmbeddedYouTubePlayer({
             },
           },
         });
-        playerRef.current = localPlayer;
       })
       .catch(() => onError("YouTube oynatıcı yüklenemedi."));
 
@@ -350,9 +374,14 @@ function EmbeddedYouTubePlayer({
     window.addEventListener("pagehide", onPageHide);
 
     return () => {
+      if (cancelled) return;
       tick();
       save();
+      playerReady = false;
       destroyedRef.current = true;
+      cancelled = true;
+      unsubscribe();
+      if (flushRef.current === flush) flushRef.current = () => undefined;
       stopTicking();
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pagehide", onPageHide);
@@ -360,7 +389,8 @@ function EmbeddedYouTubePlayer({
       if (playerRef.current === localPlayer) playerRef.current = null;
     };
   }, [
-    initialProgress,
+    userId,
+    playlistId,
     onError,
     onSaved,
     playerRef,
@@ -373,26 +403,49 @@ function EmbeddedYouTubePlayer({
 }
 
 interface VideoPlayerPanelProps {
+  readonly checkpointContext?: string;
+  readonly compact?: boolean;
+  readonly playback?: "running" | "paused" | "ready";
   readonly resource: ResourceForecast;
   readonly initialVideoId?: string | null;
+  /** undefined is resource browsing; null is a task without exact video scope. */
+  readonly taskScope?: TaskMaterialScope | null;
   readonly onProgressChanged?: (progress: VideoProgress) => void;
 }
 
 export function VideoPlayerPanel({
+  checkpointContext,
+  compact = false,
+  playback = "ready",
   resource,
   initialVideoId = null,
+  taskScope,
   onProgressChanged,
 }: VideoPlayerPanelProps) {
+  const { user } = useAuth();
   const [library, setLibrary] = useState<ResourceVideoLibraryResponse | null>(null);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [progress, setProgress] = useState<VideoProgress | null>(null);
+  const [verifiedVideoId, setVerifiedVideoId] = useState<string | null>(null);
+  const [progressRetry, setProgressRetry] = useState(0);
+  const [libraryRetry, setLibraryRetry] = useState(0);
   const [loadingLibrary, setLoadingLibrary] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const playerRef = useRef<YTPlayer | null>(null);
+  const onProgressChangedRef = useRef(onProgressChanged);
+  useEffect(() => { onProgressChangedRef.current = onProgressChanged; }, [onProgressChanged]);
 
   const videos = library ? flattenVideos(library.playlists) : [];
   const selectedVideo = videos.find((video) => video.id === selectedVideoId) ?? null;
+  const selectedPlaylistId = library?.playlists.find((playlist) => playlist.videos.some((video) => video.id === selectedVideoId))?.id ?? null;
+  const taskContext = taskScope !== undefined;
+  const exactVideoId = taskScope?.kind === "full_video" ? taskScope.youtubePlaylistVideoId : initialVideoId;
+  const exactDuration = taskScope?.kind === "full_video" ? taskScope.durationSeconds : null;
+  const locked = taskScope?.kind === "full_video" || Boolean(exactVideoId);
+  const libraryMatches = library?.resource.id === resource.resourceId && (!taskScope || taskScope.resourceId === resource.resourceId);
+  const selectedVideoIdRef = useRef(selectedVideoId);
+  selectedVideoIdRef.current = selectedVideoId;
 
   useEffect(() => {
     let cancelled = false;
@@ -401,17 +454,24 @@ export function VideoPlayerPanel({
     setLibrary(null);
     setSelectedVideoId(null);
     setProgress(null);
+    setVerifiedVideoId(null);
 
     void callAppApi<ResourceVideoLibraryResponse>(
       `/resources/${resource.resourceId}/youtube-videos`,
     )
       .then((payload) => {
         if (cancelled) return;
+        if (payload.resource.id !== resource.resourceId) throw new Error("VIDEO_RESOURCE_MISMATCH");
         setLibrary(payload);
         const videos = flattenVideos(payload.playlists);
-        const selected = videos.find((video) => video.id === initialVideoId) ?? videos[0] ?? null;
+        const resolution = taskContext ? resolveTaskVideo(resource.resourceId, taskScope ?? null, payload) : null;
+        if (resolution?.kind === "unavailable") { setError(resolution.message); return; }
+        const selected = resolution?.kind === "exact" ? resolution.video
+          : exactVideoId ? videos.find((video) => video.id === exactVideoId && playableCatalogVideo(video)) ?? null
+          : taskContext ? null
+          : videos.find((video) => playableCatalogVideo(video) && !video.progress?.completed) ?? videos.find(playableCatalogVideo) ?? null;
+        if (exactVideoId && !selected) setError("Göreve bağlı video bu kaynakta bulunamadı. Kaynak bağlantısını kontrol et.");
         setSelectedVideoId(selected?.id ?? null);
-        setProgress(selected?.progress ?? null);
       })
       .catch((caught) => {
         if (!cancelled) {
@@ -425,15 +485,17 @@ export function VideoPlayerPanel({
     return () => {
       cancelled = true;
     };
-  }, [initialVideoId, resource.resourceId]);
+  }, [exactVideoId, exactDuration, taskContext, taskScope?.kind, taskScope?.resourceId, resource.resourceId, libraryRetry]);
 
   useEffect(() => {
-    if (!selectedVideo) {
+    setVerifiedVideoId(null);
+    setProgress(null);
+    if (!selectedVideo || !selectedPlaylistId || !libraryMatches || !playableCatalogVideo(selectedVideo) ||
+        (locked && (selectedVideo.id !== exactVideoId || (exactDuration !== null && selectedVideo.durationSeconds !== exactDuration)))) {
       setProgress(null);
       return;
     }
 
-    setProgress(selectedVideo.progress ?? null);
     let cancelled = false;
     setLoadingProgress(true);
     setError(null);
@@ -442,7 +504,19 @@ export function VideoPlayerPanel({
       `/youtube-videos/${selectedVideo.id}/progress`,
     )
       .then((payload) => {
-        if (!cancelled) setProgress(payload.progress);
+        const fresh = verifiedVideoProgress(selectedVideo, selectedPlaylistId, payload);
+        if (!cancelled) {
+          setProgress(fresh);
+          setVerifiedVideoId(selectedVideo.id);
+          setLibrary((current) => current ? {
+            ...current,
+            playlists: current.playlists.map((playlist) => ({
+              ...playlist,
+              videos: playlist.videos.map((video) => video.id === selectedVideo.id ? { ...video, progress: fresh } : video),
+            })),
+          } : current);
+          if (fresh) onProgressChangedRef.current?.(fresh);
+        }
       })
       .catch((caught) => {
         if (!cancelled) {
@@ -456,9 +530,10 @@ export function VideoPlayerPanel({
     return () => {
       cancelled = true;
     };
-  }, [selectedVideo?.id]);
+  }, [selectedVideo?.id, selectedVideo?.youtubeVideoId, selectedVideo?.durationSeconds, selectedPlaylistId, libraryMatches, exactVideoId, exactDuration, progressRetry]);
 
-  const saveProgress = (saved: VideoProgress) => {
+  const saveProgress = useCallback((saved: VideoProgress) => {
+    if (saved.youtubePlaylistVideoId !== selectedVideoIdRef.current) return;
     setProgress(saved);
     setLibrary((current) => current ? {
       ...current,
@@ -471,10 +546,13 @@ export function VideoPlayerPanel({
         )),
       })),
     } : current);
-    onProgressChanged?.(saved);
-  };
+    onProgressChangedRef.current?.(saved);
+  }, []);
 
-  return <div className="youtube-player-panel">
+  const selectedIndex = videos.findIndex((video) => video.id === selectedVideoId);
+  const completedCount = videos.filter((video) => video.progress?.completed).length;
+
+  return <div className={`youtube-player-panel ${compact ? "is-inline" : ""}`}>
     {loadingLibrary && <div className="youtube-player-state">Videolar yükleniyor…</div>}
 
     {!loadingLibrary && library && videos.length === 0 && (
@@ -487,39 +565,47 @@ export function VideoPlayerPanel({
     {selectedVideo && (
       <>
         <section className="youtube-player-stage">
-          {loadingProgress
-            ? <div className="youtube-player-state">İlerleme yükleniyor…</div>
+          {loadingProgress || !user || verifiedVideoId !== selectedVideo.id || !libraryMatches || !selectedPlaylistId || !playableCatalogVideo(selectedVideo) || (locked && (selectedVideo.id !== exactVideoId || (exactDuration !== null && selectedVideo.durationSeconds !== exactDuration)))
+            ? <div className="youtube-player-state">{error && !loadingProgress ? "İlerleme doğrulanamadı." : "İlerleme yükleniyor…"}</div>
             : <EmbeddedYouTubePlayer
+                userId={user.id}
+                checkpointContext={checkpointContext}
                 key={selectedVideo.id}
+                playlistId={selectedPlaylistId}
                 video={selectedVideo}
                 initialProgress={progress}
                 onSaved={saveProgress}
                 onError={setError}
                 playerRef={playerRef}
+                playback={playback}
               />}
         </section>
 
         <section className="youtube-current-video">
           <div>
-            <span>Şimdi izleniyor</span>
+            <span>{verifiedVideoId === selectedVideo.id ? "Şimdi izleniyor" : "Seçilen video"}</span>
             <strong>{selectedVideo.title}</strong>
             {selectedVideo.channelTitle && <small>{selectedVideo.channelTitle}</small>}
           </div>
-          <div className="youtube-current-progress">
-            <strong>%{progress?.progressPercent ?? 0}</strong>
+          {verifiedVideoId === selectedVideo.id && <div className="youtube-current-progress">
+            <strong>{youtubeTimeLabel(progress?.lastPositionSeconds ?? 0)} / {youtubeTimeLabel(selectedVideo.durationSeconds)}</strong>
             <span>
-              {youtubeTimeLabel(progress?.watchedSeconds ?? 0)}
-              {" / "}
-              {youtubeTimeLabel(selectedVideo.durationSeconds)}
+              Bu video · %{progress?.progressPercent ?? 0} izlendi
             </span>
-          </div>
+          </div>}
         </section>
       </>
     )}
 
-    {error && <div className="youtube-player-error" role="alert">{error}</div>}
-
-    {library?.playlists.map((playlist) => (
+    {error && <div className="youtube-player-error" role="alert">{error} <button type="button" onClick={() => {
+      setVerifiedVideoId(null);
+      if (selectedVideo) setProgressRetry((value) => value + 1);
+      else setLibraryRetry((value) => value + 1);
+    }}>Tekrar dene</button></div>}
+    {taskContext && !locked && !selectedVideo && libraryMatches && !loadingLibrary && <p>Bu görev için kesin video kapsamı belirtilmemiş. Kaynaktan izlemek istediğin videoyu seç.</p>}
+    {locked && <p>Bu çalışma göreve bağlı video ile sınırlı. Diğer dersleri Kaynaklar’dan açabilirsin.</p>}
+    {selectedVideo && !locked && <div className="youtube-series-controls"><button type="button" disabled={selectedIndex <= 0 || !playableCatalogVideo(videos[selectedIndex - 1]!)} onClick={() => setSelectedVideoId(videos[selectedIndex - 1]!.id)}>← Önceki</button><span>Seri · {completedCount} / {videos.length} tamamlandı</span><button type="button" disabled={selectedIndex >= videos.length - 1 || !playableCatalogVideo(videos[selectedIndex + 1]!)} onClick={() => setSelectedVideoId(videos[selectedIndex + 1]!.id)}>Sonraki →</button></div>}
+    <details className="youtube-library-disclosure" open={compact ? undefined : true}><summary>Video listesi · {videos.length} ders</summary>{library?.playlists.map((playlist) => (
       <section className="youtube-playlist-section" key={playlist.id}>
         <header>
           <div>
@@ -536,8 +622,10 @@ export function VideoPlayerPanel({
               type="button"
               className={active ? "is-active" : ""}
               aria-pressed={active}
+              disabled={locked || !libraryMatches || !playableCatalogVideo(video)}
               onClick={() => {
-                setProgress(video.progress ?? null);
+                setVerifiedVideoId(null);
+                setProgress(null);
                 setSelectedVideoId(video.id);
               }}
               key={video.id}
@@ -557,7 +645,7 @@ export function VideoPlayerPanel({
           })}
         </div>
       </section>
-    ))}
+    ))}</details>
   </div>;
 }
 

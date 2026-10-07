@@ -1,0 +1,122 @@
+[
+  {
+    "route": "today",
+    "requested": {
+      "width": 1440,
+      "height": 900
+    },
+    "ctaEnabled": true,
+    "height": 900,
+    "overflow": false,
+    "pageInputHeight": 42,
+    "pageInputWidth": 80,
+    "panelsInsideViewport": true,
+    "ratio": 1.7778372570025085,
+    "width": 1440
+  },
+  {
+    "route": "session",
+    "requested": {
+      "width": 1440,
+      "height": 900
+    },
+    "ctaEnabled": true,
+    "height": 900,
+    "overflow": false,
+    "pageInputHeight": 42,
+    "pageInputWidth": 80,
+    "panelsInsideViewport": true,
+    "ratio": 1.777833351759424,
+    "width": 1440
+  },
+  {
+    "route": "today",
+    "requested": {
+      "width": 834,
+      "height": 1112
+    },
+    "ctaEnabled": true,
+    "height": 1112,
+    "overflow": false,
+    "pageInputHeight": 42,
+    "pageInputWidth": 80,
+    "panelsInsideViewport": true,
+    "ratio": 1.7777779259419135,
+    "width": 834
+  },
+  {
+    "route": "session",
+    "requested": {
+      "width": 834,
+      "height": 1112
+    },
+    "ctaEnabled": true,
+    "height": 1112,
+    "overflow": false,
+    "pageInputHeight": 42,
+    "pageInputWidth": 80,
+    "panelsInsideViewport": true,
+    "ratio": 1.777777893449778,
+    "width": 834
+  },
+  {
+    "route": "today",
+    "requested": {
+      "width": 390,
+      "height": 844
+    },
+    "ctaEnabled": true,
+    "height": 844,
+    "overflow": false,
+    "pageInputHeight": 44,
+    "pageInputWidth": 90,
+    "panelsInsideViewport": true,
+    "ratio": 1.7777777178159415,
+    "width": 390
+  },
+  {
+    "route": "session",
+    "requested": {
+      "width": 390,
+      "height": 844
+    },
+    "ctaEnabled": true,
+    "height": 844,
+    "overflow": false,
+    "pageInputHeight": 44,
+    "pageInputWidth": 90,
+    "panelsInsideViewport": true,
+    "ratio": 1.7777777178159415,
+    "width": 390
+  },
+  {
+    "route": "today",
+    "requested": {
+      "width": 320,
+      "height": 740
+    },
+    "ctaEnabled": true,
+    "height": 740,
+    "overflow": false,
+    "pageInputHeight": 44,
+    "pageInputWidth": 90,
+    "panelsInsideViewport": true,
+    "ratio": 1.777777664636574,
+    "width": 320
+  },
+  {
+    "route": "session",
+    "requested": {
+      "width": 320,
+      "height": 740
+    },
+    "ctaEnabled": true,
+    "height": 740,
+    "overflow": false,
+    "pageInputHeight": 44,
+    "pageInputWidth": 90,
+    "panelsInsideViewport": true,
+    "ratio": 1.777777664636574,
+    "width": 320
+  }
+]

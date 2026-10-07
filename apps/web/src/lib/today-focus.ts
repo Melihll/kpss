@@ -27,6 +27,7 @@ export interface ResolvedTodayFocus<T extends TodayFocusTask> {
 export function resolveTodayFocus<T extends TodayFocusTask>(input: {
   readonly recommendation: TodayFocusRecommendation<T> | null;
   readonly todayTasks: readonly T[];
+  readonly materialTasks?: readonly T[];
   readonly dailyMinutes: ReadonlyMap<string, number>;
   readonly hasActiveSession: boolean;
 }): ResolvedTodayFocus<T> | null {
@@ -34,7 +35,8 @@ export function resolveTodayFocus<T extends TodayFocusTask>(input: {
 
   if (input.recommendation) {
     return {
-      task: input.recommendation.task,
+      // /tasks/next chooses the task; weekly-plan/current owns material_scope.
+      task: (input.materialTasks ?? input.todayTasks).find((task) => task.id === input.recommendation?.task.id) ?? input.recommendation.task,
       reason: input.recommendation.reason,
       remainingMinutes: Math.max(
         0,

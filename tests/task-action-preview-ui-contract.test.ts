@@ -33,7 +33,7 @@ describe("P1-06B Today task action UI safety contract", () => {
 
   it("does not silently recalculate the plan while Today loads", () => {
     const loadStart = today.indexOf("const load = useCallback");
-    const loadEnd = today.indexOf("useEffect(() => { void load();", loadStart);
+    const loadEnd = today.indexOf("const { openTaskMaterial", loadStart);
     expect(loadStart).toBeGreaterThan(-1);
     expect(loadEnd).toBeGreaterThan(loadStart);
     expect(today.slice(loadStart, loadEnd)).not.toContain("plans/current/recalculate");

@@ -1,11 +1,13 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { Link } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { ResourceDetailDrawer, type ResourceDetailTab } from "../components/ResourceDetailDrawer";
 import { callAppApi } from "../lib/app-api";
 import type { ResourcePageProgress, ResourceProgressResponse } from "../lib/resource-progress-ui";
 import { useRoadmap } from "../hooks/useRoadmap";
 import { useResourceDiscovery } from "../hooks/useResourceDiscovery";
-import { dateLabel, RESOURCE_TYPE_LABELS, type ResourceForecast } from "../lib/roadmap";
+import { dateLabel, isoToday, RESOURCE_TYPE_LABELS, type ResourceForecast } from "../lib/roadmap";
+import { taskMaterialResourceId } from "../lib/today-material-actions";
 import { mergeDiscoveredResources } from "../lib/resource-discovery";
 
 type ResourceState = "active" | "priority" | "queued" | "completed" | "waiting";
@@ -174,6 +176,7 @@ export function ResourcesPage() {
           const state = resourceState(resource, index, currentIndex);
           const pageProgress = pageProgressByResource[resource.resourceId] ?? null;
           const progress = pageProgress?.progressPercent ?? (resource.completed ? 100 : resource.progressPercent);
+          const resumeTask = data?.currentWeek?.tasks.find((task) => task.planned_date === isoToday() && !["completed", "cancelled"].includes(task.status) && taskMaterialResourceId(task) === resource.resourceId);
           return <article className={`library-resource-row is-${state}`} style={{ "--resource-row-delay": `${index * 32}ms` } as CSSProperties} key={resource.resourceId}>
             <span className="resource-sequence" aria-hidden="true">{state === "completed" ? <Icon name="check" weight="bold" /> : String(index + 1).padStart(2, "0")}</span>
             <div className="resource-primary"><div className="resource-kicker"><span>{STATE_LABELS[state]}</span><i aria-hidden="true">·</i><small>{RESOURCE_TYPE_LABELS[resource.resourceType ?? ""] ?? "Kaynak"}</small></div><strong>{resource.resourceName}</strong><small>{resource.publisher || "Yayıncı bilgisi yok"}</small></div>
@@ -185,6 +188,7 @@ export function ResourcesPage() {
               <span>Tahmini bitiş</span>
               <strong>{resource.completed ? "Tamamlandı" : resource.forecastFinishDate ? finishDateLabel(resource.forecastFinishDate) : "Sınava kadar"}</strong>
               <div className="resource-material-actions">
+                <Link className="resource-continue-link" to={resumeTask ? `/?task=${resumeTask.id}` : `/week?resource=${resource.resourceId}`}>{resumeTask ? "Çalışmaya dön →" : "Görev planla →"}</Link>
                 <button
                   className="resource-page-progress-button"
                   type="button"

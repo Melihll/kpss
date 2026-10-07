@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-05T15:46:11.646Z",
+  "mode": "LOCAL controlled missing resource-to-playlist mapping",
+  "before": [
+    {
+      "id": "8d93ebe2-e86c-4863-af7a-eaf3a084d881",
+      "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+      "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+      "resource_id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+      "youtube_playlist_id": "b0fdaae0-cc0f-4236-adef-f4171cae40b2"
+    }
+  ],
+  "changed": [
+    {
+      "id": "8d93ebe2-e86c-4863-af7a-eaf3a084d881",
+      "youtube_playlist_id": null
+    }
+  ],
+  "restorePlaylistId": "b0fdaae0-cc0f-4236-adef-f4171cae40b2",
+  "restoredAt": "2026-10-05T15:47:04.865Z",
+  "restored": [
+    {
+      "id": "8d93ebe2-e86c-4863-af7a-eaf3a084d881",
+      "resource_id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+      "youtube_playlist_id": "b0fdaae0-cc0f-4236-adef-f4171cae40b2"
+    }
+  ]
+}

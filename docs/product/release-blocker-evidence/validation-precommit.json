@@ -1,0 +1,20 @@
+{
+  "tests": 1535,
+  "testFiles": 204,
+  "fullNonIntegrationSuite": "PASS",
+  "typecheck": "PASS (packages/domain + apps/web)",
+  "scopedLint": "PASS (19 files, strict unused/import/DEV isolation checks)",
+  "productionBuild": "PASS",
+  "security": "PASS (ownership/JWT contract tests, no credentials in release set)",
+  "safetyScripts": [
+    "check-ai-coach-safety",
+    "check-ai-coach-plan-preview-safety",
+    "check-ai-economics-v1-safety",
+    "check-planning-v2-shadow-safety",
+    "check-canonical-planner-v2-readonly-safety",
+    "check-coach-context-v1-readonly-safety"
+  ],
+  "legacy6GA": "SUPERSEDED, not counted as current gate",
+  "diffCheck": "PASS",
+  "production": "NOT DEPLOYED"
+}

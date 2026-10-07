@@ -1,0 +1,380 @@
+{
+  "runtime": "PostgREST 14.18",
+  "immediateFreshTokenCycles": 10,
+  "requests": 60,
+  "failed": 0,
+  "retries": 0,
+  "artificialLoginDelay": false,
+  "cycles": [
+    {
+      "cycle": 1,
+      "at": "2026-10-05T16:02:14.300Z",
+      "iat": 1791216131,
+      "requests": [
+        {
+          "route": "/study-sessions/active",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/weekly-plan/current",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/execution/summary",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/p48/roadmap",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/resources/848517eb-a9ed-4d8e-ad1a-ba5020f25d4d/youtube-videos",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/youtube-videos/9eb7bfba-1a41-4fb5-a098-1a29474c72fa/progress",
+          "status": 200,
+          "error": null
+        }
+      ]
+    },
+    {
+      "cycle": 2,
+      "at": "2026-10-05T16:02:15.020Z",
+      "iat": 1791216134,
+      "requests": [
+        {
+          "route": "/study-sessions/active",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/weekly-plan/current",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/execution/summary",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/p48/roadmap",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/resources/848517eb-a9ed-4d8e-ad1a-ba5020f25d4d/youtube-videos",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/youtube-videos/9eb7bfba-1a41-4fb5-a098-1a29474c72fa/progress",
+          "status": 200,
+          "error": null
+        }
+      ]
+    },
+    {
+      "cycle": 3,
+      "at": "2026-10-05T16:02:15.449Z",
+      "iat": 1791216135,
+      "requests": [
+        {
+          "route": "/study-sessions/active",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/weekly-plan/current",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/execution/summary",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/p48/roadmap",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/resources/848517eb-a9ed-4d8e-ad1a-ba5020f25d4d/youtube-videos",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/youtube-videos/9eb7bfba-1a41-4fb5-a098-1a29474c72fa/progress",
+          "status": 200,
+          "error": null
+        }
+      ]
+    },
+    {
+      "cycle": 4,
+      "at": "2026-10-05T16:02:15.842Z",
+      "iat": 1791216135,
+      "requests": [
+        {
+          "route": "/study-sessions/active",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/weekly-plan/current",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/execution/summary",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/p48/roadmap",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/resources/848517eb-a9ed-4d8e-ad1a-ba5020f25d4d/youtube-videos",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/youtube-videos/9eb7bfba-1a41-4fb5-a098-1a29474c72fa/progress",
+          "status": 200,
+          "error": null
+        }
+      ]
+    },
+    {
+      "cycle": 5,
+      "at": "2026-10-05T16:02:16.248Z",
+      "iat": 1791216136,
+      "requests": [
+        {
+          "route": "/study-sessions/active",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/weekly-plan/current",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/execution/summary",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/p48/roadmap",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/resources/848517eb-a9ed-4d8e-ad1a-ba5020f25d4d/youtube-videos",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/youtube-videos/9eb7bfba-1a41-4fb5-a098-1a29474c72fa/progress",
+          "status": 200,
+          "error": null
+        }
+      ]
+    },
+    {
+      "cycle": 6,
+      "at": "2026-10-05T16:02:16.544Z",
+      "iat": 1791216136,
+      "requests": [
+        {
+          "route": "/study-sessions/active",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/weekly-plan/current",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/execution/summary",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/p48/roadmap",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/resources/848517eb-a9ed-4d8e-ad1a-ba5020f25d4d/youtube-videos",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/youtube-videos/9eb7bfba-1a41-4fb5-a098-1a29474c72fa/progress",
+          "status": 200,
+          "error": null
+        }
+      ]
+    },
+    {
+      "cycle": 7,
+      "at": "2026-10-05T16:02:16.794Z",
+      "iat": 1791216136,
+      "requests": [
+        {
+          "route": "/study-sessions/active",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/weekly-plan/current",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/execution/summary",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/p48/roadmap",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/resources/848517eb-a9ed-4d8e-ad1a-ba5020f25d4d/youtube-videos",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/youtube-videos/9eb7bfba-1a41-4fb5-a098-1a29474c72fa/progress",
+          "status": 200,
+          "error": null
+        }
+      ]
+    },
+    {
+      "cycle": 8,
+      "at": "2026-10-05T16:02:17.121Z",
+      "iat": 1791216136,
+      "requests": [
+        {
+          "route": "/study-sessions/active",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/weekly-plan/current",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/execution/summary",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/p48/roadmap",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/resources/848517eb-a9ed-4d8e-ad1a-ba5020f25d4d/youtube-videos",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/youtube-videos/9eb7bfba-1a41-4fb5-a098-1a29474c72fa/progress",
+          "status": 200,
+          "error": null
+        }
+      ]
+    },
+    {
+      "cycle": 9,
+      "at": "2026-10-05T16:02:17.428Z",
+      "iat": 1791216137,
+      "requests": [
+        {
+          "route": "/study-sessions/active",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/weekly-plan/current",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/execution/summary",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/p48/roadmap",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/resources/848517eb-a9ed-4d8e-ad1a-ba5020f25d4d/youtube-videos",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/youtube-videos/9eb7bfba-1a41-4fb5-a098-1a29474c72fa/progress",
+          "status": 200,
+          "error": null
+        }
+      ]
+    },
+    {
+      "cycle": 10,
+      "at": "2026-10-05T16:02:17.713Z",
+      "iat": 1791216137,
+      "requests": [
+        {
+          "route": "/study-sessions/active",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/weekly-plan/current",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/execution/summary",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/p48/roadmap",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/resources/848517eb-a9ed-4d8e-ad1a-ba5020f25d4d/youtube-videos",
+          "status": 200,
+          "error": null
+        },
+        {
+          "route": "/youtube-videos/9eb7bfba-1a41-4fb5-a098-1a29474c72fa/progress",
+          "status": 200,
+          "error": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1377 @@
+{
+  "measuredAt": "2026-10-07T06:35:09.580Z",
+  "head": "ea17ee281cb192304abfb518ff4f50b1ab3ecfdd",
+  "branch": "develop",
+  "upstream": "origin/develop",
+  "aheadBehind": "0\t0",
+  "worktree": [
+    "M .gitignore",
+    " M apps/web/index.html",
+    " M apps/web/src/App.tsx",
+    " M apps/web/src/components/CoachDrawer.tsx",
+    " M apps/web/src/components/PhysicalStudyFinishDialog.tsx",
+    " M apps/web/src/components/PlanningPanel.tsx",
+    " M apps/web/src/components/QuickAddTaskDrawer.tsx",
+    " M apps/web/src/components/ResourceDetailDrawer.tsx",
+    " M apps/web/src/components/ResourceProgressDrawer.tsx",
+    " M apps/web/src/components/StudyTodayPanel.tsx",
+    " M apps/web/src/components/TaskActionPreviewDrawer.tsx",
+    " M apps/web/src/components/VideoPlayerDrawer.tsx",
+    " M apps/web/src/components/layout/AppShell.tsx",
+    " D apps/web/src/components/layout/MobileNav.tsx",
+    " D apps/web/src/components/layout/Sidebar.tsx",
+    " M apps/web/src/hooks/useRoadmap.ts",
+    " M apps/web/src/lib/app-api.ts",
+    " M apps/web/src/lib/task-material-presentation.test.ts",
+    " M apps/web/src/lib/task-material-presentation.ts",
+    " M apps/web/src/lib/today-focus.test.ts",
+    " M apps/web/src/lib/today-focus.ts",
+    " M apps/web/src/lib/youtube-player-progress.test.ts",
+    " M apps/web/src/lib/youtube-player-progress.ts",
+    " M apps/web/src/main.tsx",
+    " M apps/web/src/pages/HomePage.tsx",
+    " M apps/web/src/pages/LoginPage.tsx",
+    " M apps/web/src/pages/ProgressPage.tsx",
+    " M apps/web/src/pages/RegisterPage.tsx",
+    " M apps/web/src/pages/ResourcesPage.tsx",
+    " M apps/web/src/pages/RoadmapPage.tsx",
+    " M apps/web/src/pages/SettingsPage.tsx",
+    " M apps/web/src/pages/WeekPage.tsx",
+    " M apps/web/src/styles.css",
+    " M docs/product/CURRENT_SPRINT.md",
+    " M docs/product/PROJECT_HANDOFF.md",
+    " M package.json",
+    " M pnpm-lock.yaml",
+    " M scripts/check-ai-coach-6g-local-acceptance.mjs",
+    " M scripts/supabase-command.mjs",
+    " M supabase/functions/_shared/task-action-preview.ts",
+    " M supabase/functions/app-api/index.ts",
+    " M tests/evre7a-today-coach-entry.test.ts",
+    " M tests/evre7b-today-problem-solving.test.ts",
+    " M tests/evre7c-progress-readonly-planning.test.ts",
+    " M tests/task-action-preview-ui-contract.test.ts",
+    " M tests/task-action-preview.test.ts",
+    " M tests/today-material-actions-ui-contract.test.ts",
+    " M tests/youtube-player-ui-contract.test.ts",
+    "?? apps/web/public/",
+    "?? apps/web/src/components/ProductDialog.tsx",
+    "?? apps/web/src/components/StudyMaterialWorkspace.test.ts",
+    "?? apps/web/src/components/StudyMaterialWorkspace.tsx",
+    "?? apps/web/src/components/layout/TopNavigation.test.ts",
+    "?? apps/web/src/components/layout/TopNavigation.tsx",
+    "?? apps/web/src/components/layout/top-navigation.css",
+    "?? apps/web/src/dev-video-entry.tsx",
+    "?? apps/web/src/dev-video-review.css",
+    "?? apps/web/src/dev-video-review.tsx",
+    "?? apps/web/src/lib/app-api-owner.test.ts",
+    "?? apps/web/src/lib/dialog-focus.ts",
+    "?? apps/web/src/lib/local-video-review.test.ts",
+    "?? apps/web/src/lib/local-video-review.ts",
+    "?? apps/web/src/lib/task-video.test.ts",
+    "?? apps/web/src/lib/task-video.ts",
+    "?? apps/web/src/lib/youtube-progress-writer.test.ts",
+    "?? apps/web/src/lib/youtube-progress-writer.ts",
+    "?? apps/web/src/product-entry.tsx",
+    "?? apps/web/src/ux-lab/",
+    "?? apps/web/src/workspace.css",
+    "?? assets/",
+    "?? docs/product/CONCEPT_B_RELEASE_FREEZE.md",
+    "?? docs/product/FRONTEND_MIGRATION.md",
+    "?? docs/product/LOGO_INTEGRATION.md",
+    "?? docs/product/UX_REDESIGN.md",
+    "?? docs/product/VIDEO_INTEGRATION_AUDIT.md",
+    "?? docs/product/VIDEO_LOCAL_AUTHENTICATED_ACCEPTANCE.md",
+    "?? docs/product/brand-evidence/",
+    "?? docs/product/release-blocker-evidence/",
+    "?? docs/product/release-freeze-evidence/",
+    "?? docs/product/ux-lab-evidence/",
+    "?? scripts/build-production-web.mjs",
+    "?? scripts/check-ux-lab.mjs",
+    "?? scripts/local-frontend-acceptance-proxy.mjs",
+    "?? scripts/local-video-acceptance.mjs",
+    "?? scripts/production-build-safety.mjs",
+    "?? scripts/release-candidate-inventory.mjs",
+    "?? scripts/release-candidate-snapshot.mjs",
+    "?? scripts/setup-local-frontend-acceptance-fixture.mjs",
+    "?? scripts/setup-local-video-acceptance-fixture.mjs",
+    "?? tests/local-frontend-acceptance-safety.test.ts",
+    "?? tests/local-video-acceptance-safety.test.ts",
+    "?? tests/production-build-safety.test.ts",
+    "?? tests/video-integration-ui-contract.test.ts"
+  ],
+  "documentedWebBaseline": "395a536d18b79ea124bdac0d4498a021d9ce9bc0",
+  "documentedAppApiBaseline": "735de8d96edcef78816a0843e72669c7d16a034b",
+  "edgeClosures": {
+    "ai-coach-interpret": {
+      "files": [
+        "supabase/functions/_shared/ai-coach.bundle.js",
+        "supabase/functions/_shared/ai-coach/openai-gateway.ts",
+        "supabase/functions/_shared/ai-coach/provider-attempt-v1.ts",
+        "supabase/functions/ai-coach-interpret/handler.ts",
+        "supabase/functions/ai-coach-interpret/index.ts"
+      ],
+      "changedSinceDocumentedAppApiSource": []
+    },
+    "ai-coach-plan-preview": {
+      "files": [
+        "supabase/functions/_shared/adaptive.ts",
+        "supabase/functions/_shared/ai-coach.bundle.js",
+        "supabase/functions/_shared/ai-coach/material-context.ts",
+        "supabase/functions/_shared/ai-coach/openai-gateway.ts",
+        "supabase/functions/_shared/ai-coach/provider-attempt-v1.ts",
+        "supabase/functions/_shared/ai-coach/target-capacity.ts",
+        "supabase/functions/_shared/canonical-capacity-readonly.ts",
+        "supabase/functions/_shared/capacity-overrides.ts",
+        "supabase/functions/_shared/material-workload.ts",
+        "supabase/functions/_shared/planning-v2-shadow.ts",
+        "supabase/functions/_shared/planning-v2.bundle.js",
+        "supabase/functions/_shared/planning.bundle.js",
+        "supabase/functions/ai-coach-interpret/handler.ts",
+        "supabase/functions/ai-coach-plan-preview/handler.ts",
+        "supabase/functions/ai-coach-plan-preview/index.ts"
+      ],
+      "changedSinceDocumentedAppApiSource": []
+    },
+    "app-api": {
+      "files": [
+        "packages/domain/src/ai-coach/ai-economics-v1.ts",
+        "packages/domain/src/ai-coach/coach-signal-v1.ts",
+        "packages/domain/src/ai-coach/proactive-coach-card-v1.ts",
+        "packages/domain/src/ai-coach/proactive-coach-hysteresis-v1.ts",
+        "packages/domain/src/ai-coach/proactive-coach-materiality-policy-v1.ts",
+        "packages/domain/src/ai-coach/proactive-coach-runtime-state-v1.ts",
+        "packages/domain/src/ai-coach/proactive-coach-selection-v1.ts",
+        "supabase/functions/_shared/adaptive.ts",
+        "supabase/functions/_shared/ai-coach.bundle.js",
+        "supabase/functions/_shared/ai-coach/ai-budget-reservation-v1.ts",
+        "supabase/functions/_shared/ai-coach/ai-usage-ledger-v1.ts",
+        "supabase/functions/_shared/ai-coach/openai-coach-request-v1.ts",
+        "supabase/functions/_shared/ai-coach/openai-dev-gateway-v1.ts",
+        "supabase/functions/_shared/ai-coach/openai-input-token-count-v1.ts",
+        "supabase/functions/_shared/ai-coach/openai-production-gateway-v1.ts",
+        "supabase/functions/_shared/ai-coach/openai-server-secret-v1.ts",
+        "supabase/functions/_shared/ai-coach/proactive-coach-actions-http-v1.ts",
+        "supabase/functions/_shared/ai-coach/proactive-coach-http-v1.ts",
+        "supabase/functions/_shared/ai-coach/proactive-coach-runtime-v1.ts",
+        "supabase/functions/_shared/ai-coach/provider-attempt-v1.ts",
+        "supabase/functions/_shared/ai-coach/provider-fx-acquisition-v1.ts",
+        "supabase/functions/_shared/ai-coach/provider-fx-policy-v1.ts",
+        "supabase/functions/_shared/ai-coach/provider-openai-billing-audit-v1.ts",
+        "supabase/functions/_shared/ai-coach/provider-openai-billing-bound-v1.ts",
+        "supabase/functions/_shared/ai-coach/provider-runtime-activation-v1.ts",
+        "supabase/functions/_shared/ai-coach/provider-runtime-catalog-v1.ts",
+        "supabase/functions/_shared/ai-coach/provider-runtime-config-v1.ts",
+        "supabase/functions/_shared/ai-coach/reactive-coach-dev-runtime-v1.ts",
+        "supabase/functions/_shared/ai-coach/reactive-coach-executor-v1.ts",
+        "supabase/functions/_shared/ai-coach/reactive-coach-http-v1.ts",
+        "supabase/functions/_shared/ai-coach/reactive-coach-production-runtime-v1.ts",
+        "supabase/functions/_shared/ai-coach/reactive-coach-route-v1.ts",
+        "supabase/functions/_shared/ai-coach/read-only-coach-orchestrator-v1.ts",
+        "supabase/functions/_shared/canonical-capacity-readonly.ts",
+        "supabase/functions/_shared/canonical-material-loader.ts",
+        "supabase/functions/_shared/canonical-material-shadow.ts",
+        "supabase/functions/_shared/canonical-planner-v2-readonly.ts",
+        "supabase/functions/_shared/canonical-workload-evidence.ts",
+        "supabase/functions/_shared/capacity-overrides.ts",
+        "supabase/functions/_shared/capacity-summary.ts",
+        "supabase/functions/_shared/coach-context-v1-readonly.ts",
+        "supabase/functions/_shared/completed-study.ts",
+        "supabase/functions/_shared/daily-task-order.ts",
+        "supabase/functions/_shared/mastery.ts",
+        "supabase/functions/_shared/material-workload.ts",
+        "supabase/functions/_shared/p48-capacity-source.ts",
+        "supabase/functions/_shared/physical-study-lifecycle.ts",
+        "supabase/functions/_shared/pilot.ts",
+        "supabase/functions/_shared/planner-v2-persisted-readonly.ts",
+        "supabase/functions/_shared/planner-v2-proposal-capability.ts",
+        "supabase/functions/_shared/planner-v2-proposal-http.ts",
+        "supabase/functions/_shared/planning-v2.bundle.js",
+        "supabase/functions/_shared/planning.bundle.js",
+        "supabase/functions/_shared/proactive-coach-active-session-readonly.ts",
+        "supabase/functions/_shared/proactive-coach-runtime-state-readonly.ts",
+        "supabase/functions/_shared/quick-add-task-preview.ts",
+        "supabase/functions/_shared/recommendation-window.ts",
+        "supabase/functions/_shared/resource-progress.ts",
+        "supabase/functions/_shared/task-action-preview.ts",
+        "supabase/functions/_shared/task-context.ts",
+        "supabase/functions/_shared/task-material-scope.ts",
+        "supabase/functions/_shared/topic-resource-link.ts",
+        "supabase/functions/_shared/youtube-playlist.ts",
+        "supabase/functions/_shared/youtube-video-progress.ts",
+        "supabase/functions/app-api/index.ts"
+      ],
+      "changedSinceDocumentedAppApiSource": [
+        "packages/domain/src/ai-coach/proactive-coach-selection-v1.ts",
+        "supabase/functions/_shared/task-action-preview.ts",
+        "supabase/functions/_shared/task-material-scope.ts",
+        "supabase/functions/app-api/index.ts"
+      ]
+    },
+    "planning-v2-shadow": {
+      "files": [
+        "supabase/functions/_shared/adaptive.ts",
+        "supabase/functions/_shared/canonical-capacity-readonly.ts",
+        "supabase/functions/_shared/capacity-overrides.ts",
+        "supabase/functions/_shared/planning-v2-shadow.ts",
+        "supabase/functions/_shared/planning-v2.bundle.js",
+        "supabase/functions/_shared/planning.bundle.js",
+        "supabase/functions/planning-v2-shadow/handler.ts",
+        "supabase/functions/planning-v2-shadow/index.ts"
+      ],
+      "changedSinceDocumentedAppApiSource": []
+    },
+    "scheduler-worker": {
+      "files": [
+        "supabase/functions/_shared/adaptive.ts",
+        "supabase/functions/_shared/canonical-capacity-readonly.ts",
+        "supabase/functions/_shared/capacity-overrides.ts",
+        "supabase/functions/_shared/completed-study.ts",
+        "supabase/functions/_shared/p48-capacity-source.ts",
+        "supabase/functions/_shared/p48-week.ts",
+        "supabase/functions/_shared/pilot.ts",
+        "supabase/functions/_shared/planning.bundle.js",
+        "supabase/functions/_shared/recommendation-window.ts",
+        "supabase/functions/_shared/scheduler-plan.ts",
+        "supabase/functions/_shared/task-context.ts",
+        "supabase/functions/_shared/telegram-card.ts",
+        "supabase/functions/_shared/telegram-coach.ts",
+        "supabase/functions/_shared/telegram-presentation.ts",
+        "supabase/functions/_shared/telegram-transport.ts",
+        "supabase/functions/scheduler-worker/index.ts"
+      ],
+      "changedSinceDocumentedAppApiSource": []
+    },
+    "telegram-webhook": {
+      "files": [
+        "supabase/functions/_shared/adaptive.ts",
+        "supabase/functions/_shared/canonical-capacity-readonly.ts",
+        "supabase/functions/_shared/capacity-overrides.ts",
+        "supabase/functions/_shared/completed-study.ts",
+        "supabase/functions/_shared/mastery.ts",
+        "supabase/functions/_shared/p48-capacity-source.ts",
+        "supabase/functions/_shared/p48-week.ts",
+        "supabase/functions/_shared/pilot.ts",
+        "supabase/functions/_shared/planning.bundle.js",
+        "supabase/functions/_shared/recommendation-window.ts",
+        "supabase/functions/_shared/task-context.ts",
+        "supabase/functions/_shared/telegram-card.ts",
+        "supabase/functions/_shared/telegram-coach.ts",
+        "supabase/functions/_shared/telegram-material-summary.ts",
+        "supabase/functions/_shared/telegram-presentation.ts",
+        "supabase/functions/_shared/telegram-transport.ts",
+        "supabase/functions/telegram-webhook/index.ts"
+      ],
+      "changedSinceDocumentedAppApiSource": []
+    }
+  },
+  "databaseDiff": [],
+  "runtimeManifest": [
+    {
+      "path": "apps/web/index.html",
+      "sha256": "17d8a90d7b5f7e7bed0a4a476015f0790cd5b801349a3b77215d51979adc9adc"
+    },
+    {
+      "path": "apps/web/package.json",
+      "sha256": "233a764fb183b740bc727111abe7735d0d3653e7a5c471aa84b373b6723f397d"
+    },
+    {
+      "path": "apps/web/public/brand/kpss-kocu-logo.svg",
+      "sha256": "78471a201942d2a4634088d55487f2ea7c64f31700809361627b58db98eb254b"
+    },
+    {
+      "path": "apps/web/public/brand/kpss-kocu-mark.svg",
+      "sha256": "296887f0fd299aca44d9e92caf450ccd50b4a4ea234e873f11805c1212a68080"
+    },
+    {
+      "path": "apps/web/src/App.tsx",
+      "sha256": "2c19d3a5d019281129d1fd6590a1745e09d10930e94b0cfb152c03c65d380522"
+    },
+    {
+      "path": "apps/web/src/auth/AuthContext.tsx",
+      "sha256": "a388a3e2e3cd25001935b0dd328d3d471b7a5cc478752713341e6ea8b57d3c03"
+    },
+    {
+      "path": "apps/web/src/auth/ProtectedRoute.tsx",
+      "sha256": "d3109db5bd08111bef8357bd58135af1442c8ec89de5b8665286f643653080d2"
+    },
+    {
+      "path": "apps/web/src/components/AdaptivePlanningPanel.tsx",
+      "sha256": "4a625fe42f3e83291ec75e24b21ee66da96bb9203ed567bc847b723995c061c0"
+    },
+    {
+      "path": "apps/web/src/components/CoachDrawer.tsx",
+      "sha256": "cf3e812c4b692e0dcd4455ff896c0d950e09db4be9dc368f8bee7cc0ec2b886b"
+    },
+    {
+      "path": "apps/web/src/components/ExecutionPanel.tsx",
+      "sha256": "5f3ae79791a5f378e0fb5dc8a0857910af18e3232f7c035770d665dccbe0b601"
+    },
+    {
+      "path": "apps/web/src/components/Icon.tsx",
+      "sha256": "47b4e2cb840e1054d3395fa080c90ccdf8aa82246bab1e32fd31ba5c557b5944"
+    },
+    {
+      "path": "apps/web/src/components/P48RoadmapPanel.tsx",
+      "sha256": "6d2a4d5f4159acb580bc3ac155a574da174ddcdc3e3154b94dcb51cd70feec2f"
+    },
+    {
+      "path": "apps/web/src/components/PhysicalStudyFinishDialog.tsx",
+      "sha256": "12a4e45b36988a7437556bf855c2d340aebdaef908c0b6dbea77e6ed44e944eb"
+    },
+    {
+      "path": "apps/web/src/components/PlannerCoachExplanationCard.tsx",
+      "sha256": "88bcbdf3621cf015b84515981e288d20c21c617943b51dce6e375146b6f30877"
+    },
+    {
+      "path": "apps/web/src/components/PlannerV2PreviewPanel.tsx",
+      "sha256": "b3e0bd81d01a7b3b9923cd6ead409fe5078a1d747ee83ff891195c671cb84737"
+    },
+    {
+      "path": "apps/web/src/components/PlanningPanel.tsx",
+      "sha256": "3ad74336ce7264aec8541b51ca115f9ee361bcf1e38be962f5f6194ab014c141"
+    },
+    {
+      "path": "apps/web/src/components/ProactiveCoachCard.tsx",
+      "sha256": "81445a3344b5eccd8c0739039a9002720a6df70b071f51a9fb1aa52868680d12"
+    },
+    {
+      "path": "apps/web/src/components/ProactiveCoachSurface.tsx",
+      "sha256": "1aa0790e9ce43be9fe1e51d657011fbffe5d835e95d8702e5df4f4d54a7f3b64"
+    },
+    {
+      "path": "apps/web/src/components/ProductDialog.tsx",
+      "sha256": "e2495b02b3b6323f52ddc38483bf155520e3f4deeecc4f31ef8157b4287223db"
+    },
+    {
+      "path": "apps/web/src/components/QuickAddTaskDrawer.tsx",
+      "sha256": "021457cf4123bd8d84d2f394de77a5fb664d5266cebc2a3b423d71e9d1698225"
+    },
+    {
+      "path": "apps/web/src/components/ResourceDetailDrawer.tsx",
+      "sha256": "1cc4727b69cfe959f2ea424873da565a86dcfeff074ca4168e64ccf2e1dd0c6e"
+    },
+    {
+      "path": "apps/web/src/components/ResourceProgressDrawer.tsx",
+      "sha256": "171c613cc66b28214aea409f693f5371594d2cc26f145b9465018ddcad5121f8"
+    },
+    {
+      "path": "apps/web/src/components/RevisionPanel.tsx",
+      "sha256": "b728f04e0898793b6906447be800c34530621c1bc5ffb06d3eb485baab44ebb4"
+    },
+    {
+      "path": "apps/web/src/components/StudyMaterialWorkspace.tsx",
+      "sha256": "f098fb912d7de92e3e9a11731ab37c17c8e45e338cdb3c35f4ca8b7ea576cce9"
+    },
+    {
+      "path": "apps/web/src/components/StudyTodayPanel.tsx",
+      "sha256": "bc102a6abe5b3e5d4db1b5d08761896de7dfb327b58863ee5e0c4f6a5baa6ea2"
+    },
+    {
+      "path": "apps/web/src/components/TaskActionPreviewDrawer.tsx",
+      "sha256": "327e2103023b818469d5d0e11aa7c3a2ff19efac78055534d317a4d956b75696"
+    },
+    {
+      "path": "apps/web/src/components/TaskMaterialSummary.tsx",
+      "sha256": "6eacaeed88fd5f086e6470ff611a02885a38e15f67b1e90818922d8a4e69579f"
+    },
+    {
+      "path": "apps/web/src/components/TopicPerformancePanel.tsx",
+      "sha256": "0fc0e8b80ff1286766e3fa188960f4acbe68381ee894414641b0ddfc057390df"
+    },
+    {
+      "path": "apps/web/src/components/VideoPlayerDrawer.tsx",
+      "sha256": "c5ed788c9d15d2a847c4fcf8d516fa1673c83f405a00015262d4b557a4d04e15"
+    },
+    {
+      "path": "apps/web/src/components/WeeklyReportPanel.tsx",
+      "sha256": "72285e6ab7882e648aae0b9f08e72bca2ebeb47009fcfbe7193eeca276340b08"
+    },
+    {
+      "path": "apps/web/src/components/layout/AppShell.tsx",
+      "sha256": "63b435263f9a2cca2c939fdfa9abed160ecf8c4a4ccb2af744d0c1cb3d412903"
+    },
+    {
+      "path": "apps/web/src/components/layout/PageTransition.tsx",
+      "sha256": "96885de8eb63d642751e4cceab7236334e9b33725f66408356bca7042844fa8c"
+    },
+    {
+      "path": "apps/web/src/components/layout/TopNavigation.tsx",
+      "sha256": "f5a00ab0f52b6109bc26e36f27ab7e9abbc8c5ec9457ca493e6562078ee4af85"
+    },
+    {
+      "path": "apps/web/src/components/layout/top-navigation.css",
+      "sha256": "b79a3d489d70c08d755e6b3cf98f409c898c1b1b794d19c3c8de93d0e9b59499"
+    },
+    {
+      "path": "apps/web/src/dev-video-entry.tsx",
+      "sha256": "20f4ac707cf35c447bf1356736edbe151a295f8c12e149fecb1aeea2b59d3d6c"
+    },
+    {
+      "path": "apps/web/src/dev-video-review.css",
+      "sha256": "a66c70ca743548d6f4f00d42d9573f0408a355cbb9b173b8f81423d5e3789bd6"
+    },
+    {
+      "path": "apps/web/src/dev-video-review.tsx",
+      "sha256": "62c6a23a267919e54e3790537d0e65d3c77b9f634b8099adb6a4c94e92d33b9f"
+    },
+    {
+      "path": "apps/web/src/hooks/useDialogAccessibility.ts",
+      "sha256": "ef1b46d0ad3d3e80f6177b48473e9ed26effed4f735693aa643b7c134ee56f2c"
+    },
+    {
+      "path": "apps/web/src/hooks/useResourceDiscovery.ts",
+      "sha256": "3be90d717b9f771a1b3e0bfb408cf01c938b0658c5a35eb2bc2749bbd5a943c0"
+    },
+    {
+      "path": "apps/web/src/hooks/useRoadmap.ts",
+      "sha256": "d55b43b215ab4b2188ab985bc1f102562055de3e32d10eeccced785ce05daf43"
+    },
+    {
+      "path": "apps/web/src/hooks/useTaskMaterialDrawer.tsx",
+      "sha256": "065a05d101b0a57c0ed1c31380a9ab7a22300fdfe8eed294e15d6cdfb2ee079f"
+    },
+    {
+      "path": "apps/web/src/lib/ai-coach-api.ts",
+      "sha256": "51a56650006f4ee4a7402d238e263268e206aa7b1d39a06f69c871dbc34049d9"
+    },
+    {
+      "path": "apps/web/src/lib/ai-coach-presenter.ts",
+      "sha256": "a33e08cdf86f120f6370cde0f74cb7b81b2604227a6d9c3adb8e74221a1ad4a8"
+    },
+    {
+      "path": "apps/web/src/lib/app-api.ts",
+      "sha256": "9f103547e44b6af985538188cc07e4182fccbc86ef64e45eebb18264c1a23e39"
+    },
+    {
+      "path": "apps/web/src/lib/auth-validation.ts",
+      "sha256": "b3728d51b7ea3d94d3ac2df75dfea4e12e35d2b4346c42d3ce0ac25ab21c352c"
+    },
+    {
+      "path": "apps/web/src/lib/dialog-focus.ts",
+      "sha256": "2e97b1342e84e4647b4bb6c96e528960e71f9cf20c304fb7c3814118f739798d"
+    },
+    {
+      "path": "apps/web/src/lib/local-video-review.ts",
+      "sha256": "b7d98b264246ec02777c7ac767b6a303317118cf21687c350232c763bb79f5e9"
+    },
+    {
+      "path": "apps/web/src/lib/physical-study-finish.ts",
+      "sha256": "7ec0fcc6527f929f5aa89c49b67645a009b1f8172f5450c3fb1b08b43975ade6"
+    },
+    {
+      "path": "apps/web/src/lib/planner-v2-lifecycle-ui.ts",
+      "sha256": "54c6e3d65103e1c37b3391d4ee8d34da78b6883afe4ec4434ad113ed67c7a7ac"
+    },
+    {
+      "path": "apps/web/src/lib/planner-v2-presentation.ts",
+      "sha256": "334579748af0cce6ce1f538d9e48bad497e49991b7ac797916133befc3265709"
+    },
+    {
+      "path": "apps/web/src/lib/quick-add-task-ui.ts",
+      "sha256": "5ddbb056e5a183fe4709161f5548c4a7c108df372a38f4282cdcf0b07802b980"
+    },
+    {
+      "path": "apps/web/src/lib/resource-discovery.ts",
+      "sha256": "b57236b01f62ca8971d2cad6ac847ef738bfdb43017504886b23bd83d47211cc"
+    },
+    {
+      "path": "apps/web/src/lib/resource-material-progress.ts",
+      "sha256": "87aab62720f0f655efdec16457f9c0db03e8ccda7abe78d71572c54b696f25f3"
+    },
+    {
+      "path": "apps/web/src/lib/resource-progress-ui.ts",
+      "sha256": "e9ce5cf9eee9a18eaadf5489864b91332b2f9083f6be0f13efc55e3a7e46af44"
+    },
+    {
+      "path": "apps/web/src/lib/roadmap.ts",
+      "sha256": "472ed2d89ba61ebdf68b2facc8adf42e4cd241b6c8ae3318c1231f08291d1a0b"
+    },
+    {
+      "path": "apps/web/src/lib/study-session-timer.ts",
+      "sha256": "80bfeb981618b800f6948fd3178108134770785e91aa4eb172c74c57545c03e5"
+    },
+    {
+      "path": "apps/web/src/lib/supabase.ts",
+      "sha256": "012b366445acd474d341021488f7cda7afb4be7533384fb43496e84103af45fc"
+    },
+    {
+      "path": "apps/web/src/lib/task-action-preview-ui.ts",
+      "sha256": "c82796d4adfce892dfacf56fafb49387585b396dc1cad9701921f7d9a84e9a43"
+    },
+    {
+      "path": "apps/web/src/lib/task-material-presentation.ts",
+      "sha256": "7da8c26d9bedb6ecacb6730fc6a076e0ad2197def5f4502721971beca78c3c37"
+    },
+    {
+      "path": "apps/web/src/lib/task-video.ts",
+      "sha256": "28c756ad685f9a2f661e654a80ac134a9141bdc20bd3e7dc73322339c43659f2"
+    },
+    {
+      "path": "apps/web/src/lib/today-focus.ts",
+      "sha256": "ab004517b7b1553fcf8fe2ff7e44737ecb5e98609a3edc1ee2088d99a3f4cba7"
+    },
+    {
+      "path": "apps/web/src/lib/today-material-actions.ts",
+      "sha256": "4bd51044b1289b2170ea4788f693d72dce47dcda220edf61821b71df997bb2ed"
+    },
+    {
+      "path": "apps/web/src/lib/today-task-order.ts",
+      "sha256": "dbad37ae3cdd0749d0929c0a652c862a90628c7cf010ac73cc2a1e604e6def17"
+    },
+    {
+      "path": "apps/web/src/lib/youtube-player-progress.ts",
+      "sha256": "cad2e1c763d5b84055a7ef2d27943b721ca22a93d8ca76817adea496dcab9d4e"
+    },
+    {
+      "path": "apps/web/src/lib/youtube-progress-writer.ts",
+      "sha256": "308accc5dc1651387489cc7c6bc05db1ddcb459ab638de15a5c4a1f9f2ea56cc"
+    },
+    {
+      "path": "apps/web/src/main.tsx",
+      "sha256": "04243357f7149167c1cad0a1142df5541292f537b2739e4717f0ba96983167bb"
+    },
+    {
+      "path": "apps/web/src/pages/HomePage.tsx",
+      "sha256": "fd57b9c76de6b18089cd78c1902a867f65236aacf9250885f044fa5c8b8eda83"
+    },
+    {
+      "path": "apps/web/src/pages/LoginPage.tsx",
+      "sha256": "83f79f61d08b3752b2e4922024e40dc90feb8c70e4be53f1e9c893b1fd31ec0b"
+    },
+    {
+      "path": "apps/web/src/pages/OnboardingPage.tsx",
+      "sha256": "74d626f86488c5f7db36264854b57b5445c96aaf5f3592e9255d35788815f14d"
+    },
+    {
+      "path": "apps/web/src/pages/ProgressPage.tsx",
+      "sha256": "5bc7d76ab6f8d76060887c323f8256a033542b818831d6ec06f90554807f36a6"
+    },
+    {
+      "path": "apps/web/src/pages/RegisterPage.tsx",
+      "sha256": "a98622797dadd12d9e6d7dd2913bcd440c29a4918e8df15a1bdcc0ad9526e43f"
+    },
+    {
+      "path": "apps/web/src/pages/ResourcesPage.tsx",
+      "sha256": "9910cf7e54cb022e86a3b10d01506d0c66360a4d6c14977537a116b7ab25b0ea"
+    },
+    {
+      "path": "apps/web/src/pages/RoadmapPage.tsx",
+      "sha256": "a37ba6cf561deb794c29babcdb2c463eb1bf611f0a2ec14a5770d1466f57372c"
+    },
+    {
+      "path": "apps/web/src/pages/SettingsPage.tsx",
+      "sha256": "4df4baab6fd1eae50c43b8d1fc558462a3b72d7ba010382ba3fd4c812a27cd39"
+    },
+    {
+      "path": "apps/web/src/pages/WeekPage.tsx",
+      "sha256": "489bbf5dd2f9f2ef65736924113883c86e257f4c2d8c932fd04e46bdc87bad0e"
+    },
+    {
+      "path": "apps/web/src/product-entry.tsx",
+      "sha256": "1ee5b1262b4ea119d36b05e55e8d208cfe01966c0581c74b371dd2b84f2dcebd"
+    },
+    {
+      "path": "apps/web/src/styles.css",
+      "sha256": "c0e820e4d0d27384dc6f93181e5d5004175b0bc98ea311684b4ec20e0e2e750c"
+    },
+    {
+      "path": "apps/web/src/ux-lab/Coach.tsx",
+      "sha256": "69e35cbec9fa8380477c0f5d10e60dbbf0b03846f31c9d6b0e5ce4668c5df43d"
+    },
+    {
+      "path": "apps/web/src/ux-lab/CoachLab.tsx",
+      "sha256": "f793db3c3fd1a1f98d3aef05288cb1fd77d1e2a322290c4cdce013207da184d4"
+    },
+    {
+      "path": "apps/web/src/ux-lab/CoachPageTrack.tsx",
+      "sha256": "c7f342e5f41f3de872e15849a2b6b9fd064710158c681dbf4e3da020461e7921"
+    },
+    {
+      "path": "apps/web/src/ux-lab/CoachPlanViews.tsx",
+      "sha256": "ab2728dbfca8174b13e2c56df8d73d19241f165724190fadfaaf296b71bf63c9"
+    },
+    {
+      "path": "apps/web/src/ux-lab/CoachVideo.tsx",
+      "sha256": "676bddb2640a2464d410e9d3901027b22f1fa3004ac795760589497c4d138e6c"
+    },
+    {
+      "path": "apps/web/src/ux-lab/CoachWorkArea.tsx",
+      "sha256": "26b9a78c1f87113e57c8080267734de5eb1d7956c17726ab7859e4856138fcf0"
+    },
+    {
+      "path": "apps/web/src/ux-lab/Insights.tsx",
+      "sha256": "f7f3228d9e084afeb0472c08d7535ec9d528155d4753647ce1db51d66db626d4"
+    },
+    {
+      "path": "apps/web/src/ux-lab/PlanDialogs.tsx",
+      "sha256": "8fadec574b5e6080fc1ac0422e5d974c571950c36511fb72b73c74a19a7d93e7"
+    },
+    {
+      "path": "apps/web/src/ux-lab/Resources.tsx",
+      "sha256": "5c0e1bf7ddf9a31d786782954d52818999bd0229f08bb01b9d3eaeb5344cda49"
+    },
+    {
+      "path": "apps/web/src/ux-lab/StudySession.tsx",
+      "sha256": "b9cb4759f3cbeb1b14df31c5e0b87cbda248abce8821c3520b6070a64108ef8a"
+    },
+    {
+      "path": "apps/web/src/ux-lab/Today.tsx",
+      "sha256": "4f381f1e969df49915a0bc5ef0adab70a8279d9d4bcb6f6a948dc7fbba32da3a"
+    },
+    {
+      "path": "apps/web/src/ux-lab/UxLab.tsx",
+      "sha256": "2341bd311ef957e354686d4d7e20cf6082c35283c5c971135810f9900e33d15e"
+    },
+    {
+      "path": "apps/web/src/ux-lab/Week.tsx",
+      "sha256": "03150f3ca341f859b8bcd3b99bec26038ea237ea22d4e23e313b1f8918a0badd"
+    },
+    {
+      "path": "apps/web/src/ux-lab/bootstrap.tsx",
+      "sha256": "55cd480414c8b8171d9462cf83d1640f09da3c7f735b1964ee4f3b490f5bd3d2"
+    },
+    {
+      "path": "apps/web/src/ux-lab/coach-production-fusion.css",
+      "sha256": "aeead836c515e03e08a6ce20c4795a160faa1825db617519f0351f8b3279af60"
+    },
+    {
+      "path": "apps/web/src/ux-lab/coach-top-navigation.css",
+      "sha256": "d4224b244d9f2a9be825261e215736f0f38a64895e3461e435f5d2fc764d2109"
+    },
+    {
+      "path": "apps/web/src/ux-lab/coach-v2.css",
+      "sha256": "71f3df3b40072cc664097db2b70b15197e484346a0ad914938359996c6c9e29f"
+    },
+    {
+      "path": "apps/web/src/ux-lab/coach-workspace-context.ts",
+      "sha256": "238d0624e57e1e916dded4af63fda4a9eb6ea0908c9be298663f915bfa64d341"
+    },
+    {
+      "path": "apps/web/src/ux-lab/coach-workspace-state.ts",
+      "sha256": "951fef6cad4d6f52bd3ac11f2d0992a7cf25188c1f6081776f85b9795186e8b8"
+    },
+    {
+      "path": "apps/web/src/ux-lab/context.ts",
+      "sha256": "f15880b3d80d384139623abcf84b91d579fd89792b3955e535136cccb060c3f7"
+    },
+    {
+      "path": "apps/web/src/ux-lab/lab.css",
+      "sha256": "5fc2563ca9c956528ef4e049a63be475c1d15a945106672c9c5df0325f0ac297"
+    },
+    {
+      "path": "apps/web/src/ux-lab/model.ts",
+      "sha256": "f9adbc5b508372e33bd4497386c1d0b20180202ed2165d05d0b0f70169378748"
+    },
+    {
+      "path": "apps/web/src/ux-lab/ui.tsx",
+      "sha256": "f80413bc3dccce08fdd1348d12cc3bacc4ff47f197aac82a56749d9c6240ea14"
+    },
+    {
+      "path": "apps/web/src/vite-env.d.ts",
+      "sha256": "33602db4c7e7c78ab3e675b7dabd43044b159203271500e975ee9a7197a14863"
+    },
+    {
+      "path": "apps/web/src/workspace.css",
+      "sha256": "4350340b7ee09f2b59e07bf8f9f3f676f6e1e13e5dd3c3bd42434c905ff2f004"
+    },
+    {
+      "path": "apps/web/tsconfig.app.json",
+      "sha256": "c5dfef0f3a26b3eca19c79c001d9e8c6ed58fc839340c7c67884908a8f04e8dc"
+    },
+    {
+      "path": "apps/web/tsconfig.json",
+      "sha256": "770b4140bbb581e2dfd9ea9946ffc9c75a1d86ba7d2db5f77c83e37cbdf9d808"
+    },
+    {
+      "path": "apps/web/tsconfig.node.json",
+      "sha256": "fdeaf989da0190db278238a6e585e5f94e7f912177c4ee0f5f19bf60b4aa95a6"
+    },
+    {
+      "path": "apps/web/vite.config.ts",
+      "sha256": "2448a94bdacc4085b4fd26ccb7c3f323d04a220af29a24b61703903730b68984"
+    },
+    {
+      "path": "assets/brand/README.md",
+      "sha256": "042ed87b3748d531dd667af3a5e58bb8aeae3c079cfcf6304bafda8e04af481f"
+    },
+    {
+      "path": "assets/brand/source/kpss-kocu-logo.svg",
+      "sha256": "8c4fcc1aa2f3f60d45da5db5874df88f0392a0a84e6f5f08e77c874824778895"
+    },
+    {
+      "path": "packages/domain/src/adaptive/backlog.ts",
+      "sha256": "0857d63afdc1475f04b7748d7f355421f1aa229a1a007f5ef49b14c3f82d7b3b"
+    },
+    {
+      "path": "packages/domain/src/adaptive/capacity.ts",
+      "sha256": "2b33c67105aac054bd655778d551c3e85f728728c7104d3e8f0deda09a7a953b"
+    },
+    {
+      "path": "packages/domain/src/adaptive/config.ts",
+      "sha256": "19c39d702070397ffc4cd39f31526ddaa5e9bc52134a85c436e4a97a0fc97813"
+    },
+    {
+      "path": "packages/domain/src/adaptive/index.ts",
+      "sha256": "4d58ebed4c8656ab393adfd9530293e022326f6c0cb4f8fde8eda29e87a95206"
+    },
+    {
+      "path": "packages/domain/src/adaptive/minimum.ts",
+      "sha256": "2aa68b552f6dd6398f2b61a5a162888a568563bb81888d1b89ce19b6586d2d99"
+    },
+    {
+      "path": "packages/domain/src/adaptive/projection.ts",
+      "sha256": "151fb7a0c4d76b63fe1d0406f4cb56d5c21e5bb1711a3aea487d932f23f77d36"
+    },
+    {
+      "path": "packages/domain/src/adaptive/replan.ts",
+      "sha256": "b0a3757d81df89df3cbd33dc2fbf28b5df37a50840ac75ed4dce0f2e5d5a061a"
+    },
+    {
+      "path": "packages/domain/src/adaptive/types.ts",
+      "sha256": "18fb901eabb5e0911085f8a29dd5868616942e96732afddb86d6504369fddac1"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/ai-economics-v1.ts",
+      "sha256": "96c79b86b57fe1bdcece5ed6365ef1e3de0adc36908d1af39c193cdac2e5bcf3"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/coach-context-v1-source-map.ts",
+      "sha256": "fa7bcac78b399803e91957201fe3cf9e168c456db89d5d01e5a90b97d766f411"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/coach-context-v1.ts",
+      "sha256": "c41591fdd3f16aeab943298e7f14d151268071356c62273bd38882d55030d7f6"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/coach-evidence-view-v1.ts",
+      "sha256": "8ec32e67b01f160dd6f90658752d1baf64739ba30bd51cd5667c62213ac9fd69"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/coach-signal-v1.ts",
+      "sha256": "3d6246e26d7ae227a555fc1136a14f19ad08eb06bf37135f3ab72ca170488a74"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/conversation-intelligence-v1.ts",
+      "sha256": "cb975af04c15138173c32b63bcfdf2fb0b4539dbd88bedc30496ac9d559569d4"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/event-mapper.ts",
+      "sha256": "eaa1e74df5d7aa954a9fa0b87ad6b06a4a58bd88c6cf01192cac10f124eb34fb"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/executor.ts",
+      "sha256": "259621844b6611373309a946b779051054376cfbf5e3beb5688e21a0943340fd"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/fixtures/coach-context-v1.ts",
+      "sha256": "9757a5a6a5a6198e09b42465bef1c8f9b26c12019ab95a80a64773277a2aa430"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/index.ts",
+      "sha256": "90a533ae7dd3aa6c0aa4aa092927aa3dcd0b2675422f8294378ce5553a2da9fe"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/planner-coach-explanation-v1.ts",
+      "sha256": "21f186fcbc1bbfb7132691cba11bd161f689d2bf6342692f177d95b4152f9af5"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/proactive-coach-card-v1.ts",
+      "sha256": "0682a0d98f00e14701411d078c056073dd1f5851b55ae563e96eca63ca2f49e4"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/proactive-coach-hysteresis-v1.ts",
+      "sha256": "70bb17f661b225cd3c24e6d7c4591de314d91134b729655ba300a72219340500"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/proactive-coach-materiality-policy-v1.ts",
+      "sha256": "5b6d58c2a0fd39c1358851a1043a8f6ae60f42791f57dabd6fb54106a81b56f6"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/proactive-coach-runtime-state-v1.ts",
+      "sha256": "f188da2ae5346f65bcac715bcf58a9bffacfcfa66412e080e8a3354c0e6c8028"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/proactive-coach-selection-v1.ts",
+      "sha256": "9836d954ea8a1b6dcce8c5a6a6809ff4d7f2e3c1ba81244b4703e0fc0de58369"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/prompt.ts",
+      "sha256": "c4832db531bbc9535be2aafcf4205a3215e0c10b7ecfd297580e261aabcee59e"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/types.ts",
+      "sha256": "f9c52b2ffba4d1a9078c7c97eebd6f789adefcd4af012d1ea2bac411c143d915"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/validation.ts",
+      "sha256": "73dbfb1fc507086d6198641ff60dafcd0113644161cdadc4f0b5c887515280e6"
+    },
+    {
+      "path": "packages/domain/src/capacity.ts",
+      "sha256": "29e416dbc3c469866da9e4fe42ecf9fef141f234a6866b07323532d0a3ad22fe"
+    },
+    {
+      "path": "packages/domain/src/execution.ts",
+      "sha256": "734ef6883f9d7ce1868a8569666d65b1de905e8613689adf1473717a763df570"
+    },
+    {
+      "path": "packages/domain/src/index.ts",
+      "sha256": "24f8a2b62fa0a5cb4ead58ab884ae9c2b61bfbe07f741598f4be7d33b274f07f"
+    },
+    {
+      "path": "packages/domain/src/mastery/config.ts",
+      "sha256": "299268b6be31b13f497b0abf38165ac563e980b01c81dc4fa6a15b697e344b88"
+    },
+    {
+      "path": "packages/domain/src/mastery/engine.ts",
+      "sha256": "4d0b9fb3ca952fec2ac1e9288470b3878dcc0c56004577722aeb112268265c5d"
+    },
+    {
+      "path": "packages/domain/src/mastery/index.ts",
+      "sha256": "03b48380ae5f00eb3c2f7e4a16ce632668d17ecad9e8ed83ce90a9beb95edda1"
+    },
+    {
+      "path": "packages/domain/src/mastery/revision.ts",
+      "sha256": "83e5c910385c1f4adf45c2f41001041b25733c7dee93611a8b2fe161f6c0f813"
+    },
+    {
+      "path": "packages/domain/src/mastery/types.ts",
+      "sha256": "f9df184709b5480eaf6bf67c9c1c1bb77c99260620df92427d53e6b813d22ed8"
+    },
+    {
+      "path": "packages/domain/src/p48/index.ts",
+      "sha256": "3f33a884ba6722e3e5a055afe7a88152c16ad703247132e05f18105a0c3be543"
+    },
+    {
+      "path": "packages/domain/src/p48/roadmap.ts",
+      "sha256": "9415dd5d81cd916d2e92c8a920f18e3685df1e92fa949f8fb9491450b168c34d"
+    },
+    {
+      "path": "packages/domain/src/pilot/index.ts",
+      "sha256": "f9e5b37a5bdc498abd8b683d3186b316b722742f32eaadd0970463150f09768c"
+    },
+    {
+      "path": "packages/domain/src/pilot/report.ts",
+      "sha256": "9ca8eb599b83aa6d13268923bb021742f478ca5dc491d9fa328b8587c3fb63f0"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/candidate-generator.ts",
+      "sha256": "86c360f5ac3a452b16369ad0fc9597f1a7c459b0f55211d51aefa0e70b32a65f"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/candidate-scoring.ts",
+      "sha256": "1d56f94a03cc4778f86b64cb6adb7c273b10309c7048b72f12164982411e71eb"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/canonical-shadow.ts",
+      "sha256": "6866206c267a2eb21977601eae52d65616bc5edecc1bb1930fdcb11a68cf45bf"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/db-snapshot-builder.ts",
+      "sha256": "f0c7cddc7d584a64220def829c110578e61bd9189631577621f3830a514db872"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/db-snapshot-contract.ts",
+      "sha256": "24ae192e292c9e33b630173cbe098be898e04dc3e0bfc72f93274fb3333c204a"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/edge.ts",
+      "sha256": "c14b869532a5c4de26b84142c80f1b0fb6feb829721de541c4b2e1a089cfdedc"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/feasibility.ts",
+      "sha256": "4dca9e87a8a9ec02e13232c766e8dd35abaab10a9a37961d583425360f857aca"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/fixtures/foundation-week.ts",
+      "sha256": "0652115a3829e5f2cc98e35f53ca4e6da6b8012a25689cad1f9800dbf4c1bfbf"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/index.ts",
+      "sha256": "77677987c2a01c994fb80f111ab0e963b5452d7906698660169bb223a246fa32"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/learner-state.ts",
+      "sha256": "0ab2f34622538e2f19ad4be5de411b197f5f250a593fa16bd6b4e4007385f588"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/local-repair.ts",
+      "sha256": "d39af52c29b2642436a0b26c1fc2133c597735b3f223c292525569099e752d4b"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/planning-decision.ts",
+      "sha256": "18bb2743aef008f350e56ecf9f22f4c2d375f0a050330fb1f86769b6127a5a79"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/proposal-builder.ts",
+      "sha256": "3ed0553be9088babfd47a77e876c9fb867a8bf56b0c0f02bc62c6e4ba0f3eaa1"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/proposal-lifecycle.ts",
+      "sha256": "47df3ccb984930e733ada1d5404e117ccd667aa66d8aef63ea03341dbfddca4f"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/proposal-validator.ts",
+      "sha256": "4dc84535262fc4641bb8de59c9f6db2f1476a3edb4a20df18e18aeaf2dfa4c34"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/proposal.ts",
+      "sha256": "462d91823233e4ee7b17cf4f85e2ababb7eedd662ebe7d0cceb18ddf6b64b3f4"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/shadow-evaluation.ts",
+      "sha256": "8cf4b4316b59a80248d09496813ac72f4d5df31d880f3ea51b7c375e5b8b8de8"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/shadow-persistence.ts",
+      "sha256": "553ed6cc7357973bdf7d4c588f4442f4ee1e171e5c0786b6cff4d2f5b00b2fd4"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/snapshot.ts",
+      "sha256": "b9b8ea826efcea0022c355884177f892b7a3bea13914b463479564b3ed7425a1"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/triggers.ts",
+      "sha256": "50476bc5c9e459809c694ed51e191d7a585d73297f72941bf139fedb000ae600"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/types.ts",
+      "sha256": "f692929e54a96750f34b99c1fc573c50aded37ead3e630c3f3553becb065cead"
+    },
+    {
+      "path": "packages/domain/src/planning/canonical-workload.ts",
+      "sha256": "aff43ae73e0399bd7c79f3ea20de1967ec439311aa645113a0b68cb4f347227b"
+    },
+    {
+      "path": "packages/domain/src/planning/config.ts",
+      "sha256": "05f315deb235601736b47292217f9af18693ac1178c0549c395f4ef645cf704a"
+    },
+    {
+      "path": "packages/domain/src/planning/daily.ts",
+      "sha256": "0ca7499d49c61a42e47dd97cf80f59e342b206e1410498e618c46815376b1d3c"
+    },
+    {
+      "path": "packages/domain/src/planning/duration-policy.ts",
+      "sha256": "63bfb0e69d31374690c848810441b165a6bc60661e87a2cc609d8113600ee6e0"
+    },
+    {
+      "path": "packages/domain/src/planning/engine.ts",
+      "sha256": "5f7d50c8252f5ea47f507ea0cd8fac066287925d0c328937e565ad8fd861f5e1"
+    },
+    {
+      "path": "packages/domain/src/planning/errors.ts",
+      "sha256": "d4a5f41469f1b4b77c33855f43a96bdf61c3e400e42028fdfcd766e8d7cc2f04"
+    },
+    {
+      "path": "packages/domain/src/planning/index.ts",
+      "sha256": "3baea1f59345faae631c91c84dd0213eb7e07c67eaf61e5601081957df45c2d2"
+    },
+    {
+      "path": "packages/domain/src/planning/learning-stage-evidence.ts",
+      "sha256": "f3cafd79766afa1abe2b734715791a1e1ab071f8eb334a2ba915ab265c4863de"
+    },
+    {
+      "path": "packages/domain/src/planning/learning-stage.ts",
+      "sha256": "4afbdf5af20b448b1278b40c31c93e35b66b032a3c1455ecba87fe2f249dc314"
+    },
+    {
+      "path": "packages/domain/src/planning/lifecycle.ts",
+      "sha256": "3a3e906159c9b910ee5e0eb7d068895dc12595932ee0dfb48a02d26c18e15058"
+    },
+    {
+      "path": "packages/domain/src/planning/material-db-adapter.ts",
+      "sha256": "27851bd3026c5dc0f5be33b0b97373a988e465077e856faf975f050e5079cf4c"
+    },
+    {
+      "path": "packages/domain/src/planning/material-progress-import.ts",
+      "sha256": "f54302aadc9b6084387b06d8a467ef84dccc7126b6a045e44886b800249c23da"
+    },
+    {
+      "path": "packages/domain/src/planning/material-readiness.ts",
+      "sha256": "c21147114ed094fb680835fc5e8f4a2ec9cd8a4479db713c55e09e32ef49009f"
+    },
+    {
+      "path": "packages/domain/src/planning/material-remaining-scope.ts",
+      "sha256": "6313cba4f71835b34bde78faafc239fe2a5b73cee98bcb7aaf903540e7e7edcc"
+    },
+    {
+      "path": "packages/domain/src/planning/material-unit-view.ts",
+      "sha256": "9a9afbf995282408f1a1fc82861ba8697beda9f24bd7e9a69b8056236c49d99e"
+    },
+    {
+      "path": "packages/domain/src/planning/physical-pace-evidence.ts",
+      "sha256": "180cd47e5e0025c81ca2f31d6399374ee8c6a7067ec022a8903c940bd3941470"
+    },
+    {
+      "path": "packages/domain/src/planning/physical-structural-coverage.ts",
+      "sha256": "0a87792f3b05cad50f077a14a07d8da9c3076c0042022f3211685b055efe7330"
+    },
+    {
+      "path": "packages/domain/src/planning/recommendation.ts",
+      "sha256": "e1343200f22a8a9968be7943bf74e5e874285a418be21be2df050331e20a10a8"
+    },
+    {
+      "path": "packages/domain/src/planning/types.ts",
+      "sha256": "6b052ffec833a45878770145b3fb62fa3ef7e9cae7cf6e0414e071cada68248c"
+    },
+    {
+      "path": "packages/domain/src/planning/video-topic-mapping.ts",
+      "sha256": "84c28d199f51fd3035fab4a545f51e092a964c08ef898a9a5af771574d1ad052"
+    },
+    {
+      "path": "packages/domain/src/progress.ts",
+      "sha256": "ba07e65560c8ca447c3371cae9b13cc884191dc64573e3e02b9f7e33ab954072"
+    },
+    {
+      "path": "packages/domain/src/resources.ts",
+      "sha256": "dcd87101b2befb4402330dffd708553bf86838c1ab2490b13c22f2c1d7f7fd2d"
+    },
+    {
+      "path": "packages/domain/src/study-intent.ts",
+      "sha256": "d881a94d51e4251c22de83f5d164f18a9e9897aaccb99f406ae9c09c14573d77"
+    },
+    {
+      "path": "packages/domain/src/time-boundaries.ts",
+      "sha256": "e102f336a7bf00119bd35ac97d3cd586dde7d5bb484f97789d0a183a1392769d"
+    },
+    {
+      "path": "packages/domain/src/types.ts",
+      "sha256": "9e8c7cd63ffa79108aefabfefdc230b7585be0996ac2d180cf4787c55930418d"
+    },
+    {
+      "path": "supabase/functions/_shared/adaptive.ts",
+      "sha256": "33f8fe6c3067f06cab4b45e5a6c0ee18c9a4c39fa53313b68ea9fa7d08a568c5"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach.bundle.js",
+      "sha256": "71f2004ad94156a5f559a557dda26536cda3518a9cfa25f3eddba2906b9ee3cf"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/ai-budget-reservation-v1.ts",
+      "sha256": "a9e335d36d51f308d43ac3836311574672f274d146b60dde83ae8f41e3638891"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/ai-usage-ledger-v1.ts",
+      "sha256": "3a0bd2a9f5f7d0ec894d247afa297727633dce684c57eb4492ac8e970601dd21"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/controlled-dev-smoke-runtime-v1.ts",
+      "sha256": "2e093205f367a4f40946f830e9e69066223f1af81fcddcaad2d6180af37aea10"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/dev-smoke-policy-v1.ts",
+      "sha256": "71a1cb8bd9a89a09fb3f252640376b25bc492da4f5ab7ce9749e22df214eeea5"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/material-context.ts",
+      "sha256": "e7cb562262369bebf099c3d8c869093ac54d45e162bddc8c0ad8f98af8b130ff"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/openai-coach-request-v1.ts",
+      "sha256": "5b28d4ac0918089fcb4ad7903f28609871a4380dce41f0c191796aa6e7051f73"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/openai-dev-gateway-v1.ts",
+      "sha256": "274e5fca36fbe97294d438128ff202f593de518949c4779a2f634b758f9f10b7"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/openai-gateway.ts",
+      "sha256": "ec3bbda0470072846d923172908fee6bc516d00a1be9f311b87f67fb6cf43ab7"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/openai-input-token-count-v1.ts",
+      "sha256": "fed9da8651819a8ab20715fb96fb074bfcaa678763e23f618b9d36fc98b9629d"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/openai-production-gateway-v1.ts",
+      "sha256": "60c18c06b1f41b478dbbe9e08409cc716771bcfd80ccdc70dac195560f916f97"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/openai-server-secret-v1.ts",
+      "sha256": "e7947d57ea4833bcfe225810354f6636a07c025fe779f3022b4d91b6a93ad4ba"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/proactive-coach-actions-http-v1.ts",
+      "sha256": "a0f9bcec0bacd6836a96f65ae3a1ca98cfdfd7a19f58aaa04961442f0b882d12"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/proactive-coach-http-v1.ts",
+      "sha256": "6534921588ec5d7b4d4207dd3f8f72ccf79ff333b7a6745cb2f86aa57e19d364"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/proactive-coach-runtime-v1.ts",
+      "sha256": "b6229c971b4c5dd422a0e9f5d82ff1bebad0bcec1ac762527da70372f4df4c6b"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-attempt-v1.ts",
+      "sha256": "8f2be6f74df804775b79f7694264fdc394077f5ec5baeee9e3eed31fb89d0be3"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-fx-acquisition-v1.ts",
+      "sha256": "3c15960ebde89b20e77e80a0d3feaed4e3672c5c28eb6b10faab68ef1bb3ba70"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-fx-policy-v1.ts",
+      "sha256": "88d4948b5ed8afbca3b40f15cb56179ca9bfeaac8748f6a2cd3ca2f4b9a34099"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-openai-billing-audit-v1.ts",
+      "sha256": "6cf6524c8d04867a6a486972ef6e44e90a46232b7afc96333f0511763fdc71b3"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-openai-billing-bound-v1.ts",
+      "sha256": "ece5acb82bda173d92ba19e89b786936a1c4237491a1f10a24c1e905db7db96f"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-reconciliation-policy-v1.ts",
+      "sha256": "ed9428f34b77f994239811084c841ea96360260c71c0a8025dc5cc69dabc220c"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-runtime-activation-v1.ts",
+      "sha256": "c8e64ef8eec302b85ef6a4d3fb2989658d4251a979e20d09cb49952bff2b8c8f"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-runtime-catalog-v1.ts",
+      "sha256": "2448511a441481a872e3cbfe6b7ee78ee8c27839ff60283f8fab689f276a99c4"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-runtime-config-v1.ts",
+      "sha256": "b41b7388d9485fb43d884676c9f8b5b52a1a3a7e630f12acb9a841eb996b41b9"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/reactive-coach-dev-runtime-v1.ts",
+      "sha256": "027aff3e40cc2351d8ff09881168d2ec8f18ce6f5f18be7eb47fbad08c812c46"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/reactive-coach-executor-v1.ts",
+      "sha256": "fe346451613e438fb54eb27dad409fb76ee948697842ae047949e6093d85e3fe"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/reactive-coach-http-v1.ts",
+      "sha256": "63dbc35af853dd000dda049ac99fe9fad27bde40b9e4ab462a195abd565d6181"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/reactive-coach-production-runtime-v1.ts",
+      "sha256": "f7e44c80b5c58a682842dd2150794db05f967d4bf4716b72eb07fd6a439c6254"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/reactive-coach-route-v1.ts",
+      "sha256": "39478ef6778002bc6a45e598fe50f9944c417e980eea70351453612c74b436ca"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/read-only-coach-orchestrator-v1.ts",
+      "sha256": "73d1d0deb28791104ff9cb389c1eea2ba740812f857b6debce41e62ddf01a37e"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/target-capacity.ts",
+      "sha256": "a58c39d1cea196b02ad4193eb8603a9deabb9ea41abfc0219a0c00a59887e538"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-capacity-readonly.ts",
+      "sha256": "de92afe5da76354f66cd43bedc1853fb70979d4595677060bd72ac700f2f676e"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-material-loader.ts",
+      "sha256": "b5509a5a8391f1edde17f8e945c76a74959715a7bc8ffc7b5d28fae548d20b75"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-material-shadow.ts",
+      "sha256": "3212e17d9efeff2e37e1633a8a71faea7a206d5668557187a76639d67c063880"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-planner-v2-readonly.ts",
+      "sha256": "5012d18c8e75ab21551d86178afc8a98ecc685619305d34b736b315ccbe7c64f"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-workload-evidence.ts",
+      "sha256": "03a5cba721855a8ff7460316e702ea0b415f79ce21775e9ba626bba3386179ef"
+    },
+    {
+      "path": "supabase/functions/_shared/capacity-overrides.ts",
+      "sha256": "2a6eef9043e97d8cc6e26ada70712938e204e38425cf6910d44df5f73b22c9b9"
+    },
+    {
+      "path": "supabase/functions/_shared/capacity-summary.ts",
+      "sha256": "52968f22cfb34a04f8b6ad9b153ab01abc4e04a75ef56e82749da7929f9f62b8"
+    },
+    {
+      "path": "supabase/functions/_shared/coach-context-v1-readonly.ts",
+      "sha256": "40c2dce9ec703e9cf8e774de276e8117c4200a454876bcdd598a3a277e57f9be"
+    },
+    {
+      "path": "supabase/functions/_shared/completed-study.ts",
+      "sha256": "b0e1e92456525ca9747864fb13f4e3add16c5f2b4269dae96174f5e46eea05cd"
+    },
+    {
+      "path": "supabase/functions/_shared/daily-task-order.ts",
+      "sha256": "503a1ea68c2d554cba06fca0faade7b1dcf93d98aaac5a2c9590d399022dc8d5"
+    },
+    {
+      "path": "supabase/functions/_shared/mastery.ts",
+      "sha256": "f0c62de8d89a4b87c98eb73885d18a2ae051fbbc4bbf0709b4adbfbf972bbae8"
+    },
+    {
+      "path": "supabase/functions/_shared/material-workload.ts",
+      "sha256": "6e775af42496f823baec2f95570312df760be379b6fd2b38b07ad314080ab2c7"
+    },
+    {
+      "path": "supabase/functions/_shared/p48-capacity-source.ts",
+      "sha256": "9c1cefcff3222f9f24a556d7389bdb4302438f48b5b13292624007846d825deb"
+    },
+    {
+      "path": "supabase/functions/_shared/p48-week.ts",
+      "sha256": "b90b7a9d0572ffe46a9b882b6feba7b29953e231a440a902eb4ca61130716749"
+    },
+    {
+      "path": "supabase/functions/_shared/physical-study-lifecycle.ts",
+      "sha256": "b6d53b5dc4a63cae92ae1f9dbaa7fe1955aa5edc7d5b31b8659de7fb57d53683"
+    },
+    {
+      "path": "supabase/functions/_shared/pilot.ts",
+      "sha256": "4d083d62fa9021b7520396f921cb209b908dc477e9d89768ed614e44b20064aa"
+    },
+    {
+      "path": "supabase/functions/_shared/planner-v2-persisted-readonly.ts",
+      "sha256": "cc81f7afaa3b1505fe20c093707c388eeec43e868afa69ce03fa9f26252abb89"
+    },
+    {
+      "path": "supabase/functions/_shared/planner-v2-proposal-capability.ts",
+      "sha256": "e0ffbc9f77b7b9e870a4ef7e02858412a0466867706df48c5a4a17c2b63954ff"
+    },
+    {
+      "path": "supabase/functions/_shared/planner-v2-proposal-http.ts",
+      "sha256": "0395d52954fbc05494be000f497eaa99fc65b6a7b152f25d5639b2a7225e4a3e"
+    },
+    {
+      "path": "supabase/functions/_shared/planning-v2-shadow.ts",
+      "sha256": "c8dc93b6786efda3a5da86444ee06752f6da947de2b33ffb5d8504922ab0c076"
+    },
+    {
+      "path": "supabase/functions/_shared/planning-v2.bundle.js",
+      "sha256": "95fa25e871d7d8ec6fca93045fc0717db12d07add5bd8b0147db604d52d6ebf4"
+    },
+    {
+      "path": "supabase/functions/_shared/planning.bundle.js",
+      "sha256": "aef9335a6db13eafe7c0db3d3f4ba59cd4dbed09eced28a9135370578905ee94"
+    },
+    {
+      "path": "supabase/functions/_shared/proactive-coach-active-session-readonly.ts",
+      "sha256": "f00e7eb65b1b60d9e8e64eb282444e80fd3a37c4d68fc344090b8896c97c8e9a"
+    },
+    {
+      "path": "supabase/functions/_shared/proactive-coach-runtime-state-readonly.ts",
+      "sha256": "595052d2c30a4bbafb451e61151b03ab1ca5cd94902d3975394ceda06e255c27"
+    },
+    {
+      "path": "supabase/functions/_shared/quick-add-task-preview.ts",
+      "sha256": "e0488cab12f8a28b8360f451664aa220d84216f1b596078080b04303ecc6a531"
+    },
+    {
+      "path": "supabase/functions/_shared/recommendation-window.ts",
+      "sha256": "17f6fb23b6cdea7d7eb8538f21ed12033ea8d1679d74c0524c1f7631301994bb"
+    },
+    {
+      "path": "supabase/functions/_shared/resource-progress.ts",
+      "sha256": "04b7946070cda812f1f56c47e5d4b593c158308ce9dd9fb1286f13300dbdb0a8"
+    },
+    {
+      "path": "supabase/functions/_shared/scheduler-plan.ts",
+      "sha256": "9c0de5877e1d6b529d73a02324cca87c42a177dd2e66fc7bb7c98fae09395737"
+    },
+    {
+      "path": "supabase/functions/_shared/task-action-preview.ts",
+      "sha256": "0e80ea2cedde080f0419e3eefb13194fc944ddb3094f6bd55ba9defa33c02135"
+    },
+    {
+      "path": "supabase/functions/_shared/task-context.ts",
+      "sha256": "031e55f1c1fc646d729472f671be36efb507b7bcbea1f9bc161878a5f2a4d6bf"
+    },
+    {
+      "path": "supabase/functions/_shared/task-material-scope.ts",
+      "sha256": "d6871aa84a435eb2220c139a0f67a0d53643f36e0e4f49e1fd6a0f7da27a98c1"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-assets/INTER-LICENSE.txt",
+      "sha256": "3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-assets/inter-variable.ttf",
+      "sha256": "29160a80ff49ddcab2c97711247e08b1fab27a484a329ce8b813d820dc559031"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-assets/resvg.wasm",
+      "sha256": "22bf6e9f9a100d972da0411a69c5ba504367fc1fa87b3b64e3f35e53926d2d70"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-card.ts",
+      "sha256": "11af6840dea9716b8a24e2b0165b5b0749069fc43344ec9c36c29e9ed37cc2c4"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-coach.ts",
+      "sha256": "4cc9e42d24033a7f951469e7a879f9cf2dc556182a6c8f77b123776c965fdadc"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-material-summary.ts",
+      "sha256": "4cdcc7c56eb8dbca289de86689e544dca4e05ff58a6a559ad7966672b4d94772"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-presentation.ts",
+      "sha256": "178359c1272c2b6d9a4eb8672328da275b7a0beb1bf05f12c70fb4703d88183a"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-transport.ts",
+      "sha256": "048967915d00399060bc9abd94e703302b941cac7222687ba42bc7b5cfbdcc5b"
+    },
+    {
+      "path": "supabase/functions/_shared/topic-resource-link.ts",
+      "sha256": "0e723da587f63a273b5e7f10bfd9fe837e58cf72df324f7131dc3a9b74e1e77a"
+    },
+    {
+      "path": "supabase/functions/_shared/youtube-playlist.ts",
+      "sha256": "c45dd392715ea068a4b690d3954b4d95356528b66908c1da915fb285cb04e311"
+    },
+    {
+      "path": "supabase/functions/_shared/youtube-video-progress.ts",
+      "sha256": "33a6d672e5e85d42d5e1f03f9684a64ec8ef8874c1b16c62751ac9e0ccb1049c"
+    },
+    {
+      "path": "supabase/functions/ai-coach-interpret/handler.ts",
+      "sha256": "7966fbcabe17a47379f1e840728c99fd46d5811f6ca1dd6e9ac2a664c392692d"
+    },
+    {
+      "path": "supabase/functions/ai-coach-interpret/index.ts",
+      "sha256": "235710db7d1a06570cb785294a7b02b14681d29b58a0443ddb7999bdaad41a7b"
+    },
+    {
+      "path": "supabase/functions/ai-coach-plan-preview/handler.ts",
+      "sha256": "c65f12963545822881e1f192f3e4898186a761a5fcbced257b2f1f3f732c6bca"
+    },
+    {
+      "path": "supabase/functions/ai-coach-plan-preview/index.ts",
+      "sha256": "d9bf974e151ce653b27edd882f515983fe96260565a0a0d94efece18036bc0fd"
+    },
+    {
+      "path": "supabase/functions/app-api/index.ts",
+      "sha256": "8a0626078718ca70861e134ba22f7fab7620ac438d66ec390cc8e845d395f597"
+    },
+    {
+      "path": "supabase/functions/planning-v2-shadow/handler.ts",
+      "sha256": "e426161be8799ef767d8f2ce6568e499b2840b4587540fc27fb0081f6fcf1f3e"
+    },
+    {
+      "path": "supabase/functions/planning-v2-shadow/index.ts",
+      "sha256": "179609983bd1c06a0c26bf95615fc587e021987eaaf1c95a9752f4d5c4735dcc"
+    },
+    {
+      "path": "supabase/functions/scheduler-worker/index.ts",
+      "sha256": "d303529d30ea36cd9bc94c9c08a582c223ff583f3b9684c0b3021b1b5b4bb0e8"
+    },
+    {
+      "path": "supabase/functions/telegram-webhook/index.ts",
+      "sha256": "eacc335a9ad301cf0735add52db67ba8402191578a0be4b99220557bd2d97212"
+    }
+  ],
+  "runtimeManifestSha256": "dc820ea4871a2275c48b6410e199ad1971f2f33f279122c0f13a9e77af46b9cd",
+  "production": "NOT DEPLOYED",
+  "note": "Documented baselines only; other Edge closures do not prove their live deployment versions. A dirty precommit record identifies source hashes; the containing release commit and ignored postcommit snapshot provide the final RC identity."
+}

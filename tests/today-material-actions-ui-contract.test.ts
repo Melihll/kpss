@@ -38,8 +38,8 @@ describe("P1-13 Today material actions UI contract", () => {
   });
 
   it("supports focus, active-session and continuation-task entry points", () => {
-    expect(today).toContain("activeTask && <TaskMaterialActions");
-    expect(today).toContain("<TaskMaterialActions task={focusTask}");
+    expect(today).toContain("const workTask = active ? activeTask : focusTask");
+    expect(today).toMatch(/<StudyMaterialWorkspace\b[^>]*\bkey=\{workTask\.id\}\s+task=\{workTask\}/);
     expect(today).toContain("<TaskMaterialActions task={task}");
   });
 });

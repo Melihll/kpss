@@ -1,0 +1,887 @@
+{
+  "at": "2026-10-05T16:02:17.749Z",
+  "origin": "http://127.0.0.1:54321",
+  "frontendSupabaseUrl": "http://127.0.0.1:54321",
+  "auth": {
+    "alg": "ES256",
+    "iss": "http://127.0.0.1:54321/auth/v1",
+    "expectedIssuer": "http://127.0.0.1:54321/auth/v1",
+    "aud": "authenticated",
+    "sub": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+    "role": "authenticated",
+    "exp": 1791219737,
+    "jwksStatus": 200,
+    "signatureVerified": true
+  },
+  "requests": [
+    {
+      "route": "/study-sessions/active",
+      "status": 200,
+      "body": {
+        "session": null,
+        "break": null,
+        "paused": false
+      }
+    },
+    {
+      "route": "/weekly-plan/current",
+      "status": 200,
+      "body": {
+        "plan": {
+          "id": "96842059-4d24-4a38-ac9d-6cbe77155d3e",
+          "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+          "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+          "week_start_date": "2026-10-05",
+          "week_end_date": "2026-10-11",
+          "available_minutes": 10073,
+          "planning_budget_minutes": 420,
+          "planned_minutes": 23,
+          "status": "active",
+          "generation_version": 1,
+          "created_at": "2026-10-05T14:51:09.8231+00:00",
+          "updated_at": "2026-10-05T14:51:09.8231+00:00"
+        },
+        "tasks": [
+          {
+            "id": "2f1784eb-cbb5-469d-a055-9669f335a341",
+            "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+            "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+            "weekly_plan_id": "96842059-4d24-4a38-ac9d-6cbe77155d3e",
+            "subject_id": "20000000-0000-0000-0000-000000000002",
+            "curriculum_node_id": "30000000-0000-0000-0000-000000000001",
+            "resource_id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+            "carried_from_task_id": null,
+            "task_type": "custom",
+            "title": "Gerçek video · Yerel kabul testi",
+            "description": "LOCAL-only playback/progress/resume acceptance. KPSS curriculum content is not claimed.",
+            "planned_date": "2026-10-05",
+            "estimated_minutes": 23,
+            "importance": "important",
+            "priority_score": 90,
+            "status": "partially_completed",
+            "source_reason": "planner_v2",
+            "dedupe_key": "local-video-acceptance:2026-10-05",
+            "created_at": "2026-10-05T14:51:09.8231+00:00",
+            "updated_at": "2026-10-05T15:36:39.841686+00:00",
+            "completed_at": null,
+            "revision_schedule_id": null,
+            "work_mode": "video",
+            "resource_section_id": null,
+            "canonical_workload_identity": "youtube:9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+            "canonical_material_view_id": "youtube:9eb7bfba-1a41-4fb5-a098-1a29474c72fa:mapping:b6375449-4d7a-4886-a964-73a7a5adf229",
+            "canonical_boundary": {
+              "kind": "full_video",
+              "videoId": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+              "watchedSeconds": 0,
+              "durationSeconds": 1344
+            },
+            "planner_version": "canonical-planner-v2-shadow-v1",
+            "planner_proposal_fingerprint": "local-video-acceptance-v1:2026-10-05",
+            "subjects": {
+              "name": "Matematik"
+            },
+            "resources": {
+              "id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+              "name": "Yerel video kabul testi",
+              "resource_type": "video_course"
+            },
+            "resource_sections": null,
+            "task_progress": [
+              {
+                "completed_minutes": 15,
+                "actual_study_minutes": 15
+              }
+            ],
+            "task_resource_units": [],
+            "material_resource_id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+            "material_scope": {
+              "kind": "full_video",
+              "resourceId": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+              "youtubePlaylistVideoId": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+              "title": "YouTube Developers Live: Embedded Web Player Customization",
+              "position": 0,
+              "durationSeconds": 1344,
+              "watchedSeconds": 365,
+              "completed": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "route": "/execution/summary",
+      "status": 200,
+      "body": {
+        "todayStudyMinutes": 15,
+        "weekStudyMinutes": 15,
+        "weekPlannedActualMinutes": 15,
+        "weekExtraStudyMinutes": 0,
+        "weekPlannedCreditMinutes": 15,
+        "recentResults": [],
+        "dailyPlan": {
+          "date": "2026-10-05",
+          "tasks": [
+            {
+              "id": "2f1784eb-cbb5-469d-a055-9669f335a341",
+              "title": "Gerçek video · Yerel kabul testi",
+              "taskType": "custom",
+              "minutes": 8,
+              "remainingMinutes": 8,
+              "reason": "continue_partial",
+              "needsResult": false
+            }
+          ],
+          "completedTaskIds": [],
+          "deferredTaskCount": 0,
+          "deferredMinutes": 0,
+          "capacityMinutes": 1439,
+          "remainingCapacityMinutes": 1424,
+          "totalMinutes": 8,
+          "totalCommittedMinutes": 23
+        }
+      }
+    },
+    {
+      "route": "/p48/roadmap",
+      "status": 200,
+      "body": {
+        "configured": true,
+        "strategy": {
+          "scoreType": "KPSSP48",
+          "targetExamDate": "2027-09-12",
+          "weeklyTargetMinutes": 420,
+          "monthlyTargetMinutes": 1680,
+          "sourceNote": "LOCAL video acceptance fixture only",
+          "daysToExam": 342
+        },
+        "subjects": [
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000006",
+            "subjectName": "Hukuk",
+            "weeklyMinutes": 450,
+            "scoreWeight": 20
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000007",
+            "subjectName": "İktisat",
+            "weeklyMinutes": 360,
+            "scoreWeight": 20
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000008",
+            "subjectName": "Maliye",
+            "weeklyMinutes": 210,
+            "scoreWeight": 20
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000009",
+            "subjectName": "Muhasebe",
+            "weeklyMinutes": 210,
+            "scoreWeight": 20
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000002",
+            "subjectName": "Matematik",
+            "weeklyMinutes": 180,
+            "scoreWeight": 5
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000001",
+            "subjectName": "Türkçe",
+            "weeklyMinutes": 120,
+            "scoreWeight": 5
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000003",
+            "subjectName": "Tarih",
+            "weeklyMinutes": 150,
+            "scoreWeight": 4.5
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000004",
+            "subjectName": "Coğrafya",
+            "weeklyMinutes": 120,
+            "scoreWeight": 3
+          }
+        ],
+        "subjectForecasts": [
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000006",
+            "subjectName": "Hukuk",
+            "weeklyMinutes": 450,
+            "resources": [],
+            "newSourceDate": null,
+            "totalPlannedMinutes": 0,
+            "totalActualMinutes": 0
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000007",
+            "subjectName": "İktisat",
+            "weeklyMinutes": 360,
+            "resources": [],
+            "newSourceDate": null,
+            "totalPlannedMinutes": 0,
+            "totalActualMinutes": 0
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000008",
+            "subjectName": "Maliye",
+            "weeklyMinutes": 210,
+            "resources": [],
+            "newSourceDate": null,
+            "totalPlannedMinutes": 0,
+            "totalActualMinutes": 0
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000009",
+            "subjectName": "Muhasebe",
+            "weeklyMinutes": 210,
+            "resources": [],
+            "newSourceDate": null,
+            "totalPlannedMinutes": 0,
+            "totalActualMinutes": 0
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000002",
+            "subjectName": "Matematik",
+            "weeklyMinutes": 180,
+            "resources": [
+              {
+                "resourceId": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+                "subjectId": "20000000-0000-0000-0000-000000000002",
+                "subjectName": "Matematik",
+                "resourceName": "Yerel video kabul testi",
+                "plannedMinutes": 23,
+                "actualMinutes": 15,
+                "sequenceOrder": 1,
+                "workMode": "video",
+                "resourceStatus": "active",
+                "publisher": null,
+                "resourceType": "video_course",
+                "materialRemainingMinutes": 17,
+                "remainingMinutes": 0,
+                "progressPercent": 65,
+                "forecastStartDate": "2026-10-05",
+                "forecastFinishDate": "2026-10-11",
+                "completed": false
+              }
+            ],
+            "newSourceDate": "2026-10-12",
+            "totalPlannedMinutes": 23,
+            "totalActualMinutes": 15
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000001",
+            "subjectName": "Türkçe",
+            "weeklyMinutes": 120,
+            "resources": [],
+            "newSourceDate": null,
+            "totalPlannedMinutes": 0,
+            "totalActualMinutes": 0
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000003",
+            "subjectName": "Tarih",
+            "weeklyMinutes": 150,
+            "resources": [],
+            "newSourceDate": null,
+            "totalPlannedMinutes": 0,
+            "totalActualMinutes": 0
+          },
+          {
+            "subjectId": "20000000-0000-0000-0000-000000000004",
+            "subjectName": "Coğrafya",
+            "weeklyMinutes": 120,
+            "resources": [],
+            "newSourceDate": null,
+            "totalPlannedMinutes": 0,
+            "totalActualMinutes": 0
+          }
+        ],
+        "materialWorkloads": {
+          "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d": {
+            "page": null,
+            "video": {
+              "watchedSeconds": 365,
+              "durationSeconds": 1344,
+              "remainingSeconds": 979,
+              "remainingMinutes": 17
+            },
+            "totalRemainingMinutes": 17
+          }
+        },
+        "months": [
+          {
+            "month": "2026-10",
+            "label": "Ekim 2026",
+            "plannedMinutes": 1470,
+            "blockedDays": 0,
+            "phase": "Temel + ilk tur",
+            "focus": "Konu anlatımı, not ve soru bankasını düzenli biçimde ilerlet.",
+            "focusResources": [
+              "Matematik: Yerel video kabul testi",
+              "Matematik: Yeni kaynak zamanı"
+            ]
+          },
+          {
+            "month": "2026-11",
+            "label": "Kasım 2026",
+            "plannedMinutes": 1680,
+            "blockedDays": 0,
+            "phase": "Temel + ilk tur",
+            "focus": "Konu anlatımı, not ve soru bankasını düzenli biçimde ilerlet.",
+            "focusResources": []
+          },
+          {
+            "month": "2026-12",
+            "label": "Aralık 2026",
+            "plannedMinutes": 1680,
+            "blockedDays": 0,
+            "phase": "Temel + ilk tur",
+            "focus": "Konu anlatımı, not ve soru bankasını düzenli biçimde ilerlet.",
+            "focusResources": []
+          },
+          {
+            "month": "2027-01",
+            "label": "Ocak 2027",
+            "plannedMinutes": 1680,
+            "blockedDays": 0,
+            "phase": "Temel + ilk tur",
+            "focus": "Konu anlatımı, not ve soru bankasını düzenli biçimde ilerlet.",
+            "focusResources": []
+          },
+          {
+            "month": "2027-02",
+            "label": "Şubat 2027",
+            "plannedMinutes": 1680,
+            "blockedDays": 0,
+            "phase": "Ana kaynak + soru yoğunlaştırma",
+            "focus": "Ana kaynakları sürdür; soru çözümünü ve yanlış dönüşlerini artır.",
+            "focusResources": []
+          },
+          {
+            "month": "2027-03",
+            "label": "Mart 2027",
+            "plannedMinutes": 1680,
+            "blockedDays": 0,
+            "phase": "Ana kaynak + soru yoğunlaştırma",
+            "focus": "Ana kaynakları sürdür; soru çözümünü ve yanlış dönüşlerini artır.",
+            "focusResources": []
+          },
+          {
+            "month": "2027-04",
+            "label": "Nisan 2027",
+            "plannedMinutes": 1680,
+            "blockedDays": 0,
+            "phase": "Ana kaynak + soru yoğunlaştırma",
+            "focus": "Ana kaynakları sürdür; soru çözümünü ve yanlış dönüşlerini artır.",
+            "focusResources": []
+          },
+          {
+            "month": "2027-05",
+            "label": "Mayıs 2027",
+            "plannedMinutes": 1680,
+            "blockedDays": 0,
+            "phase": "Kaynak kapanışı",
+            "focus": "İlk kaynak havuzunu kapatmaya çalış; biten derslerde branş denemesi ekle.",
+            "focusResources": []
+          },
+          {
+            "month": "2027-06",
+            "label": "Haziran 2027",
+            "plannedMinutes": 1680,
+            "blockedDays": 0,
+            "phase": "Kaynak kapanışı",
+            "focus": "İlk kaynak havuzunu kapatmaya çalış; biten derslerde branş denemesi ekle.",
+            "focusResources": []
+          },
+          {
+            "month": "2027-07",
+            "label": "Temmuz 2027",
+            "plannedMinutes": 1680,
+            "blockedDays": 0,
+            "phase": "Yeni kaynak + branş denemeleri",
+            "focus": "Biten kaynakların yerine yeni soru/deneme kaynakları koy ve süreli çözümü artır.",
+            "focusResources": []
+          },
+          {
+            "month": "2027-08",
+            "label": "Ağustos 2027",
+            "plannedMinutes": 1680,
+            "blockedDays": 0,
+            "phase": "Yeni kaynak + branş denemeleri",
+            "focus": "Biten kaynakların yerine yeni soru/deneme kaynakları koy ve süreli çözümü artır.",
+            "focusResources": []
+          },
+          {
+            "month": "2027-09",
+            "label": "Eylül 2027",
+            "plannedMinutes": 660,
+            "blockedDays": 0,
+            "phase": "Final tekrar",
+            "focus": "Yeni ağır kaynak açma; deneme, yanlış defteri ve kısa tekrarlarla sınava gir.",
+            "focusResources": []
+          }
+        ],
+        "periods": [],
+        "milestones": [
+          {
+            "type": "new_resource",
+            "date": "2026-10-12",
+            "endDate": null,
+            "title": "Yeni kaynak zamanı · Matematik",
+            "subjectName": "Matematik"
+          },
+          {
+            "type": "source_gap",
+            "date": "2027-01-18",
+            "endDate": null,
+            "title": "Vatandaşlık + güncel bilgiler kaynağını ekle",
+            "subjectName": "Genel Kültür"
+          },
+          {
+            "type": "exam",
+            "date": "2027-09-12",
+            "endDate": null,
+            "title": "KPSS 2027 hedef günü (varsayım)",
+            "subjectName": null
+          }
+        ],
+        "currentWeek": {
+          "plan": {
+            "id": "96842059-4d24-4a38-ac9d-6cbe77155d3e",
+            "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+            "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+            "week_start_date": "2026-10-05",
+            "week_end_date": "2026-10-11",
+            "available_minutes": 10073,
+            "planning_budget_minutes": 420,
+            "planned_minutes": 23,
+            "status": "active",
+            "generation_version": 1,
+            "created_at": "2026-10-05T14:51:09.8231+00:00",
+            "updated_at": "2026-10-05T14:51:09.8231+00:00"
+          },
+          "tasks": [
+            {
+              "id": "2f1784eb-cbb5-469d-a055-9669f335a341",
+              "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+              "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+              "weekly_plan_id": "96842059-4d24-4a38-ac9d-6cbe77155d3e",
+              "subject_id": "20000000-0000-0000-0000-000000000002",
+              "curriculum_node_id": "30000000-0000-0000-0000-000000000001",
+              "resource_id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+              "carried_from_task_id": null,
+              "task_type": "custom",
+              "title": "Gerçek video · Yerel kabul testi",
+              "description": "LOCAL-only playback/progress/resume acceptance. KPSS curriculum content is not claimed.",
+              "planned_date": "2026-10-05",
+              "estimated_minutes": 23,
+              "importance": "important",
+              "priority_score": 90,
+              "status": "partially_completed",
+              "source_reason": "planner_v2",
+              "dedupe_key": "local-video-acceptance:2026-10-05",
+              "created_at": "2026-10-05T14:51:09.8231+00:00",
+              "updated_at": "2026-10-05T15:36:39.841686+00:00",
+              "completed_at": null,
+              "revision_schedule_id": null,
+              "work_mode": "video",
+              "resource_section_id": null,
+              "canonical_workload_identity": "youtube:9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+              "canonical_material_view_id": "youtube:9eb7bfba-1a41-4fb5-a098-1a29474c72fa:mapping:b6375449-4d7a-4886-a964-73a7a5adf229",
+              "canonical_boundary": {
+                "kind": "full_video",
+                "videoId": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+                "watchedSeconds": 0,
+                "durationSeconds": 1344
+              },
+              "planner_version": "canonical-planner-v2-shadow-v1",
+              "planner_proposal_fingerprint": "local-video-acceptance-v1:2026-10-05",
+              "subjects": {
+                "name": "Matematik"
+              },
+              "resources": {
+                "id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+                "name": "Yerel video kabul testi",
+                "resource_type": "video_course"
+              },
+              "resource_sections": null,
+              "task_progress": [
+                {
+                  "completed_minutes": 15,
+                  "actual_study_minutes": 15
+                }
+              ],
+              "task_resource_units": [],
+              "material_resource_id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+              "material_scope": {
+                "kind": "full_video",
+                "resourceId": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+                "youtubePlaylistVideoId": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+                "title": "YouTube Developers Live: Embedded Web Player Customization",
+                "position": 0,
+                "durationSeconds": 1344,
+                "watchedSeconds": 365,
+                "completed": false
+              }
+            }
+          ]
+        },
+        "capacity": {
+          "normalWeeklyMinutes": 10073,
+          "planningTargetMinutes": 420,
+          "effectiveWeeklyMinutes": 10073,
+          "planningBudgetMinutes": 420
+        },
+        "availability": [
+          {
+            "weekday": 1,
+            "start_time": "00:00:00",
+            "end_time": "23:59:00",
+            "is_active": true
+          },
+          {
+            "weekday": 2,
+            "start_time": "00:00:00",
+            "end_time": "23:59:00",
+            "is_active": true
+          },
+          {
+            "weekday": 3,
+            "start_time": "00:00:00",
+            "end_time": "23:59:00",
+            "is_active": true
+          },
+          {
+            "weekday": 4,
+            "start_time": "00:00:00",
+            "end_time": "23:59:00",
+            "is_active": true
+          },
+          {
+            "weekday": 5,
+            "start_time": "00:00:00",
+            "end_time": "23:59:00",
+            "is_active": true
+          },
+          {
+            "weekday": 6,
+            "start_time": "00:00:00",
+            "end_time": "23:59:00",
+            "is_active": true
+          },
+          {
+            "weekday": 7,
+            "start_time": "00:00:00",
+            "end_time": "23:59:00",
+            "is_active": true
+          }
+        ],
+        "resourcesSummary": {
+          "count": 1,
+          "totalPlannedMinutes": 23,
+          "totalActualMinutes": 15,
+          "progressPercent": 65
+        }
+      }
+    },
+    {
+      "route": "/resources/848517eb-a9ed-4d8e-ad1a-ba5020f25d4d/youtube-videos",
+      "status": 200,
+      "body": {
+        "resource": {
+          "id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+          "name": "Yerel video kabul testi",
+          "resourceType": "video_course"
+        },
+        "playlists": [
+          {
+            "id": "b0fdaae0-cc0f-4236-adef-f4171cae40b2",
+            "sourceUrl": "https://www.youtube.com/watch?v=M7lc1UVf-VE",
+            "youtubePlaylistId": "local-acceptance-single-video:M7lc1UVf-VE",
+            "title": "LOCAL acceptance collection",
+            "totalDurationSeconds": 1344,
+            "videoCount": 1,
+            "lastSyncedAt": null,
+            "videos": [
+              {
+                "id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+                "youtubeVideoId": "M7lc1UVf-VE",
+                "title": "YouTube Developers Live: Embedded Web Player Customization",
+                "position": 0,
+                "durationSeconds": 1344,
+                "thumbnailUrl": null,
+                "channelTitle": "Google for Developers",
+                "publishedAt": null,
+                "progress": {
+                  "youtubePlaylistVideoId": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+                  "lastPositionSeconds": 365,
+                  "watchedSeconds": 365,
+                  "durationSeconds": 1344,
+                  "progressPercent": 27,
+                  "remainingSeconds": 979,
+                  "completed": false,
+                  "completedAt": null,
+                  "createdAt": "2026-10-05T15:13:52.801407+00:00",
+                  "updatedAt": "2026-10-05T15:35:16.031672+00:00"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "route": "/youtube-videos/9eb7bfba-1a41-4fb5-a098-1a29474c72fa/progress",
+      "status": 200,
+      "body": {
+        "video": {
+          "id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+          "youtubePlaylistId": "b0fdaae0-cc0f-4236-adef-f4171cae40b2",
+          "youtubeVideoId": "M7lc1UVf-VE",
+          "title": "YouTube Developers Live: Embedded Web Player Customization",
+          "durationSeconds": 1344,
+          "position": 0
+        },
+        "progress": {
+          "youtubePlaylistVideoId": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+          "lastPositionSeconds": 365,
+          "watchedSeconds": 365,
+          "durationSeconds": 1344,
+          "progressPercent": 27,
+          "remainingSeconds": 979,
+          "completed": false,
+          "completedAt": null,
+          "createdAt": "2026-10-05T15:13:52.801407+00:00",
+          "updatedAt": "2026-10-05T15:35:16.031672+00:00"
+        }
+      }
+    }
+  ],
+  "chain": {
+    "tasks": [
+      {
+        "id": "2f1784eb-cbb5-469d-a055-9669f335a341",
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "weekly_plan_id": "96842059-4d24-4a38-ac9d-6cbe77155d3e",
+        "subject_id": "20000000-0000-0000-0000-000000000002",
+        "curriculum_node_id": "30000000-0000-0000-0000-000000000001",
+        "resource_id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+        "carried_from_task_id": null,
+        "task_type": "custom",
+        "title": "Gerçek video · Yerel kabul testi",
+        "description": "LOCAL-only playback/progress/resume acceptance. KPSS curriculum content is not claimed.",
+        "planned_date": "2026-10-05",
+        "estimated_minutes": 23,
+        "importance": "important",
+        "priority_score": 90,
+        "status": "partially_completed",
+        "source_reason": "planner_v2",
+        "dedupe_key": "local-video-acceptance:2026-10-05",
+        "created_at": "2026-10-05T14:51:09.8231+00:00",
+        "updated_at": "2026-10-05T15:36:39.841686+00:00",
+        "completed_at": null,
+        "revision_schedule_id": null,
+        "work_mode": "video",
+        "resource_section_id": null,
+        "canonical_workload_identity": "youtube:9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "canonical_material_view_id": "youtube:9eb7bfba-1a41-4fb5-a098-1a29474c72fa:mapping:b6375449-4d7a-4886-a964-73a7a5adf229",
+        "canonical_boundary": {
+          "kind": "full_video",
+          "videoId": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+          "watchedSeconds": 0,
+          "durationSeconds": 1344
+        },
+        "planner_version": "canonical-planner-v2-shadow-v1",
+        "planner_proposal_fingerprint": "local-video-acceptance-v1:2026-10-05"
+      }
+    ],
+    "resources": [
+      {
+        "id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "subject_id": "20000000-0000-0000-0000-000000000002",
+        "name": "Yerel video kabul testi",
+        "publisher": null,
+        "resource_type": "video_course",
+        "resource_role": "primary",
+        "difficulty": "normal",
+        "status": "active",
+        "created_at": "2026-10-05T14:51:09.8231+00:00",
+        "updated_at": "2026-10-05T14:51:09.8231+00:00"
+      }
+    ],
+    "links": [
+      {
+        "id": "8d93ebe2-e86c-4863-af7a-eaf3a084d881",
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "curriculum_node_id": "30000000-0000-0000-0000-000000000001",
+        "resource_id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+        "youtube_playlist_id": "b0fdaae0-cc0f-4236-adef-f4171cae40b2",
+        "is_primary": true,
+        "created_at": "2026-10-05T14:51:09.8231+00:00",
+        "updated_at": "2026-10-05T15:47:04.840725+00:00"
+      }
+    ],
+    "playlists": [
+      {
+        "id": "b0fdaae0-cc0f-4236-adef-f4171cae40b2",
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "source_url": "https://www.youtube.com/watch?v=M7lc1UVf-VE",
+        "youtube_playlist_id": "local-acceptance-single-video:M7lc1UVf-VE",
+        "title": "LOCAL acceptance collection",
+        "total_duration_seconds": 1344,
+        "video_count": 1,
+        "last_synced_at": null,
+        "created_at": "2026-10-05T14:51:09.8231+00:00",
+        "updated_at": "2026-10-05T14:51:09.8231+00:00"
+      }
+    ],
+    "videos": [
+      {
+        "id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "youtube_playlist_id": "b0fdaae0-cc0f-4236-adef-f4171cae40b2",
+        "youtube_video_id": "M7lc1UVf-VE",
+        "title": "YouTube Developers Live: Embedded Web Player Customization",
+        "position": 0,
+        "duration_seconds": 1344,
+        "thumbnail_url": null,
+        "channel_title": "Google for Developers",
+        "published_at": null,
+        "is_active": true,
+        "created_at": "2026-10-05T14:51:09.8231+00:00",
+        "updated_at": "2026-10-05T14:51:09.8231+00:00"
+      }
+    ],
+    "mappings": [
+      {
+        "id": "b6375449-4d7a-4886-a964-73a7a5adf229",
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "youtube_playlist_video_id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "curriculum_node_id": "30000000-0000-0000-0000-000000000001",
+        "mapping_status": "validated",
+        "mapping_provenance": "reviewed_mapping",
+        "segment_start_seconds": null,
+        "segment_end_seconds": null,
+        "is_active": true,
+        "created_at": "2026-10-05T14:51:09.8231+00:00",
+        "updated_at": "2026-10-05T14:51:09.8231+00:00"
+      }
+    ],
+    "canonical": {
+      "id": "youtube:9eb7bfba-1a41-4fb5-a098-1a29474c72fa:mapping:b6375449-4d7a-4886-a964-73a7a5adf229",
+      "sourceId": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+      "sourceKind": "youtube",
+      "resourceId": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+      "curriculumNodeId": "30000000-0000-0000-0000-000000000001",
+      "unitType": "video",
+      "title": "YouTube Developers Live: Embedded Web Player Customization",
+      "sortOrder": 0,
+      "pageStart": null,
+      "pageEnd": null,
+      "durationSeconds": 1344,
+      "watchedSeconds": 365,
+      "lastPositionSeconds": 365,
+      "mappingId": "b6375449-4d7a-4886-a964-73a7a5adf229",
+      "segmentStartSeconds": null,
+      "segmentEndSeconds": null,
+      "estimatedMinutes": null,
+      "progressState": "in_progress",
+      "completedThroughPage": null,
+      "completedAt": null,
+      "mappingStatus": "validated",
+      "mappingProvenance": "reviewed_mapping",
+      "isActive": true,
+      "plannerEligible": true
+    },
+    "progress": [
+      {
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "youtube_playlist_video_id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "last_position_seconds": 365,
+        "watched_seconds": 365,
+        "completed_at": null,
+        "created_at": "2026-10-05T15:13:52.801407+00:00",
+        "updated_at": "2026-10-05T15:35:16.031672+00:00"
+      }
+    ],
+    "sessions": [
+      {
+        "id": "bfe51721-880a-434f-9bca-1c6c01bb8055",
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "task_id": "2f1784eb-cbb5-469d-a055-9669f335a341",
+        "subject_id": "20000000-0000-0000-0000-000000000002",
+        "curriculum_node_id": "30000000-0000-0000-0000-000000000001",
+        "resource_id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+        "resource_unit_id": null,
+        "session_type": "task",
+        "started_at": "2026-10-05T15:13:52.437Z",
+        "ended_at": "2026-10-05T15:36:39.841Z",
+        "duration_minutes": 15,
+        "status": "completed",
+        "entry_source": "web",
+        "note": null,
+        "accounted_at": "2026-10-05T15:36:39.841Z",
+        "created_at": "2026-10-05T15:13:52.437Z",
+        "updated_at": "2026-10-05T15:36:39.841Z",
+        "session_mode": "video"
+      }
+    ],
+    "breaks": [
+      {
+        "id": "41285810-bc47-4a7f-9071-e59583c21ef0",
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "session_id": "bfe51721-880a-434f-9bca-1c6c01bb8055",
+        "started_at": "2026-10-05T15:17:15.222Z",
+        "ended_at": "2026-10-05T15:21:32.326Z",
+        "created_at": "2026-10-05T15:17:15.222Z",
+        "updated_at": "2026-10-05T15:21:32.326Z"
+      },
+      {
+        "id": "542de402-fa60-43d8-a636-56b407b9fd58",
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "session_id": "bfe51721-880a-434f-9bca-1c6c01bb8055",
+        "started_at": "2026-10-05T15:31:06.731Z",
+        "ended_at": "2026-10-05T15:33:46.229Z",
+        "created_at": "2026-10-05T15:31:06.731Z",
+        "updated_at": "2026-10-05T15:33:46.229Z"
+      }
+    ]
+  },
+  "production": "NOT DEPLOYED",
+  "databaseVerification": "READ ONLY",
+  "resolvedPostgrest1415Failures": [
+    {
+      "route": "/execution/summary",
+      "status": 500,
+      "body": {
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "JWT issued at future"
+        }
+      }
+    },
+    {
+      "route": "/resources/848517eb-a9ed-4d8e-ad1a-ba5020f25d4d/youtube-videos",
+      "status": 500,
+      "body": {
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "JWT issued at future"
+        }
+      }
+    }
+  ],
+  "restRuntime": "14.18",
+  "databaseVerifiedAt": "2026-10-05T16:14:11.798Z"
+}

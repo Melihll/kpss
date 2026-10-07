@@ -2,13 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { callAppApi } from "../lib/app-api";
 import type { RoadmapResponse } from "../lib/roadmap";
 
-export function useRoadmap(options: { ensureWeek?: boolean } = {}) {
+export function useRoadmap(options: { ensureWeek?: boolean; enabled?: boolean } = {}) {
   const [data, setData] = useState<RoadmapResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const preparing = useRef(false);
 
   const load = useCallback(async () => {
+    if (options.enabled === false) return;
     setLoading(true);
     try {
       let value = await callAppApi<RoadmapResponse>("/p48/roadmap");
@@ -31,9 +32,14 @@ export function useRoadmap(options: { ensureWeek?: boolean } = {}) {
       preparing.current = false;
       setLoading(false);
     }
-  }, [options.ensureWeek]);
+  }, [options.ensureWeek, options.enabled]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+    const refresh = () => void load();
+    window.addEventListener("kpss:execution-changed", refresh);
+    return () => window.removeEventListener("kpss:execution-changed", refresh);
+  }, [load]);
 
   return { data, loading, error, retry: load };
 }

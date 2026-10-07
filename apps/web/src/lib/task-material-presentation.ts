@@ -54,7 +54,7 @@ export function taskMaterialPresentation(task: RoadmapTask): TaskMaterialPresent
 
   const durationMinutes = videoMinutes(scope.durationSeconds);
   const watchedMinutes = Math.min(durationMinutes, videoMinutes(scope.watchedSeconds));
-  const videoLabel = scope.position > 0 ? `Video ${scope.position}` : "Video";
+  const videoLabel = `Video ${scope.position + 1}`;
   return {
     resourceName,
     scopeLabel: `${videoLabel} · ${scope.title}`,

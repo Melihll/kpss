@@ -1,3 +1,11 @@
+// Historical phase 6G-A only. The 2026-09-25 exact-profile pilot acceptance
+// explicitly supersedes the earlier always-disabled orchestrator contract.
+// Current gates are the Coach/economics/Planner scripts and production-runtime tests.
+if (!process.argv.includes("--historical-phase6g-a")) {
+  console.log("SUPERSEDED: phase 6G-A marker checker is historical, not a current release gate. Use current Coach/economics/Planner safety scripts. --historical-phase6g-a preserves the original audit.");
+  process.exit(0);
+}
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";

@@ -96,7 +96,7 @@ export function SettingsPage() {
 
     {pageError && <div className="inline-state error settings-load-error" role="alert"><span>Ayarlar yüklenemedi.</span><button type="button" onClick={() => { void loadSettings(); void retryRoadmap(); }}>Tekrar Dene</button></div>}
     {pageLoading ? <div className="settings-page-skeleton" aria-label="Ayarlar yükleniyor">{Array.from({ length: 6 }, (_, index) => <span key={index} />)}</div> : <div className="settings-list settings-profile-list">
-      <section className="settings-section settings-profile-section">
+      <section id="profile" className="settings-section settings-profile-section">
         <div className="settings-section-heading"><h2>Profil</h2></div>
         <div className="settings-section-value"><strong>{displayName}</strong>{user?.email ? <a className="settings-email" href={`mailto:${user.email}`}>{user.email}</a> : <small>Belirtilmedi</small>}</div>
         <Link className="settings-edit-link" to="/onboarding" aria-label="Profili düzenle">Düzenle <Icon name="arrow" /></Link>

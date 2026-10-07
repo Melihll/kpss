@@ -1,0 +1,43 @@
+{
+  "clientWidth": 1440,
+  "scrollWidth": 1440,
+  "tooltips": [
+    {
+      "bounds": {
+        "width": 232,
+        "x": 67,
+        "y": 312.3125
+      },
+      "clientHeight": 43,
+      "clientWidth": 230,
+      "scrollHeight": 43,
+      "scrollWidth": 230,
+      "text": "Yeni kaynak zamanı · MatematikYeni kaynak zamanı · 12 Ekim"
+    },
+    {
+      "bounds": {
+        "width": 232,
+        "x": 385,
+        "y": 312.3125
+      },
+      "clientHeight": 60,
+      "clientWidth": 230,
+      "scrollHeight": 60,
+      "scrollWidth": 230,
+      "text": "Vatandaşlık + güncel bilgiler kaynağını ekleKaynak notu · 18 Ocak 2027"
+    },
+    {
+      "bounds": {
+        "width": 232,
+        "x": 1233,
+        "y": 312.3125
+      },
+      "clientHeight": 43,
+      "clientWidth": 230,
+      "scrollHeight": 43,
+      "scrollWidth": 230,
+      "text": "KPSS 2027 hedef günü (varsayım)Sınav · 12 Eylül 2027"
+    }
+  ],
+  "width": 1440
+}

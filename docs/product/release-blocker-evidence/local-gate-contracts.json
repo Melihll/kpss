@@ -1,0 +1,64 @@
+{
+  "localOnly": true,
+  "measuredAt": "2026-10-07T06:31:50.013Z",
+  "userId": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+  "profileId": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+  "signatureVerified": true,
+  "capability": {
+    "enabled": false,
+    "previewEnabled": false,
+    "confirmationEnabled": false,
+    "applyEnabled": false,
+    "productionMutationAuthority": false
+  },
+  "coach": {
+    "state": "EXPLANATION",
+    "deterministicKind": "planner_state_explanation",
+    "providerAttempted": false,
+    "providerUsed": false,
+    "noMutationPerformed": true,
+    "plannerExplanation": {
+      "version": "planner-coach-explanation-v1",
+      "state": "NO_CURRENT_PREVIEW",
+      "answer": "Doğrulanmış güncel bir Planner önizlemesi yok. Planın hakkında sonuç uydurmuyorum ve mevcut capability ile önizleme sunulamıyor.",
+      "currentPreviewExists": false,
+      "lifecycleState": null,
+      "canonicalWarningCodes": [],
+      "explanationFacts": [],
+      "sourceFactPaths": [],
+      "acknowledgedUnknowns": [
+        "planner.currentPreview"
+      ],
+      "staleOrBlockedWarnings": [],
+      "provenance": [
+        {
+          "source": "planner_v2_lifecycle",
+          "recordIds": [],
+          "asOf": null
+        }
+      ],
+      "asOf": null,
+      "previewAction": {
+        "availability": "unavailable",
+        "action": null,
+        "label": null,
+        "href": null,
+        "reasonCode": "canonical_preview_disabled",
+        "requiresExplicitUserAction": true,
+        "autoRunPreview": false,
+        "confirmsProposal": false,
+        "appliesProposal": false
+      },
+      "authority": {
+        "mode": "interpretation_and_navigation_only",
+        "plannerMutationAllowed": false,
+        "taskMutationAllowed": false,
+        "capacityMutationAllowed": false,
+        "proposalCreationAllowed": false,
+        "confirmationAllowed": false,
+        "applyAllowed": false
+      }
+    }
+  },
+  "production": "NOT DEPLOYED"
+}

@@ -1,0 +1,21 @@
+{
+  "source": "Rendered product root tokens and rendered Concept B tokens, 2026-10-02",
+  "product": {
+    "bg": "#f7f7f5",
+    "border": "#e5e5e3",
+    "font": "Geist, Inter, system-ui, sans-serif",
+    "primary": "#4f46e5",
+    "soft": "#eef0ff",
+    "surface": "#fff",
+    "text": "#111113"
+  },
+  "conceptB": {
+    "bg": "#f7f7f5",
+    "border": "#e5e5e3",
+    "font": "Geist, Inter, system-ui, sans-serif",
+    "primary": "#4f46e5",
+    "soft": "#eef0ff",
+    "surface": "#fff",
+    "text": "#111113"
+  }
+}

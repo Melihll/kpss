@@ -10,4 +10,7 @@ apps/web/.env.local
 supabase/.branches/
 supabase/.temp/
 *.log
+*.tsbuildinfo
+# Local acceptance credentials, runtime controls and reproducible release output.
+.release/
 .DS_Store

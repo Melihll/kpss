@@ -1,0 +1,6 @@
+.dev-video-review { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+.dev-video-review header { margin-bottom: 24px; }
+.dev-video-review header > a { display: inline-block; margin-bottom: 24px; }
+.dev-video-review .page-eyebrow { display: block; }
+.dev-video-select { display: grid; gap: 8px; margin: 24px 0; }
+.dev-video-select select { width: 100%; max-width: 100%; padding: 12px; border: 1px solid var(--line, #e1e6df); border-radius: 8px; background: white; color: inherit; }

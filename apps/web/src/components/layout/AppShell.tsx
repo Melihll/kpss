@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { supabase } from "../../lib/supabase";
-import { Icon } from "../Icon";
-import { MobileNav } from "./MobileNav";
 import { PageTransition } from "./PageTransition";
-import { Sidebar } from "./Sidebar";
+import { TopNavigation } from "./TopNavigation";
+import { CoachDrawer, type CoachDrawerEntryContext } from "../CoachDrawer";
+import { StudyTodayPanel } from "../StudyTodayPanel";
 
 export function AppShell() {
-  const { user } = useAuth();
+  const { user, profile, signOut } = useAuth();
+  const location = useLocation();
+  const studyRoute = location.pathname === "/" || location.pathname === "/session";
+  const focus = location.pathname === "/session";
+  const [coachContext, setCoachContext] = useState<CoachDrawerEntryContext | null>(null);
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -24,18 +28,21 @@ export function AppShell() {
   }, [user]);
 
   const displayName = useMemo(() => {
-    const value = typeof user?.user_metadata?.display_name === "string" ? user.user_metadata.display_name.trim() : "";
+    const value = profile?.display_name?.trim() || (typeof user?.user_metadata?.display_name === "string" ? user.user_metadata.display_name.trim() : "");
     return value || user?.email?.split("@")[0] || "Öğrenci";
-  }, [user]);
+  }, [user, profile]);
 
   if (hasProfile === null) return <main className="shell-skeleton" aria-label="Yükleniyor"><div /><span /><span /><span /></main>;
 
-  if (!hasProfile) return <main className="profile-required"><span className="brand-mark"><Icon name="target" /></span><h1>Çalışma profili gerekli.</h1><p>Derslerini, haftalık zamanını ve kaynaklarını tanımla.</p><Link className="primary-action" to="/onboarding">Kurulumu Başlat</Link></main>;
+  if (!hasProfile) return <main className="profile-required"><img className="profile-required-brand" src="/brand/kpss-kocu-mark.svg" width={289} height={304} alt="KPSS Koçu" /><h1>Çalışma profili gerekli.</h1><p>Derslerini, haftalık zamanını ve kaynaklarını tanımla.</p><Link className="primary-action" to="/onboarding">Kurulumu Başlat</Link></main>;
 
   return <div className="product-shell">
-    <Sidebar displayName={displayName} email={user?.email} />
-    <header className="mobile-product-header"><Link to="/"><span className="brand-mark"><Icon name="target" /></span><strong>KPSS Koçu</strong></Link><Link to="/settings" aria-label="Ayarlar"><Icon name="settings" /></Link></header>
-    <main className="route-stage"><PageTransition><Outlet /></PageTransition></main>
-    <MobileNav />
+    <a className="product-skip" href="#product-main">İçeriğe geç</a>
+    <TopNavigation displayName={displayName} email={user?.email} focus={focus} onCoach={() => setCoachContext("general")} onSignOut={signOut} />
+    <main id="product-main" tabIndex={-1} className={`route-stage ${focus ? "is-focus-route" : ""}`}>
+      <StudyTodayPanel focus={focus} visible={studyRoute} onCoach={setCoachContext} />
+      {!studyRoute && <PageTransition><Outlet /></PageTransition>}
+    </main>
+    <CoachDrawer open={coachContext !== null} entryContext={coachContext ?? "general"} onClose={() => setCoachContext(null)} />
   </div>;
 }

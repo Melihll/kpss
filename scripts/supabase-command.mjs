@@ -6,13 +6,12 @@ const currentDirectory = dirname(fileURLToPath(import.meta.url));
 export const repositoryRoot = resolve(currentDirectory, "..");
 
 export function runLocalSupabase(args, { capture = false } = {}) {
-  const binary = resolve(
+  const entrypoint = resolve(
     repositoryRoot,
-    "node_modules/supabase/bin",
-    process.platform === "win32" ? "supabase.exe" : "supabase",
+    "node_modules/supabase/dist/supabase.js",
   );
 
-  return spawnSync(binary, args, {
+  return spawnSync(process.execPath, [entrypoint, ...args], {
     cwd: repositoryRoot,
     encoding: capture ? "utf8" : undefined,
     stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit",

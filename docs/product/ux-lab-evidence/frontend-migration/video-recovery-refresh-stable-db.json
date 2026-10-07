@@ -1,0 +1,46 @@
+[
+  {
+    "at": "2026-10-05T15:33:26.262Z",
+    "progress": [
+      {
+        "last_position_seconds": 277,
+        "watched_seconds": 277,
+        "updated_at": "2026-10-05T15:32:28.404Z"
+      }
+    ],
+    "breaks": [
+      {
+        "id": "41285810-bc47-4a7f-9071-e59583c21ef0",
+        "session_id": "bfe51721-880a-434f-9bca-1c6c01bb8055",
+        "ended_at": "2026-10-05T15:21:32.326Z"
+      },
+      {
+        "id": "542de402-fa60-43d8-a636-56b407b9fd58",
+        "session_id": "bfe51721-880a-434f-9bca-1c6c01bb8055",
+        "ended_at": null
+      }
+    ]
+  },
+  {
+    "at": "2026-10-05T15:33:36.294Z",
+    "progress": [
+      {
+        "last_position_seconds": 277,
+        "watched_seconds": 277,
+        "updated_at": "2026-10-05T15:32:28.404Z"
+      }
+    ],
+    "breaks": [
+      {
+        "id": "41285810-bc47-4a7f-9071-e59583c21ef0",
+        "session_id": "bfe51721-880a-434f-9bca-1c6c01bb8055",
+        "ended_at": "2026-10-05T15:21:32.326Z"
+      },
+      {
+        "id": "542de402-fa60-43d8-a636-56b407b9fd58",
+        "session_id": "bfe51721-880a-434f-9bca-1c6c01bb8055",
+        "ended_at": null
+      }
+    ]
+  }
+]

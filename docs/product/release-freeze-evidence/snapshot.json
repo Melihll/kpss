@@ -1,0 +1,1868 @@
+{
+  "date": "2026-10-06",
+  "branch": "develop",
+  "head": "ea17ee281cb192304abfb518ff4f50b1ab3ecfdd",
+  "upstream": "origin/develop",
+  "originDevelop": "ea17ee281cb192304abfb518ff4f50b1ab3ecfdd",
+  "originMain": "cbc209fdf34f217b6d1419612199ee8c8370fe4b",
+  "upstreamAheadBehind": "0\t0",
+  "status": [
+    "M apps/web/index.html",
+    " M apps/web/src/App.tsx",
+    " M apps/web/src/components/CoachDrawer.tsx",
+    " M apps/web/src/components/PhysicalStudyFinishDialog.tsx",
+    " M apps/web/src/components/PlanningPanel.tsx",
+    " M apps/web/src/components/QuickAddTaskDrawer.tsx",
+    " M apps/web/src/components/ResourceDetailDrawer.tsx",
+    " M apps/web/src/components/ResourceProgressDrawer.tsx",
+    " M apps/web/src/components/StudyTodayPanel.tsx",
+    " M apps/web/src/components/TaskActionPreviewDrawer.tsx",
+    " M apps/web/src/components/VideoPlayerDrawer.tsx",
+    " M apps/web/src/components/layout/AppShell.tsx",
+    " D apps/web/src/components/layout/MobileNav.tsx",
+    " D apps/web/src/components/layout/Sidebar.tsx",
+    " M apps/web/src/hooks/useRoadmap.ts",
+    " M apps/web/src/lib/app-api.ts",
+    " M apps/web/src/lib/task-material-presentation.test.ts",
+    " M apps/web/src/lib/task-material-presentation.ts",
+    " M apps/web/src/lib/today-focus.test.ts",
+    " M apps/web/src/lib/today-focus.ts",
+    " M apps/web/src/lib/youtube-player-progress.test.ts",
+    " M apps/web/src/lib/youtube-player-progress.ts",
+    " M apps/web/src/main.tsx",
+    " M apps/web/src/pages/HomePage.tsx",
+    " M apps/web/src/pages/LoginPage.tsx",
+    " M apps/web/src/pages/ProgressPage.tsx",
+    " M apps/web/src/pages/RegisterPage.tsx",
+    " M apps/web/src/pages/ResourcesPage.tsx",
+    " M apps/web/src/pages/RoadmapPage.tsx",
+    " M apps/web/src/pages/SettingsPage.tsx",
+    " M apps/web/src/pages/WeekPage.tsx",
+    " M apps/web/src/styles.css",
+    " M docs/product/CURRENT_SPRINT.md",
+    " M docs/product/PROJECT_HANDOFF.md",
+    " M package.json",
+    " M pnpm-lock.yaml",
+    " M scripts/supabase-command.mjs",
+    " M supabase/functions/_shared/task-action-preview.ts",
+    " M supabase/functions/app-api/index.ts",
+    " M tests/evre7a-today-coach-entry.test.ts",
+    " M tests/evre7b-today-problem-solving.test.ts",
+    " M tests/evre7c-progress-readonly-planning.test.ts",
+    " M tests/task-action-preview-ui-contract.test.ts",
+    " M tests/task-action-preview.test.ts",
+    " M tests/today-material-actions-ui-contract.test.ts",
+    "?? apps/web/public/",
+    "?? apps/web/src/components/ProductDialog.tsx",
+    "?? apps/web/src/components/StudyMaterialWorkspace.test.ts",
+    "?? apps/web/src/components/StudyMaterialWorkspace.tsx",
+    "?? apps/web/src/components/layout/TopNavigation.test.ts",
+    "?? apps/web/src/components/layout/TopNavigation.tsx",
+    "?? apps/web/src/components/layout/top-navigation.css",
+    "?? apps/web/src/dev-video-entry.tsx",
+    "?? apps/web/src/dev-video-review.css",
+    "?? apps/web/src/dev-video-review.tsx",
+    "?? apps/web/src/lib/dialog-focus.ts",
+    "?? apps/web/src/lib/local-video-review.test.ts",
+    "?? apps/web/src/lib/local-video-review.ts",
+    "?? apps/web/src/lib/task-video.test.ts",
+    "?? apps/web/src/lib/task-video.ts",
+    "?? apps/web/src/product-entry.tsx",
+    "?? apps/web/src/ux-lab/",
+    "?? apps/web/src/workspace.css",
+    "?? assets/",
+    "?? docs/product/CONCEPT_B_RELEASE_FREEZE.md",
+    "?? docs/product/FRONTEND_MIGRATION.md",
+    "?? docs/product/LOGO_INTEGRATION.md",
+    "?? docs/product/UX_REDESIGN.md",
+    "?? docs/product/VIDEO_INTEGRATION_AUDIT.md",
+    "?? docs/product/VIDEO_LOCAL_AUTHENTICATED_ACCEPTANCE.md",
+    "?? docs/product/brand-evidence/",
+    "?? docs/product/release-freeze-evidence/",
+    "?? docs/product/ux-lab-evidence/",
+    "?? packages/domain/tsconfig.tsbuildinfo",
+    "?? scripts/check-ux-lab.mjs",
+    "?? scripts/local-video-acceptance.mjs",
+    "?? scripts/setup-local-video-acceptance-fixture.mjs",
+    "?? tests/local-video-acceptance-safety.test.ts",
+    "?? tests/video-integration-ui-contract.test.ts"
+  ],
+  "staged": [],
+  "unstaged": [
+    "M\tapps/web/index.html",
+    "M\tapps/web/src/App.tsx",
+    "M\tapps/web/src/components/CoachDrawer.tsx",
+    "M\tapps/web/src/components/PhysicalStudyFinishDialog.tsx",
+    "M\tapps/web/src/components/PlanningPanel.tsx",
+    "M\tapps/web/src/components/QuickAddTaskDrawer.tsx",
+    "M\tapps/web/src/components/ResourceDetailDrawer.tsx",
+    "M\tapps/web/src/components/ResourceProgressDrawer.tsx",
+    "M\tapps/web/src/components/StudyTodayPanel.tsx",
+    "M\tapps/web/src/components/TaskActionPreviewDrawer.tsx",
+    "M\tapps/web/src/components/VideoPlayerDrawer.tsx",
+    "M\tapps/web/src/components/layout/AppShell.tsx",
+    "D\tapps/web/src/components/layout/MobileNav.tsx",
+    "D\tapps/web/src/components/layout/Sidebar.tsx",
+    "M\tapps/web/src/hooks/useRoadmap.ts",
+    "M\tapps/web/src/lib/app-api.ts",
+    "M\tapps/web/src/lib/task-material-presentation.test.ts",
+    "M\tapps/web/src/lib/task-material-presentation.ts",
+    "M\tapps/web/src/lib/today-focus.test.ts",
+    "M\tapps/web/src/lib/today-focus.ts",
+    "M\tapps/web/src/lib/youtube-player-progress.test.ts",
+    "M\tapps/web/src/lib/youtube-player-progress.ts",
+    "M\tapps/web/src/main.tsx",
+    "M\tapps/web/src/pages/HomePage.tsx",
+    "M\tapps/web/src/pages/LoginPage.tsx",
+    "M\tapps/web/src/pages/ProgressPage.tsx",
+    "M\tapps/web/src/pages/RegisterPage.tsx",
+    "M\tapps/web/src/pages/ResourcesPage.tsx",
+    "M\tapps/web/src/pages/RoadmapPage.tsx",
+    "M\tapps/web/src/pages/SettingsPage.tsx",
+    "M\tapps/web/src/pages/WeekPage.tsx",
+    "M\tapps/web/src/styles.css",
+    "M\tdocs/product/CURRENT_SPRINT.md",
+    "M\tdocs/product/PROJECT_HANDOFF.md",
+    "M\tpackage.json",
+    "M\tpnpm-lock.yaml",
+    "M\tscripts/supabase-command.mjs",
+    "M\tsupabase/functions/_shared/task-action-preview.ts",
+    "M\tsupabase/functions/app-api/index.ts",
+    "M\ttests/evre7a-today-coach-entry.test.ts",
+    "M\ttests/evre7b-today-problem-solving.test.ts",
+    "M\ttests/evre7c-progress-readonly-planning.test.ts",
+    "M\ttests/task-action-preview-ui-contract.test.ts",
+    "M\ttests/task-action-preview.test.ts",
+    "M\ttests/today-material-actions-ui-contract.test.ts"
+  ],
+  "untracked": [
+    "apps/web/public/brand/kpss-kocu-logo.svg",
+    "apps/web/public/brand/kpss-kocu-mark.svg",
+    "apps/web/src/components/ProductDialog.tsx",
+    "apps/web/src/components/StudyMaterialWorkspace.test.ts",
+    "apps/web/src/components/StudyMaterialWorkspace.tsx",
+    "apps/web/src/components/layout/TopNavigation.test.ts",
+    "apps/web/src/components/layout/TopNavigation.tsx",
+    "apps/web/src/components/layout/top-navigation.css",
+    "apps/web/src/dev-video-entry.tsx",
+    "apps/web/src/dev-video-review.css",
+    "apps/web/src/dev-video-review.tsx",
+    "apps/web/src/lib/dialog-focus.ts",
+    "apps/web/src/lib/local-video-review.test.ts",
+    "apps/web/src/lib/local-video-review.ts",
+    "apps/web/src/lib/task-video.test.ts",
+    "apps/web/src/lib/task-video.ts",
+    "apps/web/src/product-entry.tsx",
+    "apps/web/src/ux-lab/Coach.tsx",
+    "apps/web/src/ux-lab/CoachLab.tsx",
+    "apps/web/src/ux-lab/CoachPageTrack.tsx",
+    "apps/web/src/ux-lab/CoachPlanViews.tsx",
+    "apps/web/src/ux-lab/CoachVideo.tsx",
+    "apps/web/src/ux-lab/CoachWorkArea.tsx",
+    "apps/web/src/ux-lab/Insights.tsx",
+    "apps/web/src/ux-lab/PlanDialogs.tsx",
+    "apps/web/src/ux-lab/Resources.tsx",
+    "apps/web/src/ux-lab/StudySession.tsx",
+    "apps/web/src/ux-lab/Today.tsx",
+    "apps/web/src/ux-lab/UxLab.tsx",
+    "apps/web/src/ux-lab/Week.tsx",
+    "apps/web/src/ux-lab/bootstrap.tsx",
+    "apps/web/src/ux-lab/coach-production-fusion.css",
+    "apps/web/src/ux-lab/coach-top-navigation.css",
+    "apps/web/src/ux-lab/coach-v2.css",
+    "apps/web/src/ux-lab/coach-workspace-context.ts",
+    "apps/web/src/ux-lab/coach-workspace-state.test.ts",
+    "apps/web/src/ux-lab/coach-workspace-state.ts",
+    "apps/web/src/ux-lab/context.ts",
+    "apps/web/src/ux-lab/lab.css",
+    "apps/web/src/ux-lab/model.test.ts",
+    "apps/web/src/ux-lab/model.ts",
+    "apps/web/src/ux-lab/ui.tsx",
+    "apps/web/src/workspace.css",
+    "assets/brand/README.md",
+    "assets/brand/source/kpss-kocu-logo.svg",
+    "docs/product/CONCEPT_B_RELEASE_FREEZE.md",
+    "docs/product/FRONTEND_MIGRATION.md",
+    "docs/product/LOGO_INTEGRATION.md",
+    "docs/product/UX_REDESIGN.md",
+    "docs/product/VIDEO_INTEGRATION_AUDIT.md",
+    "docs/product/VIDEO_LOCAL_AUTHENTICATED_ACCEPTANCE.md",
+    "docs/product/brand-evidence/README.md",
+    "docs/product/brand-evidence/asset-verification.json",
+    "docs/product/brand-evidence/browser-measurements.json",
+    "docs/product/brand-evidence/full-preview.png",
+    "docs/product/brand-evidence/lab-desktop-1440.png",
+    "docs/product/brand-evidence/lab-focus-desktop-1440.png",
+    "docs/product/brand-evidence/lab-focus-mobile-390.png",
+    "docs/product/brand-evidence/lab-mobile-390.png",
+    "docs/product/brand-evidence/lab-tablet-834.png",
+    "docs/product/brand-evidence/local-asset-responses.json",
+    "docs/product/brand-evidence/login-desktop-1440.png",
+    "docs/product/brand-evidence/login-mobile-390.png",
+    "docs/product/brand-evidence/mark-16px.png",
+    "docs/product/brand-evidence/mark-32px.png",
+    "docs/product/brand-evidence/mark-48px.png",
+    "docs/product/brand-evidence/mark-scale-comparison.png",
+    "docs/product/brand-evidence/product-desktop-1440.png",
+    "docs/product/brand-evidence/product-mobile-390.png",
+    "docs/product/brand-evidence/product-tablet-834.png",
+    "docs/product/brand-evidence/register-mobile-390.png",
+    "docs/product/brand-evidence/source-preview.png",
+    "docs/product/brand-evidence/svg-syntax-verification.json",
+    "docs/product/release-freeze-evidence/README.md",
+    "docs/product/release-freeze-evidence/app-api-audit.bundle.js",
+    "docs/product/release-freeze-evidence/audit-snapshot.mjs",
+    "docs/product/release-freeze-evidence/change-inventory.json",
+    "docs/product/release-freeze-evidence/edge-import-closures.json",
+    "docs/product/release-freeze-evidence/snapshot.json",
+    "docs/product/release-freeze-evidence/today-mobile-aria-390.png",
+    "docs/product/ux-lab-evidence/README.md",
+    "docs/product/ux-lab-evidence/coach-v2/README.md",
+    "docs/product/ux-lab-evidence/coach-v2/desktop-plan-review.png",
+    "docs/product/ux-lab-evidence/coach-v2/desktop-session.png",
+    "docs/product/ux-lab-evidence/coach-v2/desktop-today.png",
+    "docs/product/ux-lab-evidence/coach-v2/desktop-week.png",
+    "docs/product/ux-lab-evidence/coach-v2/mobile-coach.png",
+    "docs/product/ux-lab-evidence/coach-v2/mobile-finish.png",
+    "docs/product/ux-lab-evidence/coach-v2/mobile-session.png",
+    "docs/product/ux-lab-evidence/coach-v2/mobile-today-page.png",
+    "docs/product/ux-lab-evidence/coach-v2/mobile-today-video.png",
+    "docs/product/ux-lab-evidence/coach-v2/responsive-checks.json",
+    "docs/product/ux-lab-evidence/coach-v2/tablet-today.png",
+    "docs/product/ux-lab-evidence/coach-v2/workspace-final-checks.json",
+    "docs/product/ux-lab-evidence/coach-visual-polish/README.md",
+    "docs/product/ux-lab-evidence/coach-visual-polish/coach-drawer.png",
+    "docs/product/ux-lab-evidence/coach-visual-polish/desktop-focus.png",
+    "docs/product/ux-lab-evidence/coach-visual-polish/desktop-progress.png",
+    "docs/product/ux-lab-evidence/coach-visual-polish/desktop-resources.png",
+    "docs/product/ux-lab-evidence/coach-visual-polish/desktop-roadmap.png",
+    "docs/product/ux-lab-evidence/coach-visual-polish/desktop-today.png",
+    "docs/product/ux-lab-evidence/coach-visual-polish/desktop-week.png",
+    "docs/product/ux-lab-evidence/coach-visual-polish/mobile-focus-lower.png",
+    "docs/product/ux-lab-evidence/coach-visual-polish/mobile-focus.png",
+    "docs/product/ux-lab-evidence/coach-visual-polish/mobile-today.png",
+    "docs/product/ux-lab-evidence/coach-visual-polish/responsive-checks.json",
+    "docs/product/ux-lab-evidence/coach-visual-reset/README.md",
+    "docs/product/ux-lab-evidence/coach-visual-reset/coach-drawer.png",
+    "docs/product/ux-lab-evidence/coach-visual-reset/desktop-focus.png",
+    "docs/product/ux-lab-evidence/coach-visual-reset/desktop-progress.png",
+    "docs/product/ux-lab-evidence/coach-visual-reset/desktop-resources.png",
+    "docs/product/ux-lab-evidence/coach-visual-reset/desktop-roadmap.png",
+    "docs/product/ux-lab-evidence/coach-visual-reset/desktop-today-lower.png",
+    "docs/product/ux-lab-evidence/coach-visual-reset/desktop-today.png",
+    "docs/product/ux-lab-evidence/coach-visual-reset/desktop-week.png",
+    "docs/product/ux-lab-evidence/coach-visual-reset/mobile-focus-lower.png",
+    "docs/product/ux-lab-evidence/coach-visual-reset/mobile-focus.png",
+    "docs/product/ux-lab-evidence/coach-visual-reset/mobile-today-lower.png",
+    "docs/product/ux-lab-evidence/coach-visual-reset/mobile-today.png",
+    "docs/product/ux-lab-evidence/coach-visual-reset/product-token-comparison.json",
+    "docs/product/ux-lab-evidence/coach-visual-reset/responsive-checks.json",
+    "docs/product/ux-lab-evidence/coach-visual-reset/week-review.png",
+    "docs/product/ux-lab-evidence/desktop-coach.png",
+    "docs/product/ux-lab-evidence/desktop-focus.png",
+    "docs/product/ux-lab-evidence/desktop-product.png",
+    "docs/product/ux-lab-evidence/frontend-migration/README.md",
+    "docs/product/ux-lab-evidence/frontend-migration/desktop-account-review.png",
+    "docs/product/ux-lab-evidence/frontend-migration/desktop-coach-drawer.png",
+    "docs/product/ux-lab-evidence/frontend-migration/desktop-coach.png",
+    "docs/product/ux-lab-evidence/frontend-migration/desktop-focus.png",
+    "docs/product/ux-lab-evidence/frontend-migration/desktop-progress.png",
+    "docs/product/ux-lab-evidence/frontend-migration/desktop-resources.png",
+    "docs/product/ux-lab-evidence/frontend-migration/desktop-roadmap.png",
+    "docs/product/ux-lab-evidence/frontend-migration/desktop-sticky.png",
+    "docs/product/ux-lab-evidence/frontend-migration/desktop-today.png",
+    "docs/product/ux-lab-evidence/frontend-migration/desktop-week.png",
+    "docs/product/ux-lab-evidence/frontend-migration/mobile-coach.png",
+    "docs/product/ux-lab-evidence/frontend-migration/mobile-focus.png",
+    "docs/product/ux-lab-evidence/frontend-migration/mobile-menu.png",
+    "docs/product/ux-lab-evidence/frontend-migration/mobile-today.png",
+    "docs/product/ux-lab-evidence/frontend-migration/product-login-blocker.png",
+    "docs/product/ux-lab-evidence/frontend-migration/regression-results.json",
+    "docs/product/ux-lab-evidence/frontend-migration/responsive-matrix.json",
+    "docs/product/ux-lab-evidence/frontend-migration/tablet-focus.png",
+    "docs/product/ux-lab-evidence/frontend-migration/tablet-menu.png",
+    "docs/product/ux-lab-evidence/frontend-migration/tablet-today.png",
+    "docs/product/ux-lab-evidence/frontend-migration/validation-summary.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-authenticated-acceptance-evidence.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-authenticated-today-blocked.png",
+    "docs/product/ux-lab-evidence/frontend-migration/video-integration-local-auth.png",
+    "docs/product/ux-lab-evidence/frontend-migration/video-integration-regression-results.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-api-evidence.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-checkpoint-cadence.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-final-console.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-final-evidence.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-finished-db.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-finished-today.png",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-fixture-replay.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-focus-playing.png",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping-db.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping-ui.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping.png",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-paused-db.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-postgrest-auth-cycles.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-postgrest-runtime.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-refresh-paused.png",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-refresh-stable-db.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-regression-results.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-start-db.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-validation-summary.json",
+    "docs/product/ux-lab-evidence/frontend-migration/video-recovery-youtube-paused.png",
+    "docs/product/ux-lab-evidence/interaction-checks.json",
+    "docs/product/ux-lab-evidence/mobile-coach.png",
+    "docs/product/ux-lab-evidence/mobile-resource.png",
+    "docs/product/ux-lab-evidence/mobile-session.png",
+    "docs/product/ux-lab-evidence/mobile-week.png",
+    "docs/product/ux-lab-evidence/responsive-checks.json",
+    "packages/domain/tsconfig.tsbuildinfo",
+    "scripts/check-ux-lab.mjs",
+    "scripts/local-video-acceptance.mjs",
+    "scripts/setup-local-video-acceptance-fixture.mjs",
+    "tests/local-video-acceptance-safety.test.ts",
+    "tests/video-integration-ui-contract.test.ts"
+  ],
+  "runtimeManifestSha256": "8a27008a5fbc0b4caae9726c17a0b3e0bd27044c7a5dfd865902f8a99a820f40",
+  "buildManifestSha256": "d87946edab653708c44049089be12b2e852767e6a8d64217df7ccc4ff0d44e96",
+  "runtimeManifest": [
+    {
+      "path": "apps/web/index.html",
+      "bytes": 387,
+      "sha256": "17d8a90d7b5f7e7bed0a4a476015f0790cd5b801349a3b77215d51979adc9adc"
+    },
+    {
+      "path": "apps/web/package.json",
+      "bytes": 644,
+      "sha256": "233a764fb183b740bc727111abe7735d0d3653e7a5c471aa84b373b6723f397d"
+    },
+    {
+      "path": "apps/web/public/brand/kpss-kocu-logo.svg",
+      "bytes": 7837,
+      "sha256": "78471a201942d2a4634088d55487f2ea7c64f31700809361627b58db98eb254b"
+    },
+    {
+      "path": "apps/web/public/brand/kpss-kocu-mark.svg",
+      "bytes": 1764,
+      "sha256": "296887f0fd299aca44d9e92caf450ccd50b4a4ea234e873f11805c1212a68080"
+    },
+    {
+      "path": "apps/web/src/App.tsx",
+      "bytes": 2294,
+      "sha256": "2c19d3a5d019281129d1fd6590a1745e09d10930e94b0cfb152c03c65d380522"
+    },
+    {
+      "path": "apps/web/src/auth/AuthContext.tsx",
+      "bytes": 2780,
+      "sha256": "a388a3e2e3cd25001935b0dd328d3d471b7a5cc478752713341e6ea8b57d3c03"
+    },
+    {
+      "path": "apps/web/src/auth/ProtectedRoute.tsx",
+      "bytes": 373,
+      "sha256": "d3109db5bd08111bef8357bd58135af1442c8ec89de5b8665286f643653080d2"
+    },
+    {
+      "path": "apps/web/src/components/AdaptivePlanningPanel.tsx",
+      "bytes": 6104,
+      "sha256": "4a625fe42f3e83291ec75e24b21ee66da96bb9203ed567bc847b723995c061c0"
+    },
+    {
+      "path": "apps/web/src/components/CoachDrawer.tsx",
+      "bytes": 8593,
+      "sha256": "cf3e812c4b692e0dcd4455ff896c0d950e09db4be9dc368f8bee7cc0ec2b886b"
+    },
+    {
+      "path": "apps/web/src/components/ExecutionPanel.tsx",
+      "bytes": 20433,
+      "sha256": "5f3ae79791a5f378e0fb5dc8a0857910af18e3232f7c035770d665dccbe0b601"
+    },
+    {
+      "path": "apps/web/src/components/Icon.tsx",
+      "bytes": 2120,
+      "sha256": "47b4e2cb840e1054d3395fa080c90ccdf8aa82246bab1e32fd31ba5c557b5944"
+    },
+    {
+      "path": "apps/web/src/components/P48RoadmapPanel.tsx",
+      "bytes": 14763,
+      "sha256": "6d2a4d5f4159acb580bc3ac155a574da174ddcdc3e3154b94dcb51cd70feec2f"
+    },
+    {
+      "path": "apps/web/src/components/PhysicalStudyFinishDialog.tsx",
+      "bytes": 3340,
+      "sha256": "12a4e45b36988a7437556bf855c2d340aebdaef908c0b6dbea77e6ed44e944eb"
+    },
+    {
+      "path": "apps/web/src/components/PlannerCoachExplanationCard.tsx",
+      "bytes": 1650,
+      "sha256": "88bcbdf3621cf015b84515981e288d20c21c617943b51dce6e375146b6f30877"
+    },
+    {
+      "path": "apps/web/src/components/PlannerV2PreviewPanel.tsx",
+      "bytes": 11337,
+      "sha256": "b3e0bd81d01a7b3b9923cd6ead409fe5078a1d747ee83ff891195c671cb84737"
+    },
+    {
+      "path": "apps/web/src/components/PlanningPanel.tsx",
+      "bytes": 19096,
+      "sha256": "3ad74336ce7264aec8541b51ca115f9ee361bcf1e38be962f5f6194ab014c141"
+    },
+    {
+      "path": "apps/web/src/components/ProactiveCoachCard.tsx",
+      "bytes": 1520,
+      "sha256": "81445a3344b5eccd8c0739039a9002720a6df70b071f51a9fb1aa52868680d12"
+    },
+    {
+      "path": "apps/web/src/components/ProactiveCoachSurface.tsx",
+      "bytes": 3131,
+      "sha256": "1aa0790e9ce43be9fe1e51d657011fbffe5d835e95d8702e5df4f4d54a7f3b64"
+    },
+    {
+      "path": "apps/web/src/components/ProductDialog.tsx",
+      "bytes": 1177,
+      "sha256": "e2495b02b3b6323f52ddc38483bf155520e3f4deeecc4f31ef8157b4287223db"
+    },
+    {
+      "path": "apps/web/src/components/QuickAddTaskDrawer.tsx",
+      "bytes": 11130,
+      "sha256": "021457cf4123bd8d84d2f394de77a5fb664d5266cebc2a3b423d71e9d1698225"
+    },
+    {
+      "path": "apps/web/src/components/ResourceDetailDrawer.tsx",
+      "bytes": 7752,
+      "sha256": "1cc4727b69cfe959f2ea424873da565a86dcfeff074ca4168e64ccf2e1dd0c6e"
+    },
+    {
+      "path": "apps/web/src/components/ResourceProgressDrawer.tsx",
+      "bytes": 5074,
+      "sha256": "171c613cc66b28214aea409f693f5371594d2cc26f145b9465018ddcad5121f8"
+    },
+    {
+      "path": "apps/web/src/components/RevisionPanel.tsx",
+      "bytes": 4429,
+      "sha256": "b728f04e0898793b6906447be800c34530621c1bc5ffb06d3eb485baab44ebb4"
+    },
+    {
+      "path": "apps/web/src/components/StudyMaterialWorkspace.tsx",
+      "bytes": 4599,
+      "sha256": "6f9312d67b6ebfc153819c05a3dfa78cc75e20c604b23462783570d949227491"
+    },
+    {
+      "path": "apps/web/src/components/StudyTodayPanel.tsx",
+      "bytes": 28308,
+      "sha256": "ef038e26c9780a73a915d24516ca7f5af0a8cebefe6fced6cdaaf86bd6b96e9a"
+    },
+    {
+      "path": "apps/web/src/components/TaskActionPreviewDrawer.tsx",
+      "bytes": 8185,
+      "sha256": "d5877f139e38cb11fbfd91a24f6842cef64262eaa7f67435bd52344d9a99bed4"
+    },
+    {
+      "path": "apps/web/src/components/TaskMaterialSummary.tsx",
+      "bytes": 3020,
+      "sha256": "6eacaeed88fd5f086e6470ff611a02885a38e15f67b1e90818922d8a4e69579f"
+    },
+    {
+      "path": "apps/web/src/components/TopicPerformancePanel.tsx",
+      "bytes": 4647,
+      "sha256": "0fc0e8b80ff1286766e3fa188960f4acbe68381ee894414641b0ddfc057390df"
+    },
+    {
+      "path": "apps/web/src/components/VideoPlayerDrawer.tsx",
+      "bytes": 24866,
+      "sha256": "42578a2cb4583b755cf5befcbe6c3109c0f381097c5717825879da341e42a06e"
+    },
+    {
+      "path": "apps/web/src/components/WeeklyReportPanel.tsx",
+      "bytes": 8602,
+      "sha256": "72285e6ab7882e648aae0b9f08e72bca2ebeb47009fcfbe7193eeca276340b08"
+    },
+    {
+      "path": "apps/web/src/components/layout/AppShell.tsx",
+      "bytes": 2700,
+      "sha256": "63b435263f9a2cca2c939fdfa9abed160ecf8c4a4ccb2af744d0c1cb3d412903"
+    },
+    {
+      "path": "apps/web/src/components/layout/PageTransition.tsx",
+      "bytes": 282,
+      "sha256": "96885de8eb63d642751e4cceab7236334e9b33725f66408356bca7042844fa8c"
+    },
+    {
+      "path": "apps/web/src/components/layout/TopNavigation.tsx",
+      "bytes": 5824,
+      "sha256": "f5a00ab0f52b6109bc26e36f27ab7e9abbc8c5ec9457ca493e6562078ee4af85"
+    },
+    {
+      "path": "apps/web/src/components/layout/top-navigation.css",
+      "bytes": 5825,
+      "sha256": "b79a3d489d70c08d755e6b3cf98f409c898c1b1b794d19c3c8de93d0e9b59499"
+    },
+    {
+      "path": "apps/web/src/dev-video-entry.tsx",
+      "bytes": 811,
+      "sha256": "20f4ac707cf35c447bf1356736edbe151a295f8c12e149fecb1aeea2b59d3d6c"
+    },
+    {
+      "path": "apps/web/src/dev-video-review.css",
+      "bytes": 487,
+      "sha256": "a66c70ca743548d6f4f00d42d9573f0408a355cbb9b173b8f81423d5e3789bd6"
+    },
+    {
+      "path": "apps/web/src/dev-video-review.tsx",
+      "bytes": 3957,
+      "sha256": "62c6a23a267919e54e3790537d0e65d3c77b9f634b8099adb6a4c94e92d33b9f"
+    },
+    {
+      "path": "apps/web/src/hooks/useDialogAccessibility.ts",
+      "bytes": 2351,
+      "sha256": "ef1b46d0ad3d3e80f6177b48473e9ed26effed4f735693aa643b7c134ee56f2c"
+    },
+    {
+      "path": "apps/web/src/hooks/useResourceDiscovery.ts",
+      "bytes": 2235,
+      "sha256": "3be90d717b9f771a1b3e0bfb408cf01c938b0658c5a35eb2bc2749bbd5a943c0"
+    },
+    {
+      "path": "apps/web/src/hooks/useRoadmap.ts",
+      "bytes": 1707,
+      "sha256": "d55b43b215ab4b2188ab985bc1f102562055de3e32d10eeccced785ce05daf43"
+    },
+    {
+      "path": "apps/web/src/hooks/useTaskMaterialDrawer.tsx",
+      "bytes": 1997,
+      "sha256": "065a05d101b0a57c0ed1c31380a9ab7a22300fdfe8eed294e15d6cdfb2ee079f"
+    },
+    {
+      "path": "apps/web/src/lib/ai-coach-api.ts",
+      "bytes": 9809,
+      "sha256": "51a56650006f4ee4a7402d238e263268e206aa7b1d39a06f69c871dbc34049d9"
+    },
+    {
+      "path": "apps/web/src/lib/ai-coach-presenter.ts",
+      "bytes": 9500,
+      "sha256": "a33e08cdf86f120f6370cde0f74cb7b81b2604227a6d9c3adb8e74221a1ad4a8"
+    },
+    {
+      "path": "apps/web/src/lib/app-api.ts",
+      "bytes": 5166,
+      "sha256": "c63e85623f3694fd949b1e5898b693ef99802b43d70c05870a9a9a029a2237f2"
+    },
+    {
+      "path": "apps/web/src/lib/auth-validation.ts",
+      "bytes": 413,
+      "sha256": "b3728d51b7ea3d94d3ac2df75dfea4e12e35d2b4346c42d3ce0ac25ab21c352c"
+    },
+    {
+      "path": "apps/web/src/lib/dialog-focus.ts",
+      "bytes": 989,
+      "sha256": "2e97b1342e84e4647b4bb6c96e528960e71f9cf20c304fb7c3814118f739798d"
+    },
+    {
+      "path": "apps/web/src/lib/local-video-review.ts",
+      "bytes": 550,
+      "sha256": "b7d98b264246ec02777c7ac767b6a303317118cf21687c350232c763bb79f5e9"
+    },
+    {
+      "path": "apps/web/src/lib/physical-study-finish.ts",
+      "bytes": 1127,
+      "sha256": "7ec0fcc6527f929f5aa89c49b67645a009b1f8172f5450c3fb1b08b43975ade6"
+    },
+    {
+      "path": "apps/web/src/lib/planner-v2-lifecycle-ui.ts",
+      "bytes": 4479,
+      "sha256": "54c6e3d65103e1c37b3391d4ee8d34da78b6883afe4ec4434ad113ed67c7a7ac"
+    },
+    {
+      "path": "apps/web/src/lib/planner-v2-presentation.ts",
+      "bytes": 2403,
+      "sha256": "334579748af0cce6ce1f538d9e48bad497e49991b7ac797916133befc3265709"
+    },
+    {
+      "path": "apps/web/src/lib/quick-add-task-ui.ts",
+      "bytes": 2719,
+      "sha256": "5ddbb056e5a183fe4709161f5548c4a7c108df372a38f4282cdcf0b07802b980"
+    },
+    {
+      "path": "apps/web/src/lib/resource-discovery.ts",
+      "bytes": 1584,
+      "sha256": "b57236b01f62ca8971d2cad6ac847ef738bfdb43017504886b23bd83d47211cc"
+    },
+    {
+      "path": "apps/web/src/lib/resource-material-progress.ts",
+      "bytes": 1395,
+      "sha256": "87aab62720f0f655efdec16457f9c0db03e8ccda7abe78d71572c54b696f25f3"
+    },
+    {
+      "path": "apps/web/src/lib/resource-progress-ui.ts",
+      "bytes": 1524,
+      "sha256": "e9ce5cf9eee9a18eaadf5489864b91332b2f9083f6be0f13efc55e3a7e46af44"
+    },
+    {
+      "path": "apps/web/src/lib/roadmap.ts",
+      "bytes": 5262,
+      "sha256": "472ed2d89ba61ebdf68b2facc8adf42e4cd241b6c8ae3318c1231f08291d1a0b"
+    },
+    {
+      "path": "apps/web/src/lib/study-session-timer.ts",
+      "bytes": 1117,
+      "sha256": "80bfeb981618b800f6948fd3178108134770785e91aa4eb172c74c57545c03e5"
+    },
+    {
+      "path": "apps/web/src/lib/supabase.ts",
+      "bytes": 504,
+      "sha256": "012b366445acd474d341021488f7cda7afb4be7533384fb43496e84103af45fc"
+    },
+    {
+      "path": "apps/web/src/lib/task-action-preview-ui.ts",
+      "bytes": 3705,
+      "sha256": "c82796d4adfce892dfacf56fafb49387585b396dc1cad9701921f7d9a84e9a43"
+    },
+    {
+      "path": "apps/web/src/lib/task-material-presentation.ts",
+      "bytes": 2279,
+      "sha256": "7da8c26d9bedb6ecacb6730fc6a076e0ad2197def5f4502721971beca78c3c37"
+    },
+    {
+      "path": "apps/web/src/lib/task-video.ts",
+      "bytes": 3277,
+      "sha256": "28c756ad685f9a2f661e654a80ac134a9141bdc20bd3e7dc73322339c43659f2"
+    },
+    {
+      "path": "apps/web/src/lib/today-focus.ts",
+      "bytes": 2062,
+      "sha256": "ab004517b7b1553fcf8fe2ff7e44737ecb5e98609a3edc1ee2088d99a3f4cba7"
+    },
+    {
+      "path": "apps/web/src/lib/today-material-actions.ts",
+      "bytes": 1071,
+      "sha256": "4bd51044b1289b2170ea4788f693d72dce47dcda220edf61821b71df997bb2ed"
+    },
+    {
+      "path": "apps/web/src/lib/today-task-order.ts",
+      "bytes": 1319,
+      "sha256": "dbad37ae3cdd0749d0929c0a652c862a90628c7cf010ac73cc2a1e604e6def17"
+    },
+    {
+      "path": "apps/web/src/lib/youtube-player-progress.ts",
+      "bytes": 2152,
+      "sha256": "cad2e1c763d5b84055a7ef2d27943b721ca22a93d8ca76817adea496dcab9d4e"
+    },
+    {
+      "path": "apps/web/src/main.tsx",
+      "bytes": 449,
+      "sha256": "04243357f7149167c1cad0a1142df5541292f537b2739e4717f0ba96983167bb"
+    },
+    {
+      "path": "apps/web/src/pages/HomePage.tsx",
+      "bytes": 124,
+      "sha256": "fd57b9c76de6b18089cd78c1902a867f65236aacf9250885f044fa5c8b8eda83"
+    },
+    {
+      "path": "apps/web/src/pages/LoginPage.tsx",
+      "bytes": 2236,
+      "sha256": "83f79f61d08b3752b2e4922024e40dc90feb8c70e4be53f1e9c893b1fd31ec0b"
+    },
+    {
+      "path": "apps/web/src/pages/OnboardingPage.tsx",
+      "bytes": 24751,
+      "sha256": "74d626f86488c5f7db36264854b57b5445c96aaf5f3592e9255d35788815f14d"
+    },
+    {
+      "path": "apps/web/src/pages/ProgressPage.tsx",
+      "bytes": 1529,
+      "sha256": "5bc7d76ab6f8d76060887c323f8256a033542b818831d6ec06f90554807f36a6"
+    },
+    {
+      "path": "apps/web/src/pages/RegisterPage.tsx",
+      "bytes": 2542,
+      "sha256": "a98622797dadd12d9e6d7dd2913bcd440c29a4918e8df15a1bdcc0ad9526e43f"
+    },
+    {
+      "path": "apps/web/src/pages/ResourcesPage.tsx",
+      "bytes": 12410,
+      "sha256": "9910cf7e54cb022e86a3b10d01506d0c66360a4d6c14977537a116b7ab25b0ea"
+    },
+    {
+      "path": "apps/web/src/pages/RoadmapPage.tsx",
+      "bytes": 13356,
+      "sha256": "a37ba6cf561deb794c29babcdb2c463eb1bf611f0a2ec14a5770d1466f57372c"
+    },
+    {
+      "path": "apps/web/src/pages/SettingsPage.tsx",
+      "bytes": 9268,
+      "sha256": "4df4baab6fd1eae50c43b8d1fc558462a3b72d7ba010382ba3fd4c812a27cd39"
+    },
+    {
+      "path": "apps/web/src/pages/WeekPage.tsx",
+      "bytes": 14628,
+      "sha256": "489bbf5dd2f9f2ef65736924113883c86e257f4c2d8c932fd04e46bdc87bad0e"
+    },
+    {
+      "path": "apps/web/src/product-entry.tsx",
+      "bytes": 451,
+      "sha256": "1ee5b1262b4ea119d36b05e55e8d208cfe01966c0581c74b371dd2b84f2dcebd"
+    },
+    {
+      "path": "apps/web/src/styles.css",
+      "bytes": 161662,
+      "sha256": "c09f4aabb4e2fe3dfd71b8fb7b4c173d7d1819a4844ba833d456ace15ddb14e1"
+    },
+    {
+      "path": "apps/web/src/ux-lab/Coach.tsx",
+      "bytes": 5534,
+      "sha256": "69e35cbec9fa8380477c0f5d10e60dbbf0b03846f31c9d6b0e5ce4668c5df43d"
+    },
+    {
+      "path": "apps/web/src/ux-lab/CoachLab.tsx",
+      "bytes": 11105,
+      "sha256": "f793db3c3fd1a1f98d3aef05288cb1fd77d1e2a322290c4cdce013207da184d4"
+    },
+    {
+      "path": "apps/web/src/ux-lab/CoachPageTrack.tsx",
+      "bytes": 2564,
+      "sha256": "c7f342e5f41f3de872e15849a2b6b9fd064710158c681dbf4e3da020461e7921"
+    },
+    {
+      "path": "apps/web/src/ux-lab/CoachPlanViews.tsx",
+      "bytes": 15483,
+      "sha256": "ab2728dbfca8174b13e2c56df8d73d19241f165724190fadfaaf296b71bf63c9"
+    },
+    {
+      "path": "apps/web/src/ux-lab/CoachVideo.tsx",
+      "bytes": 4603,
+      "sha256": "676bddb2640a2464d410e9d3901027b22f1fa3004ac795760589497c4d138e6c"
+    },
+    {
+      "path": "apps/web/src/ux-lab/CoachWorkArea.tsx",
+      "bytes": 8738,
+      "sha256": "26b9a78c1f87113e57c8080267734de5eb1d7956c17726ab7859e4856138fcf0"
+    },
+    {
+      "path": "apps/web/src/ux-lab/Insights.tsx",
+      "bytes": 6707,
+      "sha256": "f7f3228d9e084afeb0472c08d7535ec9d528155d4753647ce1db51d66db626d4"
+    },
+    {
+      "path": "apps/web/src/ux-lab/PlanDialogs.tsx",
+      "bytes": 8484,
+      "sha256": "8fadec574b5e6080fc1ac0422e5d974c571950c36511fb72b73c74a19a7d93e7"
+    },
+    {
+      "path": "apps/web/src/ux-lab/Resources.tsx",
+      "bytes": 5973,
+      "sha256": "5c0e1bf7ddf9a31d786782954d52818999bd0229f08bb01b9d3eaeb5344cda49"
+    },
+    {
+      "path": "apps/web/src/ux-lab/StudySession.tsx",
+      "bytes": 6013,
+      "sha256": "b9cb4759f3cbeb1b14df31c5e0b87cbda248abce8821c3520b6070a64108ef8a"
+    },
+    {
+      "path": "apps/web/src/ux-lab/Today.tsx",
+      "bytes": 6552,
+      "sha256": "4f381f1e969df49915a0bc5ef0adab70a8279d9d4bcb6f6a948dc7fbba32da3a"
+    },
+    {
+      "path": "apps/web/src/ux-lab/UxLab.tsx",
+      "bytes": 10432,
+      "sha256": "2341bd311ef957e354686d4d7e20cf6082c35283c5c971135810f9900e33d15e"
+    },
+    {
+      "path": "apps/web/src/ux-lab/Week.tsx",
+      "bytes": 4220,
+      "sha256": "03150f3ca341f859b8bcd3b99bec26038ea237ea22d4e23e313b1f8918a0badd"
+    },
+    {
+      "path": "apps/web/src/ux-lab/bootstrap.tsx",
+      "bytes": 493,
+      "sha256": "55cd480414c8b8171d9462cf83d1640f09da3c7f735b1964ee4f3b490f5bd3d2"
+    },
+    {
+      "path": "apps/web/src/ux-lab/coach-production-fusion.css",
+      "bytes": 19491,
+      "sha256": "aeead836c515e03e08a6ce20c4795a160faa1825db617519f0351f8b3279af60"
+    },
+    {
+      "path": "apps/web/src/ux-lab/coach-top-navigation.css",
+      "bytes": 950,
+      "sha256": "d4224b244d9f2a9be825261e215736f0f38a64895e3461e435f5d2fc764d2109"
+    },
+    {
+      "path": "apps/web/src/ux-lab/coach-v2.css",
+      "bytes": 30312,
+      "sha256": "71f3df3b40072cc664097db2b70b15197e484346a0ad914938359996c6c9e29f"
+    },
+    {
+      "path": "apps/web/src/ux-lab/coach-workspace-context.ts",
+      "bytes": 1366,
+      "sha256": "238d0624e57e1e916dded4af63fda4a9eb6ea0908c9be298663f915bfa64d341"
+    },
+    {
+      "path": "apps/web/src/ux-lab/coach-workspace-state.ts",
+      "bytes": 14245,
+      "sha256": "951fef6cad4d6f52bd3ac11f2d0992a7cf25188c1f6081776f85b9795186e8b8"
+    },
+    {
+      "path": "apps/web/src/ux-lab/context.ts",
+      "bytes": 696,
+      "sha256": "f15880b3d80d384139623abcf84b91d579fd89792b3955e535136cccb060c3f7"
+    },
+    {
+      "path": "apps/web/src/ux-lab/lab.css",
+      "bytes": 47009,
+      "sha256": "5fc2563ca9c956528ef4e049a63be475c1d15a945106672c9c5df0325f0ac297"
+    },
+    {
+      "path": "apps/web/src/ux-lab/model.ts",
+      "bytes": 10133,
+      "sha256": "f9adbc5b508372e33bd4497386c1d0b20180202ed2165d05d0b0f70169378748"
+    },
+    {
+      "path": "apps/web/src/ux-lab/ui.tsx",
+      "bytes": 5404,
+      "sha256": "f80413bc3dccce08fdd1348d12cc3bacc4ff47f197aac82a56749d9c6240ea14"
+    },
+    {
+      "path": "apps/web/src/vite-env.d.ts",
+      "bytes": 205,
+      "sha256": "33602db4c7e7c78ab3e675b7dabd43044b159203271500e975ee9a7197a14863"
+    },
+    {
+      "path": "apps/web/src/workspace.css",
+      "bytes": 12581,
+      "sha256": "4350340b7ee09f2b59e07bf8f9f3f676f6e1e13e5dd3c3bd42434c905ff2f004"
+    },
+    {
+      "path": "apps/web/tsconfig.app.json",
+      "bytes": 238,
+      "sha256": "c5dfef0f3a26b3eca19c79c001d9e8c6ed58fc839340c7c67884908a8f04e8dc"
+    },
+    {
+      "path": "apps/web/tsconfig.json",
+      "bytes": 119,
+      "sha256": "770b4140bbb581e2dfd9ea9946ffc9c75a1d86ba7d2db5f77c83e37cbdf9d808"
+    },
+    {
+      "path": "apps/web/tsconfig.node.json",
+      "bytes": 242,
+      "sha256": "fdeaf989da0190db278238a6e585e5f94e7f912177c4ee0f5f19bf60b4aa95a6"
+    },
+    {
+      "path": "apps/web/vite.config.ts",
+      "bytes": 192,
+      "sha256": "2448a94bdacc4085b4fd26ccb7c3f323d04a220af29a24b61703903730b68984"
+    },
+    {
+      "path": "assets/brand/README.md",
+      "bytes": 1610,
+      "sha256": "042ed87b3748d531dd667af3a5e58bb8aeae3c079cfcf6304bafda8e04af481f"
+    },
+    {
+      "path": "assets/brand/source/kpss-kocu-logo.svg",
+      "bytes": 8190,
+      "sha256": "8c4fcc1aa2f3f60d45da5db5874df88f0392a0a84e6f5f08e77c874824778895"
+    },
+    {
+      "path": "packages/domain/src/adaptive/backlog.ts",
+      "bytes": 1829,
+      "sha256": "0857d63afdc1475f04b7748d7f355421f1aa229a1a007f5ef49b14c3f82d7b3b"
+    },
+    {
+      "path": "packages/domain/src/adaptive/capacity.ts",
+      "bytes": 2659,
+      "sha256": "2b33c67105aac054bd655778d551c3e85f728728c7104d3e8f0deda09a7a953b"
+    },
+    {
+      "path": "packages/domain/src/adaptive/config.ts",
+      "bytes": 452,
+      "sha256": "19c39d702070397ffc4cd39f31526ddaa5e9bc52134a85c436e4a97a0fc97813"
+    },
+    {
+      "path": "packages/domain/src/adaptive/index.ts",
+      "bytes": 183,
+      "sha256": "4d58ebed4c8656ab393adfd9530293e022326f6c0cb4f8fde8eda29e87a95206"
+    },
+    {
+      "path": "packages/domain/src/adaptive/minimum.ts",
+      "bytes": 1139,
+      "sha256": "2aa68b552f6dd6398f2b61a5a162888a568563bb81888d1b89ce19b6586d2d99"
+    },
+    {
+      "path": "packages/domain/src/adaptive/projection.ts",
+      "bytes": 1933,
+      "sha256": "151fb7a0c4d76b63fe1d0406f4cb56d5c21e5bb1711a3aea487d932f23f77d36"
+    },
+    {
+      "path": "packages/domain/src/adaptive/replan.ts",
+      "bytes": 13499,
+      "sha256": "b0a3757d81df89df3cbd33dc2fbf28b5df37a50840ac75ed4dce0f2e5d5a061a"
+    },
+    {
+      "path": "packages/domain/src/adaptive/types.ts",
+      "bytes": 3474,
+      "sha256": "18fb901eabb5e0911085f8a29dd5868616942e96732afddb86d6504369fddac1"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/ai-economics-v1.ts",
+      "bytes": 38298,
+      "sha256": "96c79b86b57fe1bdcece5ed6365ef1e3de0adc36908d1af39c193cdac2e5bcf3"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/coach-context-v1-source-map.ts",
+      "bytes": 17438,
+      "sha256": "fa7bcac78b399803e91957201fe3cf9e168c456db89d5d01e5a90b97d766f411"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/coach-context-v1.ts",
+      "bytes": 30968,
+      "sha256": "c41591fdd3f16aeab943298e7f14d151268071356c62273bd38882d55030d7f6"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/coach-evidence-view-v1.ts",
+      "bytes": 39420,
+      "sha256": "8ec32e67b01f160dd6f90658752d1baf64739ba30bd51cd5667c62213ac9fd69"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/coach-signal-v1.ts",
+      "bytes": 36840,
+      "sha256": "3d6246e26d7ae227a555fc1136a14f19ad08eb06bf37135f3ab72ca170488a74"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/conversation-intelligence-v1.ts",
+      "bytes": 15287,
+      "sha256": "cb975af04c15138173c32b63bcfdf2fb0b4539dbd88bedc30496ac9d559569d4"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/event-mapper.ts",
+      "bytes": 2745,
+      "sha256": "eaa1e74df5d7aa954a9fa0b87ad6b06a4a58bd88c6cf01192cac10f124eb34fb"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/executor.ts",
+      "bytes": 4389,
+      "sha256": "259621844b6611373309a946b779051054376cfbf5e3beb5688e21a0943340fd"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/fixtures/coach-context-v1.ts",
+      "bytes": 16338,
+      "sha256": "9757a5a6a5a6198e09b42465bef1c8f9b26c12019ab95a80a64773277a2aa430"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/index.ts",
+      "bytes": 681,
+      "sha256": "90a533ae7dd3aa6c0aa4aa092927aa3dcd0b2675422f8294378ce5553a2da9fe"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/planner-coach-explanation-v1.ts",
+      "bytes": 11082,
+      "sha256": "21f186fcbc1bbfb7132691cba11bd161f689d2bf6342692f177d95b4152f9af5"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/proactive-coach-card-v1.ts",
+      "bytes": 6463,
+      "sha256": "0682a0d98f00e14701411d078c056073dd1f5851b55ae563e96eca63ca2f49e4"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/proactive-coach-hysteresis-v1.ts",
+      "bytes": 9848,
+      "sha256": "70bb17f661b225cd3c24e6d7c4591de314d91134b729655ba300a72219340500"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/proactive-coach-materiality-policy-v1.ts",
+      "bytes": 15472,
+      "sha256": "5b6d58c2a0fd39c1358851a1043a8f6ae60f42791f57dabd6fb54106a81b56f6"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/proactive-coach-runtime-state-v1.ts",
+      "bytes": 10765,
+      "sha256": "f188da2ae5346f65bcac715bcf58a9bffacfcfa66412e080e8a3354c0e6c8028"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/proactive-coach-selection-v1.ts",
+      "bytes": 13133,
+      "sha256": "9836d954ea8a1b6dcce8c5a6a6809ff4d7f2e3c1ba81244b4703e0fc0de58369"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/prompt.ts",
+      "bytes": 2377,
+      "sha256": "c4832db531bbc9535be2aafcf4205a3215e0c10b7ecfd297580e261aabcee59e"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/types.ts",
+      "bytes": 3277,
+      "sha256": "f9c52b2ffba4d1a9078c7c97eebd6f789adefcd4af012d1ea2bac411c143d915"
+    },
+    {
+      "path": "packages/domain/src/ai-coach/validation.ts",
+      "bytes": 9174,
+      "sha256": "73dbfb1fc507086d6198641ff60dafcd0113644161cdadc4f0b5c887515280e6"
+    },
+    {
+      "path": "packages/domain/src/capacity.ts",
+      "bytes": 2562,
+      "sha256": "29e416dbc3c469866da9e4fe42ecf9fef141f234a6866b07323532d0a3ad22fe"
+    },
+    {
+      "path": "packages/domain/src/execution.ts",
+      "bytes": 2482,
+      "sha256": "734ef6883f9d7ce1868a8569666d65b1de905e8613689adf1473717a763df570"
+    },
+    {
+      "path": "packages/domain/src/index.ts",
+      "bytes": 401,
+      "sha256": "24f8a2b62fa0a5cb4ead58ab884ae9c2b61bfbe07f741598f4be7d33b274f07f"
+    },
+    {
+      "path": "packages/domain/src/mastery/config.ts",
+      "bytes": 1053,
+      "sha256": "299268b6be31b13f497b0abf38165ac563e980b01c81dc4fa6a15b697e344b88"
+    },
+    {
+      "path": "packages/domain/src/mastery/engine.ts",
+      "bytes": 3924,
+      "sha256": "4d0b9fb3ca952fec2ac1e9288470b3878dcc0c56004577722aeb112268265c5d"
+    },
+    {
+      "path": "packages/domain/src/mastery/index.ts",
+      "bytes": 105,
+      "sha256": "03b48380ae5f00eb3c2f7e4a16ce632668d17ecad9e8ed83ce90a9beb95edda1"
+    },
+    {
+      "path": "packages/domain/src/mastery/revision.ts",
+      "bytes": 2941,
+      "sha256": "83e5c910385c1f4adf45c2f41001041b25733c7dee93611a8b2fe161f6c0f813"
+    },
+    {
+      "path": "packages/domain/src/mastery/types.ts",
+      "bytes": 2013,
+      "sha256": "f9df184709b5480eaf6bf67c9c1c1bb77c99260620df92427d53e6b813d22ed8"
+    },
+    {
+      "path": "packages/domain/src/p48/index.ts",
+      "bytes": 27,
+      "sha256": "3f33a884ba6722e3e5a055afe7a88152c16ad703247132e05f18105a0c3be543"
+    },
+    {
+      "path": "packages/domain/src/p48/roadmap.ts",
+      "bytes": 15837,
+      "sha256": "9415dd5d81cd916d2e92c8a920f18e3685df1e92fa949f8fb9491450b168c34d"
+    },
+    {
+      "path": "packages/domain/src/pilot/index.ts",
+      "bytes": 26,
+      "sha256": "f9e5b37a5bdc498abd8b683d3186b316b722742f32eaadd0970463150f09768c"
+    },
+    {
+      "path": "packages/domain/src/pilot/report.ts",
+      "bytes": 2119,
+      "sha256": "9ca8eb599b83aa6d13268923bb021742f478ca5dc491d9fa328b8587c3fb63f0"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/candidate-generator.ts",
+      "bytes": 16671,
+      "sha256": "86c360f5ac3a452b16369ad0fc9597f1a7c459b0f55211d51aefa0e70b32a65f"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/candidate-scoring.ts",
+      "bytes": 12775,
+      "sha256": "1d56f94a03cc4778f86b64cb6adb7c273b10309c7048b72f12164982411e71eb"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/canonical-shadow.ts",
+      "bytes": 32205,
+      "sha256": "6866206c267a2eb21977601eae52d65616bc5edecc1bb1930fdcb11a68cf45bf"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/db-snapshot-builder.ts",
+      "bytes": 6142,
+      "sha256": "f0c7cddc7d584a64220def829c110578e61bd9189631577621f3830a514db872"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/db-snapshot-contract.ts",
+      "bytes": 12043,
+      "sha256": "24ae192e292c9e33b630173cbe098be898e04dc3e0bfc72f93274fb3333c204a"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/edge.ts",
+      "bytes": 936,
+      "sha256": "c14b869532a5c4de26b84142c80f1b0fb6feb829721de541c4b2e1a089cfdedc"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/feasibility.ts",
+      "bytes": 6734,
+      "sha256": "4dca9e87a8a9ec02e13232c766e8dd35abaab10a9a37961d583425360f857aca"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/fixtures/foundation-week.ts",
+      "bytes": 6903,
+      "sha256": "0652115a3829e5f2cc98e35f53ca4e6da6b8012a25689cad1f9800dbf4c1bfbf"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/index.ts",
+      "bytes": 677,
+      "sha256": "77677987c2a01c994fb80f111ab0e963b5452d7906698660169bb223a246fa32"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/learner-state.ts",
+      "bytes": 9654,
+      "sha256": "0ab2f34622538e2f19ad4be5de411b197f5f250a593fa16bd6b4e4007385f588"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/local-repair.ts",
+      "bytes": 15326,
+      "sha256": "d39af52c29b2642436a0b26c1fc2133c597735b3f223c292525569099e752d4b"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/planning-decision.ts",
+      "bytes": 4696,
+      "sha256": "18bb2743aef008f350e56ecf9f22f4c2d375f0a050330fb1f86769b6127a5a79"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/proposal-builder.ts",
+      "bytes": 3224,
+      "sha256": "3ed0553be9088babfd47a77e876c9fb867a8bf56b0c0f02bc62c6e4ba0f3eaa1"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/proposal-lifecycle.ts",
+      "bytes": 20003,
+      "sha256": "47df3ccb984930e733ada1d5404e117ccd667aa66d8aef63ea03341dbfddca4f"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/proposal-validator.ts",
+      "bytes": 13721,
+      "sha256": "4dc84535262fc4641bb8de59c9f6db2f1476a3edb4a20df18e18aeaf2dfa4c34"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/proposal.ts",
+      "bytes": 2408,
+      "sha256": "462d91823233e4ee7b17cf4f85e2ababb7eedd662ebe7d0cceb18ddf6b64b3f4"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/shadow-evaluation.ts",
+      "bytes": 6384,
+      "sha256": "8cf4b4316b59a80248d09496813ac72f4d5df31d880f3ea51b7c375e5b8b8de8"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/shadow-persistence.ts",
+      "bytes": 10093,
+      "sha256": "553ed6cc7357973bdf7d4c588f4442f4ee1e171e5c0786b6cff4d2f5b00b2fd4"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/snapshot.ts",
+      "bytes": 8612,
+      "sha256": "b9b8ea826efcea0022c355884177f892b7a3bea13914b463479564b3ed7425a1"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/triggers.ts",
+      "bytes": 1079,
+      "sha256": "50476bc5c9e459809c694ed51e191d7a585d73297f72941bf139fedb000ae600"
+    },
+    {
+      "path": "packages/domain/src/planning-v2/types.ts",
+      "bytes": 5193,
+      "sha256": "f692929e54a96750f34b99c1fc573c50aded37ead3e630c3f3553becb065cead"
+    },
+    {
+      "path": "packages/domain/src/planning/canonical-workload.ts",
+      "bytes": 27595,
+      "sha256": "aff43ae73e0399bd7c79f3ea20de1967ec439311aa645113a0b68cb4f347227b"
+    },
+    {
+      "path": "packages/domain/src/planning/config.ts",
+      "bytes": 705,
+      "sha256": "05f315deb235601736b47292217f9af18693ac1178c0549c395f4ef645cf704a"
+    },
+    {
+      "path": "packages/domain/src/planning/daily.ts",
+      "bytes": 4650,
+      "sha256": "0ca7499d49c61a42e47dd97cf80f59e342b206e1410498e618c46815376b1d3c"
+    },
+    {
+      "path": "packages/domain/src/planning/duration-policy.ts",
+      "bytes": 3391,
+      "sha256": "63bfb0e69d31374690c848810441b165a6bc60661e87a2cc609d8113600ee6e0"
+    },
+    {
+      "path": "packages/domain/src/planning/engine.ts",
+      "bytes": 10060,
+      "sha256": "5f7d50c8252f5ea47f507ea0cd8fac066287925d0c328937e565ad8fd861f5e1"
+    },
+    {
+      "path": "packages/domain/src/planning/errors.ts",
+      "bytes": 422,
+      "sha256": "d4a5f41469f1b4b77c33855f43a96bdf61c3e400e42028fdfcd766e8d7cc2f04"
+    },
+    {
+      "path": "packages/domain/src/planning/index.ts",
+      "bytes": 721,
+      "sha256": "3baea1f59345faae631c91c84dd0213eb7e07c67eaf61e5601081957df45c2d2"
+    },
+    {
+      "path": "packages/domain/src/planning/learning-stage-evidence.ts",
+      "bytes": 2294,
+      "sha256": "f3cafd79766afa1abe2b734715791a1e1ab071f8eb334a2ba915ab265c4863de"
+    },
+    {
+      "path": "packages/domain/src/planning/learning-stage.ts",
+      "bytes": 4009,
+      "sha256": "4afbdf5af20b448b1278b40c31c93e35b66b032a3c1455ecba87fe2f249dc314"
+    },
+    {
+      "path": "packages/domain/src/planning/lifecycle.ts",
+      "bytes": 1577,
+      "sha256": "3a3e906159c9b910ee5e0eb7d068895dc12595932ee0dfb48a02d26c18e15058"
+    },
+    {
+      "path": "packages/domain/src/planning/material-db-adapter.ts",
+      "bytes": 8148,
+      "sha256": "27851bd3026c5dc0f5be33b0b97373a988e465077e856faf975f050e5079cf4c"
+    },
+    {
+      "path": "packages/domain/src/planning/material-progress-import.ts",
+      "bytes": 2399,
+      "sha256": "f54302aadc9b6084387b06d8a467ef84dccc7126b6a045e44886b800249c23da"
+    },
+    {
+      "path": "packages/domain/src/planning/material-readiness.ts",
+      "bytes": 1930,
+      "sha256": "c21147114ed094fb680835fc5e8f4a2ec9cd8a4479db713c55e09e32ef49009f"
+    },
+    {
+      "path": "packages/domain/src/planning/material-remaining-scope.ts",
+      "bytes": 2254,
+      "sha256": "6313cba4f71835b34bde78faafc239fe2a5b73cee98bcb7aaf903540e7e7edcc"
+    },
+    {
+      "path": "packages/domain/src/planning/material-unit-view.ts",
+      "bytes": 6547,
+      "sha256": "9a9afbf995282408f1a1fc82861ba8697beda9f24bd7e9a69b8056236c49d99e"
+    },
+    {
+      "path": "packages/domain/src/planning/physical-pace-evidence.ts",
+      "bytes": 2757,
+      "sha256": "180cd47e5e0025c81ca2f31d6399374ee8c6a7067ec022a8903c940bd3941470"
+    },
+    {
+      "path": "packages/domain/src/planning/physical-structural-coverage.ts",
+      "bytes": 5295,
+      "sha256": "0a87792f3b05cad50f077a14a07d8da9c3076c0042022f3211685b055efe7330"
+    },
+    {
+      "path": "packages/domain/src/planning/recommendation.ts",
+      "bytes": 4055,
+      "sha256": "e1343200f22a8a9968be7943bf74e5e874285a418be21be2df050331e20a10a8"
+    },
+    {
+      "path": "packages/domain/src/planning/types.ts",
+      "bytes": 3965,
+      "sha256": "6b052ffec833a45878770145b3fb62fa3ef7e9cae7cf6e0414e071cada68248c"
+    },
+    {
+      "path": "packages/domain/src/planning/video-topic-mapping.ts",
+      "bytes": 2026,
+      "sha256": "84c28d199f51fd3035fab4a545f51e092a964c08ef898a9a5af771574d1ad052"
+    },
+    {
+      "path": "packages/domain/src/progress.ts",
+      "bytes": 590,
+      "sha256": "ba07e65560c8ca447c3371cae9b13cc884191dc64573e3e02b9f7e33ab954072"
+    },
+    {
+      "path": "packages/domain/src/resources.ts",
+      "bytes": 1722,
+      "sha256": "dcd87101b2befb4402330dffd708553bf86838c1ab2490b13c22f2c1d7f7fd2d"
+    },
+    {
+      "path": "packages/domain/src/study-intent.ts",
+      "bytes": 4244,
+      "sha256": "d881a94d51e4251c22de83f5d164f18a9e9897aaccb99f406ae9c09c14573d77"
+    },
+    {
+      "path": "packages/domain/src/time-boundaries.ts",
+      "bytes": 2613,
+      "sha256": "e102f336a7bf00119bd35ac97d3cd586dde7d5bb484f97789d0a183a1392769d"
+    },
+    {
+      "path": "packages/domain/src/types.ts",
+      "bytes": 8968,
+      "sha256": "9e8c7cd63ffa79108aefabfefdc230b7585be0996ac2d180cf4787c55930418d"
+    },
+    {
+      "path": "supabase/functions/_shared/adaptive.ts",
+      "bytes": 15517,
+      "sha256": "33f8fe6c3067f06cab4b45e5a6c0ee18c9a4c39fa53313b68ea9fa7d08a568c5"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach.bundle.js",
+      "bytes": 186144,
+      "sha256": "71f2004ad94156a5f559a557dda26536cda3518a9cfa25f3eddba2906b9ee3cf"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/ai-budget-reservation-v1.ts",
+      "bytes": 8775,
+      "sha256": "a9e335d36d51f308d43ac3836311574672f274d146b60dde83ae8f41e3638891"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/ai-usage-ledger-v1.ts",
+      "bytes": 10869,
+      "sha256": "3a0bd2a9f5f7d0ec894d247afa297727633dce684c57eb4492ac8e970601dd21"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/controlled-dev-smoke-runtime-v1.ts",
+      "bytes": 6124,
+      "sha256": "2e093205f367a4f40946f830e9e69066223f1af81fcddcaad2d6180af37aea10"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/dev-smoke-policy-v1.ts",
+      "bytes": 2696,
+      "sha256": "71a1cb8bd9a89a09fb3f252640376b25bc492da4f5ab7ce9749e22df214eeea5"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/material-context.ts",
+      "bytes": 4209,
+      "sha256": "e7cb562262369bebf099c3d8c869093ac54d45e162bddc8c0ad8f98af8b130ff"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/openai-coach-request-v1.ts",
+      "bytes": 16585,
+      "sha256": "5b28d4ac0918089fcb4ad7903f28609871a4380dce41f0c191796aa6e7051f73"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/openai-dev-gateway-v1.ts",
+      "bytes": 12406,
+      "sha256": "274e5fca36fbe97294d438128ff202f593de518949c4779a2f634b758f9f10b7"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/openai-gateway.ts",
+      "bytes": 8618,
+      "sha256": "ec3bbda0470072846d923172908fee6bc516d00a1be9f311b87f67fb6cf43ab7"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/openai-input-token-count-v1.ts",
+      "bytes": 4336,
+      "sha256": "fed9da8651819a8ab20715fb96fb074bfcaa678763e23f618b9d36fc98b9629d"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/openai-production-gateway-v1.ts",
+      "bytes": 7197,
+      "sha256": "60c18c06b1f41b478dbbe9e08409cc716771bcfd80ccdc70dac195560f916f97"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/openai-server-secret-v1.ts",
+      "bytes": 1430,
+      "sha256": "e7947d57ea4833bcfe225810354f6636a07c025fe779f3022b4d91b6a93ad4ba"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/proactive-coach-actions-http-v1.ts",
+      "bytes": 12392,
+      "sha256": "a0f9bcec0bacd6836a96f65ae3a1ca98cfdfd7a19f58aaa04961442f0b882d12"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/proactive-coach-http-v1.ts",
+      "bytes": 4672,
+      "sha256": "6534921588ec5d7b4d4207dd3f8f72ccf79ff333b7a6745cb2f86aa57e19d364"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/proactive-coach-runtime-v1.ts",
+      "bytes": 6567,
+      "sha256": "b6229c971b4c5dd422a0e9f5d82ff1bebad0bcec1ac762527da70372f4df4c6b"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-attempt-v1.ts",
+      "bytes": 9088,
+      "sha256": "8f2be6f74df804775b79f7694264fdc394077f5ec5baeee9e3eed31fb89d0be3"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-fx-acquisition-v1.ts",
+      "bytes": 4574,
+      "sha256": "3c15960ebde89b20e77e80a0d3feaed4e3672c5c28eb6b10faab68ef1bb3ba70"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-fx-policy-v1.ts",
+      "bytes": 5846,
+      "sha256": "88d4948b5ed8afbca3b40f15cb56179ca9bfeaac8748f6a2cd3ca2f4b9a34099"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-openai-billing-audit-v1.ts",
+      "bytes": 4461,
+      "sha256": "6cf6524c8d04867a6a486972ef6e44e90a46232b7afc96333f0511763fdc71b3"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-openai-billing-bound-v1.ts",
+      "bytes": 12546,
+      "sha256": "ece5acb82bda173d92ba19e89b786936a1c4237491a1f10a24c1e905db7db96f"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-reconciliation-policy-v1.ts",
+      "bytes": 2264,
+      "sha256": "ed9428f34b77f994239811084c841ea96360260c71c0a8025dc5cc69dabc220c"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-runtime-activation-v1.ts",
+      "bytes": 7876,
+      "sha256": "c8e64ef8eec302b85ef6a4d3fb2989658d4251a979e20d09cb49952bff2b8c8f"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-runtime-catalog-v1.ts",
+      "bytes": 5952,
+      "sha256": "2448511a441481a872e3cbfe6b7ee78ee8c27839ff60283f8fab689f276a99c4"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/provider-runtime-config-v1.ts",
+      "bytes": 27342,
+      "sha256": "b41b7388d9485fb43d884676c9f8b5b52a1a3a7e630f12acb9a841eb996b41b9"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/reactive-coach-dev-runtime-v1.ts",
+      "bytes": 13518,
+      "sha256": "027aff3e40cc2351d8ff09881168d2ec8f18ce6f5f18be7eb47fbad08c812c46"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/reactive-coach-executor-v1.ts",
+      "bytes": 22611,
+      "sha256": "fe346451613e438fb54eb27dad409fb76ee948697842ae047949e6093d85e3fe"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/reactive-coach-http-v1.ts",
+      "bytes": 9110,
+      "sha256": "63dbc35af853dd000dda049ac99fe9fad27bde40b9e4ab462a195abd565d6181"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/reactive-coach-production-runtime-v1.ts",
+      "bytes": 9463,
+      "sha256": "f7e44c80b5c58a682842dd2150794db05f967d4bf4716b72eb07fd6a439c6254"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/reactive-coach-route-v1.ts",
+      "bytes": 15338,
+      "sha256": "39478ef6778002bc6a45e598fe50f9944c417e980eea70351453612c74b436ca"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/read-only-coach-orchestrator-v1.ts",
+      "bytes": 28144,
+      "sha256": "73d1d0deb28791104ff9cb389c1eea2ba740812f857b6debce41e62ddf01a37e"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-coach/target-capacity.ts",
+      "bytes": 2299,
+      "sha256": "a58c39d1cea196b02ad4193eb8603a9deabb9ea41abfc0219a0c00a59887e538"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-capacity-readonly.ts",
+      "bytes": 5500,
+      "sha256": "de92afe5da76354f66cd43bedc1853fb70979d4595677060bd72ac700f2f676e"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-material-loader.ts",
+      "bytes": 8799,
+      "sha256": "b5509a5a8391f1edde17f8e945c76a74959715a7bc8ffc7b5d28fae548d20b75"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-material-shadow.ts",
+      "bytes": 14394,
+      "sha256": "3212e17d9efeff2e37e1633a8a71faea7a206d5668557187a76639d67c063880"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-planner-v2-readonly.ts",
+      "bytes": 17193,
+      "sha256": "5012d18c8e75ab21551d86178afc8a98ecc685619305d34b736b315ccbe7c64f"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-workload-evidence.ts",
+      "bytes": 16523,
+      "sha256": "03a5cba721855a8ff7460316e702ea0b415f79ce21775e9ba626bba3386179ef"
+    },
+    {
+      "path": "supabase/functions/_shared/capacity-overrides.ts",
+      "bytes": 1581,
+      "sha256": "2a6eef9043e97d8cc6e26ada70712938e204e38425cf6910d44df5f73b22c9b9"
+    },
+    {
+      "path": "supabase/functions/_shared/capacity-summary.ts",
+      "bytes": 1439,
+      "sha256": "52968f22cfb34a04f8b6ad9b153ab01abc4e04a75ef56e82749da7929f9f62b8"
+    },
+    {
+      "path": "supabase/functions/_shared/coach-context-v1-readonly.ts",
+      "bytes": 37215,
+      "sha256": "40c2dce9ec703e9cf8e774de276e8117c4200a454876bcdd598a3a277e57f9be"
+    },
+    {
+      "path": "supabase/functions/_shared/completed-study.ts",
+      "bytes": 1786,
+      "sha256": "b0e1e92456525ca9747864fb13f4e3add16c5f2b4269dae96174f5e46eea05cd"
+    },
+    {
+      "path": "supabase/functions/_shared/daily-task-order.ts",
+      "bytes": 2634,
+      "sha256": "503a1ea68c2d554cba06fca0faade7b1dcf93d98aaac5a2c9590d399022dc8d5"
+    },
+    {
+      "path": "supabase/functions/_shared/mastery.ts",
+      "bytes": 4130,
+      "sha256": "f0c62de8d89a4b87c98eb73885d18a2ae051fbbc4bbf0709b4adbfbf972bbae8"
+    },
+    {
+      "path": "supabase/functions/_shared/material-workload.ts",
+      "bytes": 8184,
+      "sha256": "6e775af42496f823baec2f95570312df760be379b6fd2b38b07ad314080ab2c7"
+    },
+    {
+      "path": "supabase/functions/_shared/p48-capacity-source.ts",
+      "bytes": 672,
+      "sha256": "9c1cefcff3222f9f24a556d7389bdb4302438f48b5b13292624007846d825deb"
+    },
+    {
+      "path": "supabase/functions/_shared/p48-week.ts",
+      "bytes": 9215,
+      "sha256": "b90b7a9d0572ffe46a9b882b6feba7b29953e231a440a902eb4ca61130716749"
+    },
+    {
+      "path": "supabase/functions/_shared/physical-study-lifecycle.ts",
+      "bytes": 12452,
+      "sha256": "b6d53b5dc4a63cae92ae1f9dbaa7fe1955aa5edc7d5b31b8659de7fb57d53683"
+    },
+    {
+      "path": "supabase/functions/_shared/pilot.ts",
+      "bytes": 20935,
+      "sha256": "4d083d62fa9021b7520396f921cb209b908dc477e9d89768ed614e44b20064aa"
+    },
+    {
+      "path": "supabase/functions/_shared/planner-v2-persisted-readonly.ts",
+      "bytes": 1893,
+      "sha256": "cc81f7afaa3b1505fe20c093707c388eeec43e868afa69ce03fa9f26252abb89"
+    },
+    {
+      "path": "supabase/functions/_shared/planner-v2-proposal-capability.ts",
+      "bytes": 2722,
+      "sha256": "e0ffbc9f77b7b9e870a4ef7e02858412a0466867706df48c5a4a17c2b63954ff"
+    },
+    {
+      "path": "supabase/functions/_shared/planner-v2-proposal-http.ts",
+      "bytes": 4290,
+      "sha256": "0395d52954fbc05494be000f497eaa99fc65b6a7b152f25d5639b2a7225e4a3e"
+    },
+    {
+      "path": "supabase/functions/_shared/planning-v2-shadow.ts",
+      "bytes": 18614,
+      "sha256": "c8dc93b6786efda3a5da86444ee06752f6da947de2b33ffb5d8504922ab0c076"
+    },
+    {
+      "path": "supabase/functions/_shared/planning-v2.bundle.js",
+      "bytes": 97729,
+      "sha256": "95fa25e871d7d8ec6fca93045fc0717db12d07add5bd8b0147db604d52d6ebf4"
+    },
+    {
+      "path": "supabase/functions/_shared/planning.bundle.js",
+      "bytes": 104111,
+      "sha256": "aef9335a6db13eafe7c0db3d3f4ba59cd4dbed09eced28a9135370578905ee94"
+    },
+    {
+      "path": "supabase/functions/_shared/proactive-coach-active-session-readonly.ts",
+      "bytes": 3016,
+      "sha256": "f00e7eb65b1b60d9e8e64eb282444e80fd3a37c4d68fc344090b8896c97c8e9a"
+    },
+    {
+      "path": "supabase/functions/_shared/proactive-coach-runtime-state-readonly.ts",
+      "bytes": 11762,
+      "sha256": "595052d2c30a4bbafb451e61151b03ab1ca5cd94902d3975394ceda06e255c27"
+    },
+    {
+      "path": "supabase/functions/_shared/quick-add-task-preview.ts",
+      "bytes": 2491,
+      "sha256": "e0488cab12f8a28b8360f451664aa220d84216f1b596078080b04303ecc6a531"
+    },
+    {
+      "path": "supabase/functions/_shared/recommendation-window.ts",
+      "bytes": 357,
+      "sha256": "17f6fb23b6cdea7d7eb8538f21ed12033ea8d1679d74c0524c1f7631301994bb"
+    },
+    {
+      "path": "supabase/functions/_shared/resource-progress.ts",
+      "bytes": 2247,
+      "sha256": "04b7946070cda812f1f56c47e5d4b593c158308ce9dd9fb1286f13300dbdb0a8"
+    },
+    {
+      "path": "supabase/functions/_shared/scheduler-plan.ts",
+      "bytes": 358,
+      "sha256": "9c0de5877e1d6b529d73a02324cca87c42a177dd2e66fc7bb7c98fae09395737"
+    },
+    {
+      "path": "supabase/functions/_shared/task-action-preview.ts",
+      "bytes": 8009,
+      "sha256": "0e80ea2cedde080f0419e3eefb13194fc944ddb3094f6bd55ba9defa33c02135"
+    },
+    {
+      "path": "supabase/functions/_shared/task-context.ts",
+      "bytes": 1894,
+      "sha256": "031e55f1c1fc646d729472f671be36efb507b7bcbea1f9bc161878a5f2a4d6bf"
+    },
+    {
+      "path": "supabase/functions/_shared/task-material-scope.ts",
+      "bytes": 5671,
+      "sha256": "d6871aa84a435eb2220c139a0f67a0d53643f36e0e4f49e1fd6a0f7da27a98c1"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-assets/INTER-LICENSE.txt",
+      "bytes": 4477,
+      "sha256": "3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-assets/inter-variable.ttf",
+      "bytes": 876576,
+      "sha256": "29160a80ff49ddcab2c97711247e08b1fab27a484a329ce8b813d820dc559031"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-assets/resvg.wasm",
+      "bytes": 2478606,
+      "sha256": "22bf6e9f9a100d972da0411a69c5ba504367fc1fa87b3b64e3f35e53926d2d70"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-card.ts",
+      "bytes": 21143,
+      "sha256": "11af6840dea9716b8a24e2b0165b5b0749069fc43344ec9c36c29e9ed37cc2c4"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-coach.ts",
+      "bytes": 968,
+      "sha256": "4cc9e42d24033a7f951469e7a879f9cf2dc556182a6c8f77b123776c965fdadc"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-material-summary.ts",
+      "bytes": 7321,
+      "sha256": "4cdcc7c56eb8dbca289de86689e544dca4e05ff58a6a559ad7966672b4d94772"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-presentation.ts",
+      "bytes": 25456,
+      "sha256": "178359c1272c2b6d9a4eb8672328da275b7a0beb1bf05f12c70fb4703d88183a"
+    },
+    {
+      "path": "supabase/functions/_shared/telegram-transport.ts",
+      "bytes": 9084,
+      "sha256": "048967915d00399060bc9abd94e703302b941cac7222687ba42bc7b5cfbdcc5b"
+    },
+    {
+      "path": "supabase/functions/_shared/topic-resource-link.ts",
+      "bytes": 2310,
+      "sha256": "0e723da587f63a273b5e7f10bfd9fe837e58cf72df324f7131dc3a9b74e1e77a"
+    },
+    {
+      "path": "supabase/functions/_shared/youtube-playlist.ts",
+      "bytes": 5957,
+      "sha256": "c45dd392715ea068a4b690d3954b4d95356528b66908c1da915fb285cb04e311"
+    },
+    {
+      "path": "supabase/functions/_shared/youtube-video-progress.ts",
+      "bytes": 2863,
+      "sha256": "33a6d672e5e85d42d5e1f03f9684a64ec8ef8874c1b16c62751ac9e0ccb1049c"
+    },
+    {
+      "path": "supabase/functions/ai-coach-interpret/handler.ts",
+      "bytes": 6548,
+      "sha256": "7966fbcabe17a47379f1e840728c99fd46d5811f6ca1dd6e9ac2a664c392692d"
+    },
+    {
+      "path": "supabase/functions/ai-coach-interpret/index.ts",
+      "bytes": 891,
+      "sha256": "235710db7d1a06570cb785294a7b02b14681d29b58a0443ddb7999bdaad41a7b"
+    },
+    {
+      "path": "supabase/functions/ai-coach-plan-preview/handler.ts",
+      "bytes": 23507,
+      "sha256": "c65f12963545822881e1f192f3e4898186a761a5fcbced257b2f1f3f732c6bca"
+    },
+    {
+      "path": "supabase/functions/ai-coach-plan-preview/index.ts",
+      "bytes": 4373,
+      "sha256": "d9bf974e151ce653b27edd882f515983fe96260565a0a0d94efece18036bc0fd"
+    },
+    {
+      "path": "supabase/functions/app-api/index.ts",
+      "bytes": 106860,
+      "sha256": "8a0626078718ca70861e134ba22f7fab7620ac438d66ec390cc8e845d395f597"
+    },
+    {
+      "path": "supabase/functions/planning-v2-shadow/handler.ts",
+      "bytes": 7321,
+      "sha256": "e426161be8799ef767d8f2ce6568e499b2840b4587540fc27fb0081f6fcf1f3e"
+    },
+    {
+      "path": "supabase/functions/planning-v2-shadow/index.ts",
+      "bytes": 793,
+      "sha256": "179609983bd1c06a0c26bf95615fc587e021987eaaf1c95a9752f4d5c4735dcc"
+    },
+    {
+      "path": "supabase/functions/scheduler-worker/index.ts",
+      "bytes": 8842,
+      "sha256": "d303529d30ea36cd9bc94c9c08a582c223ff583f3b9684c0b3021b1b5b4bb0e8"
+    },
+    {
+      "path": "supabase/functions/telegram-webhook/index.ts",
+      "bytes": 75938,
+      "sha256": "eacc335a9ad301cf0735add52db67ba8402191578a0be4b99220557bd2d97212"
+    }
+  ],
+  "buildManifest": [
+    {
+      "path": "assets/AppShell-C2nZaIMu.css",
+      "bytes": 5193,
+      "sha256": "4012507e7b297b4873e26f66fd0f47ee9ee3188dc800776db34e93de5e0276a0"
+    },
+    {
+      "path": "assets/AppShell-CSKhz14K.js",
+      "bytes": 38955,
+      "sha256": "cfec304ee4f01bacf5f379452a76af38662475036384f478f8b1bf3530728d74"
+    },
+    {
+      "path": "assets/HomePage-CsICJc1p.js",
+      "bytes": 48,
+      "sha256": "4520035bf5cef646956f0051f3ff06f0b2b8e6eca1c007220f451be0b1f53c70"
+    },
+    {
+      "path": "assets/LoginPage-CZlVTa_5.js",
+      "bytes": 1640,
+      "sha256": "6939aa737ca5e9a4184ccc4b29e51c26fd9c81a89590dd0c5b144a89ae0930ec"
+    },
+    {
+      "path": "assets/OnboardingPage-D46Qo7DT.js",
+      "bytes": 17523,
+      "sha256": "f75321a7e7e2bb44b7f1e66f3ae283303217ccc0ddd4d9db6684dab3e2970294"
+    },
+    {
+      "path": "assets/PhysicalStudyFinishDialog-D_sm20ej.js",
+      "bytes": 2613,
+      "sha256": "723a14ae26e6f10a4fd84f7f55bf2d67f9396b5839c7d48bb1e04e88a70e52b5"
+    },
+    {
+      "path": "assets/ProgressPage-BtKEKOY1.js",
+      "bytes": 33252,
+      "sha256": "8e55b704c448ccd5feb44340b6441c01fb533d9a5cfdc7aa54f5dcd6d5f34db9"
+    },
+    {
+      "path": "assets/RegisterPage-LhFmb4fG.js",
+      "bytes": 1942,
+      "sha256": "b5b5ab3f511cbf5f4f894985e9bd79f78500b272a100d45b02b4e2ace2ac8da6"
+    },
+    {
+      "path": "assets/ResourcesPage-DI4BBpBW.js",
+      "bytes": 8823,
+      "sha256": "62d977c8a4639ad11d391dc66a8e55a5994e732f2def3facb069c4cf51d28f8e"
+    },
+    {
+      "path": "assets/RoadmapPage-BAuI-1IW.js",
+      "bytes": 9117,
+      "sha256": "e53d377bc6d388fe3c25bb76f3a2b14a1ff2d041072bc5a1c3d32f69c33d02a8"
+    },
+    {
+      "path": "assets/SettingsPage-DrywiF5j.js",
+      "bytes": 7258,
+      "sha256": "1efd784e3d1bbaa4f4ee6d958df82dd56679d0a212ac5ff7a6131cfc218b8112"
+    },
+    {
+      "path": "assets/WeekPage-5XwXBpBW.js",
+      "bytes": 32366,
+      "sha256": "40aad90989531b06d4055707da5d19ec691bf738b234fca0454c98ccb32f23e7"
+    },
+    {
+      "path": "assets/auth-validation-mYNUHAmY.js",
+      "bytes": 60514,
+      "sha256": "354082bf2389f78671a19190e879ccf8b99a0af5c1b7bc3869d50ee6d90bd482"
+    },
+    {
+      "path": "assets/index-SMiDj8Da.js",
+      "bytes": 2050,
+      "sha256": "8d57ed9b63d7aa06ce9946fa0bcebaade0f6ffbe12a7f041de90fc5f28c6c2ec"
+    },
+    {
+      "path": "assets/proactive-coach-materiality-policy-v1-CStjCkhS.js",
+      "bytes": 10937,
+      "sha256": "9433ad7b1cf968bc6f22670349024309fb104f9b049b9037e704b52d26a38e2d"
+    },
+    {
+      "path": "assets/product-entry-Cgp4GUPb.js",
+      "bytes": 452364,
+      "sha256": "d150de1fd28c55dcd65f7ef494a1ab48d5f780ee91722c8e144f64b4f9f26891"
+    },
+    {
+      "path": "assets/product-entry-DGScDZ7c.css",
+      "bytes": 162227,
+      "sha256": "bf06202c9cc4db81628b5d94fa5252a55a3abf6fe31defb539d04a69abba26e4"
+    },
+    {
+      "path": "assets/roadmap-Bf93FS8j.js",
+      "bytes": 57293,
+      "sha256": "56c43e7811c4598baa51995f2fbc58225d40f152543489aa7428d679a4461069"
+    },
+    {
+      "path": "assets/today-material-actions-C6oLgN-u.js",
+      "bytes": 18439,
+      "sha256": "c0d5af972aebcbc82c0745a10f8be75ecc031388818e9a8455ea6ab321363b92"
+    },
+    {
+      "path": "assets/useDialogAccessibility-7hciwZ_8.js",
+      "bytes": 1292,
+      "sha256": "7326afa0886f61c3ebd238f48c98bbbba108cb68cc68bd4fb13a6944b4300ad1"
+    },
+    {
+      "path": "assets/useTaskMaterialDrawer-DIipnPhM.js",
+      "bytes": 16551,
+      "sha256": "171f1ba10677630ca3d23bbf2424e283455686b2fcbaf39cc946c28737c3c8a2"
+    },
+    {
+      "path": "brand/kpss-kocu-logo.svg",
+      "bytes": 7837,
+      "sha256": "78471a201942d2a4634088d55487f2ea7c64f31700809361627b58db98eb254b"
+    },
+    {
+      "path": "brand/kpss-kocu-mark.svg",
+      "bytes": 1764,
+      "sha256": "296887f0fd299aca44d9e92caf450ccd50b4a4ea234e873f11805c1212a68080"
+    },
+    {
+      "path": "index.html",
+      "bytes": 411,
+      "sha256": "c621fe323d674b42e2e9714f375639eea196e7c063660b0360d5c7269706c21d"
+    }
+  ],
+  "bundleSweep": {
+    "localSupabase": [
+      "apps/web/dist/assets/product-entry-Cgp4GUPb.js",
+      "apps/web/dist/assets/roadmap-Bf93FS8j.js"
+    ],
+    "testVideo": [],
+    "localAccount": [],
+    "labToolbar": [],
+    "labRoute": [],
+    "acceptancePasswordEnv": [],
+    "debugger": []
+  },
+  "embeddedJwtRoles": [
+    "anon"
+  ],
+  "serverEnvironmentNames": [
+    "OPENAI_API_KEY",
+    "PHYSICAL_PACE_CAPTURE_V1_PROFILE_IDS",
+    "PLANNER_V2_APPLY_V1_PROFILE_IDS",
+    "PLANNER_V2_CONFIRM_V1_PROFILE_IDS",
+    "PLANNER_V2_PREVIEW_V1_PROFILE_IDS",
+    "SCHEDULER_WORKER_SECRET",
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_URL",
+    "TELEGRAM_BOT_TOKEN",
+    "TELEGRAM_BOT_USERNAME",
+    "TELEGRAM_CARD_RENDER_MODE",
+    "TELEGRAM_EVENT_STALE_SECONDS",
+    "TELEGRAM_TRANSPORT_MODE",
+    "TELEGRAM_WEBHOOK_SECRET",
+    "YOUTUBE_API_KEY"
+  ],
+  "dbDiffSinceAppApiBaseline": [],
+  "dbDiffSinceWebBaseline": [
+    "A\tsupabase/migrations/20260901123000_planner_v2_preview_attempt_lifecycle.sql",
+    "A\tsupabase/migrations/20260902101000_align_service_role_task_privileges.sql",
+    "A\tsupabase/migrations/20260902103000_harden_planner_v2_expired_confirmation_state.sql",
+    "A\tsupabase/migrations/20260911150000_ai_usage_ledger_v1.sql",
+    "A\tsupabase/migrations/20260911170000_ai_provider_runtime_reservations_v1.sql",
+    "A\tsupabase/migrations/20260919120000_ai_coach_proactive_state_v1.sql"
+  ],
+  "production": "NOT DEPLOYED",
+  "candidate": "DIRTY; runtime manifest identifies audited files but is not a release commit"
+}

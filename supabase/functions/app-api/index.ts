@@ -17,7 +17,7 @@ import { aggregateCompletedStudySessions, aggregatePlannedCreditByDate } from ".
 import { grossCapacityForDate, loadP48DailyCapacityOverrides, planningCapacityForDate } from "../_shared/capacity-overrides.ts";
 import { applyDailyTaskOrder } from "../_shared/daily-task-order.ts";
 import { buildQuickAddTaskPreview } from "../_shared/quick-add-task-preview.ts";
-import { buildTaskActionPreview, type TaskActionPreviewAction } from "../_shared/task-action-preview.ts";
+import { buildTaskActionPreview, carryoverPreviewDates, type TaskActionPreviewAction } from "../_shared/task-action-preview.ts";
 import { normalizeResourceProgress, presentResourceProgress } from "../_shared/resource-progress.ts";
 import { buildWeeklyCapacitySummary } from "../_shared/capacity-summary.ts";
 import { classifyP48CapacitySource } from "../_shared/p48-capacity-source.ts";
@@ -1934,10 +1934,10 @@ Deno.serve(async (request) => {
       let targetRemainingCapacityMinutes: number | null = null;
       if (action === "DEFER" && task.planned_date === today && !activeSessionResult.data && task.status !== "completed") {
         const weekEnd = String(plan.week_end_date ?? addDays(weekStart, 6));
-        for (let candidateDate = addDays(today, 1); candidateDate <= weekEnd; candidateDate = addDays(candidateDate, 1)) {
+        for (const candidateDate of carryoverPreviewDates(today, weekEnd, body?.targetDate)) {
           const dayContext = await loadDailyCoachContext(client, userId, profile, candidateDate);
           const remainingCapacity = Math.max(0, Number(dayContext.remainingCapacityMinutes ?? 0));
-          if (remainingCapacity >= remainingMinutes) {
+          if (body?.targetDate || remainingCapacity >= remainingMinutes) {
             targetDate = candidateDate;
             targetRemainingCapacityMinutes = remainingCapacity;
             break;

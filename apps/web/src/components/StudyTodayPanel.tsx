@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties, type PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useRoadmap } from "../hooks/useRoadmap";
-import { callAppApi } from "../lib/app-api";
+import { AppApiError, FRIENDLY_API_ERRORS, callAppApi } from "../lib/app-api";
 import { mergeMovableTaskOrder, moveTaskId } from "../lib/today-task-order";
 import { resolveTodayFocus } from "../lib/today-focus";
 import { activeStudyElapsedMinutes } from "../lib/study-session-timer";
 import { compactMinutesLabel, taskName, WORK_MODE_LABELS, type RoadmapTask } from "../lib/roadmap";
-import { CoachDrawer, type CoachDrawerEntryContext } from "./CoachDrawer";
+import type { CoachDrawerEntryContext } from "./CoachDrawer";
 import { QuickAddTaskDrawer } from "./QuickAddTaskDrawer";
 import { TaskActionPreviewDrawer } from "./TaskActionPreviewDrawer";
 import type { TaskActionPreviewAction } from "../lib/task-action-preview-ui";
@@ -15,6 +16,9 @@ import { PhysicalStudyFinishDialog } from "./PhysicalStudyFinishDialog";
 import { ProactiveCoachSurface } from "./ProactiveCoachSurface";
 import { TaskMaterialActions, TaskMaterialSummary } from "./TaskMaterialSummary";
 import { useTaskMaterialDrawer } from "../hooks/useTaskMaterialDrawer";
+import { StudyMaterialWorkspace } from "./StudyMaterialWorkspace";
+import type { VideoProgress } from "./VideoPlayerDrawer";
+import { taskWithVideoProgress } from "../lib/task-video";
 
 interface ActiveSession {
   id: string;
@@ -63,7 +67,7 @@ const REASON_LABELS: Record<string, string> = {
   default: "Sıradaki çalışma görevin.",
 };
 
-function useAnimatedNumber(target: number, duration = 360) {
+function useAnimatedNumber(target: number, duration = 180) {
   const [value, setValue] = useState(target);
 
   useEffect(() => {
@@ -88,9 +92,17 @@ function useAnimatedNumber(target: number, duration = 360) {
   return value;
 }
 
-export function StudyTodayPanel() {
-  const { data: roadmap } = useRoadmap({ ensureWeek: true });
+export function StudyTodayPanel({ focus = false, visible = true, onCoach }: { focus?: boolean; visible?: boolean; onCoach: (context: CoachDrawerEntryContext) => void }) {
+  const location = useLocation();
+  const [visited, setVisited] = useState(visible);
+  const [preferredTaskId, setPreferredTaskId] = useState<string | null>(null);
+  const requestedId = new URLSearchParams(location.search).get("task");
+  useEffect(() => { if (visible) setVisited(true); if (requestedId) setPreferredTaskId(requestedId); }, [visible, requestedId]);
+  const { data: roadmap } = useRoadmap({ ensureWeek: true, enabled: visible });
   const [tasks, setTasks] = useState<RoadmapTask[]>([]);
+  const onVideoProgress = useCallback((progress: VideoProgress) => {
+    setTasks((current) => current.map((task) => taskWithVideoProgress(task, progress)));
+  }, []);
   const [active, setActive] = useState<ActiveSession | null>(null);
   const [activeBreak, setActiveBreak] = useState<ActiveBreak | null>(null);
   const [paused, setPaused] = useState(false);
@@ -101,8 +113,6 @@ export function StudyTodayPanel() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [elapsed, setElapsed] = useState(0);
-  const [coachOpen, setCoachOpen] = useState(false);
-  const [coachEntryContext, setCoachEntryContext] = useState<CoachDrawerEntryContext>("general");
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [manualContinuationOrder, setManualContinuationOrder] = useState<string[]>([]);
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
@@ -115,14 +125,19 @@ export function StudyTodayPanel() {
   } | null>(null);
   const [physicalFinishOpen, setPhysicalFinishOpen] = useState(false);
   const [completionNotice, setCompletionNotice] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [pageDraft, setPageDraft] = useState("");
+  const loadRevision = useRef(0);
 
   const load = useCallback(async () => {
+    const revision = ++loadRevision.current;
     try {
       const [planResult, activeResult, summaryResult] = await Promise.all([
         callAppApi<{ tasks: RoadmapTask[] }>("/weekly-plan/current"),
         callAppApi<ActiveSessionResponse>("/study-sessions/active"),
         callAppApi<Summary>("/execution/summary"),
       ]);
+      if (revision !== loadRevision.current) return;
       setTasks((planResult.tasks ?? []).filter((task) => task.status !== "cancelled"));
       setActive(activeResult.session);
       setActiveBreak(activeResult.break ?? null);
@@ -130,18 +145,30 @@ export function StudyTodayPanel() {
       setClosedBreakSeconds(Math.max(0, Number(activeResult.closedBreakSeconds ?? 0)));
       setSummary({ ...summaryResult, dailyPlan: summaryResult.dailyPlan ?? EMPTY_DAILY_PLAN });
       if (!activeResult.session) {
-        try { setRecommendation(await callAppApi<Recommendation>("/tasks/next")); }
-        catch { setRecommendation(null); }
+        try {
+          const next = await callAppApi<Recommendation>("/tasks/next");
+          if (revision === loadRevision.current) setRecommendation(next);
+        } catch { if (revision === loadRevision.current) setRecommendation(null); }
       } else setRecommendation(null);
-      setError(false);
+      if (revision === loadRevision.current) setError(false);
     } catch (caught) {
       console.error("TODAY_LOAD_FAILED", caught);
-      setError(true);
-    } finally { setLoading(false); }
+      if (revision === loadRevision.current) setError(true);
+    } finally { if (revision === loadRevision.current) setLoading(false); }
   }, []);
   const { openTaskMaterial, materialDrawer } = useTaskMaterialDrawer(() => void load());
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+    const refresh = () => void load();
+    window.addEventListener("kpss:execution-changed", refresh);
+    return () => { loadRevision.current++; window.removeEventListener("kpss:execution-changed", refresh); };
+  }, [load]);
+  useEffect(() => { setPageDraft(active?.physicalCapture ? String(active.physicalCapture.startPageBoundary) : ""); }, [active?.id]);
+  useEffect(() => {
+    if (visible) return;
+    setQuickAddOpen(false); setPhysicalFinishOpen(false); setTaskActionRequest(null); setOpenTaskMenuId(null);
+  }, [visible]);
   useEffect(() => {
     if (!active) { setElapsed(0); return; }
     const tick = () => setElapsed(activeStudyElapsedMinutes({
@@ -158,6 +185,7 @@ export function StudyTodayPanel() {
 
   async function act<T>(action: () => Promise<T>): Promise<T | null> {
     setBusy(true);
+    setActionError(null);
     try {
       const result = await action();
       await load();
@@ -165,20 +193,20 @@ export function StudyTodayPanel() {
       return result;
     } catch (caught) {
       console.error("STUDY_ACTION_FAILED", caught);
-      setError(true);
+      setActionError(caught instanceof AppApiError ? FRIENDLY_API_ERRORS[caught.code] ?? "Çalışma kaydedilemedi. Verileri yenileyip tekrar dene." : "İşlem tamamlanamadı. Tekrar dene.");
       return null;
     } finally { setBusy(false); }
   }
 
   async function finishActive(completedThroughPage?: number) {
     if (!active) return false;
-    const result = await act(() => callAppApi<any>(`/study-sessions/${active.id}/finish`, {
+    const result = await act(() => callAppApi<{ outcome?: string }>(`/study-sessions/${active.id}/finish`, {
       method: "POST",
       ...(completedThroughPage === undefined ? {} : { body: { completedThroughPage } }),
     }));
     if (!result) return false;
     setCompletionNotice(result.outcome === "completed_with_evidence"
-      ? "Çalışma ve sayfa ilerlemesi atomik olarak kaydedildi."
+      ? "Çalışma ve sayfa ilerlemesi kaydedildi."
       : result.outcome === "completed_without_evidence"
         ? "Çalışma süresi kaydedildi; yeni sayfa ilerlemesi olmadığı için hız kanıtı oluşmadı."
         : "Çalışma kaydedildi.");
@@ -186,21 +214,18 @@ export function StudyTodayPanel() {
     return true;
   }
 
-  function moveSpotlight(event: PointerEvent<HTMLElement>) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    event.currentTarget.style.setProperty("--spot-x", `${event.clientX - rect.left}px`);
-    event.currentTarget.style.setProperty("--spot-y", `${event.clientY - rect.top}px`);
-  }
   const dailyMinutes = useMemo(() => new Map(summary.dailyPlan.tasks.map((task) => [task.id, task.minutes])), [summary.dailyPlan.tasks]);
   const dailyTaskIds = useMemo(() => new Set([...dailyMinutes.keys(), ...summary.dailyPlan.completedTaskIds]), [dailyMinutes, summary.dailyPlan.completedTaskIds]);
   const todayTasks = useMemo(() => tasks.filter((task) => dailyTaskIds.has(task.id)), [dailyTaskIds, tasks]);
   const resolvedFocus = resolveTodayFocus({
     recommendation,
     todayTasks,
+    materialTasks: tasks,
     dailyMinutes,
     hasActiveSession: Boolean(active),
   });
-  const focusTask = resolvedFocus?.task;
+  const requestedTask = !active ? todayTasks.find((task) => task.id === (requestedId ?? preferredTaskId) && task.status !== "completed" && (dailyMinutes.get(task.id) ?? 0) > 0) : null;
+  const focusTask = requestedTask ?? resolvedFocus?.task;
   const activeTask = active?.task_id
     ? tasks.find((task) => task.id === active.task_id) ?? null
     : null;
@@ -285,19 +310,23 @@ export function StudyTodayPanel() {
   const formattedDate = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", weekday: "long", day: "numeric", month: "long" }).format(new Date());
   const animatedDays = useAnimatedNumber(roadmap?.strategy?.daysToExam ?? 0);
   const animatedPlannedMinutes = useAnimatedNumber(todayPlanned);
+  const workTask = active ? activeTask : focusTask;
 
-  return <section className="today-page page-frame">
+  return <>{!visible && active && <Link className="product-session-return" to="/session"><Icon name="timer" /><span>{active.tasks?.title ? taskName({ title: active.tasks.title }) : "Aktif çalışma"} · {elapsed} dk · {paused ? "Moladasın" : "Çalışıyorsun"}</span><strong>Çalışmaya dön →</strong></Link>}<section hidden={!visible} className={`today-page page-frame ${focus ? "study-focus-page" : ""}`}>
     <header className="page-header today-page-header">
-      <div><span className="page-eyebrow">Bugün</span><h1>{formattedDate}</h1></div>
-      <div className="today-header-side"><div className="today-editorial-stats"><div><strong className="settling-number">{roadmap?.strategy ? animatedDays : "—"}</strong><span>gün kaldı</span></div><div><strong className="settling-number">{compactMinutesLabel(animatedPlannedMinutes)}</strong><span>bugün</span></div></div><button className="today-quick-add-trigger" type="button" onClick={() => setQuickAddOpen(true)}><span aria-hidden="true">＋</span><strong>Görev Ekle</strong></button><button className="today-capacity-trigger" type="button" onClick={() => { setCoachEntryContext("capacity"); setCoachOpen(true); }}><span>Vaktim Değişti</span></button><button className="today-coach-trigger" type="button" onClick={() => { setCoachEntryContext("general"); setCoachOpen(true); }}><Icon name="spark" weight="fill" /><span>Koça Yaz</span></button></div>
+      <div><span className="page-eyebrow">{focus ? "Bugün / Odak" : "Bugün"}</span><h1>{focus ? "Odak" : formattedDate}</h1>{focus && <p>{formattedDate}</p>}</div>
+      {!focus && <div className="today-header-side"><div className="today-editorial-stats"><div><strong className="settling-number">{roadmap?.strategy ? animatedDays : "—"}</strong><span>gün kaldı</span></div><div><strong className="settling-number">{compactMinutesLabel(animatedPlannedMinutes)}</strong><span>bugün</span></div></div><button className="today-quick-add-trigger" type="button" aria-label="Görev Ekle" onClick={() => setQuickAddOpen(true)}><span aria-hidden="true">＋</span><strong>Görev Ekle</strong></button><button className="today-capacity-trigger" type="button" onClick={() => onCoach("capacity")}><span>Vaktim Değişti</span></button><button className="today-coach-trigger" type="button" aria-label="Koça Sor" onClick={() => onCoach("general")}><Icon name="user" /><span>Koça Sor</span></button></div>}
     </header>
 
     {error && <div className="inline-state error" role="alert"><span>Veriler yüklenemedi.</span><button type="button" onClick={() => void load()}>Tekrar Dene</button></div>}
     {completionNotice && <div className="inline-state" role="status"><span>{completionNotice}</span><button type="button" onClick={() => setCompletionNotice(null)}>Kapat</button></div>}
+    {actionError && <div className="inline-state error" role="alert">{actionError}<button type="button" onClick={() => { setActionError(null); void load(); }}>Yenile</button></div>}
+    {requestedId && active && active.task_id !== requestedId && <div className="inline-state" role="status">Önce açık çalışmanı bitir. Seçtiğin görev daha sonra başlatılabilir.</div>}
+    {requestedId && !active && !loading && !error && !requestedTask && <div className="inline-state" role="status">Seçtiğin görev bugünün çalışmaya uygun planında değil. <Link to="/week">Haftam’da incele</Link></div>}
 
-    <article className={`focus-now-card ${active ? "is-running" : ""} ${paused ? "is-paused" : ""}`} onPointerMove={moveSpotlight}>
-      <div className="focus-spotlight" aria-hidden="true" />
+    <article className={`focus-now-card production-workspace ${active ? "is-running" : ""} ${paused ? "is-paused" : ""}`}>
       {loading ? <div className="page-skeleton focus-skeleton"><span /><span /><span /></div> : active ? <div className="focus-state" key="active">
+        <div className="workspace-card-top"><span className="focus-label">Şimdi</span>{!focus && <Link to="/session" className="workspace-focus-link"><Icon name="target" size={17} />Odak görünümü</Link>}</div>
         <div className="focus-status"><i />{paused ? "Moladasın" : "Çalışıyorsun"}</div>
         <div className="focus-main"><span>{active.tasks?.title?.split(" · ")[0] ?? "Çalışma"}</span><h2>{active.tasks?.title ? taskName({ title: active.tasks.title }) : "Aktif çalışma"}</h2></div>
         <div className="active-counters"><div><strong>{elapsed}</strong><span>dk çalışıldı</span></div>{activePlanned > 0 && <div><strong>{Math.max(0, activePlanned - elapsed)}</strong><span>dk kaldı</span></div>}</div>
@@ -313,20 +342,21 @@ export function StudyTodayPanel() {
             {paused ? <Icon name="play" weight="fill" /> : <span className="pause-glyph" aria-hidden="true">Ⅱ</span>}
             {paused ? "Devam Et" : "Mola Ver"}
           </button>
-          <button className="focus-action finish" type="button" disabled={busy} onClick={() => active.lifecycle === "physical_v1" && active.physicalCapture ? setPhysicalFinishOpen(true) : void finishActive()}><Icon name="stop" weight="fill" />Çalışmayı Bitir</button>
-        </div>        {activeTask && <TaskMaterialActions task={activeTask} onOpen={openTaskMaterialFromToday} />}
+          <button className="focus-action finish" type="button" disabled={busy} onClick={async () => { if (active.lifecycle === "physical_v1" && active.physicalCapture) { if (!paused) { const result = await act(() => callAppApi(`/study-sessions/${active.id}/pause`, { method: "POST" })); if (!result) return; } setPhysicalFinishOpen(true); } else void finishActive(); }}><Icon name="stop" weight="fill" />Çalışmayı Bitir</button>
+        </div>
         {paused && <p className="focus-break-note" role="status">Mola süresi çalışma sürene eklenmez.</p>}
       </div> : focusTask ? <div className="focus-state" key="ready">
-        <span className="focus-label">Şimdi</span>
+        <div className="workspace-card-top"><span className="focus-label">Şimdi</span>{!focus && <Link to="/session" className="workspace-focus-link"><Icon name="target" size={17} />Odak görünümü</Link>}</div>
         <div className="focus-main"><span>{focusTask.subjects?.name ?? focusTask.title.split(" · ")[0] ?? "Ders"}</span><h2>{taskName(focusTask)}</h2><div className="focus-resource"><p>{focusTask.resources?.name ?? focusTask.description ?? "Kaynak belirtilmedi"}</p></div></div>
         <TaskMaterialSummary task={focusTask} />
-        <div className="focus-facts"><span>{focusTask.work_mode ? WORK_MODE_LABELS[focusTask.work_mode] ?? "Çalışma" : "Çalışma"}</span><strong>{resolvedFocus?.remainingMinutes ?? 0} dk</strong></div>
-        <p className="focus-reason">{REASON_LABELS[resolvedFocus?.reason ?? "default"] ?? REASON_LABELS.default}</p>
-        <button className="focus-action" type="button" disabled={busy} onClick={() => void act(() => callAppApi("/study-sessions/start", { method: "POST", body: { taskId: focusTask.id, entrySource: "web" } }))}><Icon name="play" weight="fill" />Çalışmaya Başla</button>        <TaskMaterialActions task={focusTask} onOpen={openTaskMaterialFromToday} />
+        <div className="focus-facts"><span>{focusTask.work_mode ? WORK_MODE_LABELS[focusTask.work_mode] ?? "Çalışma" : "Çalışma"}</span><strong>{requestedTask ? dailyMinutes.get(requestedTask.id) ?? 0 : resolvedFocus?.remainingMinutes ?? 0} dk</strong></div>
+        <p className="focus-reason">{requestedTask ? "Seçtiğin çalışmadan devam et." : REASON_LABELS[resolvedFocus?.reason ?? "default"] ?? REASON_LABELS.default}</p>
+        <button className="focus-action" type="button" disabled={busy} onClick={() => void act(() => callAppApi("/study-sessions/start", { method: "POST", body: { taskId: focusTask.id, entrySource: "web" } }))}><Icon name="play" weight="fill" />{busy ? "Başlatılıyor…" : "Çalışmaya Başla"}</button>
       </div> : <div className="focus-state focus-empty"><span className="focus-label">Şimdi</span><Icon name="check" size={32} /><h2>Sıradaki görev yok.</h2><p>Haftalık plan oluşturulduğunda burada görünecek.</p></div>}
+      {workTask && (visited || visible) && <StudyMaterialWorkspace checkpointContext={focus ? "focus" : "today"} key={workTask.id} task={workTask} capture={active?.lifecycle === "physical_v1" ? active.physicalCapture ?? null : null} pageDraft={pageDraft} onPageDraft={setPageDraft} playback={active ? paused ? "paused" : "running" : "ready"} visible={visible} onVideoProgress={onVideoProgress} />}
     </article>
 
-    <section className="today-progress-summary" aria-labelledby="today-progress-title">
+    {!focus && <section className="today-progress-summary" aria-labelledby="today-progress-title">
       <div className="today-progress-copy">
         <span className="page-eyebrow">Bugünün durumu</span>
         <h2 id="today-progress-title">Bugün nasıl gidiyor?</h2>
@@ -346,18 +376,19 @@ export function StudyTodayPanel() {
           <dd>{todayCompletedTaskCount}/{todayTaskCount} görev</dd>
         </div>
       </dl>
-    </section>
+    </section>}
 
-    <ProactiveCoachSurface />
+    {!focus && visible && <ProactiveCoachSurface />}
 
     <PhysicalStudyFinishDialog
       capture={physicalFinishOpen ? active?.physicalCapture ?? null : null}
       busy={busy}
       onCancel={() => setPhysicalFinishOpen(false)}
       onFinish={finishActive}
+      initialBoundary={pageDraft}
     />
 
-    <section className="today-remaining" aria-labelledby="remaining-title">
+    {!focus && <section className="today-remaining" aria-labelledby="remaining-title">
       <div className="section-bar"><h2 id="remaining-title">Bugünün devamı</h2><span>{pendingTasks.length} görev · {compactMinutesLabel(pendingTasks.reduce((sum, task) => sum + (dailyMinutes.get(task.id) ?? 0), 0))}</span></div>
         {orderSaving && <div className="task-order-status" aria-live="polite">Sıra kaydediliyor…</div>}
         {orderError && <div className="task-order-error" role="alert">{orderError}</div>}
@@ -366,7 +397,7 @@ export function StudyTodayPanel() {
         const next = !completed && pendingTasks[0]?.id === task.id;
         return <article
             className={`${completed ? "is-complete" : ""} ${next ? "is-next" : ""} ${draggedTaskId === task.id ? "is-dragging" : ""}`}
-            style={{ animationDelay: `${210 + index * 50}ms` } as CSSProperties}
+            style={{ animationDelay: `${Math.min(index, 3) * 35}ms` } as CSSProperties}
             key={task.id}
             draggable={!orderSaving}
             onDragStart={(event) => {
@@ -395,7 +426,7 @@ export function StudyTodayPanel() {
               <button type="button" disabled={orderSaving || index === continuationTasks.length - 1} aria-label={`${taskName(task)} görevini aşağı taşı`} onClick={() => moveContinuationTask(task.id, index + 1)}>↓</button>
             </div>
           </div>
-        <div className="task-subject"><span>{task.subjects?.name ?? "Ders"}</span><strong>{task.resources?.name ?? taskName(task)}</strong></div>
+        <div className="task-subject"><span>{task.subjects?.name ?? "Ders"}</span>{completed ? <strong>{task.resources?.name ?? taskName(task)}</strong> : <Link className="task-study-link" to={`/?task=${task.id}`}><strong>{task.resources?.name ?? taskName(task)}</strong></Link>}</div>
         <span className="task-mode">{task.work_mode ? WORK_MODE_LABELS[task.work_mode] ?? "Çalışma" : "Çalışma"}</span>
         <strong className="task-minutes">{completed ? <Icon name="check" weight="bold" /> : <>{dailyMinutes.get(task.id) ?? 0}<small>dk</small></>}</strong>
         <div className="task-action-menu" onPointerDown={(event) => event.stopPropagation()}>
@@ -424,7 +455,7 @@ export function StudyTodayPanel() {
           </div>}
         </div>
       </article>})}</div> : <div className="plain-empty">Bugün için başka görev yok.</div>}
-    </section>
+    </section>}
 
 
           <TaskActionPreviewDrawer
@@ -433,6 +464,5 @@ export function StudyTodayPanel() {
       />
       {materialDrawer}
       <QuickAddTaskDrawer open={quickAddOpen} onClose={() => setQuickAddOpen(false)} onApplied={() => void load()} />
-      <CoachDrawer open={coachOpen} entryContext={coachEntryContext} onClose={() => setCoachOpen(false)} />
-  </section>;
+  </section></>;
 }

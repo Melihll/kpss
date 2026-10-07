@@ -3,7 +3,6 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { loginSchema } from "../lib/auth-validation";
 import { supabase } from "../lib/supabase";
-import { Icon } from "../components/Icon";
 
 export function LoginPage() {
   const { user } = useAuth();
@@ -30,7 +29,7 @@ export function LoginPage() {
 
   return <main className="auth-shell">
     <section className="auth-card">
-      <div className="auth-brand-inline"><span className="brand-mark"><Icon name="target" /></span><strong>KPSS Koçu</strong></div>
+      <div className="auth-brand-inline"><img src="/brand/kpss-kocu-logo.svg" width={728} height={304} alt="KPSS Koçu" /></div>
       <h1>Tekrar hoş geldin.</h1>
       <form onSubmit={handleSubmit}>
         <label>E-posta<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="ornek@mail.com" /></label>

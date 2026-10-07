@@ -1,0 +1,135 @@
+[
+  {
+    "time": "2026-10-05T15:16:15.101Z",
+    "progress": [
+      {
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "youtube_playlist_video_id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "last_position_seconds": 94,
+        "watched_seconds": 94,
+        "updated_at": "2026-10-05T15:16:11.648Z"
+      }
+    ],
+    "stats": [
+      {
+        "n_tup_ins": "1",
+        "n_tup_upd": "8"
+      }
+    ]
+  },
+  {
+    "time": "2026-10-05T15:16:20.161Z",
+    "progress": [
+      {
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "youtube_playlist_video_id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "last_position_seconds": 94,
+        "watched_seconds": 94,
+        "updated_at": "2026-10-05T15:16:11.648Z"
+      }
+    ],
+    "stats": [
+      {
+        "n_tup_ins": "1",
+        "n_tup_upd": "8"
+      }
+    ]
+  },
+  {
+    "time": "2026-10-05T15:16:25.171Z",
+    "progress": [
+      {
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "youtube_playlist_video_id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "last_position_seconds": 94,
+        "watched_seconds": 94,
+        "updated_at": "2026-10-05T15:16:11.648Z"
+      }
+    ],
+    "stats": [
+      {
+        "n_tup_ins": "1",
+        "n_tup_upd": "9"
+      }
+    ]
+  },
+  {
+    "time": "2026-10-05T15:16:30.219Z",
+    "progress": [
+      {
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "youtube_playlist_video_id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "last_position_seconds": 110,
+        "watched_seconds": 110,
+        "updated_at": "2026-10-05T15:16:27.554Z"
+      }
+    ],
+    "stats": [
+      {
+        "n_tup_ins": "1",
+        "n_tup_upd": "9"
+      }
+    ]
+  },
+  {
+    "time": "2026-10-05T15:16:35.238Z",
+    "progress": [
+      {
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "youtube_playlist_video_id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "last_position_seconds": 110,
+        "watched_seconds": 110,
+        "updated_at": "2026-10-05T15:16:27.554Z"
+      }
+    ],
+    "stats": [
+      {
+        "n_tup_ins": "1",
+        "n_tup_upd": "9"
+      }
+    ]
+  },
+  {
+    "time": "2026-10-05T15:16:40.257Z",
+    "progress": [
+      {
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "youtube_playlist_video_id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "last_position_seconds": 110,
+        "watched_seconds": 110,
+        "updated_at": "2026-10-05T15:16:27.554Z"
+      }
+    ],
+    "stats": [
+      {
+        "n_tup_ins": "1",
+        "n_tup_upd": "10"
+      }
+    ]
+  },
+  {
+    "time": "2026-10-05T15:16:45.272Z",
+    "progress": [
+      {
+        "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+        "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+        "youtube_playlist_video_id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "last_position_seconds": 126,
+        "watched_seconds": 126,
+        "updated_at": "2026-10-05T15:16:43.531Z"
+      }
+    ],
+    "stats": [
+      {
+        "n_tup_ins": "1",
+        "n_tup_upd": "10"
+      }
+    ]
+  }
+]

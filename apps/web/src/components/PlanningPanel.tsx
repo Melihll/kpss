@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppApiError, callAppApi, FRIENDLY_API_ERRORS } from "../lib/app-api";
 import { Icon } from "./Icon";
 
@@ -106,7 +106,16 @@ function varianceText(task: ApiTask) {
   return "Planla uyumlu";
 }
 
-export function PlanningPanel() {
+// Mirrors the existing whole-week replacement's protected-history rule.
+function isReplaceable(task: ApiTask) {
+  return ["planned", "ready", "rescheduled"].includes(task.status) &&
+    !(task.task_progress?.[0]?.completed_minutes || task.task_progress?.[0]?.actual_study_minutes);
+}
+
+export function PlanningPanel({ initialDate, initialResourceId, compact = false }: { initialDate?: string; initialResourceId?: string; compact?: boolean } = {}) {
+  const initialized = useRef(false);
+  const [editingDate, setEditingDate] = useState(initialDate ?? "");
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [plan, setPlan] = useState<ApiPlan | null>(null);
   const [tasks, setTasks] = useState<ApiTask[]>([]);
   const [options, setOptions] = useState<PlanOptions | null>(null);
@@ -116,6 +125,7 @@ export function PlanningPanel() {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
+  useEffect(() => { setReviewOpen(false); }, [draft]);
 
   const load = useCallback(async () => {
     try {
@@ -142,10 +152,12 @@ export function PlanningPanel() {
   }, [load]);
 
   useEffect(() => {
-    if (!options || draft.length) return;
-    const manualTasks = tasks.filter((task) => task.source_reason === "manual" && task.planned_date && ["planned", "ready", "rescheduled"].includes(task.status));
+    if (!options || initialized.current) return;
+    initialized.current = true;
+    const manualTasks = tasks.filter((task) => task.source_reason === "manual" && task.planned_date && isReplaceable(task));
+    const resource = options.resources.find((item) => item.id === initialResourceId);
     if (manualTasks.length) {
-      setDraft(manualTasks.map((task) => ({
+      const blocks = manualTasks.map((task) => ({
         key: crypto.randomUUID(),
         plannedDate: task.planned_date!,
         subjectId: task.subject_id,
@@ -153,12 +165,14 @@ export function PlanningPanel() {
         resourceId: task.resource_id ?? "",
         detail: task.description?.replace(/^Kaynak:\s*[^·]+(?:·\s*)?/, "") ?? "",
         estimatedMinutes: String(task.estimated_minutes),
-      })));
+      }));
+      if (resource) blocks.push({ key: crypto.randomUUID(), plannedDate: initialDate ?? options.weekStartDate, subjectId: resource.subject_id, workMode: resource.resource_type === "video_course" ? "video" : "book", resourceId: resource.id, detail: "", estimatedMinutes: "30" });
+      setDraft(blocks);
       return;
     }
-    const subjectId = options.subjects[0]?.id ?? "";
-    setDraft([{ key: crypto.randomUUID(), plannedDate: options.weekStartDate, subjectId, workMode: "video", resourceId: "", detail: "", estimatedMinutes: "60" }]);
-  }, [options, tasks, draft.length]);
+    const subjectId = resource?.subject_id ?? options.subjects[0]?.id ?? "";
+    setDraft([{ key: crypto.randomUUID(), plannedDate: initialDate ?? options.weekStartDate, subjectId, workMode: resource && resource.resource_type !== "video_course" ? "book" : "video", resourceId: resource?.id ?? "", detail: "", estimatedMinutes: "60" }]);
+  }, [options, tasks, initialResourceId, initialDate]);
 
   async function savePlan() {
     if (!options) return;
@@ -186,7 +200,8 @@ export function PlanningPanel() {
       });
       setPlan(response.plan);
       setTasks(response.tasks.filter((task) => task.status !== "cancelled"));
-      setSavedNotice("Haftalık plan kaydedildi. Telegram artık bu planı kullanacak.");
+      setSavedNotice("Haftalık plan kaydedildi.");
+      setReviewOpen(false);
       window.dispatchEvent(new Event(EXECUTION_CHANGED_EVENT));
     } catch (caught) {
       setError(errorMessage(caught));
@@ -226,6 +241,10 @@ export function PlanningPanel() {
   }
 
   const totalDraftMinutes = useMemo(() => draft.reduce((sum, block) => sum + (Number(block.estimatedMinutes) || 0), 0), [draft]);
+  const replacedTasks = tasks.filter(isReplaceable);
+  const preservedTasks = tasks.filter((task) => !isReplaceable(task) && !["cancelled", "missed"].includes(task.status));
+  const preservedMinutes = preservedTasks.reduce((sum, task) => sum + task.estimated_minutes, 0);
+  const plannedMinutes = totalDraftMinutes + preservedMinutes;
   const groupedTasks = useMemo(() => {
     const byDate = new Map<string, ApiTask[]>();
     for (const task of tasks.filter((item) => item.planned_date && item.status !== "cancelled")) {
@@ -238,9 +257,9 @@ export function PlanningPanel() {
 
   if (loading) return <section className="planning-panel panel-card loading-panel"><div className="loading-line wide-line"/><div className="loading-line"/><div className="loading-card"/></section>;
 
-  return <section className="planning-panel panel-card pilot-plan-panel">
+  return <section className={`planning-panel panel-card pilot-plan-panel ${compact ? "is-compact-editor" : ""}`}>
     <div className="panel-heading">
-      <div><span className="panel-kicker">HAFTALIK PİLOT PLANI</span><h2>Haftayı kaba taslak kur</h2><p>Dersi, çalışma biçimini ve süreyi seç. Gerçek çalışman farklı çıkarsa sistem kalan haftayı yeniden yerleştirsin.</p></div>
+      <div><span className="panel-kicker">HAFTALIK PLAN</span><h2>Çalışmaları düzenle</h2><p>Gün, kaynak ve süreyi değiştir; kaydetmeden önce haftanın tamamını incele.</p></div>
       {options && <span className="status-pill good">Kapasite {minutesLabel(options.availableMinutes)}</span>}
     </div>
 
@@ -252,12 +271,12 @@ export function PlanningPanel() {
         {DAY_LABELS.map((label, index) => {
           const date = addDays(options.weekStartDate, index);
           const minutes = draft.filter((block) => block.plannedDate === date).reduce((sum, block) => sum + (Number(block.estimatedMinutes) || 0), 0);
-          return <button type="button" key={date} className="day-shortcut" onClick={() => addBlock(date)}><strong>{label.slice(0, 3)}</strong><span>{minutes ? minutesLabel(minutes) : "+ ekle"}</span></button>;
+          return <button type="button" key={date} className={`day-shortcut ${editingDate === date ? "active" : ""}`} onClick={() => compact ? setEditingDate(date) : addBlock(date)}><strong>{label.slice(0, 3)}</strong><span>{minutes ? minutesLabel(minutes) : "—"}</span></button>;
         })}
       </div>
 
       <div className="plan-block-list">
-        {draft.map((block, index) => {
+        {draft.filter((block) => !compact || !editingDate || block.plannedDate === editingDate).map((block, index) => {
           const resources = options.resources.filter((resource) => resource.subject_id === block.subjectId);
           return <article className="plan-block-row" key={block.key}>
             <span className="block-index">{index + 1}</span>
@@ -273,14 +292,17 @@ export function PlanningPanel() {
       </div>
 
       <div className="builder-footer">
-        <button type="button" className="ghost-action" onClick={() => addBlock()}><span>＋</span> Çalışma ekle</button>
-        <div className="builder-total"><span>Planlanan</span><strong>{minutesLabel(totalDraftMinutes)}</strong><small>/ {minutesLabel(options.availableMinutes)} kapasite</small></div>
-        <button type="button" className="primary-action" disabled={working || totalDraftMinutes <= 0 || totalDraftMinutes > options.availableMinutes} onClick={() => void savePlan()}><Icon name="calendar" />Haftayı Kaydet</button>
+        <button type="button" className="ghost-action" onClick={() => addBlock(editingDate || undefined)}><span>＋</span> Çalışma ekle</button>
+        <div className="builder-total"><span>Planlanan</span><strong>{minutesLabel(plannedMinutes)}</strong><small>/ {minutesLabel(options.availableMinutes)} kapasite</small></div>
+        <button type="button" className="primary-action" disabled={working || totalDraftMinutes <= 0 || plannedMinutes > options.availableMinutes} onClick={() => setReviewOpen(true)}><Icon name="calendar" />Değişiklikleri incele</button>
       </div>
-      {totalDraftMinutes > options.availableMinutes && <p className="capacity-warning">Plan kapasiteni {minutesLabel(totalDraftMinutes - options.availableMinutes)} aşıyor. Birkaç süreyi azalt.</p>}
+      {plannedMinutes > options.availableMinutes && <p className="capacity-warning">Plan kapasiteni {minutesLabel(plannedMinutes - options.availableMinutes)} aşıyor. Birkaç süreyi azalt.</p>}
+      {reviewOpen && <section className="manual-plan-review" aria-label="Haftalık plan değişiklikleri"><h3>Haftanın yeni dağılımı</h3><p>Bu işlem haftanın bekleyen tüm çalışmalarını aşağıdaki taslakla değiştirir. Başlamış ve tamamlanmış çalışmalar korunur.</p>
+        {replacedTasks.length > 0 && <details open><summary>Yerine taslağın kaydedileceği {replacedTasks.length} çalışma</summary><ul>{replacedTasks.map((task) => <li key={task.id}>{task.title} · {task.planned_date} · {task.estimated_minutes} dk</li>)}</ul></details>}
+        <div>{DAY_LABELS.map((label, index) => { const date = addDays(options.weekStartDate, index); const before = tasks.filter((task) => task.planned_date === date && !["cancelled", "missed"].includes(task.status)).reduce((sum, task) => sum + task.estimated_minutes, 0); const after = draft.filter((block) => block.plannedDate === date).reduce((sum, block) => sum + Number(block.estimatedMinutes), 0) + preservedTasks.filter((task) => task.planned_date === date).reduce((sum, task) => sum + task.estimated_minutes, 0); return <p key={date}><span>{label}</span><strong>{before} → {after} dk</strong></p>; })}</div><button className="secondary-action" type="button" disabled={working} onClick={() => setReviewOpen(false)}>Düzenlemeye dön</button><button className="primary-action" type="button" disabled={working} onClick={() => void savePlan()}>{working ? "Kaydediliyor…" : "Haftayı onayla ve kaydet"}</button></section>}
     </div>}
 
-    {plan && <div className="saved-week-plan">
+    {!compact && plan && <div className="saved-week-plan">
       <div className="subsection-heading"><div><span className="panel-kicker">AKTİF PLAN</span><h3>Telegram'ın kullanacağı hafta</h3></div><span>{tasks.filter((task) => task.status !== "cancelled").length} görev · {minutesLabel(tasks.filter((task) => task.status !== "cancelled").reduce((sum, task) => sum + task.estimated_minutes, 0))}</span></div>
       <div className="week-day-plan-grid">
         {groupedTasks.map(([date, dayTasks]) => <article className="day-plan-card" key={date}>
@@ -297,7 +319,7 @@ export function PlanningPanel() {
       </div>
     </div>}
 
-    <article className={`recommendation hero-recommendation compact-coach-card ${recommendation ? "has-task" : "empty"}`}>
+    {!compact && <article className={`recommendation hero-recommendation compact-coach-card ${recommendation ? "has-task" : "empty"}`}>
       <div className="recommendation-visual"><span className="target-orbit"><Icon name="target" /></span></div>
       {recommendation ? <>
         <div className="recommendation-copy"><span className="eyebrow">TELEGRAM İLE AYNI SIRADAKİ GÖREV</span><h3>{recommendation.task.title}</h3><p>{REASON_LABELS[recommendation.reason] || REASON_LABELS.default}</p><div className="recommendation-chips"><span><Icon name="timer" />Kalan <strong>{recommendation.remainingMinutes} dk</strong></span></div></div>
@@ -306,6 +328,6 @@ export function PlanningPanel() {
         <div className="recommendation-copy"><span className="eyebrow">KONTROL NOKTASI</span><h3>Planı kaydet, sonra Telegram'dan test et.</h3><p>/bugun ve /simdi bu aktif haftalık planı okuyacak. Çalışma süren plana göre kısa veya uzun çıkarsa kalan günler yeniden düzenlenecek.</p></div>
         <div className="recommendation-actions"><button className="secondary-action" disabled={working || !plan} onClick={() => void recommend()}><Icon name="spark" />Sıradaki Görevi Kontrol Et</button></div>
       </>}
-    </article>
+    </article>}
   </section>;
 }

@@ -1,0 +1,191 @@
+[
+  {
+    "size": "desktop",
+    "route": "today",
+    "height": 900,
+    "mainHeading": "Bugün",
+    "overflow": false,
+    "playerRatio": 1.7778534648068078,
+    "width": 1440
+  },
+  {
+    "size": "desktop",
+    "route": "session",
+    "height": 900,
+    "mainHeading": "Odak",
+    "overflow": false,
+    "playerRatio": 1.777833351759424,
+    "width": 1440
+  },
+  {
+    "size": "desktop",
+    "route": "week",
+    "height": 900,
+    "mainHeading": "Haftam",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 1440
+  },
+  {
+    "size": "desktop",
+    "route": "resources",
+    "height": 900,
+    "mainHeading": "Kaynaklar",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 1440
+  },
+  {
+    "size": "desktop",
+    "route": "progress",
+    "height": 900,
+    "mainHeading": "İlerleme",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 1440
+  },
+  {
+    "size": "desktop",
+    "route": "roadmap",
+    "height": 900,
+    "mainHeading": "Yol Haritası",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 1440
+  },
+  {
+    "size": "desktop",
+    "route": "coach",
+    "height": 900,
+    "mainHeading": "Koç",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 1440
+  },
+  {
+    "size": "tablet",
+    "route": "today",
+    "height": 1112,
+    "mainHeading": "Bugün",
+    "overflow": false,
+    "playerRatio": 1.7777779259419135,
+    "width": 834
+  },
+  {
+    "size": "tablet",
+    "route": "session",
+    "height": 1112,
+    "mainHeading": "Odak",
+    "overflow": false,
+    "playerRatio": 1.777777893449778,
+    "width": 834
+  },
+  {
+    "size": "tablet",
+    "route": "week",
+    "height": 1112,
+    "mainHeading": "Haftam",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 834
+  },
+  {
+    "size": "tablet",
+    "route": "resources",
+    "height": 1112,
+    "mainHeading": "Kaynaklar",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 834
+  },
+  {
+    "size": "tablet",
+    "route": "progress",
+    "height": 1112,
+    "mainHeading": "İlerleme",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 834
+  },
+  {
+    "size": "tablet",
+    "route": "roadmap",
+    "height": 1112,
+    "mainHeading": "Yol Haritası",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 834
+  },
+  {
+    "size": "tablet",
+    "route": "coach",
+    "height": 1112,
+    "mainHeading": "Koç",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 834
+  },
+  {
+    "size": "mobile",
+    "route": "today",
+    "height": 844,
+    "mainHeading": "Bugün",
+    "overflow": false,
+    "playerRatio": 1.7777777178159415,
+    "width": 390
+  },
+  {
+    "size": "mobile",
+    "route": "session",
+    "height": 844,
+    "mainHeading": "Odak",
+    "overflow": false,
+    "playerRatio": 1.7777777178159415,
+    "width": 390
+  },
+  {
+    "size": "mobile",
+    "route": "week",
+    "height": 844,
+    "mainHeading": "Haftam",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 390
+  },
+  {
+    "size": "mobile",
+    "route": "resources",
+    "height": 844,
+    "mainHeading": "Kaynaklar",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 390
+  },
+  {
+    "size": "mobile",
+    "route": "progress",
+    "height": 844,
+    "mainHeading": "İlerleme",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 390
+  },
+  {
+    "size": "mobile",
+    "route": "roadmap",
+    "height": 844,
+    "mainHeading": "Yol Haritası",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 390
+  },
+  {
+    "size": "mobile",
+    "route": "coach",
+    "height": 844,
+    "mainHeading": "Koç",
+    "overflow": false,
+    "playerRatio": null,
+    "width": 390
+  }
+]

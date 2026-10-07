@@ -1,0 +1,350 @@
+{
+  "date": "2026-10-01",
+  "checks": [
+    {
+      "overflow": false,
+      "title": "Günaydın, Deniz.",
+      "url": "/ux-lab/today?concept=focus",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Haftana yer aç.",
+      "url": "/ux-lab/week?concept=focus",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Yanında bir çalışma koçu.",
+      "url": "/ux-lab/coach?concept=focus",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Her ay, hedefe biraz daha yakın.",
+      "url": "/ux-lab/roadmap?concept=focus",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Nerede kaldığın hep belli.",
+      "url": "/ux-lab/resources?concept=focus",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Emeğin birikiyor.",
+      "url": "/ux-lab/progress?concept=focus",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Her gün, biraz daha ileri.",
+      "url": "/ux-lab/today?concept=coach",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Haftana yer aç.",
+      "url": "/ux-lab/week?concept=coach",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Birlikte düşünelim.",
+      "url": "/ux-lab/coach?concept=coach",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Her ay, hedefe biraz daha yakın.",
+      "url": "/ux-lab/roadmap?concept=coach",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Nerede kaldığın hep belli.",
+      "url": "/ux-lab/resources?concept=coach",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Emeğin birikiyor.",
+      "url": "/ux-lab/progress?concept=coach",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Günaydın, Deniz.",
+      "url": "/ux-lab/today?concept=product",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Haftana yer aç.",
+      "url": "/ux-lab/week?concept=product",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Yanında bir çalışma koçu.",
+      "url": "/ux-lab/coach?concept=product",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Her ay, hedefe biraz daha yakın.",
+      "url": "/ux-lab/roadmap?concept=product",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Nerede kaldığın hep belli.",
+      "url": "/ux-lab/resources?concept=product",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Emeğin birikiyor.",
+      "url": "/ux-lab/progress?concept=product",
+      "width": 1440
+    },
+    {
+      "overflow": false,
+      "title": "Günaydın, Deniz.",
+      "url": "/ux-lab/today?concept=focus",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Haftana yer aç.",
+      "url": "/ux-lab/week?concept=focus",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Yanında bir çalışma koçu.",
+      "url": "/ux-lab/coach?concept=focus",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Her ay, hedefe biraz daha yakın.",
+      "url": "/ux-lab/roadmap?concept=focus",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Nerede kaldığın hep belli.",
+      "url": "/ux-lab/resources?concept=focus",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Emeğin birikiyor.",
+      "url": "/ux-lab/progress?concept=focus",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Her gün, biraz daha ileri.",
+      "url": "/ux-lab/today?concept=coach",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Haftana yer aç.",
+      "url": "/ux-lab/week?concept=coach",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Birlikte düşünelim.",
+      "url": "/ux-lab/coach?concept=coach",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Her ay, hedefe biraz daha yakın.",
+      "url": "/ux-lab/roadmap?concept=coach",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Nerede kaldığın hep belli.",
+      "url": "/ux-lab/resources?concept=coach",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Emeğin birikiyor.",
+      "url": "/ux-lab/progress?concept=coach",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Günaydın, Deniz.",
+      "url": "/ux-lab/today?concept=product",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Haftana yer aç.",
+      "url": "/ux-lab/week?concept=product",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Yanında bir çalışma koçu.",
+      "url": "/ux-lab/coach?concept=product",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Her ay, hedefe biraz daha yakın.",
+      "url": "/ux-lab/roadmap?concept=product",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Nerede kaldığın hep belli.",
+      "url": "/ux-lab/resources?concept=product",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Emeğin birikiyor.",
+      "url": "/ux-lab/progress?concept=product",
+      "width": 834
+    },
+    {
+      "overflow": false,
+      "title": "Günaydın, Deniz.",
+      "url": "/ux-lab/today?concept=focus",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Haftana yer aç.",
+      "url": "/ux-lab/week?concept=focus",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Yanında bir çalışma koçu.",
+      "url": "/ux-lab/coach?concept=focus",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Her ay, hedefe biraz daha yakın.",
+      "url": "/ux-lab/roadmap?concept=focus",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Nerede kaldığın hep belli.",
+      "url": "/ux-lab/resources?concept=focus",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Emeğin birikiyor.",
+      "url": "/ux-lab/progress?concept=focus",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Her gün, biraz daha ileri.",
+      "url": "/ux-lab/today?concept=coach",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Haftana yer aç.",
+      "url": "/ux-lab/week?concept=coach",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Birlikte düşünelim.",
+      "url": "/ux-lab/coach?concept=coach",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Her ay, hedefe biraz daha yakın.",
+      "url": "/ux-lab/roadmap?concept=coach",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Nerede kaldığın hep belli.",
+      "url": "/ux-lab/resources?concept=coach",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Emeğin birikiyor.",
+      "url": "/ux-lab/progress?concept=coach",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Günaydın, Deniz.",
+      "url": "/ux-lab/today?concept=product",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Haftana yer aç.",
+      "url": "/ux-lab/week?concept=product",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Yanında bir çalışma koçu.",
+      "url": "/ux-lab/coach?concept=product",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Her ay, hedefe biraz daha yakın.",
+      "url": "/ux-lab/roadmap?concept=product",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Nerede kaldığın hep belli.",
+      "url": "/ux-lab/resources?concept=product",
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "title": "Emeğin birikiyor.",
+      "url": "/ux-lab/progress?concept=product",
+      "width": 390
+    }
+  ],
+  "sessions": [
+    {
+      "direction": "focus",
+      "savedCorrectPage": true,
+      "completed": true
+    },
+    {
+      "direction": "coach",
+      "overflow": false,
+      "scrollTop": 0,
+      "savedCorrectPage": true,
+      "completed": true
+    },
+    {
+      "direction": "product",
+      "overflow": false,
+      "scrollTop": 0,
+      "savedCorrectPage": true,
+      "completed": true
+    }
+  ]
+}

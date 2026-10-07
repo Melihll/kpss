@@ -7,6 +7,24 @@ export const TASK_ACTION_PREVIEW_ACTIONS = [
 export type TaskActionPreviewAction =
   (typeof TASK_ACTION_PREVIEW_ACTIONS)[number];
 
+/** Optional drag destination stays inside the current plan; no fallback move. */
+export function carryoverPreviewDates(currentDate: string, weekEnd: string, requestedDate?: unknown): string[] {
+  if (requestedDate !== undefined && requestedDate !== null) {
+    const requestedTime = typeof requestedDate === "string" ? Date.parse(`${requestedDate}T12:00:00Z`) : NaN;
+    if (typeof requestedDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ||
+      requestedDate <= currentDate || requestedDate > weekEnd ||
+      !Number.isFinite(requestedTime) || new Date(requestedTime).toISOString().slice(0, 10) !== requestedDate) {
+      throw new Error("TASK_ACTION_INVALID_TARGET_DATE");
+    }
+    return [requestedDate];
+  }
+  const dates: string[] = [];
+  const date = new Date(`${currentDate}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + 1);
+  for (; date.toISOString().slice(0, 10) <= weekEnd; date.setUTCDate(date.getUTCDate() + 1)) dates.push(date.toISOString().slice(0, 10));
+  return dates;
+}
+
 export interface TaskActionPreviewTask {
   readonly id: string;
   readonly title: string;

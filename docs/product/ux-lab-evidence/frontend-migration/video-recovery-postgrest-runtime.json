@@ -1,0 +1,35 @@
+{
+  "at": "2026-10-05T16:01:13.467Z",
+  "beforeImage": "public.ecr.aws/supabase/postgrest:v14.15",
+  "afterImage": "public.ecr.aws/supabase/postgrest:v14.18",
+  "imageDigest": [
+    "public.ecr.aws/supabase/postgrest@sha256:c7cd7e265a85b05248abf53f4473fcec7e327c282d0bd0cf60f1551996d09fcf"
+  ],
+  "retainedStoppedBackup": "supabase_rest_kpss-coach_before_video_acceptance_v1415",
+  "localVersionCache": "supabase/.temp/rest-version=v14.18",
+  "configurationIdentical": true,
+  "environmentValues": "unchanged, not exported",
+  "mounts": 0,
+  "publishedPorts": 0,
+  "databaseReset": false,
+  "databaseVolumeDeletion": false,
+  "authRulesChanged": false,
+  "production": "NOT DEPLOYED",
+  "verifiedSecurityHostConfigFields": [
+    "Privileged",
+    "ReadonlyRootfs",
+    "CapAdd",
+    "CapDrop",
+    "SecurityOpt",
+    "UsernsMode",
+    "IpcMode",
+    "PidMode",
+    "NetworkMode",
+    "PortBindings",
+    "Binds",
+    "Tmpfs",
+    "ExtraHosts",
+    "RestartPolicy"
+  ],
+  "securityHostConfigUnchanged": true
+}

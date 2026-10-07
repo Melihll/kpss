@@ -6,7 +6,7 @@ import { compactMinutesLabel, dateLabel, type RoadmapMilestone } from "../lib/ro
 const milestoneType = (type: string) => type === "academic_gap" ? "Akademik ara" : type === "new_resource" ? "Yeni kaynak zamanı" : type === "exam" ? "Sınav" : "Kaynak notu";
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function useAnimatedNumber(target: number, duration = 380) {
+function useAnimatedNumber(target: number, duration = 180) {
   const [value, setValue] = useState(target);
   const valueRef = useRef(target);
 
@@ -47,6 +47,7 @@ export function RoadmapPage() {
   const [displayedMonth, setDisplayedMonth] = useState("");
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [changingMonth, setChangingMonth] = useState(false);
+  const [showAllResources, setShowAllResources] = useState(false);
   const railRef = useRef<HTMLDivElement>(null);
   const monthButtons = useRef<Array<HTMLButtonElement | null>>([]);
   const transitionTimer = useRef<number | null>(null);
@@ -105,6 +106,7 @@ export function RoadmapPage() {
     if (transitionTimer.current) window.clearTimeout(transitionTimer.current);
     setDirection(nextMonth > displayedMonth ? "forward" : "backward");
     setSelectedMonth(nextMonth);
+    setShowAllResources(false);
     if (reducedMotion()) {
       setDisplayedMonth(nextMonth);
       setChangingMonth(false);
@@ -187,13 +189,15 @@ export function RoadmapPage() {
         <p className="month-focus">{month.focus}</p>
         {periods.length > 0 && <div className="academic-period"><Icon name="calendar" /><div><span>{periods[0]!.name}</span><strong>{contextualDateLabel(periods[0]!.startDate)} — {contextualDateLabel(periods[0]!.endDate)}</strong><small>Bu dönemde KPSS çalışma yükü azaltıldı.</small></div><div><small>Normal ay</small><strong>{compactMinutesLabel(data?.strategy?.monthlyTargetMinutes ?? 0)}</strong><small>Bu ay</small><strong>{compactMinutesLabel(month.plannedMinutes)}</strong></div></div>}
 
-        {activeResources.length ? <div className="month-resource-status">{activeResources.slice(0, 6).map((resource, index) => <article style={{ animationDelay: `${index * 35}ms` }} key={resource.resourceId}>
+        {activeResources.length > 0 && <div className="section-bar"><h3>Bu ayın kaynakları</h3><span>{activeResources.length} kaynak</span></div>}
+        {activeResources.length ? <div className="month-resource-status">{(showAllResources ? activeResources : activeResources.slice(0, 6)).map((resource, index) => <article style={{ animationDelay: `${Math.min(index, 5) * 25}ms` }} key={resource.resourceId}>
           <div className="month-resource-copy"><span>{resource.subjectName}</span><strong>{resource.resourceName}</strong></div>
           <div className={`month-resource-progress ${resource.progressPercent > 0 ? "has-progress" : "zero-progress"}`}>
             {resource.progressPercent > 0 ? <><div><i style={{ width: `${resource.progressPercent}%` }} /></div><span>%{resource.progressPercent}</span></> : <span>Henüz başlanmadı</span>}
           </div>
           <div className="month-resource-finish"><span>Tahmini bitiş</span><strong>{resource.completed ? "Tamamlandı" : resource.forecastFinishDate ? contextualDateLabel(resource.forecastFinishDate) : "Sınava kadar"}</strong></div>
         </article>)}</div> : <div className="plain-empty roadmap-resource-empty">Bu ay aktif kaynak tahmini yok.</div>}
+        {activeResources.length > 6 && <button className="secondary-action" type="button" aria-expanded={showAllResources} onClick={() => setShowAllResources((value) => !value)}>{showAllResources ? "Daha az göster" : "Tüm kaynakları göster"}</button>}
 
         {milestones.length ? <div className="compact-milestones">{milestones.map((item) => <article className={item.type} key={`${item.type}-${item.date}-${item.title}`}><i /><div><span>{milestoneType(item.type)} · {eventDate(item)}</span><strong>{item.title}</strong>{item.subjectName && <small>{item.subjectName}</small>}</div></article>)}</div> : <div className="plain-empty">Bu ay için kaynak kilometre taşı yok.</div>}
       </section>

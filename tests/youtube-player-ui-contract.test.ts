@@ -6,6 +6,10 @@ describe("P1-11B YouTube player UI contract", () => {
     new URL("../apps/web/src/components/VideoPlayerDrawer.tsx", import.meta.url),
     "utf8",
   );
+  const writer = readFileSync(
+    new URL("../apps/web/src/lib/youtube-progress-writer.ts", import.meta.url),
+    "utf8",
+  );
   const resourcesPage = readFileSync(
     new URL("../apps/web/src/pages/ResourcesPage.tsx", import.meta.url),
     "utf8",
@@ -29,7 +33,8 @@ describe("P1-11B YouTube player UI contract", () => {
     expect(player).toContain('method: "PUT"');
     expect(player).toContain("visibilitychange");
     expect(player).toContain("pagehide");
-    expect(player).toContain("YOUTUBE_PROGRESS_CHECKPOINT_MS");
+    expect(player).toContain("sharedYouTubeProgressWriter");
+    expect(writer).toContain("YOUTUBE_PROGRESS_CHECKPOINT_MS");
   });
 
   it("is hosted by the unified resource detail drawer from P1-12 onward", () => {

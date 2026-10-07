@@ -1,0 +1,79 @@
+{
+  "at": "2026-10-05T15:37:32.585Z",
+  "progress": [
+    {
+      "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+      "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+      "youtube_playlist_video_id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+      "last_position_seconds": 365,
+      "watched_seconds": 365,
+      "completed_at": null,
+      "created_at": "2026-10-05T15:13:52.801Z",
+      "updated_at": "2026-10-05T15:35:16.031Z"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "bfe51721-880a-434f-9bca-1c6c01bb8055",
+      "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+      "exam_profile_id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+      "task_id": "2f1784eb-cbb5-469d-a055-9669f335a341",
+      "subject_id": "20000000-0000-0000-0000-000000000002",
+      "curriculum_node_id": "30000000-0000-0000-0000-000000000001",
+      "resource_id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+      "resource_unit_id": null,
+      "session_type": "task",
+      "started_at": "2026-10-05T15:13:52.437Z",
+      "ended_at": "2026-10-05T15:36:39.841Z",
+      "duration_minutes": 15,
+      "status": "completed",
+      "entry_source": "web",
+      "note": null,
+      "accounted_at": "2026-10-05T15:36:39.841Z",
+      "created_at": "2026-10-05T15:13:52.437Z",
+      "updated_at": "2026-10-05T15:36:39.841Z",
+      "session_mode": "video"
+    }
+  ],
+  "breaks": [
+    {
+      "id": "41285810-bc47-4a7f-9071-e59583c21ef0",
+      "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+      "session_id": "bfe51721-880a-434f-9bca-1c6c01bb8055",
+      "started_at": "2026-10-05T15:17:15.222Z",
+      "ended_at": "2026-10-05T15:21:32.326Z",
+      "created_at": "2026-10-05T15:17:15.222Z",
+      "updated_at": "2026-10-05T15:21:32.326Z"
+    },
+    {
+      "id": "542de402-fa60-43d8-a636-56b407b9fd58",
+      "user_id": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+      "session_id": "bfe51721-880a-434f-9bca-1c6c01bb8055",
+      "started_at": "2026-10-05T15:31:06.731Z",
+      "ended_at": "2026-10-05T15:33:46.229Z",
+      "created_at": "2026-10-05T15:31:06.731Z",
+      "updated_at": "2026-10-05T15:33:46.229Z"
+    }
+  ],
+  "task": [
+    {
+      "id": "2f1784eb-cbb5-469d-a055-9669f335a341",
+      "status": "partially_completed",
+      "canonical_workload_identity": "youtube:9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+      "canonical_material_view_id": "youtube:9eb7bfba-1a41-4fb5-a098-1a29474c72fa:mapping:b6375449-4d7a-4886-a964-73a7a5adf229",
+      "canonical_boundary": {
+        "kind": "full_video",
+        "videoId": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "watchedSeconds": 0,
+        "durationSeconds": 1344
+      },
+      "resource_id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d"
+    }
+  ],
+  "counts": [
+    {
+      "progress_rows": "1",
+      "session_rows": "1"
+    }
+  ]
+}

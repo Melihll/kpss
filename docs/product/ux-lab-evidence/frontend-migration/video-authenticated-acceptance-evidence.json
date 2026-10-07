@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-05",
+  "acceptance": "BLOCKED",
+  "production": "NOT_DEPLOYED",
+  "frontend": "http://127.0.0.1:5174/",
+  "supabase": "http://127.0.0.1:54321",
+  "db": { "host": "127.0.0.1", "port": 54322, "transactions": "READ ONLY" },
+  "auth": { "realExistingFixtureLogin": true, "browserProtectedRootReached": true, "userIdentityVerified": true, "jwtAlgorithm": "ES256", "fakeToken": false },
+  "edge": { "initialStatus": 503, "runtimeStartedThroughRepositoryWorkflow": true, "unauthenticatedStatusAfterStart": 401, "verifyJwtChanged": false, "noVerifyJwtFlag": false, "runtime": "supabase-edge-runtime-1.69.1", "failure": "ES256 verifier expects CryptoKey, receives Uint8Array" },
+  "authenticatedReadChecks": [
+    { "route": "/weekly-plan/current", "status": 401 },
+    { "route": "/study-sessions/active", "status": 401 },
+    { "route": "/execution/summary", "status": 401 },
+    { "route": "/p48/roadmap", "status": 401 }
+  ],
+  "catalog": { "activeItems": 8, "nativePlaybackIds": 0, "canonicalVideoTasks": 4, "readyCanonicalVideoTasks": 2, "currentWeekVideoTasks": 0, "dbDate": "2026-10-05", "readyTaskWeek": "2026-09-14/2026-09-20" },
+  "readyTaskIdentityChecks": [
+    { "taskId": "01be46e7-a5f1-4041-8475-7395b15a5757", "userId": "e6f94f70-cd4e-42d4-8afe-8af1dc9cbe26", "profileId": "ed39f423-2902-479e-aff5-cde41b95a89a", "resourceId": "07b492c3-06af-4956-b489-813c0658d561", "videoCatalogId": "b83e1c85-aa8d-470d-9dd9-0b0825f1f687", "playlistId": "6feb7901-42df-4a80-8c41-6bfaf82bb86a", "videoOwnershipMatches": true, "resourceOwnershipMatches": true, "resourcePlaylistLinkExists": false, "validatedVideoTopicMappingExists": true, "materialViewMatchesPersistedMapping": false },
+    { "taskId": "c7d088b0-220d-44ab-824e-153eda3583ea", "userId": "47b7ae3f-04b6-44cb-83ce-db48d8cb2482", "profileId": "26cf0804-61e7-460e-81b7-70533afdb0f4", "resourceId": "22b10c6a-23ff-4bb9-8508-877f5987a4cd", "videoCatalogId": "acfd944a-b2b6-4a17-9ff9-f44538de722e", "playlistId": "2749b262-3aed-4a1b-9afc-8aaa4dd83c4d", "videoOwnershipMatches": true, "resourceOwnershipMatches": true, "resourcePlaylistLinkExists": false, "validatedVideoTopicMappingExists": true, "materialViewMatchesPersistedMapping": false }
+  ],
+  "domainCountsBefore": { "tasks": 148, "weeklyPlans": 22, "videoProgress": 3, "studySessions": 48 },
+  "domainCountsAfter": { "tasks": 148, "weeklyPlans": 22, "videoProgress": 3, "studySessions": 48 },
+  "browser": { "path": "/", "alert": "Veriler yüklenemedi.", "videoIframes": 0, "consoleErrors": ["TODAY_LOAD_FAILED", "ROADMAP_LOAD_FAILED"] },
+  "videoProgressPuts": 0,
+  "studySessionMutations": 0,
+  "fixtureProvisioning": false,
+  "applicationCodeChanged": false,
+  "schemaChanged": false,
+  "databaseReset": false,
+  "productionRequestsMade": false,
+  "lastRegression": { "files": 199, "tests": 1494, "rerunThisAcceptance": false }
+}

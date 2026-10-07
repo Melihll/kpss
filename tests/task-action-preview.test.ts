@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { buildTaskActionPreview } from "../supabase/functions/_shared/task-action-preview";
+import { buildTaskActionPreview, carryoverPreviewDates } from "../supabase/functions/_shared/task-action-preview";
 
 const task = {
   id: "task-1",
@@ -16,6 +16,19 @@ const task = {
 };
 
 describe("buildTaskActionPreview", () => {
+  it("keeps a dragged destination exact and rejects invalid/out-of-plan days", () => {
+    expect(carryoverPreviewDates("2026-10-05", "2026-10-11", "2026-10-09")).toEqual(["2026-10-09"]);
+    expect(carryoverPreviewDates("2026-10-05", "2026-10-07")).toEqual(["2026-10-06", "2026-10-07"]);
+    for (const date of ["2026-10-05", "2026-10-04", "2026-10-12", "2026-10-99", "bad", 3]) {
+      expect(() => carryoverPreviewDates("2026-10-05", "2026-10-11", date)).toThrow("TASK_ACTION_INVALID_TARGET_DATE");
+    }
+  });
+  it("blocks an exact dragged day without capacity instead of switching days", () => {
+    const result = buildTaskActionPreview({ action: "DEFER", task, currentDate: "2026-08-20", targetDate: "2026-08-22", targetRemainingCapacityMinutes: 20 });
+    expect(result.status).toBe("BLOCKED");
+    expect(result.reasonCodes).toContain("TARGET_DAY_CAPACITY_INSUFFICIENT");
+    expect(result.changes).toHaveLength(0);
+  });
   it("builds one MOVE proposal for the nearest feasible future day", () => {
     const result = buildTaskActionPreview({
       action: "DEFER",

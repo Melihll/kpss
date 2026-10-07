@@ -7,6 +7,16 @@ type Task = {
 };
 
 describe("resolveTodayFocus", () => {
+  it("hydrates the recommended task by UUID from weekly material data without changing recommendation order", () => {
+    const fullTask = { id: "recommended", status: "ready", material_scope: { kind: "full_video", youtubePlaylistVideoId: "catalog-uuid" } };
+    const focus = resolveTodayFocus<Task>({
+      recommendation: { task: { id: "recommended", status: "ready" }, reason: "continue_partial", remainingMinutes: 17 },
+      todayTasks: [{ id: "another", status: "ready" }], materialTasks: [fullTask],
+      dailyMinutes: new Map([["another", 45]]), hasActiveSession: false,
+    });
+    expect(focus?.task).toBe(fullTask);
+    expect(focus).toMatchObject({ reason: "continue_partial", remainingMinutes: 17, source: "recommendation" });
+  });
   it("keeps the server recommendation authoritative when one exists", () => {
     const recommended: Task = { id: "recommended", status: "ready" };
     const fallback: Task = { id: "fallback", status: "ready" };

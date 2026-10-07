@@ -1,0 +1,149 @@
+[
+  {
+    "route": "today",
+    "width": 1440,
+    "documentWidth": 1425,
+    "horizontalOverflow": 0,
+    "videoRatio": 1.778
+  },
+  {
+    "route": "session",
+    "width": 1440,
+    "documentWidth": 1425,
+    "horizontalOverflow": 0,
+    "videoRatio": 1.778
+  },
+  {
+    "route": "week",
+    "width": 1440,
+    "documentWidth": 1425,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "resources",
+    "width": 1440,
+    "documentWidth": 1425,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "progress",
+    "width": 1440,
+    "documentWidth": 1440,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "roadmap",
+    "width": 1440,
+    "documentWidth": 1440,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "coach",
+    "width": 1440,
+    "documentWidth": 1440,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "today",
+    "width": 834,
+    "documentWidth": 819,
+    "horizontalOverflow": 0,
+    "videoRatio": 1.778
+  },
+  {
+    "route": "session",
+    "width": 834,
+    "documentWidth": 819,
+    "horizontalOverflow": 0,
+    "videoRatio": 1.778
+  },
+  {
+    "route": "week",
+    "width": 834,
+    "documentWidth": 819,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "resources",
+    "width": 834,
+    "documentWidth": 819,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "progress",
+    "width": 834,
+    "documentWidth": 819,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "roadmap",
+    "width": 834,
+    "documentWidth": 834,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "coach",
+    "width": 834,
+    "documentWidth": 834,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "today",
+    "width": 390,
+    "documentWidth": 375,
+    "horizontalOverflow": 0,
+    "videoRatio": 1.778
+  },
+  {
+    "route": "session",
+    "width": 390,
+    "documentWidth": 375,
+    "horizontalOverflow": 0,
+    "videoRatio": 1.778
+  },
+  {
+    "route": "week",
+    "width": 390,
+    "documentWidth": 375,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "resources",
+    "width": 390,
+    "documentWidth": 375,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "progress",
+    "width": 390,
+    "documentWidth": 375,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "roadmap",
+    "width": 390,
+    "documentWidth": 375,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  },
+  {
+    "route": "coach",
+    "width": 390,
+    "documentWidth": 375,
+    "horizontalOverflow": 0,
+    "videoRatio": null
+  }
+]

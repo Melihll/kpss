@@ -4,10 +4,23 @@ import {
   clampYouTubeWatchedSeconds,
   countedYouTubeWatchDelta,
   shouldCheckpointYouTubeProgress,
+  youtubeResumeIntentOnSessionPause,
   youtubeTimeLabel,
 } from "./youtube-player-progress";
 
 describe("P1-11B youtube player progress accounting", () => {
+  it("resumes a refreshed paused session once its player is ready", () => {
+    const restoredIntent = youtubeResumeIntentOnSessionPause(false, false, true);
+    expect(restoredIntent).toBe(true);
+    expect(youtubeResumeIntentOnSessionPause(true, true, restoredIntent)).toBe(true);
+  });
+
+  it("preserves an explicit video pause through session pause and a pending SDK", () => {
+    const manualPause = youtubeResumeIntentOnSessionPause(true, false, true);
+    expect(manualPause).toBe(false);
+    expect(youtubeResumeIntentOnSessionPause(false, false, manualPause)).toBe(false);
+  });
+
   it("counts normal playback", () => {
     expect(countedYouTubeWatchDelta({
       previousPositionSeconds: 10,

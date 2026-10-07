@@ -10,6 +10,7 @@ const coachSource = readFileSync(
   new URL("../apps/web/src/components/CoachDrawer.tsx", import.meta.url),
   "utf8",
 );
+const shellSource = readFileSync(new URL("../apps/web/src/components/layout/AppShell.tsx", import.meta.url), "utf8");
 
 describe("Evre 7A Coach web convergence", () => {
   it("routes both Today actions to one Coach surface", () => {
@@ -17,21 +18,22 @@ describe("Evre 7A Coach web convergence", () => {
     expect(todaySource).toContain("today-coach-trigger");
 
     expect(todaySource).toContain(
-      'setCoachEntryContext("capacity")',
+      'onCoach("capacity")',
     );
 
     expect(todaySource).toContain(
-      'setCoachEntryContext("general")',
+      'onCoach("general")',
     );
 
-    expect(todaySource).toContain(
-      "entryContext={coachEntryContext}",
+    expect(shellSource).toContain(
+      'entryContext={coachContext ?? "general"}',
     );
 
     const coachSurfaces =
-      todaySource.match(/<CoachDrawer /g) ?? [];
+      (todaySource + shellSource).match(/<CoachDrawer /g) ?? [];
 
     expect(coachSurfaces).toHaveLength(1);
+    expect(shellSource).toContain("onCoach={setCoachContext}");
 
     expect(todaySource).not.toContain("CoachDrawerMode");
     expect(todaySource).not.toContain("setCoachMode");

@@ -1,0 +1,34 @@
+{
+  "measuredAt": "2026-10-07T06:33:11.922Z",
+  "scope": "Oct 7 direct LOCAL root after runtime recovery",
+  "logs": [
+    {
+      "level": "error",
+      "message": "[vite] failed to connect to websocket.\nyour current setup:\n  (browser) 127.0.0.1:5174/ <--[HTTP]--> 127.0.0.1:5174/ (server)\n  (browser) 127.0.0.1:5174/ <--[WebSocket (failing)]--> 127.0.0.1:5174/ (server)\nCheck out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .",
+      "timestamp": "2026-10-07T06:11:42.006Z",
+      "url": "http://127.0.0.1:5174/@vite/client"
+    },
+    {
+      "level": "error",
+      "message": "TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:5174/src/product-entry.tsx?t=1791313468597",
+      "timestamp": "2026-10-07T06:11:42.006Z",
+      "url": "http://127.0.0.1:5174/"
+    }
+  ],
+  "recoveryWindowStart": "2026-10-07T06:31:50.013Z",
+  "historicalOfflineLogs": [
+    {
+      "level": "error",
+      "message": "[vite] failed to connect to websocket.\nyour current setup:\n  (browser) 127.0.0.1:5174/ <--[HTTP]--> 127.0.0.1:5174/ (server)\n  (browser) 127.0.0.1:5174/ <--[WebSocket (failing)]--> 127.0.0.1:5174/ (server)\nCheck out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .",
+      "timestamp": "2026-10-07T06:11:42.006Z",
+      "url": "http://127.0.0.1:5174/@vite/client"
+    },
+    {
+      "level": "error",
+      "message": "TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:5174/src/product-entry.tsx?t=1791313468597",
+      "timestamp": "2026-10-07T06:11:42.006Z",
+      "url": "http://127.0.0.1:5174/"
+    }
+  ],
+  "unexpectedErrors": []
+}

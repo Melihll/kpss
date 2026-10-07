@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-05",
+  "status": "SOURCE_IMPLEMENTED_LOCAL_AUTH_SMOKE_PENDING",
+  "production": "NOT_DEPLOYED",
+  "regression": {
+    "files": 196,
+    "passed": 1463,
+    "failed": 0
+  },
+  "finalFocusedRegression": {
+    "passed": 28,
+    "files": 8,
+    "failed": 0
+  },
+  "domainTypecheck": "PASS",
+  "webTypecheck": "PASS",
+  "viteBuild": "PASS",
+  "edgeSyntaxTranspile": "PASS (not HTTP runtime smoke)",
+  "uxLabIsolation": "PASS",
+  "aiCoachSafety": "PASS",
+  "aiCoachPlanPreviewSafety": "PASS",
+  "canonicalPlannerReadonlySafety": "PASS",
+  "planningV2ShadowSafety": "PASS",
+  "responsiveLabViews": 21,
+  "pageOverflow": 0,
+  "labBrowserChecks": [
+    "desktop links and active destination",
+    "tablet/mobile menu",
+    "mobile Coach entry",
+    "native menu Tab/Shift+Tab containment",
+    "Escape and focus restoration",
+    "sticky nav top 0 after scroll",
+    "deep link",
+    "reload",
+    "back/forward"
+  ],
+  "realAccountProfileSettingsLogout": "SOURCE WIRED; AUTHENTICATED SMOKE PENDING",
+  "realStudyVideoPageFinishWeekMutation": "SOURCE WIRED; AUTHENTICATED SMOKE PENDING",
+  "localBlocker": {
+    "dockerCommandAvailable": false,
+    "authHealth": "127.0.0.1:54321 unavailable",
+    "dockerDesktopExecutablePresent": false,
+    "observedProductRoute": "/settings#profile redirected to /login"
+  },
+  "screenshotsUse": "Lab B fixtures plus actual unauthenticated login blocker",
+  "sqlOrProductionMutation": 0,
+  "deploy": 0
+}

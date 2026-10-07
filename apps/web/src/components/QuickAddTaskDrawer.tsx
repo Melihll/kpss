@@ -17,6 +17,7 @@ import { useDialogAccessibility } from "../hooks/useDialogAccessibility";
 import { Icon } from "./Icon";
 
 interface QuickAddTaskDrawerProps {
+  readonly initialDate?: string;
   readonly open: boolean;
   readonly onClose: () => void;
   readonly onApplied?: () => void;
@@ -30,6 +31,7 @@ const EMPTY_FORM: QuickAddFormValue = {
 };
 
 export function QuickAddTaskDrawer({
+  initialDate,
   open,
   onClose,
   onApplied,
@@ -57,7 +59,9 @@ export function QuickAddTaskDrawer({
       .then((result) => {
         if (cancelled) return;
         setOptions(result);
-        setForm(initialQuickAddForm(result));
+        const initial = initialQuickAddForm(result);
+        const range = quickAddDateBounds(result);
+        setForm({ ...initial, plannedDate: initialDate && initialDate >= range.min && initialDate <= range.max ? initialDate : initial.plannedDate });
       })
       .catch((caught) => {
         if (cancelled) return;
@@ -71,7 +75,7 @@ export function QuickAddTaskDrawer({
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, initialDate]);
 
   const bounds = useMemo(
     () => options ? quickAddDateBounds(options) : null,

@@ -1,0 +1,3126 @@
+{
+  "web": {
+    "baseline": "395a536d18b79ea124bdac0d4498a021d9ce9bc0",
+    "baselineToHead": [
+      "M\tapps/web/src/components/AdaptivePlanningPanel.tsx",
+      "M\tapps/web/src/components/CoachDrawer.tsx",
+      "M\tapps/web/src/components/PhysicalStudyFinishDialog.tsx",
+      "A\tapps/web/src/components/PlannerCoachExplanationCard.tsx",
+      "M\tapps/web/src/components/PlannerV2PreviewPanel.tsx",
+      "A\tapps/web/src/components/ProactiveCoachCard.test.ts",
+      "A\tapps/web/src/components/ProactiveCoachCard.tsx",
+      "A\tapps/web/src/components/ProactiveCoachSurface.tsx",
+      "M\tapps/web/src/components/QuickAddTaskDrawer.tsx",
+      "M\tapps/web/src/components/ResourceDetailDrawer.tsx",
+      "M\tapps/web/src/components/ResourceProgressDrawer.tsx",
+      "M\tapps/web/src/components/StudyTodayPanel.tsx",
+      "M\tapps/web/src/components/TaskActionPreviewDrawer.tsx",
+      "A\tapps/web/src/components/TaskMaterialSummary.tsx",
+      "M\tapps/web/src/components/VideoPlayerDrawer.tsx",
+      "A\tapps/web/src/components/conversation-intelligence-v1-safety.test.ts",
+      "A\tapps/web/src/components/planner-coach-preview-cta-safety.test.ts",
+      "A\tapps/web/src/hooks/useDialogAccessibility.test.ts",
+      "A\tapps/web/src/hooks/useDialogAccessibility.ts",
+      "A\tapps/web/src/hooks/useTaskMaterialDrawer.tsx",
+      "M\tapps/web/src/lib/ai-coach-api.test.ts",
+      "M\tapps/web/src/lib/ai-coach-api.ts",
+      "A\tapps/web/src/lib/planner-v2-lifecycle-ui.test.ts",
+      "A\tapps/web/src/lib/planner-v2-lifecycle-ui.ts",
+      "A\tapps/web/src/lib/planner-v2-presentation.test.ts",
+      "A\tapps/web/src/lib/planner-v2-presentation.ts",
+      "M\tapps/web/src/lib/roadmap.ts",
+      "A\tapps/web/src/lib/task-material-presentation.test.ts",
+      "A\tapps/web/src/lib/task-material-presentation.ts",
+      "A\tapps/web/src/lib/today-focus.test.ts",
+      "A\tapps/web/src/lib/today-focus.ts",
+      "M\tapps/web/src/lib/today-material-actions.test.ts",
+      "M\tapps/web/src/lib/today-material-actions.ts",
+      "M\tapps/web/src/pages/WeekPage.tsx",
+      "M\tapps/web/src/styles.css",
+      "M\tdocs/product/CURRENT_SPRINT.md",
+      "M\tdocs/product/PRODUCT_BACKLOG.md",
+      "M\tdocs/product/PROJECT_HANDOFF.md",
+      "M\tdocs/product/ROADMAP.md",
+      "A\tdocs/product/releases/2026-08-27_W7_GATE_OFF_RUNTIME_RELEASE.md",
+      "A\tdocs/product/releases/2026-08-27_W8A_PREVIEW_ONLY_PILOT_PREFLIGHT.md",
+      "A\tdocs/product/releases/2026-09-01_W8D_W8E_CONFIRM_APPLY_ENGINEERING.md",
+      "A\tdocs/product/releases/2026-09-25_AI_COACH_6G_PRODUCTION_PILOT_LOCAL_RELEASE_READY.md",
+      "A\tdocs/product/specs/AI_COACH_CONTEXT_V1.md",
+      "A\tdocs/product/specs/AI_COACH_CONTROLLED_DEV_RUNTIME_V1.md",
+      "A\tdocs/product/specs/AI_COACH_DEV_SMOKE_RUNBOOK.md",
+      "A\tdocs/product/specs/AI_COACH_EVRE_6C_FINAL_ACCEPTANCE.md",
+      "A\tdocs/product/specs/AI_COACH_EVRE_6_PRODUCT_AUTHORITY_COST_CONTRACT.md",
+      "A\tdocs/product/specs/AI_COACH_PROVIDER_RUNTIME_BUDGET_V1.md",
+      "A\tdocs/product/specs/AI_COACH_READ_ONLY_PROVIDER_ORCHESTRATOR_V1.md",
+      "A\tdocs/product/specs/AI_COACH_ROUTER_COST_TELEMETRY_V1.md",
+      "M\tdocs/product/specs/PLANNER_V2_PROPOSAL_LIFECYCLE.md",
+      "M\tpackage.json",
+      "A\tpackages/domain/src/ai-coach/ai-economics-v1.test.ts",
+      "A\tpackages/domain/src/ai-coach/ai-economics-v1.ts",
+      "A\tpackages/domain/src/ai-coach/coach-context-v1-source-map.ts",
+      "A\tpackages/domain/src/ai-coach/coach-context-v1.test.ts",
+      "A\tpackages/domain/src/ai-coach/coach-context-v1.ts",
+      "A\tpackages/domain/src/ai-coach/coach-evidence-view-v1.test.ts",
+      "A\tpackages/domain/src/ai-coach/coach-evidence-view-v1.ts",
+      "A\tpackages/domain/src/ai-coach/coach-signal-v1.test.ts",
+      "A\tpackages/domain/src/ai-coach/coach-signal-v1.ts",
+      "A\tpackages/domain/src/ai-coach/conversation-intelligence-v1.test.ts",
+      "A\tpackages/domain/src/ai-coach/conversation-intelligence-v1.ts",
+      "A\tpackages/domain/src/ai-coach/fixtures/coach-context-v1.ts",
+      "M\tpackages/domain/src/ai-coach/index.ts",
+      "A\tpackages/domain/src/ai-coach/planner-coach-explanation-v1.test.ts",
+      "A\tpackages/domain/src/ai-coach/planner-coach-explanation-v1.ts",
+      "A\tpackages/domain/src/ai-coach/proactive-coach-card-v1.test.ts",
+      "A\tpackages/domain/src/ai-coach/proactive-coach-card-v1.ts",
+      "A\tpackages/domain/src/ai-coach/proactive-coach-hysteresis-v1.test.ts",
+      "A\tpackages/domain/src/ai-coach/proactive-coach-hysteresis-v1.ts",
+      "A\tpackages/domain/src/ai-coach/proactive-coach-materiality-policy-v1.test.ts",
+      "A\tpackages/domain/src/ai-coach/proactive-coach-materiality-policy-v1.ts",
+      "A\tpackages/domain/src/ai-coach/proactive-coach-runtime-state-v1.test.ts",
+      "A\tpackages/domain/src/ai-coach/proactive-coach-runtime-state-v1.ts",
+      "A\tpackages/domain/src/ai-coach/proactive-coach-selection-v1.test.ts",
+      "A\tpackages/domain/src/ai-coach/proactive-coach-selection-v1.ts",
+      "A\tpackages/domain/src/ai-coach/proactive-coach-shadow-acceptance-v1.test.ts",
+      "M\tpackages/domain/src/planning-v2/edge.ts",
+      "M\tpackages/domain/src/planning-v2/proposal-lifecycle.test.ts",
+      "M\tpackages/domain/src/planning-v2/proposal-lifecycle.ts",
+      "M\tpnpm-lock.yaml",
+      "A\tscripts/check-ai-coach-6g-local-acceptance.mjs",
+      "A\tscripts/check-ai-coach-6g-p90-projection.ts",
+      "A\tscripts/check-ai-economics-v1-safety.mjs",
+      "A\tscripts/check-coach-context-v1-readonly-safety.mjs",
+      "A\tscripts/run-ai-coach-controlled-dev-preflight.ts",
+      "A\tscripts/run-ai-coach-controlled-dev-smoke-dry-run.ts",
+      "M\tscripts/run-edge-smoke.mjs",
+      "M\tscripts/run-integration-tests.mjs",
+      "A\tscripts/run-planner-v2-preview-only-http-smoke.mjs",
+      "M\tscripts/supabase-status.mjs",
+      "M\tsupabase/functions/_shared/adaptive.ts",
+      "M\tsupabase/functions/_shared/ai-coach.bundle.js",
+      "A\tsupabase/functions/_shared/ai-coach/ai-budget-reservation-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/ai-usage-ledger-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/controlled-dev-smoke-runtime-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/controlled-dev-smoke-runtime-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/conversation-intelligence-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/dev-smoke-policy-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/openai-coach-request-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/openai-coach-request-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/openai-dev-gateway-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/openai-dev-gateway-v1.ts",
+      "M\tsupabase/functions/_shared/ai-coach/openai-gateway.ts",
+      "A\tsupabase/functions/_shared/ai-coach/openai-input-token-count-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/openai-input-token-count-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/openai-production-gateway-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/openai-production-gateway-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/openai-server-secret-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/planner-coach-reactive-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/proactive-coach-actions-http-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/proactive-coach-actions-http-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/proactive-coach-http-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/proactive-coach-http-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/proactive-coach-runtime-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/proactive-coach-runtime-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-attempt-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-attempt-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-controlled-dev-cost-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-fx-acquisition-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-fx-acquisition-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-fx-policy-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-fx-policy-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-openai-billing-audit-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-openai-billing-bound-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-openai-billing-bound-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-operations-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-reconciliation-policy-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-runtime-activation-dev-risk-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-runtime-activation-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-runtime-activation-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-runtime-catalog-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-runtime-catalog-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-runtime-config-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/provider-runtime-config-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/reactive-coach-dev-runtime-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/reactive-coach-dev-runtime-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/reactive-coach-executor-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/reactive-coach-executor-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/reactive-coach-http-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/reactive-coach-http-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/reactive-coach-production-runtime-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/reactive-coach-production-runtime-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/reactive-coach-route-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/reactive-coach-route-v1.ts",
+      "A\tsupabase/functions/_shared/ai-coach/read-only-coach-orchestrator-v1.test.ts",
+      "A\tsupabase/functions/_shared/ai-coach/read-only-coach-orchestrator-v1.ts",
+      "A\tsupabase/functions/_shared/canonical-capacity-readonly.ts",
+      "M\tsupabase/functions/_shared/canonical-material-loader.ts",
+      "A\tsupabase/functions/_shared/coach-context-v1-readonly.test.ts",
+      "A\tsupabase/functions/_shared/coach-context-v1-readonly.ts",
+      "A\tsupabase/functions/_shared/planner-v2-persisted-readonly.ts",
+      "M\tsupabase/functions/_shared/planner-v2-proposal-capability.test.ts",
+      "M\tsupabase/functions/_shared/planner-v2-proposal-capability.ts",
+      "A\tsupabase/functions/_shared/planner-v2-proposal-http.ts",
+      "M\tsupabase/functions/_shared/planning-v2.bundle.js",
+      "A\tsupabase/functions/_shared/proactive-coach-active-session-readonly.test.ts",
+      "A\tsupabase/functions/_shared/proactive-coach-active-session-readonly.ts",
+      "A\tsupabase/functions/_shared/proactive-coach-runtime-state-readonly.test.ts",
+      "A\tsupabase/functions/_shared/proactive-coach-runtime-state-readonly.ts",
+      "A\tsupabase/functions/_shared/task-material-scope.ts",
+      "M\tsupabase/functions/app-api/index.ts",
+      "A\tsupabase/migrations/20260901123000_planner_v2_preview_attempt_lifecycle.sql",
+      "A\tsupabase/migrations/20260902101000_align_service_role_task_privileges.sql",
+      "A\tsupabase/migrations/20260902103000_harden_planner_v2_expired_confirmation_state.sql",
+      "A\tsupabase/migrations/20260911150000_ai_usage_ledger_v1.sql",
+      "A\tsupabase/migrations/20260911170000_ai_provider_runtime_reservations_v1.sql",
+      "A\tsupabase/migrations/20260919120000_ai_coach_proactive_state_v1.sql",
+      "A\ttests/evre7a-today-coach-entry.test.ts",
+      "A\ttests/evre7b-today-hierarchy.test.ts",
+      "A\ttests/evre7b-today-problem-solving.test.ts",
+      "A\ttests/evre7c-coach-planner-handoff.test.ts",
+      "A\ttests/evre7c-progress-readonly-planning.test.ts",
+      "A\ttests/evre7e-product-language-contract.test.ts",
+      "A\ttests/integration/_helpers/local-auth.ts",
+      "A\ttests/integration/ai-budget-reservation-v1.test.ts",
+      "A\ttests/integration/ai-usage-ledger-v1.test.ts",
+      "A\ttests/integration/coach-context-v1-readonly.test.ts",
+      "M\ttests/integration/confirmed-product-actions.test.ts",
+      "M\ttests/integration/p48-canonical-infrastructure.test.ts",
+      "M\ttests/integration/planner-v2-proposal-lifecycle.test.ts",
+      "A\ttests/integration/proactive-coach-active-session-readonly.test.ts",
+      "A\ttests/integration/proactive-coach-state-persistence-v1.test.ts",
+      "M\ttests/integration/w2-physical-pace-evidence.test.ts",
+      "A\ttests/planner-v2-preview-attempt-lifecycle.test.ts",
+      "A\ttests/planner-v2-proposal-http-contract.test.ts",
+      "M\ttests/planner-v2-proposal-runtime-safety.test.ts",
+      "A\ttests/task-material-scope.test.ts",
+      "M\ttests/today-material-actions-ui-contract.test.ts",
+      "M\ttests/today-material-resource-contract.test.ts",
+      "A\ttests/week-material-continuity-contract.test.ts",
+      "M\ttsconfig.base.json",
+      "M\tvitest.config.ts"
+    ],
+    "trackedCandidateDiff": [
+      {
+        "status": "M",
+        "path": "apps/web/index.html",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/App.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/AdaptivePlanningPanel.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/CoachDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/PhysicalStudyFinishDialog.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/components/PlannerCoachExplanationCard.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/PlannerV2PreviewPanel.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/PlanningPanel.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/components/ProactiveCoachCard.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/components/ProactiveCoachCard.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/components/ProactiveCoachSurface.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/QuickAddTaskDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/ResourceDetailDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/ResourceProgressDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/StudyTodayPanel.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/TaskActionPreviewDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/components/TaskMaterialSummary.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/VideoPlayerDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/components/conversation-intelligence-v1-safety.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/layout/AppShell.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "D",
+        "path": "apps/web/src/components/layout/MobileNav.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "D",
+        "path": "apps/web/src/components/layout/Sidebar.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/components/planner-coach-preview-cta-safety.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/hooks/useDialogAccessibility.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/hooks/useDialogAccessibility.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/hooks/useRoadmap.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/hooks/useTaskMaterialDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/ai-coach-api.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/ai-coach-api.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/app-api.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/lib/planner-v2-lifecycle-ui.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/lib/planner-v2-lifecycle-ui.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/lib/planner-v2-presentation.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/lib/planner-v2-presentation.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/roadmap.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/lib/task-material-presentation.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/lib/task-material-presentation.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/lib/today-focus.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/lib/today-focus.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/today-material-actions.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/today-material-actions.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/youtube-player-progress.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/youtube-player-progress.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/main.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/HomePage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/LoginPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/ProgressPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/RegisterPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/ResourcesPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/RoadmapPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/SettingsPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/WeekPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/styles.css",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "docs/product/CURRENT_SPRINT.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "M",
+        "path": "docs/product/PRODUCT_BACKLOG.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "M",
+        "path": "docs/product/PROJECT_HANDOFF.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "M",
+        "path": "docs/product/ROADMAP.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "A",
+        "path": "docs/product/releases/2026-08-27_W7_GATE_OFF_RUNTIME_RELEASE.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "A",
+        "path": "docs/product/releases/2026-08-27_W8A_PREVIEW_ONLY_PILOT_PREFLIGHT.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "A",
+        "path": "docs/product/releases/2026-09-01_W8D_W8E_CONFIRM_APPLY_ENGINEERING.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "A",
+        "path": "docs/product/releases/2026-09-25_AI_COACH_6G_PRODUCTION_PILOT_LOCAL_RELEASE_READY.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "A",
+        "path": "docs/product/specs/AI_COACH_CONTEXT_V1.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "A",
+        "path": "docs/product/specs/AI_COACH_CONTROLLED_DEV_RUNTIME_V1.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "A",
+        "path": "docs/product/specs/AI_COACH_DEV_SMOKE_RUNBOOK.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "A",
+        "path": "docs/product/specs/AI_COACH_EVRE_6C_FINAL_ACCEPTANCE.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "A",
+        "path": "docs/product/specs/AI_COACH_EVRE_6_PRODUCT_AUTHORITY_COST_CONTRACT.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "A",
+        "path": "docs/product/specs/AI_COACH_PROVIDER_RUNTIME_BUDGET_V1.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "A",
+        "path": "docs/product/specs/AI_COACH_READ_ONLY_PROVIDER_ORCHESTRATOR_V1.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "A",
+        "path": "docs/product/specs/AI_COACH_ROUTER_COST_TELEMETRY_V1.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "M",
+        "path": "docs/product/specs/PLANNER_V2_PROPOSAL_LIFECYCLE.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "M",
+        "path": "package.json",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/ai-economics-v1.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/ai-economics-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/coach-context-v1-source-map.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/coach-context-v1.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/coach-context-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/coach-evidence-view-v1.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/coach-evidence-view-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/coach-signal-v1.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/coach-signal-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/conversation-intelligence-v1.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/conversation-intelligence-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/fixtures/coach-context-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "M",
+        "path": "packages/domain/src/ai-coach/index.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/planner-coach-explanation-v1.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/planner-coach-explanation-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/proactive-coach-card-v1.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/proactive-coach-card-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/proactive-coach-hysteresis-v1.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/proactive-coach-hysteresis-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/proactive-coach-materiality-policy-v1.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/proactive-coach-materiality-policy-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/proactive-coach-runtime-state-v1.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/proactive-coach-runtime-state-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/proactive-coach-selection-v1.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/proactive-coach-selection-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "packages/domain/src/ai-coach/proactive-coach-shadow-acceptance-v1.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "M",
+        "path": "packages/domain/src/planning-v2/edge.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "M",
+        "path": "packages/domain/src/planning-v2/proposal-lifecycle.test.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "M",
+        "path": "packages/domain/src/planning-v2/proposal-lifecycle.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "M",
+        "path": "pnpm-lock.yaml",
+        "category": "CONFIG"
+      },
+      {
+        "status": "A",
+        "path": "scripts/check-ai-coach-6g-local-acceptance.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "scripts/check-ai-coach-6g-p90-projection.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "scripts/check-ai-economics-v1-safety.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "scripts/check-coach-context-v1-readonly-safety.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "scripts/run-ai-coach-controlled-dev-preflight.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "scripts/run-ai-coach-controlled-dev-smoke-dry-run.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "scripts/run-edge-smoke.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "scripts/run-integration-tests.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "scripts/run-planner-v2-preview-only-http-smoke.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "scripts/supabase-command.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "scripts/supabase-status.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/_shared/adaptive.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/_shared/ai-coach.bundle.js",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/ai-budget-reservation-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/ai-usage-ledger-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/controlled-dev-smoke-runtime-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/controlled-dev-smoke-runtime-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/conversation-intelligence-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/dev-smoke-policy-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/openai-coach-request-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/openai-coach-request-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/openai-dev-gateway-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/openai-dev-gateway-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/_shared/ai-coach/openai-gateway.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/openai-input-token-count-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/openai-input-token-count-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/openai-production-gateway-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/openai-production-gateway-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/openai-server-secret-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/planner-coach-reactive-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/proactive-coach-actions-http-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/proactive-coach-actions-http-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/proactive-coach-http-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/proactive-coach-http-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/proactive-coach-runtime-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/proactive-coach-runtime-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-attempt-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-attempt-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-controlled-dev-cost-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-fx-acquisition-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-fx-acquisition-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-fx-policy-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-fx-policy-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-openai-billing-audit-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-openai-billing-bound-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-openai-billing-bound-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-operations-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-reconciliation-policy-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-runtime-activation-dev-risk-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-runtime-activation-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-runtime-activation-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-runtime-catalog-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-runtime-catalog-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-runtime-config-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/provider-runtime-config-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/reactive-coach-dev-runtime-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/reactive-coach-dev-runtime-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/reactive-coach-executor-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/reactive-coach-executor-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/reactive-coach-http-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/reactive-coach-http-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/reactive-coach-production-runtime-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/reactive-coach-production-runtime-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/reactive-coach-route-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/reactive-coach-route-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/read-only-coach-orchestrator-v1.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/ai-coach/read-only-coach-orchestrator-v1.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/canonical-capacity-readonly.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/_shared/canonical-material-loader.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/coach-context-v1-readonly.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/coach-context-v1-readonly.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/planner-v2-persisted-readonly.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/_shared/planner-v2-proposal-capability.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/_shared/planner-v2-proposal-capability.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/planner-v2-proposal-http.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/_shared/planning-v2.bundle.js",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/proactive-coach-active-session-readonly.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/proactive-coach-active-session-readonly.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/proactive-coach-runtime-state-readonly.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/proactive-coach-runtime-state-readonly.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/_shared/task-action-preview.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/task-material-scope.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/app-api/index.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/migrations/20260901123000_planner_v2_preview_attempt_lifecycle.sql",
+        "category": "DATABASE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/migrations/20260902101000_align_service_role_task_privileges.sql",
+        "category": "DATABASE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/migrations/20260902103000_harden_planner_v2_expired_confirmation_state.sql",
+        "category": "DATABASE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/migrations/20260911150000_ai_usage_ledger_v1.sql",
+        "category": "DATABASE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/migrations/20260911170000_ai_provider_runtime_reservations_v1.sql",
+        "category": "DATABASE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/migrations/20260919120000_ai_coach_proactive_state_v1.sql",
+        "category": "DATABASE"
+      },
+      {
+        "status": "A",
+        "path": "tests/evre7a-today-coach-entry.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/evre7b-today-hierarchy.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/evre7b-today-problem-solving.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/evre7c-coach-planner-handoff.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/evre7c-progress-readonly-planning.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/evre7e-product-language-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/integration/_helpers/local-auth.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/integration/ai-budget-reservation-v1.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/integration/ai-usage-ledger-v1.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/integration/coach-context-v1-readonly.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/integration/confirmed-product-actions.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/integration/p48-canonical-infrastructure.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/integration/planner-v2-proposal-lifecycle.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/integration/proactive-coach-active-session-readonly.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/integration/proactive-coach-state-persistence-v1.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/integration/w2-physical-pace-evidence.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/planner-v2-preview-attempt-lifecycle.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/planner-v2-proposal-http-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/planner-v2-proposal-runtime-safety.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/task-action-preview-ui-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/task-action-preview.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/task-material-scope.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/today-material-actions-ui-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/today-material-resource-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/week-material-continuity-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tsconfig.base.json",
+        "category": "CONFIG"
+      },
+      {
+        "status": "M",
+        "path": "vitest.config.ts",
+        "category": "CONFIG"
+      }
+    ],
+    "untracked": [
+      {
+        "path": "apps/web/public/brand/kpss-kocu-logo.svg",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/public/brand/kpss-kocu-mark.svg",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/components/ProductDialog.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/components/StudyMaterialWorkspace.test.ts",
+        "category": "TEST"
+      },
+      {
+        "path": "apps/web/src/components/StudyMaterialWorkspace.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/components/layout/TopNavigation.test.ts",
+        "category": "TEST"
+      },
+      {
+        "path": "apps/web/src/components/layout/TopNavigation.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/components/layout/top-navigation.css",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/dev-video-entry.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/dev-video-review.css",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/dev-video-review.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/lib/dialog-focus.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/lib/local-video-review.test.ts",
+        "category": "TEST"
+      },
+      {
+        "path": "apps/web/src/lib/local-video-review.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/lib/task-video.test.ts",
+        "category": "TEST"
+      },
+      {
+        "path": "apps/web/src/lib/task-video.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/product-entry.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/Coach.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/CoachLab.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/CoachPageTrack.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/CoachPlanViews.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/CoachVideo.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/CoachWorkArea.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/Insights.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/PlanDialogs.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/Resources.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/StudySession.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/Today.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/UxLab.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/Week.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/bootstrap.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/coach-production-fusion.css",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/coach-top-navigation.css",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/coach-v2.css",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/coach-workspace-context.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/coach-workspace-state.test.ts",
+        "category": "TEST"
+      },
+      {
+        "path": "apps/web/src/ux-lab/coach-workspace-state.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/context.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/lab.css",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/model.test.ts",
+        "category": "TEST"
+      },
+      {
+        "path": "apps/web/src/ux-lab/model.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/ui.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/workspace.css",
+        "category": "WEB"
+      },
+      {
+        "path": "assets/brand/README.md",
+        "category": "BRAND_SOURCE"
+      },
+      {
+        "path": "assets/brand/source/kpss-kocu-logo.svg",
+        "category": "BRAND_SOURCE"
+      },
+      {
+        "path": "docs/product/CONCEPT_B_RELEASE_FREEZE.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/FRONTEND_MIGRATION.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/LOGO_INTEGRATION.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/UX_REDESIGN.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/VIDEO_INTEGRATION_AUDIT.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/VIDEO_LOCAL_AUTHENTICATED_ACCEPTANCE.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/README.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/asset-verification.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/browser-measurements.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/full-preview.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/lab-desktop-1440.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/lab-focus-desktop-1440.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/lab-focus-mobile-390.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/lab-mobile-390.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/lab-tablet-834.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/local-asset-responses.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/login-desktop-1440.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/login-mobile-390.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/mark-16px.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/mark-32px.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/mark-48px.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/mark-scale-comparison.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/product-desktop-1440.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/product-mobile-390.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/product-tablet-834.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/register-mobile-390.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/source-preview.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/svg-syntax-verification.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/README.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/README.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/desktop-plan-review.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/desktop-session.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/desktop-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/desktop-week.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-coach.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-finish.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-session.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-today-page.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-today-video.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/responsive-checks.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/tablet-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/workspace-final-checks.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/README.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/coach-drawer.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-progress.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-resources.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-roadmap.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-week.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/mobile-focus-lower.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/mobile-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/mobile-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/responsive-checks.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/README.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/coach-drawer.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-progress.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-resources.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-roadmap.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-today-lower.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-week.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-focus-lower.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-today-lower.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/product-token-comparison.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/responsive-checks.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/week-review.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/desktop-coach.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/desktop-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/desktop-product.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/README.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-account-review.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-coach-drawer.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-coach.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-progress.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-resources.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-roadmap.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-sticky.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-week.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-coach.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-menu.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/product-login-blocker.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/regression-results.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/responsive-matrix.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/tablet-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/tablet-menu.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/tablet-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/validation-summary.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-authenticated-acceptance-evidence.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-authenticated-today-blocked.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-integration-local-auth.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-integration-regression-results.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-api-evidence.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-checkpoint-cadence.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-final-console.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-final-evidence.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-finished-db.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-finished-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-fixture-replay.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-focus-playing.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping-db.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping-ui.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-paused-db.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-postgrest-auth-cycles.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-postgrest-runtime.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-refresh-paused.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-refresh-stable-db.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-regression-results.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-start-db.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-validation-summary.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-youtube-paused.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/interaction-checks.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/mobile-coach.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/mobile-resource.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/mobile-session.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/mobile-week.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/responsive-checks.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "packages/domain/tsconfig.tsbuildinfo",
+        "category": "CONFIG"
+      },
+      {
+        "path": "scripts/check-ux-lab.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "path": "scripts/local-video-acceptance.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "path": "scripts/setup-local-video-acceptance-fixture.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "path": "tests/local-video-acceptance-safety.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "path": "tests/video-integration-ui-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      }
+    ]
+  },
+  "appApi": {
+    "baseline": "735de8d96edcef78816a0843e72669c7d16a034b",
+    "baselineToHead": [
+      "M\tapps/web/src/components/AdaptivePlanningPanel.tsx",
+      "M\tapps/web/src/components/CoachDrawer.tsx",
+      "M\tapps/web/src/components/PhysicalStudyFinishDialog.tsx",
+      "M\tapps/web/src/components/PlannerCoachExplanationCard.tsx",
+      "M\tapps/web/src/components/PlannerV2PreviewPanel.tsx",
+      "M\tapps/web/src/components/QuickAddTaskDrawer.tsx",
+      "M\tapps/web/src/components/ResourceDetailDrawer.tsx",
+      "M\tapps/web/src/components/ResourceProgressDrawer.tsx",
+      "M\tapps/web/src/components/StudyTodayPanel.tsx",
+      "M\tapps/web/src/components/TaskActionPreviewDrawer.tsx",
+      "A\tapps/web/src/components/TaskMaterialSummary.tsx",
+      "M\tapps/web/src/components/VideoPlayerDrawer.tsx",
+      "A\tapps/web/src/hooks/useDialogAccessibility.test.ts",
+      "A\tapps/web/src/hooks/useDialogAccessibility.ts",
+      "A\tapps/web/src/hooks/useTaskMaterialDrawer.tsx",
+      "M\tapps/web/src/lib/planner-v2-lifecycle-ui.test.ts",
+      "M\tapps/web/src/lib/planner-v2-lifecycle-ui.ts",
+      "A\tapps/web/src/lib/planner-v2-presentation.test.ts",
+      "A\tapps/web/src/lib/planner-v2-presentation.ts",
+      "M\tapps/web/src/lib/roadmap.ts",
+      "A\tapps/web/src/lib/task-material-presentation.test.ts",
+      "A\tapps/web/src/lib/task-material-presentation.ts",
+      "M\tapps/web/src/lib/today-material-actions.test.ts",
+      "M\tapps/web/src/lib/today-material-actions.ts",
+      "M\tapps/web/src/pages/WeekPage.tsx",
+      "M\tapps/web/src/styles.css",
+      "M\tdocs/product/CURRENT_SPRINT.md",
+      "M\tdocs/product/PRODUCT_BACKLOG.md",
+      "M\tdocs/product/PROJECT_HANDOFF.md",
+      "M\tdocs/product/ROADMAP.md",
+      "M\tdocs/product/releases/2026-09-25_AI_COACH_6G_PRODUCTION_PILOT_LOCAL_RELEASE_READY.md",
+      "M\tpackages/domain/src/ai-coach/coach-evidence-view-v1.ts",
+      "M\tpackages/domain/src/ai-coach/conversation-intelligence-v1.ts",
+      "M\tpackages/domain/src/ai-coach/planner-coach-explanation-v1.ts",
+      "M\tpackages/domain/src/ai-coach/proactive-coach-selection-v1.ts",
+      "A\tsupabase/functions/_shared/task-material-scope.ts",
+      "M\tsupabase/functions/app-api/index.ts",
+      "A\ttests/evre7a-today-coach-entry.test.ts",
+      "A\ttests/evre7b-today-hierarchy.test.ts",
+      "A\ttests/evre7b-today-problem-solving.test.ts",
+      "A\ttests/evre7c-coach-planner-handoff.test.ts",
+      "A\ttests/evre7c-progress-readonly-planning.test.ts",
+      "A\ttests/evre7e-product-language-contract.test.ts",
+      "A\ttests/task-material-scope.test.ts",
+      "M\ttests/today-material-actions-ui-contract.test.ts",
+      "M\ttests/today-material-resource-contract.test.ts",
+      "A\ttests/week-material-continuity-contract.test.ts",
+      "M\ttsconfig.base.json"
+    ],
+    "trackedCandidateDiff": [
+      {
+        "status": "M",
+        "path": "apps/web/index.html",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/App.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/AdaptivePlanningPanel.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/CoachDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/PhysicalStudyFinishDialog.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/PlannerCoachExplanationCard.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/PlannerV2PreviewPanel.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/PlanningPanel.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/QuickAddTaskDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/ResourceDetailDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/ResourceProgressDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/StudyTodayPanel.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/TaskActionPreviewDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/components/TaskMaterialSummary.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/VideoPlayerDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/layout/AppShell.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "D",
+        "path": "apps/web/src/components/layout/MobileNav.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "D",
+        "path": "apps/web/src/components/layout/Sidebar.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/hooks/useDialogAccessibility.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/hooks/useDialogAccessibility.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/hooks/useRoadmap.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/hooks/useTaskMaterialDrawer.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/app-api.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/planner-v2-lifecycle-ui.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/planner-v2-lifecycle-ui.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/lib/planner-v2-presentation.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/lib/planner-v2-presentation.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/roadmap.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/lib/task-material-presentation.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "A",
+        "path": "apps/web/src/lib/task-material-presentation.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/today-focus.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/today-focus.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/today-material-actions.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/today-material-actions.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/youtube-player-progress.test.ts",
+        "category": "TEST"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/youtube-player-progress.ts",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/main.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/HomePage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/LoginPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/ProgressPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/RegisterPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/ResourcesPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/RoadmapPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/SettingsPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/WeekPage.tsx",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/styles.css",
+        "category": "WEB"
+      },
+      {
+        "status": "M",
+        "path": "docs/product/CURRENT_SPRINT.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "M",
+        "path": "docs/product/PRODUCT_BACKLOG.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "M",
+        "path": "docs/product/PROJECT_HANDOFF.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "M",
+        "path": "docs/product/ROADMAP.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "M",
+        "path": "docs/product/releases/2026-09-25_AI_COACH_6G_PRODUCTION_PILOT_LOCAL_RELEASE_READY.md",
+        "category": "DOCS"
+      },
+      {
+        "status": "M",
+        "path": "package.json",
+        "category": "CONFIG"
+      },
+      {
+        "status": "M",
+        "path": "packages/domain/src/ai-coach/coach-evidence-view-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "M",
+        "path": "packages/domain/src/ai-coach/conversation-intelligence-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "M",
+        "path": "packages/domain/src/ai-coach/planner-coach-explanation-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "M",
+        "path": "packages/domain/src/ai-coach/proactive-coach-selection-v1.ts",
+        "category": "CONFIG"
+      },
+      {
+        "status": "M",
+        "path": "pnpm-lock.yaml",
+        "category": "CONFIG"
+      },
+      {
+        "status": "M",
+        "path": "scripts/supabase-command.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/_shared/task-action-preview.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "supabase/functions/_shared/task-material-scope.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/app-api/index.ts",
+        "category": "EDGE"
+      },
+      {
+        "status": "A",
+        "path": "tests/evre7a-today-coach-entry.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/evre7b-today-hierarchy.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/evre7b-today-problem-solving.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/evre7c-coach-planner-handoff.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/evre7c-progress-readonly-planning.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/evre7e-product-language-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/task-action-preview-ui-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/task-action-preview.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/task-material-scope.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/today-material-actions-ui-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tests/today-material-resource-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "A",
+        "path": "tests/week-material-continuity-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "status": "M",
+        "path": "tsconfig.base.json",
+        "category": "CONFIG"
+      }
+    ],
+    "untracked": [
+      {
+        "path": "apps/web/public/brand/kpss-kocu-logo.svg",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/public/brand/kpss-kocu-mark.svg",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/components/ProductDialog.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/components/StudyMaterialWorkspace.test.ts",
+        "category": "TEST"
+      },
+      {
+        "path": "apps/web/src/components/StudyMaterialWorkspace.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/components/layout/TopNavigation.test.ts",
+        "category": "TEST"
+      },
+      {
+        "path": "apps/web/src/components/layout/TopNavigation.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/components/layout/top-navigation.css",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/dev-video-entry.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/dev-video-review.css",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/dev-video-review.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/lib/dialog-focus.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/lib/local-video-review.test.ts",
+        "category": "TEST"
+      },
+      {
+        "path": "apps/web/src/lib/local-video-review.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/lib/task-video.test.ts",
+        "category": "TEST"
+      },
+      {
+        "path": "apps/web/src/lib/task-video.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/product-entry.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/Coach.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/CoachLab.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/CoachPageTrack.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/CoachPlanViews.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/CoachVideo.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/CoachWorkArea.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/Insights.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/PlanDialogs.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/Resources.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/StudySession.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/Today.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/UxLab.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/Week.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/bootstrap.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/coach-production-fusion.css",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/coach-top-navigation.css",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/coach-v2.css",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/coach-workspace-context.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/coach-workspace-state.test.ts",
+        "category": "TEST"
+      },
+      {
+        "path": "apps/web/src/ux-lab/coach-workspace-state.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/context.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/lab.css",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/model.test.ts",
+        "category": "TEST"
+      },
+      {
+        "path": "apps/web/src/ux-lab/model.ts",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/ux-lab/ui.tsx",
+        "category": "WEB"
+      },
+      {
+        "path": "apps/web/src/workspace.css",
+        "category": "WEB"
+      },
+      {
+        "path": "assets/brand/README.md",
+        "category": "BRAND_SOURCE"
+      },
+      {
+        "path": "assets/brand/source/kpss-kocu-logo.svg",
+        "category": "BRAND_SOURCE"
+      },
+      {
+        "path": "docs/product/CONCEPT_B_RELEASE_FREEZE.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/FRONTEND_MIGRATION.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/LOGO_INTEGRATION.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/UX_REDESIGN.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/VIDEO_INTEGRATION_AUDIT.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/VIDEO_LOCAL_AUTHENTICATED_ACCEPTANCE.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/README.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/asset-verification.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/browser-measurements.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/full-preview.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/lab-desktop-1440.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/lab-focus-desktop-1440.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/lab-focus-mobile-390.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/lab-mobile-390.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/lab-tablet-834.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/local-asset-responses.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/login-desktop-1440.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/login-mobile-390.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/mark-16px.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/mark-32px.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/mark-48px.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/mark-scale-comparison.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/product-desktop-1440.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/product-mobile-390.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/product-tablet-834.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/register-mobile-390.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/source-preview.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/brand-evidence/svg-syntax-verification.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/README.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/README.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/desktop-plan-review.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/desktop-session.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/desktop-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/desktop-week.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-coach.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-finish.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-session.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-today-page.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-today-video.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/responsive-checks.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/tablet-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-v2/workspace-final-checks.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/README.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/coach-drawer.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-progress.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-resources.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-roadmap.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-week.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/mobile-focus-lower.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/mobile-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/mobile-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/responsive-checks.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/README.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/coach-drawer.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-progress.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-resources.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-roadmap.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-today-lower.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-week.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-focus-lower.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-today-lower.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/product-token-comparison.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/responsive-checks.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/week-review.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/desktop-coach.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/desktop-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/desktop-product.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/README.md",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-account-review.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-coach-drawer.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-coach.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-progress.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-resources.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-roadmap.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-sticky.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-week.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-coach.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-menu.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/product-login-blocker.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/regression-results.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/responsive-matrix.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/tablet-focus.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/tablet-menu.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/tablet-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/validation-summary.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-authenticated-acceptance-evidence.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-authenticated-today-blocked.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-integration-local-auth.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-integration-regression-results.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-api-evidence.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-checkpoint-cadence.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-final-console.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-final-evidence.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-finished-db.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-finished-today.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-fixture-replay.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-focus-playing.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping-db.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping-ui.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-paused-db.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-postgrest-auth-cycles.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-postgrest-runtime.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-refresh-paused.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-refresh-stable-db.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-regression-results.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-start-db.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-validation-summary.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-youtube-paused.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/interaction-checks.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/mobile-coach.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/mobile-resource.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/mobile-session.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/mobile-week.png",
+        "category": "DOCS"
+      },
+      {
+        "path": "docs/product/ux-lab-evidence/responsive-checks.json",
+        "category": "DOCS"
+      },
+      {
+        "path": "packages/domain/tsconfig.tsbuildinfo",
+        "category": "CONFIG"
+      },
+      {
+        "path": "scripts/check-ux-lab.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "path": "scripts/local-video-acceptance.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "path": "scripts/setup-local-video-acceptance-fixture.mjs",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "path": "tests/local-video-acceptance-safety.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      },
+      {
+        "path": "tests/video-integration-ui-contract.test.ts",
+        "category": "LOCAL_TOOLING_TEST"
+      }
+    ]
+  }
+}

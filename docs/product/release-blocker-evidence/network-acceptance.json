@@ -1,0 +1,443 @@
+{
+  "scope": "Curated application transport evidence, not HAR; no headers, request bodies, tokens or passwords. All upstream requests target LOCAL 127.0.0.1:54321; temporary observer 54323, real root 5184.",
+  "recoveryWindowStart": "2026-10-06T18:41:21.528Z",
+  "maximumConcurrentProgress": 1,
+  "progressRequests": [
+    {
+      "id": 106,
+      "startedAt": "2026-10-06T18:41:35.036Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 4986,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 155,
+      "startedAt": "2026-10-06T18:42:48.208Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 503,
+      "durationMs": 10,
+      "fault": "controlled 503, not forwarded",
+      "segment": 1
+    },
+    {
+      "id": 157,
+      "startedAt": "2026-10-06T18:43:03.324Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 503,
+      "durationMs": 0,
+      "fault": "controlled 503, not forwarded",
+      "segment": 1
+    },
+    {
+      "id": 159,
+      "startedAt": "2026-10-06T18:43:19.321Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 503,
+      "durationMs": 1,
+      "fault": "controlled 503, not forwarded",
+      "segment": 1
+    },
+    {
+      "id": 174,
+      "startedAt": "2026-10-06T18:43:34.344Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 2667,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 223,
+      "startedAt": "2026-10-06T18:44:27.176Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 2279,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 225,
+      "startedAt": "2026-10-06T18:44:42.281Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 640,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 227,
+      "startedAt": "2026-10-06T18:44:58.273Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 591,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 229,
+      "startedAt": "2026-10-06T18:45:14.271Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 957,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 247,
+      "startedAt": "2026-10-06T18:45:29.286Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 454,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 249,
+      "startedAt": "2026-10-06T18:45:45.271Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 651,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 251,
+      "startedAt": "2026-10-06T18:45:58.628Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 947,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 302,
+      "startedAt": "2026-10-06T18:46:27.726Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 493,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 313,
+      "startedAt": "2026-10-06T18:46:31.815Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 937,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 650,
+      "startedAt": "2026-10-06T18:54:25.288Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 573,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 651,
+      "startedAt": "2026-10-06T18:54:26.955Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 484,
+      "fault": null,
+      "segment": 1
+    },
+    {
+      "id": 56,
+      "startedAt": "2026-10-06T19:01:22.010Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 1010,
+      "fault": null,
+      "segment": 2
+    },
+    {
+      "id": 58,
+      "startedAt": "2026-10-06T19:01:37.011Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 698,
+      "fault": null,
+      "segment": 2
+    },
+    {
+      "id": 60,
+      "startedAt": "2026-10-06T19:01:52.014Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 679,
+      "fault": null,
+      "segment": 2
+    },
+    {
+      "id": 62,
+      "startedAt": "2026-10-06T19:02:05.160Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 1005,
+      "fault": null,
+      "segment": 2
+    },
+    {
+      "id": 109,
+      "startedAt": "2026-10-06T19:03:52.263Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 1536,
+      "fault": null,
+      "segment": 2
+    },
+    {
+      "id": 139,
+      "startedAt": "2026-10-06T19:11:28.574Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 1139,
+      "fault": null,
+      "segment": 2
+    },
+    {
+      "id": 194,
+      "startedAt": "2026-10-06T19:12:15.124Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 99,
+      "fault": null,
+      "segment": 2
+    },
+    {
+      "id": 196,
+      "startedAt": "2026-10-06T19:12:30.196Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 234,
+      "fault": null,
+      "segment": 2
+    },
+    {
+      "id": 200,
+      "startedAt": "2026-10-06T19:12:45.214Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 194,
+      "fault": null,
+      "segment": 2
+    },
+    {
+      "id": 216,
+      "startedAt": "2026-10-06T19:14:01.312Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 1548,
+      "fault": null,
+      "segment": 2
+    },
+    {
+      "id": 218,
+      "startedAt": "2026-10-06T19:14:16.264Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 307,
+      "fault": null,
+      "segment": 2
+    },
+    {
+      "id": 220,
+      "startedAt": "2026-10-06T19:14:26.571Z",
+      "method": "PUT",
+      "path": "/functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "progress": true,
+      "status": 200,
+      "durationMs": 246,
+      "fault": null,
+      "segment": 2
+    }
+  ],
+  "controlledFailureIntervalsMs": [
+    15116,
+    15997
+  ],
+  "slowRequests": [],
+  "statusCounts": {
+    "200": 800,
+    "201": 6,
+    "204": 1,
+    "404": 16,
+    "503": 4
+  },
+  "unexplainedErrors": [],
+  "expectedDisabledProactive404": 16,
+  "mutationSummary": [
+    {
+      "route": "PUT /functions/v1/app-api/youtube-videos/87b746c0-c7e9-407e-a378-883fecfbafa8/progress",
+      "statuses": {
+        "200": 25,
+        "503": 3
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/study-sessions/300fdb9e-f27e-4a93-acaa-1a8cbbb57113/resume",
+      "statuses": {
+        "200": 2
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/study-sessions/300fdb9e-f27e-4a93-acaa-1a8cbbb57113/pause",
+      "statuses": {
+        "200": 1
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/study-sessions/300fdb9e-f27e-4a93-acaa-1a8cbbb57113/finish",
+      "statuses": {
+        "200": 1
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/study-sessions/start",
+      "statuses": {
+        "201": 3
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/study-sessions/6dbcf418-6352-4667-ae2c-9582d61d9ace/finish",
+      "statuses": {
+        "200": 1
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/ai-coach/proactive",
+      "statuses": {
+        "404": 16
+      }
+    },
+    {
+      "route": "PUT /functions/v1/app-api/resources/c1d7ef0b-da32-4b32-a6f8-32cefb2c2f28/progress",
+      "statuses": {
+        "200": 1
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/study-sessions/fcd8ffe6-0881-4deb-9052-d9850c77b7fd/pause",
+      "statuses": {
+        "200": 1
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/study-sessions/fcd8ffe6-0881-4deb-9052-d9850c77b7fd/finish",
+      "statuses": {
+        "200": 1
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/tasks/quick-add/preview",
+      "statuses": {
+        "200": 1
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/tasks/quick-add/apply",
+      "statuses": {
+        "200": 1
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/tasks/276cb8da-536d-40e0-b315-1295e5e913bb/action-preview",
+      "statuses": {
+        "200": 1
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/study-intent/carryovers/confirm",
+      "statuses": {
+        "200": 1
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/weekly-plan/manual",
+      "statuses": {
+        "201": 1
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/reports/weekly/generate",
+      "statuses": {
+        "201": 2
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/ai-coach/reactive",
+      "statuses": {
+        "200": 2,
+        "503": 1
+      }
+    },
+    {
+      "route": "POST /functions/v1/app-api/study-sessions/7e1bf91f-ac9c-4c3d-9b72-cc28390e3099/finish",
+      "statuses": {
+        "200": 1
+      }
+    }
+  ],
+  "productionCalls": 0,
+  "production": "NOT DEPLOYED"
+}

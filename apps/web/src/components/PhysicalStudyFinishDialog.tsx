@@ -10,6 +10,7 @@ interface Props {
   readonly busy: boolean;
   readonly onCancel: () => void;
   readonly onFinish: (completedThroughPage: number) => Promise<boolean>;
+  readonly initialBoundary?: string;
 }
 
 const ERROR_MESSAGES = {
@@ -18,15 +19,15 @@ const ERROR_MESSAGES = {
   PHYSICAL_PROGRESS_REVERSAL: "Önceki ilerlemeden daha düşük bir sayfa seçemezsin.",
 } as const;
 
-export function PhysicalStudyFinishDialog({ capture, busy, onCancel, onFinish }: Props) {
+export function PhysicalStudyFinishDialog({ capture, busy, onCancel, onFinish, initialBoundary = "" }: Props) {
   const [rawBoundary, setRawBoundary] = useState("");
   const [error, setError] = useState<string | null>(null);
   const dialogRef = useDialogAccessibility<HTMLElement>(Boolean(capture), onCancel);
 
   useEffect(() => {
-    setRawBoundary("");
+    setRawBoundary(initialBoundary);
     setError(null);
-  }, [capture?.pageEnd, capture?.startPageBoundary]);
+  }, [capture?.pageEnd, capture?.startPageBoundary, initialBoundary]);
 
   if (!capture) return null;
 

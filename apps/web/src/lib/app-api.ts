@@ -9,11 +9,15 @@ export class AppApiError extends Error {
 
 export async function callAppApi<T>(
   path: string,
-  options: { method?: "GET" | "POST" | "PUT" | "PATCH"; body?: unknown } = {},
+  options: { method?: "GET" | "POST" | "PUT" | "PATCH"; body?: unknown; expectedUserId?: string } = {},
 ): Promise<T> {
   const { data, error } = await supabase.auth.getSession();
   if (error) throw error;
   if (!data.session) throw new AppApiError("UNAUTHORIZED", "Oturum bulunamadı.");
+  // A delayed video checkpoint must not switch authority after logout/relogin.
+  if (options.expectedUserId && data.session.user.id !== options.expectedUserId) {
+    throw new AppApiError("UNAUTHORIZED", "Çalışma oturumu değişti.");
+  }
   const response = await fetch(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-api${path}`,
     {
@@ -34,6 +38,7 @@ export async function callAppApi<T>(
 }
 
 export const FRIENDLY_API_ERRORS: Readonly<Record<string, string>> = {
+  TASK_ACTION_INVALID_TARGET_DATE: "Görevi bu haftadaki gelecek bir güne taşıyabilirsin.",
   NO_ACTIVE_EXAM_PROFILE: "Önce aktif bir çalışma profili oluşturun.",
   NO_WEEKLY_AVAILABILITY: "Plan oluşturmak için haftalık müsaitlik ekleyin.",
   ACTIVE_PLAN_ALREADY_EXISTS: "Bu hafta için aktif plan zaten var.",

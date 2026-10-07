@@ -1,0 +1,13 @@
+/* Review tools are distinct from the shared product navigation. */
+.b-lab .application-nav { top: 0; }
+.b-lab .b-shell { display: block; }
+.b-lab .b-content, .b-lab.b-focus .b-content { width: 100%; margin: 0; }
+.b-lab .b-main, .b-lab.b-focus .b-main { max-width: 1320px; margin: 0 auto; padding: 34px 28px 56px; }
+.b-lab .b-today-heading { margin-bottom: 26px; }
+.b-lab .b-today-heading, .b-lab .b-today-grid, .b-lab .b-focus-heading, .b-lab .b-focus-workspace { max-width: none; }
+.b-lab .b-today-date h1 { font-size: clamp(32px, 3.3vw, 48px); }
+.b-lab .lab-toolbar { position: static; }
+.b-lab .b-active-session { margin: 20px 28px 0; }
+.b-lab .application-nav strong, .b-lab .application-nav h2 { font-family: "Geist", Inter, system-ui, sans-serif; }
+@media(max-width: 850px) { .b-lab .b-main, .b-lab.b-focus .b-main { padding: 28px 20px 48px; } }
+@media(max-width: 600px) { .b-lab .b-main, .b-lab.b-focus .b-main { padding: 24px 16px 40px; } }

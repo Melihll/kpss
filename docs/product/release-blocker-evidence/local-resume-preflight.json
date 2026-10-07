@@ -1,0 +1,13 @@
+{
+  "measuredAt": "2026-10-07T06:31:15.084Z",
+  "localOnly": true,
+  "dockerRecoveredWithoutReset": true,
+  "allMeasuredDomainStatePreserved": true,
+  "activeSessions": 0,
+  "videoPositionSeconds": 580,
+  "originalProgressUnchanged": true,
+  "physicalEvidenceCount": 1,
+  "jwtVerification": true,
+  "trackedConfigUnchanged": true,
+  "production": "NOT DEPLOYED"
+}

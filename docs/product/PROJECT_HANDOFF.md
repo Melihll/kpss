@@ -1,3 +1,67 @@
+> **2026-10-07 — RELEASE BLOCKER CLOSURE: LOCAL GREEN / NOT DEPLOYED**
+>
+> - Original 45 tracked + 183 untracked paths individually classified and preserved; intentional accepted source/tests/docs/evidence enter one authorized local release commit. LOCAL/generated inputs are ignored. The exact RC is the commit containing this record; parent `ea17ee281cb192304abfb518ff4f50b1ab3ecfdd`. Final exact-HEAD/postcommit validation and clean 1/0 upstream state are required before GO; see ignored `.release/final-freeze.json` and the final report.
+> - Full regression **1535 tests / 204 files PASS**, domain/web typecheck, 19-file scoped lint, production-input build/endpoint scan, six authoritative safety scripts and diff check PASS. Production process inputs override the unchanged LOCAL env file; no new production secret.
+> - Existing video PUT now has one active + one latest pending checkpoint, 15-second error backoff, critical lifecycle flush and stale/owner protection. Real slow/fail concurrency max 1; no storm. Finish pauses the mounted partial-task player; async ready seek restoration cannot autoplay.
+> - Full authenticated real-root acceptance on Oct 6: physical page/atomic finish, Week add/edit/exact move/review/confirm, Resources/Progress/Roadmap/Coach/account/logout/relogin and 390 px mobile PASS. Existing Planner preview/confirm/apply gates remain OFF; safe blocked explanation PASS. Original historical task/session/progress preserved; separate scoped LOCAL fixtures, no DB reset/schema/second tracking.
+> - Source diff confirms future surfaces **app-api → web**, other Edge/database migration/new production secrets **NONE**; app-api backward compatibility PASS from source/tests. Exact rollback remains web `395a536d` / Pages `f7c4dd8e-e3a4-4a19-8b47-cbcd8016abae`, app-api `735de8d` / code v75 / config v78. No live production drift query, deploy, SQL, data/secret mutation or Git push.
+> - [Current evidence and limits](release-blocker-evidence/README.md), [source/rollback report](CONCEPT_B_RELEASE_FREEZE.md). Historical NO-GO/GREEN records below are retained. **Production NOT DEPLOYED; stop after clean local RC and postcommit checks.**
+
+> **2026-10-06 — FINAL RELEASE READINESS AUDIT: NO-GO / DIRTY / NOT DEPLOYED**
+>
+> - User-authorized freeze audit completed; the candidate is **not frozen/release-ready**. Branch `develop`, HEAD `ea17ee281cb192304abfb518ff4f50b1ab3ecfdd`, upstream `origin/develop`, no upstream divergence; accepted migration remains dirty/untracked. No commit/push.
+> - Fresh full non-integration regression **1509 tests / 200 files PASS**, domain/web typecheck, existing scoped lint, Vite compilation, six current security scripts, app-api local import bundle and diff check PASS after the minimum Today mobile button-name fix. Historical video/logo GREEN remains scoped acceptance, not production GO.
+> - **Blockers:** dirty RC without exact commit; fresh build embeds LOCAL Supabase endpoint; video checkpoint failure/slow-response path can enqueue PUTs every second after its threshold; complete authenticated frontend migration smoke remains pending. No further application changes after identifying checkpoint blocker.
+> - Required future surfaces: **web + app-api**, API first. No new DB migration, other Edge deployment, secret or infrastructure required. Separate documented baselines: web `395a536d` / Pages `f7c4dd8e-e3a4-4a19-8b47-cbcd8016abae`; app-api `735de8d` / code v75, configuration v78. `origin/main` is not either current production reference.
+> - [CONCEPT_B_RELEASE_FREEZE.md](CONCEPT_B_RELEASE_FREEZE.md) records exact refs, inventory, evidence, legacy checker mismatch, rollback and future smoke/observation plan. No production endpoint/SQL/mutation/deploy/gate change; read-only remote Git refs only. **NOT DEPLOYED. Stop; deployment is not authorized.** Earlier checkpoints below remain historical.
+
+> **2026-10-06 — OFFICIAL LOGO INTEGRATION: LOCAL/DEV COMPLETE / NOT DEPLOYED**
+>
+> - Official source: `assets/brand/source/kpss-kocu-logo.svg`, byte-identical to the Downloads SVG explicitly confirmed by the user. Web assets: `apps/web/public/brand/kpss-kocu-logo.svg` and `kpss-kocu-mark.svg`; original paths/colors/gradients preserved.
+> - Full logo in desktop/tablet product/B Lab navigation and auth screens; compact mark on mobile and as SVG favicon. Header heights and product accents preserved; symmetric desktop layout, existing Today Router link and one accessible name verified.
+> - Relevant tests 10/10, web typecheck, existing scoped lint, build and SVG checks PASS. Desktop/tablet/mobile and Focus/auth evidence: [LOGO_INTEGRATION.md](LOGO_INTEGRATION.md), [brand-evidence](brand-evidence/README.md). Firefox/Safari runtime and numeric CLS remain unmeasured; existing 320 px page minimum is documented.
+> - Local account restored after auth-screen checks. No schema/backend/production SQL/mutation/deploy, remote push/merge or gate changes. Do not infer authorization to start release freeze; wait for that task. **NOT DEPLOYED**.
+
+> **2026-10-05 — LOCAL VIDEO ACCEPTANCE RECOVERY: GREEN / NOT DEPLOYED**
+>
+> - Current actual product video chain passed with dedicated local Auth at `http://127.0.0.1:5174/`; root browser tab is kept for review. Full matrix, IDs, reproduction and limits: [VIDEO_LOCAL_AUTHENTICATED_ACCEPTANCE.md](VIDEO_LOCAL_AUTHENTICATED_ACCEPTANCE.md).
+> - Local runtime: repo CLI 2.113.0, Edge 1.74.3 / Deno 2.1.4; PostgREST 14.18. `app-api.verify_jwt=true`, genuine ES256 bearer, local JWKS signature PASS. Only Edge/REST runtime compatibility changed; Auth keys, JWT checks, DB and production config preserved.
+> - Ignored `.temp/rest-version=v14.18` pins the local REST patch. Old REST container `supabase_rest_kpss-coach_before_video_acceptance_v1415` remains stopped for rollback; no DB reset/volume deletion. A clean checkout needs a compatible local stack; never replace this with JWT bypass or production endpoints.
+> - Fixture helper `scripts/setup-local-video-acceptance-fixture.mjs --profile-id a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31` defaults to dry-run; apply requires the dedicated LOCAL account password in its env variable. It refuses remote hosts/collisions and preserves task status, progress and sessions. Existing real catalog/canonical adapter truth only, no new schema.
+> - Playback → 15-second checkpoints → paused refresh/resume → Today/Focus → finish PASS. Session `bfe51721-880a-434f-9bca-1c6c01bb8055` completed once (15 min); video progress remains one row at 365 sec; task remains partially completed. Missing resource mapping yields 0 iframe; original link has been restored.
+> - Final validation: 1509 tests / 200 files PASS; typechecks, web build, scoped lint and four Coach/Planner safety checks PASS; 60 immediate fresh-token API reads PASS. No current browser errors/auth loop; network evidence scope is documented without claiming a complete HAR.
+> - Next work requires its own requested scope: physical-material acceptance, remote playlist sync/mapping product flow or remaining full migration checklist. Local video acceptance is complete. Production deploy/SQL/migration/mutation, remote push/merge: **0; NOT DEPLOYED**. Historical phase/gate states below remain unchanged.
+
+> **Historical, superseded by recovery above — REAL VIDEO AUTHENTICATED ACCEPTANCE: AUTH PASS / RUNTIME BLOCKED / NOT DEPLOYED**
+>
+> - Docker is running from the per-user installation; local Supabase/Auth/DB are available. An existing fixture user signed into the real product root. Local Functions serve is running with JWT verification preserved.
+> - Authenticated Today endpoints return 401 due to local ES256 platform verification failure. Catalog has 0 native playback IDs and 0 current-week canonical video tasks; ready lifecycle fixtures have resource/mapping identity gaps.
+> - Next verification requires a working authenticated local Edge runtime plus a current real canonical video fixture. No IDs/dates were replaced; no fake auth, gate change, DB reset or Lab simulation acceptance was used.
+> - [VIDEO_LOCAL_AUTHENTICATED_ACCEPTANCE.md](VIDEO_LOCAL_AUTHENTICATED_ACCEPTANCE.md) is current runtime evidence. No application source/schema/production changes; previous source regression remains 1494 PASS. This block supersedes older Docker/Auth-down wording below.
+
+> **2026-10-05 — CONCEPT B REAL FRONTEND + TOP NAVIGATION: SOURCE IMPLEMENTED / LOCAL AUTH SMOKE PENDING**
+>
+> - User-authorized local migration now shares `TopNavigation` between product and B Lab, removes the sidebar, persists Today/Focus, connects existing material/session APIs, and preserves real Coach/account/planning flows.
+> - Typechecks/build and 1463 tests across 196 files PASS; existing safety checks PASS; B Lab responsive/browser evidence PASS. Lab screenshots are not authenticated product acceptance.
+> - Local Supabase/Auth is unavailable and Docker is absent. Required next verification: restore the local backend, then run the authenticated Today → video/page → Focus → finish → Week → Resources → Progress → Roadmap → Coach → Settings/logout checklist in [FRONTEND_MIGRATION.md](FRONTEND_MIGRATION.md).
+> - Manual editor retains the whole-week replacement contract and reviews all replaced pending tasks; selected-day dragging uses real carryover preview/confirmation only for eligible Today tasks. No fictional generic Planner mutation was added.
+> - No production deployment, SQL/data mutation, gate/secret/provider change, remote push/merge. **NOT DEPLOYED**. Historical phase/gate state below is preserved; earlier no-migration authorization statements are historical for this new user-authorized source task.
+
+> **2026-10-02 — Concept B / Coach V2: READY FOR PROTOTYPE REVIEW**
+>
+> - B was selected by the user and redesigned around a shared Today/Focus workspace with inline video, page save and session controls. Coach opens on demand; Week moves/add/edit remain explicitly reviewed; resources return to the same work context. A/C screen files remain unchanged.
+> - Validation: **1,456 tests / 194 files PASS**, including 31 UX Lab cases; strict checks, scoped lint, builds, three safety scripts and production exclusion PASS. B's seven routes passed desktop/tablet/mobile overflow checks.
+> - Review decisions/URLs: [UX_REDESIGN.md](UX_REDESIGN.md). Evidence: [coach-v2/README.md](ux-lab-evidence/coach-v2/README.md).
+> - **NEXT EXACT STEP:** evaluate B V2. Do not migrate to production or integrate real APIs/persistence without a new scope. This checkpoint does not alter Evre 7 closure or Evre 8/9 / production gate status.
+
+> **2026-10-01 — Isolated UX Lab iteration 1: READY FOR DESIGN EVALUATION**
+>
+> - Separately authorized frontend prototype at development-only `/ux-lab`; Focus / Coach / Product share seven experiences and in-memory demo data. See [UX_REDESIGN.md](UX_REDESIGN.md) for the audit, run instructions, design comparison, validation and migration boundary.
+> - Real auth/API modules are not imported by the lab. Production builds exclude the lab. Existing product pages, Planner gates, Coach authority, backend contracts, migrations, secrets and real data were not changed.
+> - Acceptance: strict domain/web typecheck PASS; scoped lab lint PASS; full non-integration regression **1,433/1,433 across 193 files** PASS; domain/web build PASS; existing three Coach/Planner safety checks PASS. Responsive browser matrix: 54 views across desktop/tablet/mobile, plus session and plan-editing flows.
+> - **NEXT EXACT STEP:** evaluate the three concepts. Do not migrate a selected concept into the real frontend in this task. Evre 7 remains CLOSED; Evre 8/9 and production activation retain the historical state below.
+> - This additive prototype checkpoint does not rewrite or supersede historical release evidence.
+
 > **Authoritative current state - EVRE_7_PRODUCT_UX_CLOSED_2026_09_29**
 >
 > - **Evre 7 Product UX / Daily Coach Experience is `CLOSED`. Evre 7A UX Reality Audit & Daily Experience Contract, 7B Today as Daily Home, 7C Coach x Planner UX, 7D Week + Material Continuity, and 7E Product Polish & Real-user UX Acceptance are all `CLOSED`. Evre 8 and Evre 9 remain `WAITING`.**

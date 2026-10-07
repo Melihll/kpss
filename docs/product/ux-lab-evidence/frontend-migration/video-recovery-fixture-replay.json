@@ -1,0 +1,109 @@
+{
+  "mode": "APPLIED",
+  "auth": {
+    "alg": "ES256",
+    "iss": "http://127.0.0.1:54321/auth/v1",
+    "expectedIssuer": "http://127.0.0.1:54321/auth/v1",
+    "aud": "authenticated",
+    "sub": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+    "role": "authenticated",
+    "exp": 1791218903,
+    "jwksStatus": 200,
+    "signatureVerified": true
+  },
+  "protectedSmokeStatus": 200,
+  "userId": "f5887c7b-012d-48ad-8d17-71101b82ab37",
+  "manifest": {
+    "email": "video-acceptance-local@example.test",
+    "profileId": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+    "today": "2026-10-05",
+    "weekStart": "2026-10-05",
+    "weekEnd": "2026-10-11",
+    "resourceId": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d",
+    "playlistId": "b0fdaae0-cc0f-4236-adef-f4171cae40b2",
+    "videoId": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+    "mappingId": "b6375449-4d7a-4886-a964-73a7a5adf229",
+    "planId": "96842059-4d24-4a38-ac9d-6cbe77155d3e",
+    "taskId": "2f1784eb-cbb5-469d-a055-9669f335a341",
+    "nativeVideoId": "M7lc1UVf-VE",
+    "materialViewId": "youtube:9eb7bfba-1a41-4fb5-a098-1a29474c72fa:mapping:b6375449-4d7a-4886-a964-73a7a5adf229"
+  },
+  "inserted": [],
+  "reused": [
+    {
+      "table": "exam_profiles",
+      "id": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31"
+    },
+    {
+      "table": "user_subjects",
+      "id": "81e3de91-626b-4e1e-afea-d1fe20d5cf2b"
+    },
+    {
+      "table": "p48_strategy_profiles",
+      "id": "26d63e67-3c18-4ca6-a2ab-d84f3a5ff968"
+    },
+    {
+      "table": "weekly_availability",
+      "id": "c1e0dc6e-cebe-4cce-a8bc-16ae6c942dd7"
+    },
+    {
+      "table": "weekly_availability",
+      "id": "e44bf47f-c6cb-4254-ae49-6e223abc3d97"
+    },
+    {
+      "table": "weekly_availability",
+      "id": "f62ec21e-5959-4252-ab56-a137f87741e6"
+    },
+    {
+      "table": "weekly_availability",
+      "id": "572a90c3-f1bc-4cbe-a0a0-6a3c9e5522d7"
+    },
+    {
+      "table": "weekly_availability",
+      "id": "91550017-3d21-416d-af07-5d2e95c0d918"
+    },
+    {
+      "table": "weekly_availability",
+      "id": "26a74b3c-9cc8-45d4-a6db-d4f3d0601afa"
+    },
+    {
+      "table": "weekly_availability",
+      "id": "8e0728ff-d925-4ff4-afd3-2527c6efb248"
+    },
+    {
+      "table": "resources",
+      "id": "848517eb-a9ed-4d8e-ad1a-ba5020f25d4d"
+    },
+    {
+      "table": "p48_resource_targets",
+      "id": "44cb382b-c6d0-41e9-a5de-996525bd403e"
+    },
+    {
+      "table": "youtube_playlists",
+      "id": "b0fdaae0-cc0f-4236-adef-f4171cae40b2"
+    },
+    {
+      "table": "youtube_playlist_videos",
+      "id": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa"
+    },
+    {
+      "table": "topic_resource_links",
+      "id": "8d93ebe2-e86c-4863-af7a-eaf3a084d881"
+    },
+    {
+      "table": "youtube_video_topic_links",
+      "id": "b6375449-4d7a-4886-a964-73a7a5adf229"
+    },
+    {
+      "table": "weekly_plans",
+      "id": "96842059-4d24-4a38-ac9d-6cbe77155d3e"
+    },
+    {
+      "table": "tasks",
+      "id": "2f1784eb-cbb5-469d-a055-9669f335a341"
+    }
+  ],
+  "updated": [],
+  "progressAndSessions": "untouched",
+  "production": "NOT DEPLOYED"
+}

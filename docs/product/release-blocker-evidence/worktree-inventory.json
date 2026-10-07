@@ -1,0 +1,3536 @@
+{
+  "head": "ea17ee281cb192304abfb518ff4f50b1ab3ecfdd",
+  "trackedCount": 48,
+  "untrackedCount": 225,
+  "groups": {
+    "RELEASE SOURCE": 80,
+    "TEST": 22,
+    "DOCS": 8,
+    "LOCAL ONLY": 5,
+    "EVIDENCE": 158
+  },
+  "files": [
+    {
+      "status": "M",
+      "path": ".gitignore",
+      "group": "RELEASE SOURCE",
+      "purpose": "Intentional release configuration/tooling; review with source and lockfile.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/index.html",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/App.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/components/CoachDrawer.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/components/PhysicalStudyFinishDialog.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/components/PlanningPanel.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/components/QuickAddTaskDrawer.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/components/ResourceDetailDrawer.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/components/ResourceProgressDrawer.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/components/StudyTodayPanel.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/components/TaskActionPreviewDrawer.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/components/VideoPlayerDrawer.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/components/layout/AppShell.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "D",
+      "path": "apps/web/src/components/layout/MobileNav.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "D",
+      "path": "apps/web/src/components/layout/Sidebar.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/hooks/useRoadmap.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/lib/app-api.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/lib/task-material-presentation.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/lib/task-material-presentation.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/lib/today-focus.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/lib/today-focus.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/lib/youtube-player-progress.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/lib/youtube-player-progress.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/main.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/pages/HomePage.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/pages/LoginPage.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/pages/ProgressPage.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/pages/RegisterPage.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/pages/ResourcesPage.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/pages/RoadmapPage.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/pages/SettingsPage.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/pages/WeekPage.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "apps/web/src/styles.css",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "docs/product/CURRENT_SPRINT.md",
+      "group": "DOCS",
+      "purpose": "Product acceptance, migration or release record; preserve history.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "docs/product/PROJECT_HANDOFF.md",
+      "group": "DOCS",
+      "purpose": "Product acceptance, migration or release record; preserve history.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "package.json",
+      "group": "RELEASE SOURCE",
+      "purpose": "Intentional release configuration/tooling; review with source and lockfile.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "pnpm-lock.yaml",
+      "group": "RELEASE SOURCE",
+      "purpose": "Intentional release configuration/tooling; review with source and lockfile.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "scripts/check-ai-coach-6g-local-acceptance.mjs",
+      "group": "RELEASE SOURCE",
+      "purpose": "Intentional release configuration/tooling; review with source and lockfile.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "scripts/supabase-command.mjs",
+      "group": "LOCAL ONLY",
+      "purpose": "Reviewed repository tooling with LOCAL guards; safe to version, not a deploy artifact.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "supabase/functions/_shared/task-action-preview.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Existing app-api preview/canonical material contract; no schema change.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "supabase/functions/app-api/index.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Existing app-api preview/canonical material contract; no schema change.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "tests/evre7a-today-coach-entry.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "tests/evre7b-today-problem-solving.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "tests/evre7c-progress-readonly-planning.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "tests/task-action-preview-ui-contract.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "tests/task-action-preview.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "tests/today-material-actions-ui-contract.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "M",
+      "path": "tests/youtube-player-ui-contract.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/public/brand/kpss-kocu-logo.svg",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/public/brand/kpss-kocu-mark.svg",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/components/ProductDialog.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/components/StudyMaterialWorkspace.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/components/StudyMaterialWorkspace.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/components/layout/TopNavigation.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/components/layout/TopNavigation.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/components/layout/top-navigation.css",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/dev-video-entry.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/dev-video-review.css",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/dev-video-review.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/lib/app-api-owner.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/lib/dialog-focus.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/lib/local-video-review.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/lib/local-video-review.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/lib/task-video.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/lib/task-video.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/lib/youtube-progress-writer.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/lib/youtube-progress-writer.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/product-entry.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/Coach.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/CoachLab.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/CoachPageTrack.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/CoachPlanViews.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/CoachVideo.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/CoachWorkArea.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/Insights.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/PlanDialogs.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/Resources.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/StudySession.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/Today.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/UxLab.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/Week.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/bootstrap.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/coach-production-fusion.css",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/coach-top-navigation.css",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/coach-v2.css",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/coach-workspace-context.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/coach-workspace-state.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/coach-workspace-state.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/context.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/lab.css",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/model.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/model.ts",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/ux-lab/ui.tsx",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "apps/web/src/workspace.css",
+      "group": "RELEASE SOURCE",
+      "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "assets/brand/README.md",
+      "group": "RELEASE SOURCE",
+      "purpose": "Official preserved source brand asset.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "assets/brand/source/kpss-kocu-logo.svg",
+      "group": "RELEASE SOURCE",
+      "purpose": "Official preserved source brand asset.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/CONCEPT_B_RELEASE_FREEZE.md",
+      "group": "DOCS",
+      "purpose": "Product acceptance, migration or release record; preserve history.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/FRONTEND_MIGRATION.md",
+      "group": "DOCS",
+      "purpose": "Product acceptance, migration or release record; preserve history.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/LOGO_INTEGRATION.md",
+      "group": "DOCS",
+      "purpose": "Product acceptance, migration or release record; preserve history.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/UX_REDESIGN.md",
+      "group": "DOCS",
+      "purpose": "Product acceptance, migration or release record; preserve history.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/VIDEO_INTEGRATION_AUDIT.md",
+      "group": "DOCS",
+      "purpose": "Product acceptance, migration or release record; preserve history.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/VIDEO_LOCAL_AUTHENTICATED_ACCEPTANCE.md",
+      "group": "DOCS",
+      "purpose": "Product acceptance, migration or release record; preserve history.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/README.md",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/asset-verification.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/browser-measurements.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/full-preview.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/lab-desktop-1440.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/lab-focus-desktop-1440.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/lab-focus-mobile-390.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/lab-mobile-390.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/lab-tablet-834.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/local-asset-responses.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/login-desktop-1440.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/login-mobile-390.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/mark-16px.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/mark-32px.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/mark-48px.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/mark-scale-comparison.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/product-desktop-1440.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/product-mobile-390.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/product-tablet-834.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/register-mobile-390.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/source-preview.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/brand-evidence/svg-syntax-verification.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/README.md",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/acceptance-results.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/candidate-source.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/coach-controlled-error.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/coach-planner-blocked.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/console-acceptance.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/final-today.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/initial-inventory.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/local-gate-contracts.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/local-resume-preflight.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/mobile-account.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/mobile-coach-layout.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/mobile-coach.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/mobile-menu.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/mobile-physical.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/mobile-today-video.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/mobile-video-layout.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/network-acceptance.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/physical-finish-confirm.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/physical-refreshed.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/production-artifact-precommit.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/progress-real.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/resumed-console.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/roadmap-milestone.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/roadmap-visible-contract.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/runtime-recovery-console.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/validation-precommit.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/video-finished.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/video-paused.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/week-edit-review.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/week-edited-refreshed.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/week-visible-contract.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-blocker-evidence/worktree-inventory.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-freeze-evidence/README.md",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-freeze-evidence/audit-snapshot.mjs",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-freeze-evidence/change-inventory.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-freeze-evidence/edge-import-closures.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-freeze-evidence/snapshot.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/release-freeze-evidence/today-mobile-aria-390.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/README.md",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/README.md",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/desktop-plan-review.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/desktop-session.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/desktop-today.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/desktop-week.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/mobile-coach.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/mobile-finish.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/mobile-session.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/mobile-today-page.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/mobile-today-video.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/responsive-checks.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/tablet-today.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-v2/workspace-final-checks.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-polish/README.md",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-polish/coach-drawer.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-focus.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-progress.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-resources.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-roadmap.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-today.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-week.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-polish/mobile-focus-lower.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-polish/mobile-focus.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-polish/mobile-today.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-polish/responsive-checks.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/README.md",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/coach-drawer.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-focus.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-progress.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-resources.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-roadmap.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-today-lower.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-today.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-week.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-focus-lower.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-focus.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-today-lower.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-today.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/product-token-comparison.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/responsive-checks.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/coach-visual-reset/week-review.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/desktop-coach.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/desktop-focus.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/desktop-product.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/README.md",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-account-review.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-coach-drawer.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-coach.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-focus.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-progress.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-resources.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-roadmap.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-sticky.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-today.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-week.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-coach.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-focus.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-menu.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-today.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/product-login-blocker.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/regression-results.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/responsive-matrix.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/tablet-focus.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/tablet-menu.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/tablet-today.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/validation-summary.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-authenticated-acceptance-evidence.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-authenticated-today-blocked.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-integration-local-auth.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-integration-regression-results.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-api-evidence.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-checkpoint-cadence.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-final-console.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-final-evidence.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-finished-db.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-finished-today.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-fixture-replay.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-focus-playing.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping-db.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping-ui.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-paused-db.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-postgrest-auth-cycles.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-postgrest-runtime.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-refresh-paused.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-refresh-stable-db.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-regression-results.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-start-db.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-validation-summary.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-youtube-paused.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/interaction-checks.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/mobile-coach.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/mobile-resource.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/mobile-session.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/mobile-week.png",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "docs/product/ux-lab-evidence/responsive-checks.json",
+      "group": "EVIDENCE",
+      "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "scripts/build-production-web.mjs",
+      "group": "RELEASE SOURCE",
+      "purpose": "Intentional release configuration/tooling; review with source and lockfile.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "scripts/check-ux-lab.mjs",
+      "group": "RELEASE SOURCE",
+      "purpose": "Intentional release configuration/tooling; review with source and lockfile.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "scripts/local-frontend-acceptance-proxy.mjs",
+      "group": "LOCAL ONLY",
+      "purpose": "Reviewed repository tooling with LOCAL guards; safe to version, not a deploy artifact.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "scripts/local-video-acceptance.mjs",
+      "group": "LOCAL ONLY",
+      "purpose": "Reviewed repository tooling with LOCAL guards; safe to version, not a deploy artifact.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "scripts/production-build-safety.mjs",
+      "group": "RELEASE SOURCE",
+      "purpose": "Intentional release configuration/tooling; review with source and lockfile.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "scripts/release-candidate-inventory.mjs",
+      "group": "RELEASE SOURCE",
+      "purpose": "Intentional release configuration/tooling; review with source and lockfile.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "scripts/release-candidate-snapshot.mjs",
+      "group": "RELEASE SOURCE",
+      "purpose": "Intentional release configuration/tooling; review with source and lockfile.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "scripts/setup-local-frontend-acceptance-fixture.mjs",
+      "group": "LOCAL ONLY",
+      "purpose": "Reviewed repository tooling with LOCAL guards; safe to version, not a deploy artifact.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "scripts/setup-local-video-acceptance-fixture.mjs",
+      "group": "LOCAL ONLY",
+      "purpose": "Reviewed repository tooling with LOCAL guards; safe to version, not a deploy artifact.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "tests/local-frontend-acceptance-safety.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "tests/local-video-acceptance-safety.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "tests/production-build-safety.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    },
+    {
+      "status": "UNTRACKED",
+      "path": "tests/video-integration-ui-contract.test.ts",
+      "group": "TEST",
+      "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+      "commitEligible": true
+    }
+  ],
+  "originalFreeze": {
+    "trackedCount": 45,
+    "untrackedCount": 183,
+    "files": [
+      {
+        "status": "M",
+        "path": "apps/web/index.html",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/App.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/CoachDrawer.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/PhysicalStudyFinishDialog.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/PlanningPanel.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/QuickAddTaskDrawer.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/ResourceDetailDrawer.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/ResourceProgressDrawer.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/StudyTodayPanel.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/TaskActionPreviewDrawer.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/VideoPlayerDrawer.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/components/layout/AppShell.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "D",
+        "path": "apps/web/src/components/layout/MobileNav.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "D",
+        "path": "apps/web/src/components/layout/Sidebar.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/hooks/useRoadmap.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/app-api.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/task-material-presentation.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/task-material-presentation.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/today-focus.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/today-focus.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/youtube-player-progress.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/lib/youtube-player-progress.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/main.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/HomePage.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/LoginPage.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/ProgressPage.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/RegisterPage.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/ResourcesPage.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/RoadmapPage.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/SettingsPage.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/pages/WeekPage.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "apps/web/src/styles.css",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "docs/product/CURRENT_SPRINT.md",
+        "group": "DOCS",
+        "purpose": "Product acceptance, migration or release record; preserve history.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "docs/product/PROJECT_HANDOFF.md",
+        "group": "DOCS",
+        "purpose": "Product acceptance, migration or release record; preserve history.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "package.json",
+        "group": "RELEASE SOURCE",
+        "purpose": "Intentional release configuration/tooling; review with source and lockfile.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "pnpm-lock.yaml",
+        "group": "RELEASE SOURCE",
+        "purpose": "Intentional release configuration/tooling; review with source and lockfile.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "scripts/supabase-command.mjs",
+        "group": "LOCAL ONLY",
+        "purpose": "Reviewed repository tooling with LOCAL guards; safe to version, not a deploy artifact.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/_shared/task-action-preview.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Existing app-api preview/canonical material contract; no schema change.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "supabase/functions/app-api/index.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Existing app-api preview/canonical material contract; no schema change.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "tests/evre7a-today-coach-entry.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "tests/evre7b-today-problem-solving.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "tests/evre7c-progress-readonly-planning.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "tests/task-action-preview-ui-contract.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "tests/task-action-preview.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "M",
+        "path": "tests/today-material-actions-ui-contract.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/public/brand/kpss-kocu-logo.svg",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/public/brand/kpss-kocu-mark.svg",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/components/ProductDialog.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/components/StudyMaterialWorkspace.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/components/StudyMaterialWorkspace.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/components/layout/TopNavigation.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/components/layout/TopNavigation.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/components/layout/top-navigation.css",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/dev-video-entry.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/dev-video-review.css",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/dev-video-review.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/lib/dialog-focus.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/lib/local-video-review.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/lib/local-video-review.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/lib/task-video.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/lib/task-video.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/product-entry.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/Coach.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/CoachLab.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/CoachPageTrack.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/CoachPlanViews.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/CoachVideo.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/CoachWorkArea.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/Insights.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/PlanDialogs.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/Resources.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/StudySession.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/Today.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/UxLab.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/Week.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/bootstrap.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/coach-production-fusion.css",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/coach-top-navigation.css",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/coach-v2.css",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/coach-workspace-context.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/coach-workspace-state.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/coach-workspace-state.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/context.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/lab.css",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/model.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/model.ts",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/ux-lab/ui.tsx",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "apps/web/src/workspace.css",
+        "group": "RELEASE SOURCE",
+        "purpose": "Accepted real frontend, isolated DEV review, brand or release build tooling.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "assets/brand/README.md",
+        "group": "RELEASE SOURCE",
+        "purpose": "Official preserved source brand asset.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "assets/brand/source/kpss-kocu-logo.svg",
+        "group": "RELEASE SOURCE",
+        "purpose": "Official preserved source brand asset.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/CONCEPT_B_RELEASE_FREEZE.md",
+        "group": "DOCS",
+        "purpose": "Product acceptance, migration or release record; preserve history.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/FRONTEND_MIGRATION.md",
+        "group": "DOCS",
+        "purpose": "Product acceptance, migration or release record; preserve history.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/LOGO_INTEGRATION.md",
+        "group": "DOCS",
+        "purpose": "Product acceptance, migration or release record; preserve history.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/UX_REDESIGN.md",
+        "group": "DOCS",
+        "purpose": "Product acceptance, migration or release record; preserve history.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/VIDEO_INTEGRATION_AUDIT.md",
+        "group": "DOCS",
+        "purpose": "Product acceptance, migration or release record; preserve history.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/VIDEO_LOCAL_AUTHENTICATED_ACCEPTANCE.md",
+        "group": "DOCS",
+        "purpose": "Product acceptance, migration or release record; preserve history.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/README.md",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/asset-verification.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/browser-measurements.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/full-preview.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/lab-desktop-1440.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/lab-focus-desktop-1440.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/lab-focus-mobile-390.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/lab-mobile-390.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/lab-tablet-834.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/local-asset-responses.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/login-desktop-1440.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/login-mobile-390.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/mark-16px.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/mark-32px.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/mark-48px.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/mark-scale-comparison.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/product-desktop-1440.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/product-mobile-390.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/product-tablet-834.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/register-mobile-390.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/source-preview.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/brand-evidence/svg-syntax-verification.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/release-freeze-evidence/README.md",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/release-freeze-evidence/app-api-audit.bundle.js",
+        "group": "GENERATED",
+        "purpose": "Reproducible compiler/build output; exclude from release commit.",
+        "disposition": "Ignored reproducible output; historical generated audit bundle retained in .release/."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/release-freeze-evidence/audit-snapshot.mjs",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/release-freeze-evidence/change-inventory.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/release-freeze-evidence/edge-import-closures.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/release-freeze-evidence/snapshot.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/release-freeze-evidence/today-mobile-aria-390.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/README.md",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/README.md",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/desktop-plan-review.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/desktop-session.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/desktop-today.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/desktop-week.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-coach.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-finish.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-session.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-today-page.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/mobile-today-video.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/responsive-checks.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/tablet-today.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-v2/workspace-final-checks.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/README.md",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/coach-drawer.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-focus.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-progress.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-resources.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-roadmap.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-today.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/desktop-week.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/mobile-focus-lower.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/mobile-focus.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/mobile-today.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-polish/responsive-checks.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/README.md",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/coach-drawer.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-focus.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-progress.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-resources.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-roadmap.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-today-lower.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-today.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/desktop-week.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-focus-lower.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-focus.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-today-lower.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/mobile-today.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/product-token-comparison.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/responsive-checks.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/coach-visual-reset/week-review.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/desktop-coach.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/desktop-focus.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/desktop-product.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/README.md",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-account-review.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-coach-drawer.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-coach.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-focus.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-progress.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-resources.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-roadmap.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-sticky.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-today.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/desktop-week.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-coach.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-focus.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-menu.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/mobile-today.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/product-login-blocker.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/regression-results.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/responsive-matrix.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/tablet-focus.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/tablet-menu.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/tablet-today.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/validation-summary.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-authenticated-acceptance-evidence.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-authenticated-today-blocked.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-integration-local-auth.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-integration-regression-results.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-api-evidence.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-checkpoint-cadence.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-final-console.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-final-evidence.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-finished-db.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-finished-today.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-fixture-replay.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-focus-playing.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping-db.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping-ui.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-missing-mapping.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-paused-db.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-postgrest-auth-cycles.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-postgrest-runtime.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-refresh-paused.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-refresh-stable-db.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-regression-results.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-start-db.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-validation-summary.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/frontend-migration/video-recovery-youtube-paused.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/interaction-checks.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/mobile-coach.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/mobile-resource.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/mobile-session.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/mobile-week.png",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "docs/product/ux-lab-evidence/responsive-checks.json",
+        "group": "EVIDENCE",
+        "purpose": "Retained acceptance/audit evidence; inspect for credentials before committing.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "packages/domain/tsconfig.tsbuildinfo",
+        "group": "GENERATED",
+        "purpose": "Reproducible compiler/build output; exclude from release commit.",
+        "disposition": "Ignored reproducible output; historical generated audit bundle retained in .release/."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "scripts/check-ux-lab.mjs",
+        "group": "RELEASE SOURCE",
+        "purpose": "Intentional release configuration/tooling; review with source and lockfile.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "scripts/local-video-acceptance.mjs",
+        "group": "LOCAL ONLY",
+        "purpose": "Reviewed repository tooling with LOCAL guards; safe to version, not a deploy artifact.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "scripts/setup-local-video-acceptance-fixture.mjs",
+        "group": "LOCAL ONLY",
+        "purpose": "Reviewed repository tooling with LOCAL guards; safe to version, not a deploy artifact.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "tests/local-video-acceptance-safety.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      },
+      {
+        "status": "UNTRACKED",
+        "path": "tests/video-integration-ui-contract.test.ts",
+        "group": "TEST",
+        "purpose": "Regression/contract coverage for the accepted implementation and release safety.",
+        "disposition": "Preserved in intentional release file set."
+      }
+    ]
+  },
+  "ignoredLocalInputs": [
+    "apps/web/.env.local",
+    "apps/web/.env.local.backup",
+    "supabase/.temp/",
+    "apps/web/dist/",
+    ".release/",
+    "*.tsbuildinfo"
+  ],
+  "production": "NOT DEPLOYED"
+}

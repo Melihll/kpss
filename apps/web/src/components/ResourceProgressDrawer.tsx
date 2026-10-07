@@ -9,12 +9,14 @@ import {
 import { useDialogAccessibility } from "../hooks/useDialogAccessibility";
 
 interface ResourceProgressPanelProps {
+  readonly compact?: boolean;
   readonly resource: ResourceForecast;
   readonly progress: ResourcePageProgress | null;
   readonly onSaved: (progress: ResourcePageProgress) => void;
 }
 
 export function ResourceProgressPanel({
+  compact = false,
   resource,
   progress,
   onSaved,
@@ -73,16 +75,16 @@ export function ResourceProgressPanel({
   }
 
   return <form
-    className="resource-progress-panel"
+    className={`resource-progress-panel ${compact ? "is-compact" : ""}`}
     onSubmit={(event) => void submit(event)}
   >
-    <div className="resource-progress-intro">
+    {!compact && <div className="resource-progress-intro">
       <strong>Gerçek sayfa ilerlemesi</strong>
       <p>
         Kaynağın toplam sayfasını ve şu an kaldığınız sayfayı girin.
         Bu kayıt çalışma planını otomatik olarak değiştirmez.
       </p>
-    </div>
+    </div>}
 
     <label>
       <span>Toplam sayfa</span>
@@ -98,7 +100,7 @@ export function ResourceProgressPanel({
     </label>
 
     <label>
-      <span>Kaldığınız sayfa</span>
+      <span>Geldiğin sayfa</span>
       <input
         type="number"
         min="0"
@@ -123,7 +125,7 @@ export function ResourceProgressPanel({
 
     <footer>
       <button type="submit" className="primary" disabled={saving}>
-        {saving ? "Kaydediliyor…" : "Sayfa ilerlemesini kaydet"}
+        {saving ? "Kaydediliyor…" : compact ? "Sayfayı kaydet" : "Sayfa ilerlemesini kaydet"}
       </button>
     </footer>
   </form>;

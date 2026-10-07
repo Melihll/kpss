@@ -16,19 +16,20 @@ const coach = readFileSync(
   ),
   "utf8",
 );
+const shell = readFileSync(new URL("../apps/web/src/components/layout/AppShell.tsx", import.meta.url), "utf8");
 
 describe("Evre 7B Today problem-solving entry contract", () => {
   it("keeps general and capacity entry context distinct in presentation", () => {
     expect(today).toContain(
-      'setCoachEntryContext("capacity")',
+      'onCoach("capacity")',
     );
 
     expect(today).toContain(
-      'setCoachEntryContext("general")',
+      'onCoach("general")',
     );
 
-    expect(today).toContain(
-      "entryContext={coachEntryContext}",
+    expect(shell).toContain(
+      'entryContext={coachContext ?? "general"}',
     );
 
     expect(coach).toContain(

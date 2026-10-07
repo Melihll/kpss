@@ -1,5 +1,14 @@
 export const YOUTUBE_PROGRESS_CHECKPOINT_MS = 15_000;
 
+/** A paused session restored before SDK readiness must retain its resume intent. */
+export function youtubeResumeIntentOnSessionPause(
+  playerReady: boolean,
+  videoPlaying: boolean,
+  previousIntent: boolean,
+): boolean {
+  return playerReady ? videoPlaying : previousIntent;
+}
+
 interface WatchDeltaInput {
   readonly previousPositionSeconds: number;
   readonly currentPositionSeconds: number;

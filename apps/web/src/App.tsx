@@ -25,6 +25,7 @@ export function App() {
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route element={<AppShell />}>
         <Route index element={<HomePage />} />
+        <Route path="session" element={<HomePage />} />
         <Route path="week" element={<WeekPage />} />
         <Route path="roadmap" element={<RoadmapPage />} />
         <Route path="resources" element={<ResourcesPage />} />

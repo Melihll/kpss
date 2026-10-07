@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { PlanningPanel } from "../components/PlanningPanel";
+import { ProductDialog } from "../components/ProductDialog";
+import { QuickAddTaskDrawer } from "../components/QuickAddTaskDrawer";
+import { TaskActionPreviewDrawer } from "../components/TaskActionPreviewDrawer";
+import type { TaskActionPreviewAction } from "../lib/task-action-preview-ui";
+import type { RoadmapTask } from "../lib/roadmap";
 import { PlannerV2PreviewPanel } from "../components/PlannerV2PreviewPanel";
 import { TaskMaterialOpenButton, TaskMaterialSummary } from "../components/TaskMaterialSummary";
 import { useRoadmap } from "../hooks/useRoadmap";
@@ -21,12 +27,20 @@ function reducedMotion() {
 }
 
 export function WeekPage() {
+  const [params] = useSearchParams();
+  const resourceId = params.get("resource") ?? undefined;
   const { data, loading, error, retry } = useRoadmap({ ensureWeek: true });
   const [selectedDate, setSelectedDate] = useState(isoToday());
   const [displayedDate, setDisplayedDate] = useState(isoToday());
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [changingDay, setChangingDay] = useState(false);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(Boolean(resourceId));
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dropDate, setDropDate] = useState<string | null>(null);
+  const [moveDate, setMoveDate] = useState("");
+  const [taskAction, setTaskAction] = useState<{ task: RoadmapTask; action: TaskActionPreviewAction; targetDate?: string } | null>(null);
   const transitionTimer = useRef<number | null>(null);
   const dayButtons = useRef<Array<HTMLButtonElement | null>>([]);
   const plan = data?.currentWeek?.plan;
@@ -113,6 +127,7 @@ export function WeekPage() {
         </p>}
       </div>
       <div className="week-progress-editorial"><strong>%{progress}</strong><span>{compactMinutesLabel(actual)} tamamlandı</span></div>
+      <div className="week-page-actions"><button className="secondary-action" type="button" onClick={() => setEditorOpen(true)}>Planı düzenle</button><button className="primary-action" type="button" onClick={() => setQuickAddOpen(true)}>Görev Ekle</button></div>
     </header>
     <div className="thin-progress" role="progressbar" aria-label="Haftalık hedef ilerlemesi" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><i style={{ width: `${progress}%` }} /></div>
 
@@ -132,11 +147,14 @@ export function WeekPage() {
               aria-controls="selected-week-day"
               aria-selected={isSelected}
               tabIndex={isSelected ? 0 : -1}
-              className={`${isSelected ? "active" : ""} ${date === isoToday() ? "today" : ""} ${dayCompleted ? "day-complete" : ""} ${dayTasks.length === 0 ? "day-empty" : ""}`}
+              className={`${isSelected ? "active" : ""} ${dropDate === date ? "is-drop-target" : ""} ${date === isoToday() ? "today" : ""} ${dayCompleted ? "day-complete" : ""} ${dayTasks.length === 0 ? "day-empty" : ""}`}
               key={date}
               ref={(node) => { dayButtons.current[index] = node; }}
               onClick={() => selectDay(date)}
               onKeyDown={(event) => handleDayKeyDown(event, index)}
+              onDragOver={(event) => { if (draggedTaskId && date > isoToday()) { event.preventDefault(); setDropDate(date); } }}
+              onDragLeave={() => setDropDate(null)}
+              onDrop={(event) => { event.preventDefault(); const task = tasks.find((item) => item.id === draggedTaskId); if (task && date > isoToday()) setTaskAction({ task, action: "DEFER", targetDate: date }); setDraggedTaskId(null); setDropDate(null); }}
             >
               <span>{DAY_NAMES[index]}</span>
               <strong>{new Date(`${date}T12:00:00Z`).getUTCDate()}</strong>
@@ -184,14 +202,22 @@ export function WeekPage() {
             {expanded && <div className="week-task-detail" id={`week-task-detail-${task.id}`}>
               <TaskMaterialSummary task={task} />
               <TaskMaterialOpenButton task={task} onOpen={openTaskMaterial} />
+              <div className="week-task-inline-actions">
+                {!completed && task.planned_date === isoToday() && <Link to={`/?task=${task.id}`}>Çalışmaya dön</Link>}
+                <button type="button" onClick={() => setTaskAction({ task, action: "DURATION_DETAILS" })}>Süre detayları</button>
+                {!completed && <button type="button" onClick={() => setEditorOpen(true)}>Planı düzenle</button>}
+                {!completed && task.planned_date === isoToday() && <><label>Taşınacak gün<select aria-label={`${taskName(task)} için taşınacak gün`} value={moveDate} onChange={(event) => setMoveDate(event.target.value)}><option value="">Gün seç</option>{dates.filter((date) => date > isoToday()).map((date) => <option key={date} value={date}>{dateLabel(date)}</option>)}</select></label><button type="button" disabled={!moveDate} onClick={() => setTaskAction({ task, action: "DEFER", targetDate: moveDate })}>Taşımayı incele</button><button className="week-drag-handle" type="button" draggable aria-label={`${taskName(task)} görevini gelecek güne sürükle`} onDragStart={(event) => { setDraggedTaskId(task.id); event.dataTransfer.setData("text/plain", task.id); }} onDragEnd={() => { setDraggedTaskId(null); setDropDate(null); }}>⋮⋮ Sürükle</button></>}
+              </div>
             </div>}
           </article>;
         })}</div> : <div className="plain-empty">Bu gün için planlanmış çalışma yok.</div>}
       </section>
 
       <PlannerV2PreviewPanel />
-      <details className="week-edit-tools"><summary><span><Icon name="settings" />Planı düzenle</span><Icon name="arrow" /></summary><PlanningPanel /></details>
       {materialDrawer}
     </> : <div className="plain-empty action-empty"><span>Bu hafta henüz plan oluşturulmadı.</span></div>}
+    <QuickAddTaskDrawer open={quickAddOpen} initialDate={selectedDate} onClose={() => setQuickAddOpen(false)} onApplied={() => void retry()} />
+    <ProductDialog open={editorOpen} title="Haftalık planı düzenle" onClose={() => setEditorOpen(false)}><PlanningPanel initialDate={selectedDate} initialResourceId={resourceId} compact /></ProductDialog>
+    <TaskActionPreviewDrawer request={taskAction} onClose={() => { setTaskAction(null); void retry(); }} />
   </section>;
 }

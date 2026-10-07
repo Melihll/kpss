@@ -1,16 +1,9 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import { App } from "./App";
-import { AuthProvider } from "./auth/AuthContext";
-import "./styles.css";
-
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
-  </StrictMode>,
-);
+// Vite removes the lab import entirely from production builds. Selecting the
+// entry before importing auth also keeps the demo independent of Supabase.
+if (import.meta.env.DEV && /^\/ux-lab\/live-video\/?$/.test(window.location.pathname)) {
+  void import("./dev-video-entry");
+} else if (import.meta.env.DEV && /^\/ux-lab(?:\/|$)/.test(window.location.pathname)) {
+  void import("./ux-lab/bootstrap");
+} else {
+  void import("./product-entry");
+}
