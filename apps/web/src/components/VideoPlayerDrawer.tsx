@@ -187,14 +187,14 @@ function EmbeddedYouTubePlayer({
   playerRef,
 }: EmbeddedYouTubePlayerProps) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const tickTimerRef = useRef<number | null>(null);
   const watchedRef = useRef(initialProgress?.watchedSeconds ?? 0);
   const positionRef = useRef(initialProgress?.lastPositionSeconds ?? 0);
   const previousPositionRef = useRef(initialProgress?.lastPositionSeconds ?? 0);
   const previousWallRef = useRef(performance.now());
   const flushRef = useRef<() => void>(() => undefined);
-  const destroyedRef = useRef(false);
-  const initialRef = useRef(initialProgress);
+  const generationRef = useRef(0);
+  const initialRef = useRef({ videoId: video.id, progress: initialProgress });
+  if (initialRef.current.videoId !== video.id) initialRef.current = { videoId: video.id, progress: initialProgress };
   const playbackRef = useRef(playback);
   const playingRef = useRef(false);
   const resumeVideoRef = useRef(true);
@@ -212,12 +212,28 @@ function EmbeddedYouTubePlayer({
   }, [playback, playerRef]);
 
   useEffect(() => {
-    destroyedRef.current = false;
-    let cancelled = false;
+    const host = hostRef.current;
+    if (!host) return;
+    const generation = ++generationRef.current;
+    let retired = false;
+    const isCurrent = () => !retired && generationRef.current === generation;
+    let tickTimer: number | null = null;
     let localPlayer: YTPlayer | null = null;
     let playerReady = false;
     let pauseAfterRestoreSeek = false;
+    // React owns the host. Only this imperative subtree belongs to the SDK.
+    const sdkRoot = document.createElement("div");
+    sdkRoot.style.width = "100%";
+    sdkRoot.style.height = "100%";
+    const sdkTarget = document.createElement("div");
+    sdkRoot.appendChild(sdkTarget);
+    host.appendChild(sdkRoot);
+    const initial = initialRef.current.progress;
     const writer = sharedYouTubeProgressWriter<VideoProgress>(`${userId}:${video.id}`, {
+      initialCheckpoint: {
+        lastPositionSeconds: initial?.lastPositionSeconds ?? 0,
+        watchedSeconds: initial?.watchedSeconds ?? 0,
+      },
       send: async (body) => {
         const payload = await callAppApi<VideoProgressResponse>(
           `/youtube-videos/${video.id}/progress`,
@@ -228,15 +244,22 @@ function EmbeddedYouTubePlayer({
         return saved;
       },
     });
+    // A remount while the final PUT is in flight must not restore an older GET.
+    const pending = writer.pendingCheckpoint();
+    positionRef.current = pending?.lastPositionSeconds ?? initial?.lastPositionSeconds ?? 0;
+    watchedRef.current = pending?.watchedSeconds ?? initial?.watchedSeconds ?? 0;
+    previousPositionRef.current = positionRef.current;
+    previousWallRef.current = performance.now();
+    playingRef.current = false;
     const unsubscribe = writer.subscribe(
-      (saved) => { if (!cancelled && !destroyedRef.current) onSaved(saved); },
-      () => { if (!cancelled && !destroyedRef.current) onError("Video ilerlemesi kaydedilemedi."); },
+      (saved) => { if (isCurrent()) onSaved(saved); },
+      () => { if (isCurrent()) onError("Video ilerlemesi kaydedilemedi."); },
     );
 
     const stopTicking = () => {
-      if (tickTimerRef.current !== null) {
-        window.clearInterval(tickTimerRef.current);
-        tickTimerRef.current = null;
+      if (tickTimer !== null) {
+        window.clearInterval(tickTimer);
+        tickTimer = null;
       }
     };
 
@@ -245,11 +268,11 @@ function EmbeddedYouTubePlayer({
       watchedSeconds: Math.max(0, Math.min(video.durationSeconds, Math.floor(watchedRef.current))),
     });
     const save = () => {
-      if (!localPlayer || !playerReady) return;
+      if (!isCurrent() || !localPlayer || !playerReady) return;
       writer.flush(snapshot());
     };
 
-    const tick = () => {
+    const sample = () => {
       if (!localPlayer || !playerReady) return;
       const now = performance.now();
       const currentPosition = Math.max(
@@ -276,23 +299,27 @@ function EmbeddedYouTubePlayer({
       previousPositionRef.current = currentPosition;
       previousWallRef.current = now;
 
+    };
+    const tick = () => {
+      if (!isCurrent() || !playerReady) return;
+      sample();
       writer.checkpoint(snapshot());
     };
     const flush = () => { tick(); save(); };
     flushRef.current = flush;
 
     const startTicking = () => {
-      if (!playerReady || tickTimerRef.current !== null) return;
+      if (!isCurrent() || !playerReady || tickTimer !== null) return;
       previousWallRef.current = performance.now();
       previousPositionRef.current = localPlayer?.getCurrentTime() ?? positionRef.current;
-      tickTimerRef.current = window.setInterval(tick, 1000);
+      tickTimer = window.setInterval(tick, 1000);
     };
 
     void loadYouTubeIframeApi()
       .then((YT) => {
-        if (cancelled || destroyedRef.current || !hostRef.current) return;
+        if (!isCurrent()) return;
 
-        localPlayer = new YT.Player(hostRef.current, {
+        localPlayer = new YT.Player(sdkTarget, {
           videoId: video.youtubeVideoId,
           playerVars: {
             playsinline: 1,
@@ -301,10 +328,10 @@ function EmbeddedYouTubePlayer({
           },
           events: {
             onReady: ({ target }) => {
-              if (cancelled || destroyedRef.current) return;
+              if (!isCurrent()) return;
               playerReady = true;
               playerRef.current = target;
-              const resume = initialRef.current?.lastPositionSeconds ?? 0;
+              const resume = positionRef.current;
               if (resume > 0 && resume < video.durationSeconds - 2) {
                 pauseAfterRestoreSeek = playbackRef.current !== "running";
                 target.seekTo(resume, true);
@@ -315,6 +342,7 @@ function EmbeddedYouTubePlayer({
               else target.pauseVideo();
             },
             onStateChange: (event) => {
+              if (!isCurrent() || !playerReady) return;
               playingRef.current = event.data === YT.PlayerState.PLAYING;
               if (event.data === YT.PlayerState.PLAYING) {
                 // seekTo can finish asynchronously after the initial pause.
@@ -351,13 +379,14 @@ function EmbeddedYouTubePlayer({
               }
             },
             onError: () => {
+              if (!isCurrent()) return;
               stopTicking();
               onError("YouTube videosu oynatılamadı.");
             },
           },
         });
       })
-      .catch(() => onError("YouTube oynatıcı yüklenemedi."));
+      .catch(() => { if (isCurrent()) onError("YouTube oynatıcı yüklenemedi."); });
 
     const onVisibility = () => {
       if (document.visibilityState === "hidden") {
@@ -374,19 +403,23 @@ function EmbeddedYouTubePlayer({
     window.addEventListener("pagehide", onPageHide);
 
     return () => {
-      if (cancelled) return;
-      tick();
-      save();
-      playerReady = false;
-      destroyedRef.current = true;
-      cancelled = true;
-      unsubscribe();
-      if (flushRef.current === flush) flushRef.current = () => undefined;
+      if (retired) return;
+      retired = true;
+      if (generationRef.current === generation) generationRef.current++;
       stopTicking();
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pagehide", onPageHide);
-      localPlayer?.destroy();
+      unsubscribe();
+      if (flushRef.current === flush) flushRef.current = () => undefined;
       if (playerRef.current === localPlayer) playerRef.current = null;
+      if (playerReady) {
+        // An unavailable SDK cannot discard the last successfully sampled point.
+        try { sample(); } catch { /* Flush the cached snapshot below. */ }
+        writer.flush(snapshot());
+      }
+      playerReady = false;
+      try { localPlayer?.destroy(); } catch { /* The SDK subtree may already be detached. */ }
+      finally { sdkRoot.remove(); }
     };
   }, [
     userId,
@@ -570,7 +603,6 @@ export function VideoPlayerPanel({
             : <EmbeddedYouTubePlayer
                 userId={user.id}
                 checkpointContext={checkpointContext}
-                key={selectedVideo.id}
                 playlistId={selectedPlaylistId}
                 video={selectedVideo}
                 initialProgress={progress}

@@ -1,0 +1,150 @@
+{
+  "measuredAt": "2026-10-07T11:34:18.627Z",
+  "scope": "LOCAL ONLY; no production access, mutation, push or deployment",
+  "failedParent": "caf69b4e7a931b8233a63e863205dfbc93419a20",
+  "reproduction": {
+    "beforeRepair": "NotFoundError: The node to be removed is not a child of this node.",
+    "afterRepair": "PASS; real React component with SDK target.replaceWith(iframe)",
+    "fakeCatalogSize": 91,
+    "componentTests": 11,
+    "additionalWriterTests": 2
+  },
+  "authenticated": {
+    "account": "video-acceptance-local@example.test",
+    "profileId": "a9cb4d62-5d48-4bdd-a17d-ae8c6f240f31",
+    "taskId": "374eb1db-6ee9-4d4c-a1c1-6f039859ecf6",
+    "resourceId": "60851e79-8597-4c88-afbb-9cefcfccedca",
+    "catalogSize": 3,
+    "canonicalIdentityPreserved": true,
+    "previousSessionsPreserved": 5,
+    "previousOriginalVideoProgressUnchanged": true,
+    "addedCompletedSession": {
+      "id": "3f648150-b201-4cec-b09b-05520851bb5d",
+      "task_id": "374eb1db-6ee9-4d4c-a1c1-6f039859ecf6",
+      "status": "completed",
+      "duration_minutes": 1
+    },
+    "activeSessions": 0,
+    "progressRowCount": 2,
+    "duplicateProgressRows": 0,
+    "progress": [
+      {
+        "catalogVideoId": "9eb7bfba-1a41-4fb5-a098-1a29474c72fa",
+        "position": 870,
+        "watched": 368,
+        "updatedAt": "2026-10-05T16:21:02.690883+00:00"
+      },
+      {
+        "catalogVideoId": "87b746c0-c7e9-407e-a378-883fecfbafa8",
+        "position": 808,
+        "watched": 806,
+        "updatedAt": "2026-10-07T11:34:04.646921+00:00"
+      }
+    ]
+  },
+  "stress": {
+    "sequentialRuns": [
+      20,
+      20
+    ],
+    "selections": 40,
+    "loadingSelectionsSecondRun": 7,
+    "inFlightSelectionsSecondRun": 4,
+    "blankRootEvents": 0,
+    "uncaughtDomErrors": 0,
+    "maxDrawerIframes": 1,
+    "finalVideo": "YouTube Developers Live: Embedded Web Player Customization",
+    "instancesTimersListeners": "deterministic balanced counters PASS; browser drawer iframe bound PASS; no heap profiling claim"
+  },
+  "transport": {
+    "maximumMeasuredActive": 1,
+    "maximumMeasuredPerVideo": {
+      "87b746c0-c7e9-407e-a378-883fecfbafa8": 1
+    },
+    "maximumPending": "1 latest checkpoint per owner/catalog-video stream; deterministic tests",
+    "successfulPuts": 16,
+    "controlledFailures": 3,
+    "controlledFailureGapsMs": [
+      16013,
+      15982
+    ],
+    "slowPuts": [
+      {
+        "startedAt": "2026-10-07T10:39:35.597Z",
+        "durationMs": 20623,
+        "status": 200
+      },
+      {
+        "startedAt": "2026-10-07T10:39:56.259Z",
+        "durationMs": 20705,
+        "status": 200
+      },
+      {
+        "startedAt": "2026-10-07T10:40:17.001Z",
+        "durationMs": 20638,
+        "status": 200
+      },
+      {
+        "startedAt": "2026-10-07T10:40:37.681Z",
+        "durationMs": 20565,
+        "status": 200
+      },
+      {
+        "startedAt": "2026-10-07T10:40:58.279Z",
+        "durationMs": 20557,
+        "status": 200
+      },
+      {
+        "startedAt": "2026-10-07T11:28:09.688Z",
+        "durationMs": 45536,
+        "status": 200
+      },
+      {
+        "startedAt": "2026-10-07T11:28:55.241Z",
+        "durationMs": 45175,
+        "status": 200
+      },
+      {
+        "startedAt": "2026-10-07T11:29:40.423Z",
+        "durationMs": 45254,
+        "status": 200
+      }
+    ],
+    "postFailureRecovery": "PASS",
+    "finalFlush": "PASS"
+  },
+  "console": {
+    "uncaughtDomErrors": 0,
+    "profileLoadFailed": 0,
+    "caughtLocalRuntimeErrors": 4,
+    "caughtRuntimeWindow": "2026-10-07T11:22:44Z; local Edge restart; recovered on refresh; no app source fix",
+    "postRecoveryErrors": 0,
+    "expectedControlledProgressFailures": 3
+  },
+  "validation": {
+    "tests": 1548,
+    "files": 205,
+    "typecheck": "PASS",
+    "lint": "PASS: existing 19-file UX Lab scope",
+    "build": "PASS: LOCAL inputs only; not a production promotion artifact",
+    "security": "PASS: current changed paths; staged and committed scan required",
+    "currentSafetyScripts": 6,
+    "diffCheck": "PASS"
+  },
+  "sourceSha256": {
+    "apps/web/src/components/VideoPlayerDrawer.tsx": "a2c97846c56a87217b543acc6d6422b21a5e499561d3b691cdcc464243b71a3b",
+    "apps/web/src/components/VideoPlayerDrawer.test.ts": "53a12a9b91a873f8c3885091f0bfa617ecc4059a74bec2e95a8044589a8c597f",
+    "apps/web/src/lib/youtube-progress-writer.ts": "004e1870ee9e9a9ee2d6ee4fdcc5864274c8a82962bed26a6149b053b183ec17",
+    "apps/web/src/lib/youtube-progress-writer.test.ts": "f914ca905906520a0c606b4b48cb259e535682d7086b8e6a548d0190c08ce43f",
+    "package.json": "e8e1d55e863a13cfa2d1c9d42f6ec59be5d543cd85fd70d1a67d90f6833fb14c",
+    "pnpm-lock.yaml": "46874edc0e9409e6e5b4ef526fae0843f11152c8eaef5b6e7ce0b5bcba4dafe4"
+  },
+  "historicalRollbackSha256": "21eefbaf9862b8f03b2a3c7f71c7e46367ad91884ac2efcca627f11125a1647a",
+  "productionLastRecorded": {
+    "webDeployment": "b187f696-2bd8-4fc6-b4d8-1e505f2421a9",
+    "webSource": "cbc209fdf34f217b6d1419612199ee8c8370fe4b",
+    "appApi": "v79 ACTIVE; verify_jwt=true",
+    "database": "unchanged; no SQL/migrations",
+    "notRequeriedInThisLocalTask": true
+  }
+}

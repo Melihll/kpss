@@ -1,3 +1,11 @@
+> **2026-10-07 — P1 VIDEO LIFECYCLE: LOCAL GREEN / NEW RC PENDING**
+>
+> **Production rollback incident repaired locally; new RC pending.** Exact React/SDK DOM ownership failure reproduced before source repair, then SDK replacement/unmount regression GREEN. Stable host, imperative children, generation guards and idempotent retirement preserve the existing progress writer.
+>
+> - **1548/1548 tests / 205 files PASS**, typecheck, scoped lint, LOCAL build, security, six current safety scripts and diff check PASS. Authenticated LOCAL Resources switch/close/reopen/refresh and Today→Focus pause/resume/finish PASS; **40 real selections**, max checkpoint concurrency 1, no blank root/uncaught DOM error, old fixture/session data preserved.
+> - A new **LOCAL-only commit** follows failed RC `caf69b4e7a931b8233a63e863205dfbc93419a20`; failed RC is not amended or reused. **No push, production access/deploy/SQL, migration, schema, backend or gate changes.** Future repair surface: web only; app-api v79 ACTIVE and database unchanged per incident record.
+> - [Repair report and limits](VIDEO_PLAYER_LIFECYCLE_FIX.md), [unchanged rollback history](releases/2026-10-07_CONCEPT_B_PRODUCTION_ROLLBACK.md). **Ready for a separate new release freeze; production is not GREEN. Stop after clean local commit.**
+
 > **2026-10-07 — RELEASE BLOCKER CLOSURE: LOCAL GREEN / NOT DEPLOYED**
 >
 > - Original 45 tracked + 183 untracked paths individually classified and preserved; intentional accepted source/tests/docs/evidence enter one authorized local release commit. LOCAL/generated inputs are ignored. The exact RC is the commit containing this record; parent `ea17ee281cb192304abfb518ff4f50b1ab3ecfdd`. Final exact-HEAD/postcommit validation and clean 1/0 upstream state are required before GO; see ignored `.release/final-freeze.json` and the final report.

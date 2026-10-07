@@ -13,6 +13,7 @@ interface VersionedCheckpoint {
 
 interface WriterOptions<Result> {
   send: (body: YouTubeCheckpoint) => Promise<Result>;
+  initialCheckpoint?: YouTubeCheckpoint;
   now?: () => number;
   intervalMs?: number;
   onIdle?: () => void;
@@ -35,6 +36,12 @@ export class YouTubeProgressWriter<Result> {
     this.now = options.now ?? (() => performance.now());
     this.interval = options.intervalMs ?? YOUTUBE_PROGRESS_CHECKPOINT_MS;
     this.lastAttempt = this.now();
+    if (options.initialCheckpoint) this.latest = {body: {...options.initialCheckpoint}, revision: 0, critical: false};
+  }
+
+  /** Only unsent/in-flight transport state, scoped to the same owned stream. */
+  pendingCheckpoint(): YouTubeCheckpoint | null {
+    return this.dirty && this.latest ? { ...this.latest.body } : null;
   }
 
   subscribe(saved: (value: Result) => void, error: () => void): () => void {

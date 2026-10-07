@@ -1,3 +1,11 @@
+> **2026-10-07 — P1 VIDEO LIFECYCLE: LOCAL GREEN / NEW RC PENDING**
+>
+> **Production rollback incident repaired locally; new RC pending.** SDK replacement of React-owned DOM reproduced as the exact NotFoundError before repair. Stable React host + imperative SDK children, generation guards and at-most-once destroy now pass actual-component SDK replacement, StrictMode, slow/fail/final-flush regressions.
+>
+> - Full regression **1548 tests / 205 files PASS**, typecheck, existing scoped lint, LOCAL-input build, six current safety scripts, secrets scan and diff check PASS. Real dedicated LOCAL Resources/Today/Focus acceptance: **40 selections**, 4 overlapping delayed PUT, maximum active checkpoint PUT 1, no uncaught DOM error/blank root, one new completed session, original progress/five sessions preserved. PROFILE_LOAD_FAILED not reproduced; separate LOCAL runtime restart documented.
+> - New local commit on failed parent `caf69b4e7a931b8233a63e863205dfbc93419a20`; do not amend/redeploy failed RC. **No push/deployment/production access/SQL/migration/schema/backend/gate changes**. Repair's next surface is **web only**; app-api v79 and database untouched.
+> - Recorded production web remains restored `b187f696-2bd8-4fc6-b4d8-1e505f2421a9` / source `cbc209fdf34f217b6d1419612199ee8c8370fe4b`; incident history preserved. [Repair and evidence](VIDEO_PLAYER_LIFECYCLE_FIX.md). Stop after clean local commit; separate new release freeze required. **Production is not marked GREEN.**
+
 > **2026-10-07 — RELEASE BLOCKER CLOSURE: LOCAL GREEN / NOT DEPLOYED**
 >
 > - Original 45 tracked + 183 untracked paths individually classified and preserved; intentional accepted source/tests/docs/evidence enter one authorized local release commit. LOCAL/generated inputs are ignored. The exact RC is the commit containing this record; parent `ea17ee281cb192304abfb518ff4f50b1ab3ecfdd`. Final exact-HEAD/postcommit validation and clean 1/0 upstream state are required before GO; see ignored `.release/final-freeze.json` and the final report.

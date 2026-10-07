@@ -14,6 +14,34 @@ describe("existing YouTube progress PUT backpressure", () => {
   beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(0); });
   afterEach(() => vi.useRealTimers());
 
+  it("does not write an unchanged verified initial checkpoint on ready/cleanup", async () => {
+    const send = vi.fn(async (body: YouTubeCheckpoint) => body);
+    const writer = new YouTubeProgressWriter({send, now: Date.now, initialCheckpoint: point(100, 20)});
+    writer.flush(point(100, 20));
+    writer.flush(point(100, 20));
+    await settle();
+    expect(send).not.toHaveBeenCalled();
+    expect(writer.pendingCheckpoint()).toBeNull();
+    writer.flush(point(101, 21));
+    await settle();
+    expect(send).toHaveBeenCalledExactlyOnceWith(point(101, 21));
+  });
+
+  it("exposes only the latest dirty checkpoint to the same stream's remount", async () => {
+    const active = deferred<YouTubeCheckpoint>();
+    const send = vi.fn().mockReturnValueOnce(active.promise).mockImplementation(async body => body);
+    const writer = new YouTubeProgressWriter<YouTubeCheckpoint>({send, now: Date.now, initialCheckpoint: point(100, 20)});
+    writer.flush(point(115, 35));
+    await settle();
+    writer.flush(point(116, 36));
+    expect(writer.pendingCheckpoint()).toEqual(point(116, 36));
+    expect(writer.pendingCheckpoint()).not.toBe(writer.pendingCheckpoint());
+    active.resolve(point(115, 35));
+    await settle();
+    expect(send.mock.calls.map(([body]) => body)).toEqual([point(115, 35), point(116, 36)]);
+    expect(writer.pendingCheckpoint()).toBeNull();
+  });
+
   it("saves normal checkpoints at fifteen seconds and deduplicates unchanged lifecycle flushes", async () => {
     const send = vi.fn(async (body: YouTubeCheckpoint) => body);
     const saved = vi.fn();
