@@ -27,7 +27,7 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; }
+body { margin: 0; min-width: min(320px, 100%); min-height: 100vh; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; }
 body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .32; background: radial-gradient(circle at 72% 2%, rgba(79, 70, 229, .045), transparent 24rem), repeating-linear-gradient(91deg, rgba(17,17,19,.012) 0, rgba(17,17,19,.012) 1px, transparent 1px, transparent 5px); }
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
@@ -354,7 +354,7 @@ html,body,.product-shell{overflow-x:hidden}.coach-drawer-body{overscroll-behavio
 .focus-now-card.is-paused{background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(241,241,239,.72))}
 .focus-now-card.is-paused .focus-status i{animation:none;opacity:.42}
 .focus-session-actions{display:flex;align-items:center;gap:10px;margin-top:auto;flex-wrap:wrap}
-.focus-session-actions .focus-action{margin-top:0}
+.focus-session-actions .focus-action{grid-area:auto;margin-top:0}
 .focus-action.break{border:1px solid rgba(17,17,19,.12);background:rgba(255,255,255,.72);color:var(--text)}
 .focus-action.break:hover:not(:disabled){background:#fff;border-color:rgba(17,17,19,.22)}
 .focus-action.break.resume{background:var(--text);color:var(--surface)}

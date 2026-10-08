@@ -1,0 +1,386 @@
+{
+  "localOnly": true,
+  "productionAccepted": false,
+  "previousRc": "e58e5d7704b95ccf82416904a3f65bce9c5ccb1f",
+  "pointer": {
+    "old": [
+      {
+        "page": "today",
+        "result": "RED",
+        "intended": "Mola ver",
+        "receiver": "Çalışmayı Bitir",
+        "overlap": 5888.299865722656,
+        "method": "POST",
+        "path": "/functions/v1/app-api/study-sessions/00000000-0000-4000-8000-000000000001/finish",
+        "transport": "fixture"
+      },
+      {
+        "page": "focus",
+        "result": "RED",
+        "intended": "Mola ver",
+        "receiver": "Çalışmayı Bitir",
+        "overlap": 5888.299865722656,
+        "method": "POST",
+        "path": "/functions/v1/app-api/study-sessions/00000000-0000-4000-8000-000000000001/finish",
+        "transport": "fixture"
+      }
+    ],
+    "repaired": {
+      "viewports": 7,
+      "pages": 2,
+      "actualPointerActions": 42,
+      "expectedResponses": 42,
+      "overlap": 0,
+      "geometry": "PASS",
+      "receivers": "PASS",
+      "contracts": "PASS",
+      "fixtureOnly": true
+    }
+  },
+  "matrix": [
+    {
+      "width": 320,
+      "focus": false,
+      "phase": "matrix-today-320",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 320,
+      "focus": true,
+      "phase": "matrix-focus-320",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 360,
+      "focus": false,
+      "phase": "matrix-today-360",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 360,
+      "focus": true,
+      "phase": "matrix-focus-360",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 375,
+      "focus": false,
+      "phase": "matrix-today-375",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 375,
+      "focus": true,
+      "phase": "matrix-focus-375",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "focus": false,
+      "phase": "matrix-today-390",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "focus": true,
+      "phase": "matrix-focus-390",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 414,
+      "focus": false,
+      "phase": "matrix-today-414",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 414,
+      "focus": true,
+      "phase": "matrix-focus-414",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 768,
+      "focus": false,
+      "phase": "matrix-today-768",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 768,
+      "focus": true,
+      "phase": "matrix-focus-768",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 1280,
+      "focus": false,
+      "phase": "matrix-today-1280",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    },
+    {
+      "width": 1280,
+      "focus": true,
+      "phase": "matrix-focus-1280",
+      "overlap": 0,
+      "geometry": "PASS",
+      "pointerActions": [
+        "pause",
+        "resume",
+        "finish"
+      ],
+      "transport": "fixture",
+      "networkVerification": "PASS",
+      "result": "PASS"
+    }
+  ],
+  "session": {
+    "result": "PASS",
+    "sessionId": "5fcb3dc5-301b-4270-ae71-91f45f36f896",
+    "addedSessions": 1,
+    "taskCountBefore": 6,
+    "taskCountAfter": 6,
+    "sameSession": true,
+    "requests": [
+      {
+        "method": "POST",
+        "path": "/functions/v1/app-api/study-sessions/start",
+        "status": 201,
+        "outcome": "legacy_started"
+      },
+      {
+        "method": "POST",
+        "path": "/functions/v1/app-api/study-sessions/5fcb3dc5-301b-4270-ae71-91f45f36f896/pause",
+        "status": 200,
+        "outcome": "paused"
+      },
+      {
+        "method": "POST",
+        "path": "/functions/v1/app-api/study-sessions/5fcb3dc5-301b-4270-ae71-91f45f36f896/resume",
+        "status": 200,
+        "outcome": "resumed"
+      },
+      {
+        "method": "POST",
+        "path": "/functions/v1/app-api/study-sessions/5fcb3dc5-301b-4270-ae71-91f45f36f896/pause",
+        "status": 200,
+        "outcome": "paused"
+      },
+      {
+        "method": "POST",
+        "path": "/functions/v1/app-api/study-sessions/5fcb3dc5-301b-4270-ae71-91f45f36f896/resume",
+        "status": 200,
+        "outcome": "resumed"
+      },
+      {
+        "method": "POST",
+        "path": "/functions/v1/app-api/study-sessions/5fcb3dc5-301b-4270-ae71-91f45f36f896/pause",
+        "status": 200,
+        "outcome": "paused"
+      },
+      {
+        "method": "POST",
+        "path": "/functions/v1/app-api/study-sessions/5fcb3dc5-301b-4270-ae71-91f45f36f896/resume",
+        "status": 200,
+        "outcome": "resumed"
+      },
+      {
+        "method": "POST",
+        "path": "/functions/v1/app-api/study-sessions/5fcb3dc5-301b-4270-ae71-91f45f36f896/finish",
+        "status": 200,
+        "outcome": "legacy_completed"
+      }
+    ],
+    "pauses": 3,
+    "resumes": 3,
+    "finishes": 1,
+    "unexpectedFinish": 0,
+    "activeSessionsAfter": 0,
+    "newBreaks": 3,
+    "accounting": {
+      "rowsAdded": 0,
+      "rowsUpdated": 1,
+      "completedBefore": 7,
+      "completedAfter": 9,
+      "expectedMinutes": 2,
+      "elapsedSeconds": 294.359,
+      "breakSeconds": 129.439,
+      "remainingBefore": 53,
+      "remainingAfter": 51
+    },
+    "delayedPauseMs": [
+      12077,
+      12078
+    ],
+    "pendingRerenders": 30,
+    "oldSessionsPreserved": true,
+    "refreshes": [
+      {
+        "phase": "live-refresh-running",
+        "sameSession": true,
+        "paused": false
+      },
+      {
+        "phase": "live-refresh-running",
+        "sameSession": true,
+        "paused": false
+      },
+      {
+        "phase": "live-refresh-paused",
+        "sameSession": true,
+        "paused": true
+      },
+      {
+        "phase": "live-refresh-paused",
+        "sameSession": true,
+        "paused": true
+      }
+    ],
+    "measuredNetworkIssues": 0,
+    "preflightAnomalies": [
+      {
+        "id": 1131,
+        "at": "2026-10-08T11:25:24.009Z",
+        "transport": "live",
+        "phase": "live-start",
+        "method": "GET",
+        "path": "/functions/v1/app-api/p48/roadmap",
+        "status": 503,
+        "durationMs": 1849,
+        "completedAt": "2026-10-08T11:25:25.859Z"
+      }
+    ],
+    "consoleIssues": 0
+  },
+  "validation": {
+    "tests": 1555,
+    "testFiles": 206,
+    "scopedTests": 50,
+    "scopedFiles": 5,
+    "protectedFiles": 319,
+    "previousArtifactFiles": 24,
+    "previousArtifactSha": "bc6bf2c48559aa60a4f243bfe44a39c151380d6102a1c34f2422234add2aabde",
+    "safetyScripts": 6,
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "LOCAL PASS",
+    "syntax": "PASS",
+    "diff": "PASS"
+  },
+  "productionActions": "NONE"
+}
