@@ -1,4 +1,7 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { requireTimeWindowCapacity } from "../_shared/capacity-capability.ts";
+import { initialManualPlanRoute, initialManualToday, hasInitialManualPlan } from "../_shared/initial-manual-plan.ts";
+import { weeklyStudyViewRoute } from "../_shared/weekly-study-view.ts";
 import {
   buildP48Months,
   buildP48WeekBlocks,
@@ -21,6 +24,7 @@ import { buildTaskActionPreview, carryoverPreviewDates, type TaskActionPreviewAc
 import { normalizeResourceProgress, presentResourceProgress } from "../_shared/resource-progress.ts";
 import { buildWeeklyCapacitySummary } from "../_shared/capacity-summary.ts";
 import { classifyP48CapacitySource } from "../_shared/p48-capacity-source.ts";
+import { p48GenerationReadiness } from "../_shared/p48-generation-readiness.ts";
 import { loadMaterialWorkloads } from "../_shared/material-workload.ts";
 import { normalizeTopicResourceLinkInput } from "../_shared/topic-resource-link.ts";
 import { fetchYouTubePlaylistCatalog } from "../_shared/youtube-playlist.ts";
@@ -109,6 +113,8 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   PLANNER_V2_PROPOSAL_NOT_FOUND: 404,
   NO_ACTIVE_EXAM_PROFILE: 400,
   NO_WEEKLY_AVAILABILITY: 400,
+  CAPACITY_MODEL_UNSUPPORTED: 409,
+  CAPACITY_TIMED_EXCEPTION_UNSUPPORTED: 409,
   INVALID_TEST_RESULT: 400,
   INVALID_TEST_RESULT_TOTAL: 400,
   INVALID_TEST_RESULT_COUNTS: 400,
@@ -180,7 +186,22 @@ const domainErrorStatuses: Readonly<Record<string, number>> = {
   YOUTUBE_VIDEO_PROGRESS_INVALID_POSITION: 400,
   YOUTUBE_VIDEO_PROGRESS_INVALID_WATCHED_SECONDS: 400,
   P48_STRATEGY_NOT_CONFIGURED: 409,
+  P48_SETUP_REQUIRED: 409,
+  P48_EXPLICIT_INTENT_REQUIRED: 400,
+  P48_EXAM_DATE_REQUIRED: 409,
+  P48_SUBJECTS_REQUIRED: 409,
+  P48_RESOURCES_REQUIRED: 409,
   P48_CAPACITY_SOURCE_MISSING: 409,
+  PLANNING_FRESHNESS_REQUIRED: 409,
+  PLANNING_INPUT_STALE: 409,
+  V0_PLANNING_RETIRED: 410,
+  TASK_NOT_REPLANNABLE: 409,
+  INVALID_PLAN_SUBJECT: 409,
+  INVALID_PLAN_RESOURCE: 409,
+  INVALID_PLAN_DATE: 409,
+  PLAN_CAPACITY_EXCEEDED: 409,
+  P48_NO_EFFECTIVE_CAPACITY: 409,
+  P48_EXISTING_COMMITMENTS: 409,
   PHYSICAL_RESOURCE_UNIT_SELECTION_INVALID: 409,
   PHYSICAL_SESSION_OWNERSHIP_CONFLICT: 409,
   PHYSICAL_SESSION_CANCEL_UNAVAILABLE: 409,
@@ -270,6 +291,7 @@ async function buildContext(
   userId: string,
   weekStartDate: string,
 ): Promise<WeeklyPlanningContext> {
+  await requireTimeWindowCapacity(client, userId, profileId);
   const [selectionResult, progressResult, curriculumResult, availabilityResult, resourcesResult] = await Promise.all([
     client.from("user_subjects").select("subject_id, status, subjects(id, name, sort_order)").eq("exam_profile_id", profileId),
     client.from("topic_progress").select("curriculum_node_id, state").eq("exam_profile_id", profileId),
@@ -496,12 +518,13 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
     .eq("status", "active")
     .maybeSingle();
   if (strategyResult.error) throw strategyResult.error;
-  if (!strategyResult.data) return { configured: false };
+  if (!strategyResult.data) return { configured: false, setupRequired: true };
+  await requireTimeWindowCapacity(client, userId, profile.id);
 
   const roadmapToday = istanbulDate();
   const roadmapWeekStart = mondayOf(roadmapToday);
 
-  const [targetResult, sessionsResult, periodsResult, availabilityResult, exceptionsResult, dailyOverrides] = await Promise.all([
+  const [targetResult, sessionsResult, periodsResult, availabilityResult, exceptionsResult, dailyOverrides, selectionResult] = await Promise.all([
     client.from("p48_resource_targets")
       .select("planned_minutes,sequence_order,work_mode,resources(id,subject_id,name,status,resource_type,publisher)")
       .eq("user_id", userId)
@@ -536,8 +559,9 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
       roadmapWeekStart,
       addDays(roadmapWeekStart, 6),
     ),
+    client.from("user_subjects").select("subject_id").eq("user_id", userId).eq("exam_profile_id", profile.id).eq("status", "active"),
   ]);
-  for (const result of [targetResult, sessionsResult, periodsResult, availabilityResult, exceptionsResult]) if (result.error) throw result.error;
+  for (const result of [targetResult, sessionsResult, periodsResult, availabilityResult, exceptionsResult, selectionResult]) if (result.error) throw result.error;
 
   const actualByResource = new Map<string, number>();
   for (const row of sessionsResult.data ?? []) {
@@ -681,6 +705,12 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
 
   return {
     configured: true,
+    weekGenerationReadiness: p48GenerationReadiness({
+      targetExamDate,
+      availableMinutes: Math.max(normalWeeklyMinutes, ...Object.values(grossDayCapacities)),
+      selectedSubjectIds: (selectionResult.data ?? []).map((row: any) => row.subject_id).filter((id: string) => P48_SUBJECT_TARGETS.some(subject => subject.subjectId === id)),
+      resources: (targetResult.data ?? []).map((row: any) => row.resources).filter(Boolean),
+    }),
     strategy: {
       scoreType: strategyResult.data.score_type,
       targetExamDate,
@@ -707,7 +737,11 @@ async function loadP48Roadmap(client: SupabaseClient, userId: string, profile: a
   };
 }
 
-async function generateP48Week(client: SupabaseClient, userId: string, profile: any, force = false) {
+async function generateP48Week(client: SupabaseClient, userId: string, profile: any) {
+  const today = istanbulDate();
+  const weekStart = mondayOf(today);
+  const snapshot = await client.rpc("planning_week_snapshot", { p_exam_profile_id: profile.id, p_week_start: weekStart });
+  if (snapshot.error) throw snapshot.error;
   const strategyResult = await client.from("p48_strategy_profiles")
     .select("*")
     .eq("user_id", userId)
@@ -717,12 +751,11 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
   if (strategyResult.error) throw strategyResult.error;
   if (!strategyResult.data) throw new Error("P48_STRATEGY_NOT_CONFIGURED");
 
-  const today = istanbulDate();
-  const weekStart = mondayOf(today);
   const existing = await currentPlan(client, profile.id, weekStart);
-  if (existing && !force) return { ...(await planWithTasks(client, existing)), created: false };
+  if (existing) return { ...(await planWithTasks(client, existing)), created: false };
+  if (snapshot.data?.input?.capacitySource?.mode === "daily_minutes") throw new Error("CAPACITY_MODEL_UNSUPPORTED");
 
-  const [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult, allocationsResult, dailyOverrides] = await Promise.all([
+  const [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult, allocationsResult, dailyOverrides, selectionResult] = await Promise.all([
     client.from("weekly_availability").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id).eq("is_active", true),
     client.from("calendar_periods").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id),
     client.from("schedule_exceptions").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id)
@@ -737,8 +770,9 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
       .select("planned_credit_minutes,study_sessions!inner(started_at)")
       .eq("user_id", userId).eq("exam_profile_id", profile.id).is("superseded_at", null),
     loadP48DailyCapacityOverrides(client, userId, profile.id, weekStart, addDays(weekStart, 6)),
+    client.from("user_subjects").select("subject_id").eq("user_id", userId).eq("exam_profile_id", profile.id).eq("status", "active"),
   ]);
-  for (const result of [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult, allocationsResult]) if (result.error) throw result.error;
+  for (const result of [availabilityResult, periodsResult, exceptionsResult, targetResult, sessionsResult, allocationsResult, selectionResult]) if (result.error) throw result.error;
 
   const capacitySourceState = classifyP48CapacitySource({
     weeklyTargetMinutes: Number(strategyResult.data.weekly_target_minutes),
@@ -777,7 +811,15 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
     dayCapacities[date] = date < today ? 0 : Math.max(0, planningCapacity - (plannedCreditByDate.get(date) ?? 0));
   }
 
-  const resources = (targetResult.data ?? []).map((row: any) => ({
+  const selectedSubjects = P48_SUBJECT_TARGETS.filter(subject => (selectionResult.data ?? []).some((row: any) => row.subject_id === subject.subjectId));
+  const readiness = p48GenerationReadiness({
+    targetExamDate: strategyResult.data.target_exam_date,
+    availableMinutes: Math.max(calculateWeeklyAvailableMinutes(p48Windows(availabilityResult.data ?? [])), ...Object.values(dayCapacities)),
+    selectedSubjectIds: selectedSubjects.map(subject => subject.subjectId),
+    resources: (targetResult.data ?? []).map((row: any) => row.resources).filter(Boolean),
+  });
+  if (!readiness.ready) throw new Error(readiness.reason!);
+  const resources = (targetResult.data ?? []).filter((row: any) => row.resources?.status === "active" && selectedSubjects.some(subject => subject.subjectId === row.resources.subject_id)).map((row: any) => ({
     resourceId: row.resources.id,
     resourceName: row.resources.name,
     subjectId: row.resources.subject_id,
@@ -794,11 +836,13 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
     currentDate: today,
     weeklyTargetMinutes: Number(strategyResult.data.weekly_target_minutes),
     dayCapacities,
-    subjects: P48_SUBJECT_TARGETS.map((subject) => ({ ...subject })),
+    subjects: selectedSubjects.map((subject) => ({ ...subject })),
     resources,
   });
 
-  const normalized = blocks.map((block) => ({
+  // A source-selection hint is not executable study work. Never persist a
+  // generated block without an eligible owned active resource.
+  const normalized = blocks.filter((block) => block.resourceId).map((block) => ({
     plannedDate: block.plannedDate,
     subjectId: block.subjectId,
     workMode: block.workMode,
@@ -819,12 +863,12 @@ async function generateP48Week(client: SupabaseClient, userId: string, profile: 
     return { plan: null, tasks: [], created: false, academicGap: true, dayCapacities, generatedBlocks: 0 };
   }
 
-  const stored = await client.rpc("replace_manual_weekly_plan", {
-    p_payload: { weekStartDate: weekStart, availableMinutes, blocks: normalized },
+  const stored = await client.rpc("create_p48_week_once", {
+    p_payload: { intent: "generate_week", weekStartDate: weekStart, expectedFingerprint: snapshot.data.fingerprint, blocks: normalized },
   });
   if (stored.error) throw stored.error;
   const plan = await currentPlan(client, profile.id, weekStart);
-  return { ...(await planWithTasks(client, plan)), created: true, dayCapacities, generatedBlocks: normalized.length };
+  return { ...(await planWithTasks(client, plan)), created: stored.data.created, dayCapacities, generatedBlocks: normalized.length };
 }
 
 async function nextTask(client: SupabaseClient, profile: any, userId: string) {
@@ -859,6 +903,10 @@ Deno.serve(async (request) => {
     const { data: authData, error: authError } = await client.auth.getUser();
     if (authError || !authData.user) return json({ error: { code: "UNAUTHORIZED", message: "Invalid token" } }, 401);
     const userId = authData.user.id;
+    const initialPathname = new URL(request.url).pathname;
+    const initialRoute = initialPathname.includes("/app-api") ? initialPathname.split("/app-api")[1] || "/" : initialPathname;
+    const initialResponse = await initialManualPlanRoute(request, initialRoute, client, json);
+    if (initialResponse) return initialResponse;
     const profile = await activeProfile(client, userId);
     const physicalLifecycle = new PhysicalStudyLifecycleService(client, {
       captureEnabled: isPhysicalPaceCaptureEnabled(
@@ -870,6 +918,19 @@ Deno.serve(async (request) => {
     const route = pathname.includes("/app-api") ? pathname.split("/app-api")[1] || "/" : pathname;
     const today = istanbulDate();
     const weekStart = mondayOf(today);
+    const weeklyViewResponse = await weeklyStudyViewRoute(request, route, client, profile.id, weekStart, json, async view => {
+      // Reuse the existing exact-material presenter. Metrics remain from the single SQL snapshot.
+      // Failure to enrich optional material details must never hide protected work.
+      try {
+        const materialPlans = await Promise.all(view.plans.map((p: any) => planWithTasks(client, p)));
+        const materials = new Map(materialPlans.flatMap(p => p.tasks).map((t: any) => [t.id, t]));
+        return { ...view, days: view.days.map((d: any) => ({ ...d, tasks: d.tasks.map((t: any) => {
+          const m: any = materials.get(t.id);
+          return m ? { ...t, material_resource_id: m.material_resource_id, material_scope: m.material_scope, resources: m.resources } : t;
+        }) })) };
+      } catch { return { ...view, materialDetailsUnavailable: true }; }
+    });
+    if (weeklyViewResponse) return weeklyViewResponse;
     const plannerV2Capabilities = plannerV2ProposalCapabilities(
       Deno.env.get("PLANNER_V2_PREVIEW_V1_PROFILE_IDS"),
       Deno.env.get("PLANNER_V2_CONFIRM_V1_PROFILE_IDS"),
@@ -879,6 +940,13 @@ Deno.serve(async (request) => {
     const plannerV2PreviewEnabled = plannerV2Capabilities.previewEnabled;
     const plannerV2ConfirmationEnabled = plannerV2Capabilities.confirmationEnabled;
     const plannerV2ApplyEnabled = plannerV2Capabilities.applyEnabled;
+
+    if (request.method === "GET" && route === "/capacity/readiness") {
+      const selectedWeek = new URL(request.url).searchParams.get("weekStart") ?? weekStart;
+      const result = await client.rpc("study_capacity_readiness", { p_exam_profile_id: profile.id, p_week_start: selectedWeek });
+      if (result.error) throw result.error;
+      return json(result.data);
+    }
 
     const reactiveCoachDeploymentEnvironment =
       resolveReactiveCoachDeploymentEnvironmentV1(
@@ -1207,13 +1275,16 @@ Deno.serve(async (request) => {
       return json(await loadP48Roadmap(client, userId, profile));
     }
     if (request.method === "POST" && route === "/p48/bootstrap") {
-      const bootstrap = await client.rpc("bootstrap_p48_strategy");
-      if (bootstrap.error) throw bootstrap.error;
-      await generateP48Week(client, userId, profile, true);
-      return json({ bootstrap: bootstrap.data, roadmap: await loadP48Roadmap(client, userId, profile) }, 201);
+      // Do not invoke an older destructive SQL body even during mixed-version
+      // cutover. This compatibility route is a read-only configuration check.
+      const roadmap = await loadP48Roadmap(client, userId, profile);
+      if (!roadmap.configured) throw new Error("P48_SETUP_REQUIRED");
+      return json({ bootstrap: { configured: true, initialized: false }, roadmap });
     }
     if (request.method === "POST" && route === "/p48/week/generate") {
-      return json(await generateP48Week(client, userId, profile, false), 201);
+      const intent = await request.json().catch(() => null);
+      if (intent?.intent !== "generate_week") throw new Error("P48_EXPLICIT_INTENT_REQUIRED");
+      return json(await generateP48Week(client, userId, profile), 201);
     }
     const resourceYoutubeVideosMatch = route.match(/^\/resources\/([0-9a-f-]+)\/youtube-videos$/);
     if (request.method === "GET" && resourceYoutubeVideosMatch) {
@@ -1598,6 +1669,7 @@ Deno.serve(async (request) => {
       });
     }
     if (request.method === "GET" && route === "/weekly-plan/options") {
+      await requireTimeWindowCapacity(client, userId, profile.id);
       const [subjectsResult, resourcesResult, availabilityResult] = await Promise.all([
         client.from("user_subjects").select("subject_id, subjects(id,name,sort_order)").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","active"),
         client.from("resources").select("id,subject_id,name,resource_type").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","active").order("name"),
@@ -1614,8 +1686,11 @@ Deno.serve(async (request) => {
       });
     }
     if (request.method === "POST" && route === "/weekly-plan/manual") {
+      await requireTimeWindowCapacity(client, userId, profile.id);
       const body=await request.json();
       const blocks=Array.isArray(body.blocks)?body.blocks:[];
+      const snapshot=await client.rpc("planning_week_snapshot",{p_exam_profile_id:profile.id,p_week_start:weekStart});
+      if(snapshot.error)throw snapshot.error;
       const [subjectsResult,resourcesResult,availabilityResult,periodsResult,exceptionsResult,sessionsResult,dailyOverrides]=await Promise.all([
         client.from("user_subjects").select("subject_id, subjects(name)").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","active"),
         client.from("resources").select("id,subject_id,name,resource_type").eq("user_id",userId).eq("exam_profile_id",profile.id).eq("status","active"),
@@ -1632,7 +1707,6 @@ Deno.serve(async (request) => {
       const {actualByDate}=aggregateCompletedStudySessions(sessionsResult.data??[]);
       const dayCapacities:Record<string,number>={};
       for(let index=0;index<7;index++){const date=addDays(weekStart,index);const capacityContext={date,weeklyAvailability:availability,calendarPeriods:p48Periods(periodsResult.data??[])};const baseCapacity=calculateEffectiveDayCapacity({...capacityContext,scheduleExceptions:[]});const effective=calculateEffectiveDayCapacity({...capacityContext,scheduleExceptions:p48Exceptions(exceptionsResult.data??[])});const planningCapacity=planningCapacityForDate(date,effective,dailyOverrides,baseCapacity);dayCapacities[date]=date<today?0:Math.max(0,planningCapacity-(actualByDate.get(date)??0));}
-      const availableMinutes=Object.values(dayCapacities).reduce((sum,minutes)=>sum+minutes,0);
       const normalized=blocks.map((block:any)=>{
         const subjectName=subjectNames.get(block.subjectId);
         const resource=block.resourceId?resources.get(block.resourceId):null;
@@ -1648,7 +1722,7 @@ Deno.serve(async (request) => {
         };
       });
       if(findDailyCapacityOverloads(normalized,dayCapacities).length)throw new Error("MANUAL_PLAN_OVER_CAPACITY");
-      const stored=await client.rpc("replace_manual_weekly_plan",{p_payload:{weekStartDate:weekStart,availableMinutes,blocks:normalized}});
+      const stored=await client.rpc("replace_manual_weekly_plan",{p_payload:{weekStartDate:weekStart,expectedFingerprint:snapshot.data.fingerprint,blocks:normalized}});
       if(stored.error) throw stored.error;
       const plan=await currentPlan(client,profile.id,weekStart);
       return json({...(await planWithTasks(client,plan)),manual:stored.data},201);
@@ -1657,15 +1731,13 @@ Deno.serve(async (request) => {
     if (request.method === "POST" && route === "/weekly-plan/build") {
       const existing = await currentPlan(client, profile.id, weekStart);
       if (existing) return json({ ...(await planWithTasks(client, existing)), created: false });
-      const context = await buildContext(client, profile.id, userId, weekStart);
-      const draft = buildWeeklyPlanV0(context);
-      const { data, error } = await client.rpc("persist_weekly_plan", { p_plan: draft });
-      if (error) throw error;
-      const plan = await currentPlan(client, profile.id, weekStart);
-      return json({ ...(await planWithTasks(client, plan)), created: data?.created ?? true }, 201);
+      throw new Error("V0_PLANNING_RETIRED");
     }
     if (request.method === "GET" && route === "/weekly-plan/current") {
       return json(await planWithTasks(client, await currentPlan(client, profile.id, weekStart)));
+    }
+    if (request.method === "GET" && route === "/initial-plan/today") {
+      return json(await initialManualToday(client, profile.id, today, weekStart, (plan) => planWithTasks(client, plan)));
     }
     if (request.method === "GET" && route === "/tasks") {
       const plan = await currentPlan(client, profile.id, weekStart);
@@ -2071,6 +2143,11 @@ Deno.serve(async (request) => {
     }
     if (request.method === "POST" && route === "/study-sessions/start") {
       const body=await request.json();
+      if (await hasInitialManualPlan(client, profile.id)) {
+        const task = await client.from("tasks").select("planned_date").eq("id", body.taskId).eq("exam_profile_id", profile.id).maybeSingle();
+        if (task.error) throw task.error;
+        if (task.data?.planned_date > today) return json({ error: { code: "TASK_NOT_ELIGIBLE_TODAY", message: "Çalışma günü henüz gelmedi." } }, 409);
+      }
       return json(await physicalLifecycle.start({
         taskId:body.taskId,
         entrySource:body.entrySource??"web",
@@ -2104,7 +2181,7 @@ Deno.serve(async (request) => {
             ?await physicalLifecycle.pause(sessionMatch[1])
             :await physicalLifecycle.resume(sessionMatch[1]);
       const plan=action==="finish"?await currentPlan(client,profile.id,weekStart):null;
-      const replanPreview=plan?await previewCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
+      const replanPreview=plan && !await hasInitialManualPlan(client,profile.id,plan.id)?await previewCurrentPlan(client,userId,profile,plan,"study_deviation"):null;
       return json(action==="finish"?{...data,replanPreview,planMutationApplied:false}:data);
     }
     if(request.method==="POST"&&route==="/test-results"){

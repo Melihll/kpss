@@ -469,6 +469,13 @@ export async function applyCanonicalImport({ client, userId, examProfileId, mode
     if (changed.error) throw changed.error;
   }
 
+  // Catalog upserts are separate from plan authoring. Capture the owned DB
+  // revision after those writes, before resolving the final execution payload.
+  const snapshot = await client.rpc("service_planning_week_snapshot", {
+    p_user_id: userId, p_exam_profile_id: examProfileId, p_week_start: baselinePlan.weekStartDate,
+  });
+  if (snapshot.error) throw snapshot.error;
+
   const unitRows = await client.from("resource_units").select("id,resource_id,resource_section_id,external_key")
     .in("resource_id", resourceIds);
   if (unitRows.error) throw unitRows.error;
@@ -477,6 +484,7 @@ export async function applyCanonicalImport({ client, userId, examProfileId, mode
   if (unitByKey.size !== baselinePlan.units.length) throw new Error("EXECUTION_UNIT_PERSISTENCE_INCOMPLETE");
 
   const payload = {
+    expectedFingerprint: snapshot.data.fingerprint,
     sourceKey: baselinePlan.sourceKey,
     weekStartDate: baselinePlan.weekStartDate,
     capacityMinutes: baselinePlan.capacityMinutes,

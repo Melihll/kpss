@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { AppApiError, callAppApi, FRIENDLY_API_ERRORS } from "../lib/app-api";
 import { Icon } from "./Icon";
+import { Link } from "react-router-dom";
 
 interface ApiTask {
   id: string;
@@ -52,6 +53,7 @@ interface Milestone { type: string; date: string; endDate: string | null; title:
 
 interface RoadmapResponse {
   configured: boolean;
+  weekGenerationReadiness?: { ready: boolean; reason: string | null };
   strategy?: { scoreType: string; targetExamDate: string; weeklyTargetMinutes: number; monthlyTargetMinutes: number; sourceNote: string; daysToExam: number };
   subjectForecasts?: SubjectForecast[];
   months?: MonthSummary[];
@@ -85,7 +87,6 @@ export function P48RoadmapPanel() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [attemptedWeek, setAttemptedWeek] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -103,22 +104,10 @@ export function P48RoadmapPanel() {
     } finally { setLoading(false); }
   }, []);
 
-  const bootstrap = useCallback(async () => {
-    setBusy(true);
-    try {
-      const response = await callAppApi<{ roadmap: RoadmapResponse }>("/p48/bootstrap", { method: "POST" });
-      setRoadmap(response.roadmap);
-      setError(null);
-      window.dispatchEvent(new Event("kpss:profile-changed"));
-      window.dispatchEvent(new Event("kpss:execution-changed"));
-    } catch (caught) { setError(errorText(caught)); }
-    finally { setBusy(false); }
-  }, []);
-
   const ensureWeek = useCallback(async () => {
     setBusy(true);
     try {
-      await callAppApi("/p48/week/generate", { method: "POST" });
+      await callAppApi("/p48/week/generate", { method: "POST", body: { intent: "generate_week" } });
       await load();
       window.dispatchEvent(new Event("kpss:execution-changed"));
     } catch (caught) { setError(errorText(caught)); }
@@ -126,11 +115,6 @@ export function P48RoadmapPanel() {
   }, [load]);
 
   useEffect(() => { void load(); }, [load]);
-  useEffect(() => {
-    if (!roadmap || loading || busy) return;
-    if (!roadmap.configured) { void bootstrap(); return; }
-    if (!roadmap.currentWeek?.plan && !attemptedWeek) { setAttemptedWeek(true); void ensureWeek(); }
-  }, [roadmap, loading, busy, attemptedWeek, bootstrap, ensureWeek]);
   useEffect(() => {
     const refresh = () => void load();
     window.addEventListener("kpss:execution-changed", refresh);
@@ -144,7 +128,7 @@ export function P48RoadmapPanel() {
   }, [roadmap]);
 
   if (loading) return <section className="roadmap-loading"><div className="loading-line wide-line" /><div className="loading-card" /></section>;
-  if (!roadmap?.configured) return <section className="roadmap-setup"><span className="target-orbit"><Icon name="target" size={32} /></span><div><span className="section-kicker">KPSSP48 · 2027</span><h2>Yol haritan hazırlanıyor.</h2><p>Gerçek kaynaklar, haftalık kapasite ve okul sınavları tek takvimde buluşacak.</p></div><button className="primary-action" type="button" disabled={busy} onClick={() => void bootstrap()}>{busy ? "Hazırlanıyor…" : "Planı Hazırla"}</button>{error && <p className="state-message error">{error}</p>}</section>;
+  if (!roadmap?.configured) return <section className="roadmap-setup"><h2>Plan kurulumu gerekli.</h2><p>Seçimlerin korunuyor. İlk P48 planı henüz kurulmadı.</p><Link to="/onboarding">Kurulumu gözden geçir</Link>{error && <p className="state-message error">{error}</p>}</section>;
 
   const strategy = roadmap.strategy!;
   const summary = roadmap.resourcesSummary!;
@@ -156,6 +140,7 @@ export function P48RoadmapPanel() {
   const selectedMinutes = selectedTasks.reduce((sum, task) => sum + task.estimated_minutes, 0);
 
   return <>
+    {!plan && <div className="plain-empty"><p>Bu hafta için plan gerekli.</p><button type="button" disabled={busy || !roadmap.weekGenerationReadiness?.ready} onClick={() => void ensureWeek()}>Haftalık Planı Oluştur</button></div>}
     <section className="week-section page-enter" id="week" aria-labelledby="week-title">
       <div className="section-heading week-heading"><div><span className="section-kicker">BU HAFTA</span><h2 id="week-title">Yedi gün, tek ritim.</h2><p>Bir güne dokun; o günün gerçek çalışma bloklarını gör.</p></div><div className="editorial-stat"><strong>{minutesLabel(tasks.reduce((sum, task) => sum + task.estimated_minutes, 0))}</strong><span>/ {minutesLabel(strategy.weeklyTargetMinutes)} hedef</span></div></div>
       {error && <div className="state-message error" role="alert"><Icon name="warning" />{error}<button type="button" onClick={() => void load()}>Tekrar dene</button></div>}

@@ -164,29 +164,31 @@ describe("Phase 02 catalog, ownership and resource RLS", () => {
   });
 
   it("lets User A create valid availability and rejects invalid windows", async () => {
-    const { data, error } = await userAClient
-      .from("weekly_availability")
-      .insert({
-        user_id: userA.id,
-        exam_profile_id: profileAId,
+    const initial = await userAClient.rpc("weekly_availability_state", { p_exam_profile_id: profileAId });
+    expect(initial.error).toBeNull();
+    const { data, error } = await userAClient.rpc("replace_weekly_availability", {
+      p_exam_profile_id: profileAId,
+      p_expected_revision: initial.data.revision,
+      p_windows: [{
         weekday: 1,
         start_time: "14:00",
         end_time: "18:00",
         label: "Pazartesi",
-      })
-      .select("id")
-      .single();
+      }],
+    });
     expect(error).toBeNull();
-    expect(data?.id).toBeTruthy();
+    expect(data?.windows[0]?.id).toBeTruthy();
 
-    const { error: invalidError } = await userAClient.from("weekly_availability").insert({
-      user_id: userA.id,
-      exam_profile_id: profileAId,
+    const { error: invalidError } = await userAClient.rpc("replace_weekly_availability", {
+      p_exam_profile_id: profileAId,
+      p_expected_revision: data.revision,
+      p_windows: [{
       weekday: 1,
       start_time: "18:00",
       end_time: "14:00",
+      }],
     });
-    expect(invalidError?.code).toBe("23514");
+    expect(invalidError?.message).toContain("INVALID_AVAILABILITY");
   });
 
   it("prevents User B from reading or changing User A's availability", async () => {
@@ -202,8 +204,12 @@ describe("Phase 02 catalog, ownership and resource RLS", () => {
       .update({ label: "Changed" })
       .eq("exam_profile_id", profileAId)
       .select("id");
-    expect(changeError).toBeNull();
-    expect(changedRows).toEqual([]);
+    expect(changeError?.code).toBe("42501");
+    expect(changedRows).toBeNull();
+    const denied = await userBClient.rpc("replace_weekly_availability", {
+      p_exam_profile_id: profileAId, p_windows: [], p_expected_revision: "foreign",
+    });
+    expect(denied.error?.message).toContain("EXAM_PROFILE_NOT_FOUND");
   });
 
   it("isolates calendar periods and schedule exceptions by profile owner", async () => {

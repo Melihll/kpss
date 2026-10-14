@@ -15,12 +15,14 @@ describe("Evre 7D Week material continuity contract", () => {
     "utf8",
   );
 
-  it("uses the same material presenter and drawer controller on Today and Week", () => {
+  it("uses the same exact material presenter on Today and read-only Week", () => {
     for (const source of [today, week]) {
       expect(source).toContain("TaskMaterialSummary");
-      expect(source).toContain("useTaskMaterialDrawer");
+
     }
-    expect(week).toContain("TaskMaterialOpenButton");
+    expect(today).toContain("useTaskMaterialDrawer");
+    expect(week).not.toContain("useTaskMaterialDrawer");
+    expect(week).toContain("Bugün’de aç");
     expect(drawer).toContain("ResourceDetailDrawer");
   });
 
@@ -33,8 +35,7 @@ describe("Evre 7D Week material continuity contract", () => {
   });
 
   it("expands tasks explicitly and exposes exact scope only from the API task contract", () => {
-    expect(week).toContain("expandedTaskId");
-    expect(week).toContain("aria-expanded={expanded}");
+    expect(week).toContain("<details className=\"wv-task\"");
     expect(week).toContain("<TaskMaterialSummary task={task}");
     expect(week).not.toContain("canonical_workload_identity");
     expect(week).not.toMatch(/title.*page|title.*sayfa/i);

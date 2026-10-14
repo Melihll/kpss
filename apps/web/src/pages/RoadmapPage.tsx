@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Icon } from "../components/Icon";
 import { useRoadmap } from "../hooks/useRoadmap";
+import { PlanSetupNotice } from "../components/PlanSetupNotice";
 import { compactMinutesLabel, dateLabel, type RoadmapMilestone } from "../lib/roadmap";
 
 const milestoneType = (type: string) => type === "academic_gap" ? "Akademik ara" : type === "new_resource" ? "Yeni kaynak zamanı" : type === "exam" ? "Sınav" : "Kaynak notu";
@@ -141,6 +142,7 @@ export function RoadmapPage() {
       <div className="exam-countdown"><strong>{data?.strategy ? animatedDays : "—"}</strong><span>gün kaldı</span></div>
     </header>
     {error && <div className="inline-state error" role="alert"><span>Yol haritası yüklenemedi.</span><button type="button" onClick={() => void retry()}>Tekrar Dene</button></div>}
+    {!loading && <PlanSetupNotice roadmap={data} />}
     {loading ? <div className="roadmap-page-skeleton page-skeleton"><span /><div /><div /></div> : month ? <>
       <div className="exam-timeline-shell">
         <button type="button" className="timeline-scroll-button previous" aria-label="Önceki dönem" onClick={() => scrollTimeline(-336)}><Icon name="arrow" /></button>

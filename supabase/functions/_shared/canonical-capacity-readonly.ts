@@ -1,4 +1,5 @@
 import { addRevisionCalendarDays, calculateEffectiveDayCapacity } from "./planning.bundle.js";
+import { requireTimeWindowCapacity } from "./capacity-capability.ts";
 import {
   grossCapacityForDate,
   loadP48DailyCapacityOverrides,
@@ -73,11 +74,13 @@ function datesBetween(start: string, end: string): string[] {
 /**
  * Authoritative read-only capacity projection extracted from loadAdaptiveBase.
  * It owns no Coach semantics and performs no writes. Its day calculations are
- * byte-for-byte equivalent in inputs and ordering to the prior adaptive path.
+ * equivalent in inputs and ordering to the prior adaptive path for time-window
+ * profiles. Daily-minute profiles report a capability error before any legacy calculation.
  */
 export async function loadCanonicalCapacityReadOnly(
   input: CanonicalCapacityReadOnlyInput,
 ): Promise<CanonicalCapacityReadOnlyProjection> {
+  await requireTimeWindowCapacity(input.client, input.userId, input.examProfileId);
   const [availability, calendar, exceptionRows, dailyOverrides] = await Promise.all([
     input.client.from("weekly_availability").select("*")
       .eq("user_id", input.userId)

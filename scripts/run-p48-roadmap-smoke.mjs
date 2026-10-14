@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { readLocalSupabaseStatus } from "./supabase-status.mjs";
+import { createLocalP48PilotFixture } from "./lib/local-p48-pilot-fixture.mjs";
 
 const EDITION = "11000000-0000-0000-0000-000000000001";
 const { url, anonKey } = readLocalSupabaseStatus();
+if (url !== 'http://127.0.0.1:54321') throw Error('LOCAL_URL_REQUIRED');
 const api = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
 const id = randomUUID();
 const sign = await api.auth.signUp({ email: `p48-roadmap-${id}@example.test`, password: `Safe-${id}` });
@@ -33,6 +35,7 @@ async function http(path, { method = "GET", body } = {}) {
 
 const before = await http("/p48/roadmap");
 if (before.configured !== false) throw new Error("fresh profile should not be configured");
+await createLocalP48PilotFixture(api, { url, userId: user, profileId: profile.data.id });
 const boot = await http("/p48/bootstrap", { method: "POST" });
 const roadmap = boot.roadmap;
 if (!roadmap?.configured) throw new Error("P48 bootstrap failed");
@@ -60,6 +63,7 @@ const total = (availability ?? []).reduce((sum, row) => {
 }, 0);
 if (total !== 1800) throw new Error(`availability should equal 1800, got ${total}`);
 
+await http("/p48/week/generate", { method: 'POST', body: { intent: 'generate_week' } });
 const current = await http("/weekly-plan/current");
 if (current.plan && !current.tasks.some((task) => task.resource_id)) throw new Error("generated week does not use real resources");
 

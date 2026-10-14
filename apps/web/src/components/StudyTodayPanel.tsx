@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useRoadmap } from "../hooks/useRoadmap";
+import { PlanSetupNotice } from "./PlanSetupNotice";
 import { AppApiError, FRIENDLY_API_ERRORS, callAppApi } from "../lib/app-api";
 import { mergeMovableTaskOrder, moveTaskId } from "../lib/today-task-order";
 import { resolveTodayFocus } from "../lib/today-focus";
@@ -19,6 +20,8 @@ import { useTaskMaterialDrawer } from "../hooks/useTaskMaterialDrawer";
 import { StudyMaterialWorkspace } from "./StudyMaterialWorkspace";
 import type { VideoProgress } from "./VideoPlayerDrawer";
 import { taskWithVideoProgress } from "../lib/task-video";
+import { initialDateLabel } from "../lib/initial-manual-plan";
+import "../pages/first-plan.css";
 
 interface ActiveSession {
   id: string;
@@ -98,7 +101,7 @@ export function StudyTodayPanel({ focus = false, visible = true, onCoach }: { fo
   const [preferredTaskId, setPreferredTaskId] = useState<string | null>(null);
   const requestedId = new URLSearchParams(location.search).get("task");
   useEffect(() => { if (visible) setVisited(true); if (requestedId) setPreferredTaskId(requestedId); }, [visible, requestedId]);
-  const { data: roadmap } = useRoadmap({ ensureWeek: true, enabled: visible });
+  const { data: roadmap } = useRoadmap({ enabled: visible });
   const [tasks, setTasks] = useState<RoadmapTask[]>([]);
   const onVideoProgress = useCallback((progress: VideoProgress) => {
     setTasks((current) => current.map((task) => taskWithVideoProgress(task, progress)));
@@ -110,6 +113,8 @@ export function StudyTodayPanel({ focus = false, visible = true, onCoach }: { fo
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [summary, setSummary] = useState<Summary>({ todayStudyMinutes: 0, weekStudyMinutes: 0, dailyPlan: EMPTY_DAILY_PLAN });
   const [loading, setLoading] = useState(true);
+  const [initialPlan, setInitialPlan] = useState(false);
+  const [upcomingDate, setUpcomingDate] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -132,19 +137,27 @@ export function StudyTodayPanel({ focus = false, visible = true, onCoach }: { fo
   const load = useCallback(async () => {
     const revision = ++loadRevision.current;
     try {
+      const initial = await callAppApi<{ supported: boolean; tasks: RoadmapTask[]; summary: Summary; upcomingStartDate: string | null }>("/initial-plan/today").catch((caught) => {
+        // Optional capability on older backends; existing pilot reads remain available.
+        if (caught instanceof AppApiError && ["NOT_FOUND", "INITIAL_PLAN_UNAVAILABLE"].includes(caught.code)) return null;
+        if (!(caught instanceof AppApiError)) return null;
+        throw caught;
+      });
       const [planResult, activeResult, summaryResult] = await Promise.all([
-        callAppApi<{ tasks: RoadmapTask[] }>("/weekly-plan/current"),
+        initial?.supported ? Promise.resolve(initial) : callAppApi<{ tasks: RoadmapTask[] }>("/weekly-plan/current"),
         callAppApi<ActiveSessionResponse>("/study-sessions/active"),
-        callAppApi<Summary>("/execution/summary"),
+        initial?.supported ? Promise.resolve(initial.summary) : callAppApi<Summary>("/execution/summary"),
       ]);
       if (revision !== loadRevision.current) return;
       setTasks((planResult.tasks ?? []).filter((task) => task.status !== "cancelled"));
+      setInitialPlan(Boolean(initial?.supported));
+      setUpcomingDate(initial?.supported ? initial.upcomingStartDate : null);
       setActive(activeResult.session);
       setActiveBreak(activeResult.break ?? null);
       setPaused(Boolean(activeResult.paused));
       setClosedBreakSeconds(Math.max(0, Number(activeResult.closedBreakSeconds ?? 0)));
       setSummary({ ...summaryResult, dailyPlan: summaryResult.dailyPlan ?? EMPTY_DAILY_PLAN });
-      if (!activeResult.session) {
+      if (!activeResult.session && !initial?.supported) {
         try {
           const next = await callAppApi<Recommendation>("/tasks/next");
           if (revision === loadRevision.current) setRecommendation(next);
@@ -318,6 +331,9 @@ export function StudyTodayPanel({ focus = false, visible = true, onCoach }: { fo
       {!focus && <div className="today-header-side"><div className="today-editorial-stats"><div><strong className="settling-number">{roadmap?.strategy ? animatedDays : "—"}</strong><span>gün kaldı</span></div><div><strong className="settling-number">{compactMinutesLabel(animatedPlannedMinutes)}</strong><span>bugün</span></div></div><button className="today-quick-add-trigger" type="button" aria-label="Görev Ekle" onClick={() => setQuickAddOpen(true)}><span aria-hidden="true">＋</span><strong>Görev Ekle</strong></button><button className="today-capacity-trigger" type="button" onClick={() => onCoach("capacity")}><span>Vaktim Değişti</span></button><button className="today-coach-trigger" type="button" aria-label="Koça Sor" onClick={() => onCoach("general")}><Icon name="user" /><span>Koça Sor</span></button></div>}
     </header>
 
+    {!focus && !initialPlan && (roadmap?.configured ? <PlanSetupNotice roadmap={roadmap} /> : roadmap && <div className="plain-empty"><strong>İlk haftan için çalışmalarını seç.</strong><p>Tercihlerin kayıtlı. Planını inceleyip açıkça oluşturabilirsin.</p><Link className="primary-action" to="/first-plan">İlk haftanı planla</Link></div>)}
+    {!focus && initialPlan && upcomingDate && <article className="first-plan-upcoming" role="status"><h2>Planındaki sıradaki gün: {initialDateLabel(upcomingDate)}</h2><p>Bu çalışma günü geldiğinde Bugün’de başlayabilirsin.</p><ul>{tasks.filter(task => task.planned_date === upcomingDate && !["cancelled", "missed", "completed"].includes(task.status)).map(task => <li key={task.id} data-task-id={task.id}><strong>{task.subjects?.name} · {task.resources?.name}</strong><span>{WORK_MODE_LABELS[task.work_mode ?? "other"]} · {task.estimated_minutes} dk</span></li>)}</ul><Link to="/first-plan">Planını aç</Link></article>}
+    {!focus && initialPlan && !upcomingDate && <Link to="/first-plan">Kayıtlı planını aç</Link>}
     {error && <div className="inline-state error" role="alert"><span>Veriler yüklenemedi.</span><button type="button" onClick={() => void load()}>Tekrar Dene</button></div>}
     {completionNotice && <div className="inline-state" role="status"><span>{completionNotice}</span><button type="button" onClick={() => setCompletionNotice(null)}>Kapat</button></div>}
     {actionError && <div className="inline-state error" role="alert">{actionError}<button type="button" onClick={() => { setActionError(null); void load(); }}>Yenile</button></div>}
@@ -352,7 +368,7 @@ export function StudyTodayPanel({ focus = false, visible = true, onCoach }: { fo
         <div className="focus-facts"><span>{focusTask.work_mode ? WORK_MODE_LABELS[focusTask.work_mode] ?? "Çalışma" : "Çalışma"}</span><strong>{requestedTask ? dailyMinutes.get(requestedTask.id) ?? 0 : resolvedFocus?.remainingMinutes ?? 0} dk</strong></div>
         <p className="focus-reason">{requestedTask ? "Seçtiğin çalışmadan devam et." : REASON_LABELS[resolvedFocus?.reason ?? "default"] ?? REASON_LABELS.default}</p>
         <button className="focus-action" type="button" disabled={busy} onClick={() => void act(() => callAppApi("/study-sessions/start", { method: "POST", body: { taskId: focusTask.id, entrySource: "web" } }))}><Icon name="play" weight="fill" />{busy ? "Başlatılıyor…" : "Çalışmaya Başla"}</button>
-      </div> : <div className="focus-state focus-empty"><span className="focus-label">Şimdi</span><Icon name="check" size={32} /><h2>Sıradaki görev yok.</h2><p>Haftalık plan oluşturulduğunda burada görünecek.</p></div>}
+      </div> : <div className="focus-state focus-empty"><span className="focus-label">Şimdi</span><Icon name="check" size={32} /><h2>Sıradaki görev yok.</h2><p>{initialPlan ? upcomingDate ? "Sıradaki çalışmanın tarihi yukarıda. Bugün için başlatılacak görev yok." : "Bugün için başlatılacak başka görev yok. Kayıtlı planını açabilirsin." : "Haftalık plan oluşturulduğunda burada görünecek."}</p></div>}
       {workTask && (visited || visible) && <StudyMaterialWorkspace checkpointContext={focus ? "focus" : "today"} key={workTask.id} task={workTask} capture={active?.lifecycle === "physical_v1" ? active.physicalCapture ?? null : null} pageDraft={pageDraft} onPageDraft={setPageDraft} playback={active ? paused ? "paused" : "running" : "ready"} visible={visible} onVideoProgress={onVideoProgress} />}
     </article>
 
@@ -451,7 +467,7 @@ export function StudyTodayPanel({ focus = false, visible = true, onCoach }: { fo
               <strong>Süre detayları</strong><span>Planlanan, tamamlanan ve kalan süre</span>
             </button>            <div className="task-material-menu-divider" aria-hidden="true" />
             <TaskMaterialSummary task={task} compact />
-            <TaskMaterialActions task={task} onOpen={openTaskMaterialFromToday} compact />
+            {initialPlan ? <button type="button" onClick={() => openTaskMaterialFromToday(task)}>Kaynağı aç</button> : <TaskMaterialActions task={task} onOpen={openTaskMaterialFromToday} compact />}
           </div>}
         </div>
       </article>})}</div> : <div className="plain-empty">Bugün için başka görev yok.</div>}

@@ -1,223 +1,55 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Icon } from "../components/Icon";
-import { PlanningPanel } from "../components/PlanningPanel";
-import { ProductDialog } from "../components/ProductDialog";
-import { QuickAddTaskDrawer } from "../components/QuickAddTaskDrawer";
-import { TaskActionPreviewDrawer } from "../components/TaskActionPreviewDrawer";
-import type { TaskActionPreviewAction } from "../lib/task-action-preview-ui";
-import type { RoadmapTask } from "../lib/roadmap";
-import { PlannerV2PreviewPanel } from "../components/PlannerV2PreviewPanel";
-import { TaskMaterialOpenButton, TaskMaterialSummary } from "../components/TaskMaterialSummary";
-import { useRoadmap } from "../hooks/useRoadmap";
-import { useTaskMaterialDrawer } from "../hooks/useTaskMaterialDrawer";
-import { addDays, compactMinutesLabel, dateLabel, DAY_NAMES, isoToday, taskName, taskRemainingMinutes, totalTaskRemainingMinutes, WORK_MODE_LABELS } from "../lib/roadmap";
+import { useWeeklyStudyView } from "../hooks/useWeeklyStudyView";
+import { TaskMaterialSummary } from "../components/TaskMaterialSummary";
+import { initialDateLabel } from "../lib/initial-manual-plan";
+import { WORK_MODE_LABELS } from "../lib/roadmap";
+import { canOpenFirstPlan, fulfillmentLabel, minutesLabel, WEEK_STATUS, type WeekMetrics, type WeekTask } from "../lib/weekly-study-view";
+import "./weekly-view.css";
 
-function weekRangeLabel(start: string, end: string) {
-  const startDate = new Date(`${start}T12:00:00Z`);
-  const endDate = new Date(`${end}T12:00:00Z`);
-  const sameMonth = startDate.getUTCFullYear() === endDate.getUTCFullYear() && startDate.getUTCMonth() === endDate.getUTCMonth();
-  return sameMonth
-    ? `${startDate.getUTCDate()} — ${dateLabel(end)}`
-    : `${dateLabel(start)} — ${dateLabel(end)}`;
+const STATUSES: Record<string, string> = { planned: "Planlandı", ready: "Hazır", pending: "Bekliyor", in_progress: "Çalışılıyor", partially_completed: "Kısmen tamamlandı", completed: "Tamamlandı", missed: "Kaçırıldı", cancelled: "İptal edildi", rescheduled: "Yeniden tarihlendi", blocked: "Engelli" };
+export function WeeklyMetrics({ metrics, compact = false }: { metrics: WeekMetrics; compact?: boolean }) {
+  const values = [["Beyan", metrics.declaredMinutes], ["Efektif kapasite", metrics.effectiveMinutes], ["Planlandı", metrics.plannedMinutes], ["Plan kredisi", metrics.plannedCreditMinutes], ["Çalışıldı", metrics.actualMinutes], ["Kalan iş", metrics.remainingPlannedMinutes], ["Ayrılmamış zaman", metrics.unallocatedMinutes]] as const;
+  return <dl className={`wv-metrics ${compact ? "wv-compact" : ""}`}>{values.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{minutesLabel(value)}</dd></div>)}</dl>;
 }
-
-function reducedMotion() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function Task({ task, materialUnavailable }: { task: WeekTask; materialUnavailable?: boolean }) {
+  return <details className="wv-task" data-task-id={task.id} data-resource-id={task.resources?.id}>
+    <summary><div><strong>{task.subjects?.name ?? "Ders"} · {WORK_MODE_LABELS[task.work_mode ?? "other"] ?? "Çalışma"}</strong><span className="wv-resource">{task.resources?.name ?? "Kaynak bilgisi yok"}</span><small>{minutesLabel(task.estimated_minutes)} planlandı · {minutesLabel(task.plannedCreditMinutes)} kredi · {minutesLabel(task.remainingPlannedMinutes)} kaldı</small></div><span className="wv-task-status">{STATUSES[task.status] ?? task.status}<span aria-hidden="true"> ⌄</span></span></summary>
+    <div className="wv-task-detail">{materialUnavailable ? <p role="status">Materyal ayrıntıları yüklenemedi. Kayıtlı görev ve kaynak bilgileri korunuyor.</p> : <TaskMaterialSummary task={task} />}<p>{task.title}{task.description && ` · ${task.description}`}</p>{task.protected && <p>Korunan çalışma · tarih, kaynak ve ilerleme kayıtları korunuyor.</p>}{task.progressMissing && <p role="status">İlerleme kaydı eksik. Kredi ve kalan süre doğrulanamıyor.</p>}<p>Gerçek çalışma süresi, tamamlanmış oturumların başladığı İstanbul gününde sayılır. Göreve verilen kredi kalan işi azaltır; ek çalışma bunu kendiliğinden azaltmaz.</p>{task.eligibleToday && <Link className="secondary-action" to={`/?task=${task.id}`}>Bugün’de aç</Link>}</div>
+  </details>;
 }
-
 export function WeekPage() {
-  const [params] = useSearchParams();
-  const resourceId = params.get("resource") ?? undefined;
-  const { data, loading, error, retry } = useRoadmap({ ensureWeek: true });
-  const [selectedDate, setSelectedDate] = useState(isoToday());
-  const [displayedDate, setDisplayedDate] = useState(isoToday());
-  const [direction, setDirection] = useState<"forward" | "backward">("forward");
-  const [changingDay, setChangingDay] = useState(false);
-  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
-  const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [editorOpen, setEditorOpen] = useState(Boolean(resourceId));
-  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
-  const [dropDate, setDropDate] = useState<string | null>(null);
-  const [moveDate, setMoveDate] = useState("");
-  const [taskAction, setTaskAction] = useState<{ task: RoadmapTask; action: TaskActionPreviewAction; targetDate?: string } | null>(null);
-  const transitionTimer = useRef<number | null>(null);
-  const dayButtons = useRef<Array<HTMLButtonElement | null>>([]);
-  const plan = data?.currentWeek?.plan;
-  const tasks = useMemo(() => (data?.currentWeek?.tasks ?? []).filter((task) => task.status !== "cancelled"), [data]);
-  const { openTaskMaterial, materialDrawer } = useTaskMaterialDrawer(() => void retry());
-
-  useEffect(() => {
-    if (!plan) return;
-    const today = isoToday();
-    const initialDate = today >= plan.week_start_date && today <= plan.week_end_date ? today : plan.week_start_date;
-    if (transitionTimer.current) window.clearTimeout(transitionTimer.current);
-    setSelectedDate(initialDate);
-    setDisplayedDate(initialDate);
-    setExpandedTaskId(null);
-    setChangingDay(false);
-  }, [plan]);
-
-  useEffect(() => () => {
-    if (transitionTimer.current) window.clearTimeout(transitionTimer.current);
-  }, []);
-
-  const weekStart = plan?.week_start_date ?? isoToday();
-  const dates = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
-  const selectedTasks = tasks.filter((task) => task.planned_date === displayedDate);
-  const planned = tasks.reduce((sum, task) => sum + task.estimated_minutes, 0);
-  const actual = tasks.reduce((sum, task) => sum + (task.task_progress?.[0]?.actual_study_minutes ?? 0), 0);
-  const target = data?.capacity?.planningTargetMinutes ?? 0;
-  const progress = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
-  const selectedMinutes = totalTaskRemainingMinutes(selectedTasks);
-  const replannedTaskCount = selectedTasks.filter((task) => task.source_reason === "dynamic_replan" || task.status === "rescheduled").length;
-  const selectedDayIndex = Math.max(0, dates.indexOf(selectedDate));
-
-  useEffect(() => {
-    if (!window.matchMedia("(max-width: 760px)").matches) return;
-    dayButtons.current[selectedDayIndex]?.scrollIntoView({
-      behavior: reducedMotion() ? "auto" : "smooth",
-      block: "nearest",
-      inline: "center",
-    });
-  }, [selectedDayIndex]);
-
-  function selectDay(nextDate: string) {
-    if (nextDate === selectedDate) return;
-    if (transitionTimer.current) window.clearTimeout(transitionTimer.current);
-    setDirection(nextDate > displayedDate ? "forward" : "backward");
-    setSelectedDate(nextDate);
-    setExpandedTaskId(null);
-    if (reducedMotion()) {
-      setDisplayedDate(nextDate);
-      setChangingDay(false);
-      return;
-    }
-    setChangingDay(true);
-    transitionTimer.current = window.setTimeout(() => {
-      setDisplayedDate(nextDate);
-      setChangingDay(false);
-    }, 130);
-  }
-
-  function handleDayKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    const keyMoves: Record<string, number> = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
-    let nextIndex = index;
-    if (event.key === "Home") nextIndex = 0;
-    else if (event.key === "End") nextIndex = dates.length - 1;
-    else if (event.key in keyMoves) nextIndex = Math.max(0, Math.min(dates.length - 1, index + keyMoves[event.key]!));
-    else return;
-    event.preventDefault();
-    selectDay(dates[nextIndex]!);
-    window.requestAnimationFrame(() => dayButtons.current[nextIndex]?.focus());
-  }
-
-  return <section className="week-page page-frame">
-    <header className="page-header compact-header week-page-header">
-      <div>
-        <span className="page-eyebrow">Haftam</span>
-        <h1>{plan ? weekRangeLabel(plan.week_start_date, plan.week_end_date) : "Bu hafta"}</h1>
-        <p>{compactMinutesLabel(planned)} planlandı · {compactMinutesLabel(target)} planlama hedefi</p>
-        {data?.capacity && <p className="week-capacity-context">
-          Efektif kapasite {compactMinutesLabel(data.capacity.effectiveWeeklyMinutes)}
-          {" · "}
-          Planlama bütçesi {data.capacity.planningBudgetMinutes == null
-            ? "yok"
-            : compactMinutesLabel(data.capacity.planningBudgetMinutes)}
-        </p>}
-      </div>
-      <div className="week-progress-editorial"><strong>%{progress}</strong><span>{compactMinutesLabel(actual)} tamamlandı</span></div>
-      <div className="week-page-actions"><button className="secondary-action" type="button" onClick={() => setEditorOpen(true)}>Planı düzenle</button><button className="primary-action" type="button" onClick={() => setQuickAddOpen(true)}>Görev Ekle</button></div>
-    </header>
-    <div className="thin-progress" role="progressbar" aria-label="Haftalık hedef ilerlemesi" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><i style={{ width: `${progress}%` }} /></div>
-
-    {error && <div className="inline-state error" role="alert"><span>Haftalık plan yüklenemedi.</span><button type="button" onClick={() => void retry()}>Tekrar Dene</button></div>}
-    {loading ? <div className="week-page-skeleton page-skeleton"><span /><div /><div /></div> : plan ? <>
-      <div className="week-calendar-scroll">
-        <div className="week-calendar" role="tablist" aria-label="Haftanın günleri" style={{ "--week-active-index": selectedDayIndex } as CSSProperties}>
-          {dates.map((date, index) => {
-            const dayTasks = tasks.filter((task) => task.planned_date === date);
-            const dayMinutes = totalTaskRemainingMinutes(dayTasks);
-            const dayCompleted = dayTasks.length > 0 && dayTasks.every((task) => task.status === "completed");
-            const isSelected = selectedDate === date;
-            return <button
-              type="button"
-              role="tab"
-              id={`week-day-${date}`}
-              aria-controls="selected-week-day"
-              aria-selected={isSelected}
-              tabIndex={isSelected ? 0 : -1}
-              className={`${isSelected ? "active" : ""} ${dropDate === date ? "is-drop-target" : ""} ${date === isoToday() ? "today" : ""} ${dayCompleted ? "day-complete" : ""} ${dayTasks.length === 0 ? "day-empty" : ""}`}
-              key={date}
-              ref={(node) => { dayButtons.current[index] = node; }}
-              onClick={() => selectDay(date)}
-              onKeyDown={(event) => handleDayKeyDown(event, index)}
-              onDragOver={(event) => { if (draggedTaskId && date > isoToday()) { event.preventDefault(); setDropDate(date); } }}
-              onDragLeave={() => setDropDate(null)}
-              onDrop={(event) => { event.preventDefault(); const task = tasks.find((item) => item.id === draggedTaskId); if (task && date > isoToday()) setTaskAction({ task, action: "DEFER", targetDate: date }); setDraggedTaskId(null); setDropDate(null); }}
-            >
-              <span>{DAY_NAMES[index]}</span>
-              <strong>{new Date(`${date}T12:00:00Z`).getUTCDate()}</strong>
-              <small>{dayMinutes ? compactMinutesLabel(dayMinutes) : "—"}</small>
-              {dayCompleted && <span className="day-state-icon" aria-label="Tamamlandı"><Icon name="check" weight="bold" /></span>}
-            </button>;
-          })}
-        </div>
-      </div>
-
-      <section
-        className={`selected-day-schedule week-day-content ${changingDay ? "is-leaving" : "is-entering"} ${direction}`}
-        id="selected-week-day"
-        role="tabpanel"
-        aria-labelledby={`week-day-${displayedDate}`}
-        key={displayedDate}
-      >
-        <div className="selected-day-title">
-          <div><h2>{new Intl.DateTimeFormat("tr-TR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${displayedDate}T12:00:00Z`))}</h2></div>
-          <strong><b>{selectedTasks.length} görev</b><i aria-hidden="true">·</i>{compactMinutesLabel(selectedMinutes)}</strong>
-        </div>
-        {replannedTaskCount > 1 && <p className="day-plan-change-summary"><Icon name="arrow" />Plan güncellendi · {replannedTaskCount} görev yeniden yerleştirildi</p>}
-        {selectedTasks.length ? <div className="day-timeline">{selectedTasks.map((task, index) => {
-          const completed = task.status === "completed";
-          const active = task.status === "in_progress" || task.status === "partially_completed";
-          const replanned = task.source_reason === "dynamic_replan" || task.status === "rescheduled";
-          const expanded = expandedTaskId === task.id;
-          return <article className={`${completed ? "complete" : ""} ${active ? "active-task" : ""} ${replanned ? "replanned-task" : ""} ${expanded ? "is-expanded" : ""}`} style={{ animationDelay: `${index * 40}ms` }} key={task.id}>
-            <span className="timeline-node" aria-hidden="true">{completed ? <Icon name="check" weight="bold" /> : String(index + 1).padStart(2, "0")}</span>
-            <button
-              className="timeline-task-toggle"
-              type="button"
-              aria-expanded={expanded}
-              aria-controls={`week-task-detail-${task.id}`}
-              onClick={() => setExpandedTaskId((current) => current === task.id ? null : task.id)}
-            >
-              <span className="timeline-task-copy">
-                <span className="timeline-task-kicker"><span>{task.subjects?.name ?? "Ders"}</span>{active && <em>{task.status === "in_progress" ? "Şimdi" : "Devam"}</em>}</span>
-                <strong title={task.resources?.name ?? taskName(task)}>{task.resources?.name ?? taskName(task)}</strong>
-                <small>{task.work_mode ? WORK_MODE_LABELS[task.work_mode] ?? "Çalışma" : task.description ?? "Çalışma"}<i aria-hidden="true">·</i><b>{taskRemainingMinutes(task)} dk</b></small>
-                {replanned && replannedTaskCount <= 1 && <span className="task-plan-change"><Icon name="arrow" />Plan güncellendi</span>}
-              </span>
-              <Icon className="timeline-task-chevron" name="arrow" />
-            </button>
-            {expanded && <div className="week-task-detail" id={`week-task-detail-${task.id}`}>
-              <TaskMaterialSummary task={task} />
-              <TaskMaterialOpenButton task={task} onOpen={openTaskMaterial} />
-              <div className="week-task-inline-actions">
-                {!completed && task.planned_date === isoToday() && <Link to={`/?task=${task.id}`}>Çalışmaya dön</Link>}
-                <button type="button" onClick={() => setTaskAction({ task, action: "DURATION_DETAILS" })}>Süre detayları</button>
-                {!completed && <button type="button" onClick={() => setEditorOpen(true)}>Planı düzenle</button>}
-                {!completed && task.planned_date === isoToday() && <><label>Taşınacak gün<select aria-label={`${taskName(task)} için taşınacak gün`} value={moveDate} onChange={(event) => setMoveDate(event.target.value)}><option value="">Gün seç</option>{dates.filter((date) => date > isoToday()).map((date) => <option key={date} value={date}>{dateLabel(date)}</option>)}</select></label><button type="button" disabled={!moveDate} onClick={() => setTaskAction({ task, action: "DEFER", targetDate: moveDate })}>Taşımayı incele</button><button className="week-drag-handle" type="button" draggable aria-label={`${taskName(task)} görevini gelecek güne sürükle`} onDragStart={(event) => { setDraggedTaskId(task.id); event.dataTransfer.setData("text/plain", task.id); }} onDragEnd={() => { setDraggedTaskId(null); setDropDate(null); }}>⋮⋮ Sürükle</button></>}
-              </div>
-            </div>}
-          </article>;
-        })}</div> : <div className="plain-empty">Bu gün için planlanmış çalışma yok.</div>}
+  const [params, setParams] = useSearchParams();
+  const selected = params.get("weekStart") ?? undefined;
+  const { data, loading, error, retry } = useWeeklyStudyView(selected);
+  return <section className="page-frame wv-page">
+    <header className="page-header compact-header"><div><span className="page-eyebrow">Haftam</span><h1>Haftalık çalışmaların</h1><p>Bu hafta neler planladın ve ne kadarını gerçekleştirdin?</p></div><Link className="secondary-action" to="/">Bugün’e dön</Link></header>
+    <div className="wv-toolbar">{data && <label>Gösterilen hafta<select value={data.weekStart} onChange={e => setParams({ weekStart: e.target.value })}><option value={data.currentWeek}>Bu hafta · {initialDateLabel(data.currentWeek)}</option><option value={data.nextWeek}>Gelecek hafta · {initialDateLabel(data.nextWeek)}</option>{data.knownHistoricalWeeks.map(w => <option key={w} value={w}>Geçmiş · {initialDateLabel(w)}</option>)}</select></label>}<button className="secondary-action" type="button" disabled={loading} onClick={() => void retry()}>Yenile</button></div>
+    {loading && <p role="status">Haftanın kayıtlı görevleri ve çalışma süreleri yükleniyor…</p>}
+    {error && <div className="wv-notice" role="alert"><h2>Haftalık veriler yüklenemedi</h2><p>{error === "UNAUTHORIZED" ? "Oturumun sona ermiş. Yeniden giriş yap." : error === "UNSUPPORTED_WEEK" || error === "INVALID_WEEK" ? "Bu hafta görüntülenemiyor. Bu haftaya dönerek tekrar dene." : "Kaydedilmiş çalışmaların korunuyor. Yenile veya mevcut çalışmalarını Bugün’den aç."}</p>{error === "UNAUTHORIZED" ? <Link to="/login">Giriş yap</Link> : <button type="button" onClick={() => setParams({})}>Bu haftayı aç</button>}<Link to="/">Mevcut çalışmalarını aç</Link></div>}
+    {data && <>
+      <section className="wv-overview" aria-label="Haftalık özet" data-week-start={data.weekStart} data-plan-ids={data.plans.map(p => p.id).join(",")}>
+        <div className="wv-overview-heading"><h2>{initialDateLabel(data.weekStart)} — {initialDateLabel(data.weekEnd)}</h2><span>{data.mode === "daily_minutes" ? "Günlük süre" : "Saat aralığı"} · İstanbul takvimi</span></div>
+        <WeeklyMetrics metrics={data.totals} />
+        <p className="wv-explainer">Plan karşılığı <strong>{fulfillmentLabel(data.totals.planFulfillmentPercent)}</strong> · {data.totals.completedTaskCount} / {data.totals.taskCount} görev tamamlandı. {minutesLabel(data.totals.extraActualMinutes)} ek çalışma; ek süre plan kredisine eklenmez.</p>
+        <details className="wv-definition"><summary>Bu sayılar ne anlama geliyor?</summary><p>Beyan: kaydettiğin haftalık gün süreleri. Efektif kapasite: seçili haftada geçmiş gün, sınav takvimi, dönem, istisna ve rezervlerden sonra kalan kapasite. Planlandı: tamamlanan görevler dahil başlangıç taahhüdü. Plan kredisi: bu görevlerin kazanılmış karşılığı. Çalışıldı: bu hafta başlayan tamamlanmış oturumların gerçek süresi; aktif sayaç dahil değil. Kalan iş: açık görevlerin kalan yükü. Ayrılmamış zaman: gerçek çalışma ve kredi politikaları ile haftalık tavanı aşmadan, kalan işin ötesinde kullanılabilen süre. Geçmişte kalan iş otomatik taşınmaz. N/A: doğrulanamayan veya paydası sıfır değer.</p><p>Takvimde kazanılan plan kredisi: {minutesLabel(data.totals.calendarPlannedCreditMinutes)}. Görevlerin başka tarihlerde tamamlanması durumunda bu değer seçili haftanın görev kredisinden farklı olabilir.</p>{data.totals.weeklyCeilingMinutes != null && <p>Haftalık planlama tavanı: {minutesLabel(data.totals.weeklyCeilingMinutes)}. Günlerin kapasitesi bu tavandan ayrı gösterilir; ayrılmamış haftalık zaman tavana tabidir.</p>}</details>
+        {data.totals.activeSessionCount > 0 && <p role="status">{data.totals.activeSessionCount} açık çalışma oturumu var. Süresi bitirilene kadar gerçekleşen toplamına eklenmez.</p>}
       </section>
-
-      <PlannerV2PreviewPanel />
-      {materialDrawer}
-    </> : <div className="plain-empty action-empty"><span>Bu hafta henüz plan oluşturulmadı.</span></div>}
-    <QuickAddTaskDrawer open={quickAddOpen} initialDate={selectedDate} onClose={() => setQuickAddOpen(false)} onApplied={() => void retry()} />
-    <ProductDialog open={editorOpen} title="Haftalık planı düzenle" onClose={() => setEditorOpen(false)}><PlanningPanel initialDate={selectedDate} initialResourceId={resourceId} compact /></ProductDialog>
-    <TaskActionPreviewDrawer request={taskAction} onClose={() => { setTaskAction(null); void retry(); }} />
+      {data.capacityStatus !== "SUPPORTED" && <div className="wv-notice" role="status"><p>{WEEK_STATUS[data.capacityStatus] ?? data.capacityStatus}</p><Link to="/onboarding?step=capacity">Zamanını gözden geçir</Link></div>}
+      {!!data.dataWarnings.length && <p className="wv-notice" role="status">Bazı kayıtlar eksik. N/A değerleri 0 kabul edilmedi. Verileri yenileyip mevcut çalışmanı Bugün’den kontrol edebilirsin.</p>}
+      {data.initialPlanStartDate && data.initialPlanStartDate > data.today && <div className="wv-notice">İlk planın {initialDateLabel(data.initialPlanStartDate)} başlıyor. {data.initialPlanStartDate >= data.nextWeek && data.weekStart !== data.nextWeek && <button type="button" onClick={() => setParams({ weekStart: data.nextWeek })}>Gelecek haftayı gör</button>}</div>}
+      {!data.totals.taskCount && <div className="wv-notice"><h2>Bu haftada planlanmış çalışma yok</h2>{data.upcomingStartDate && <p>Kayıtlı çalışman {initialDateLabel(data.upcomingStartDate)} başlıyor. Tarihi gelince Bugün’de görünecek.</p>}{canOpenFirstPlan(data) ? <Link className="primary-action" to="/first-plan">İlk planını incele</Link> : data.hasAnyPlan || data.hasProtectedWork ? <p>Mevcut plan ve korunan görevlerin saklanıyor. Bu ekran yeni plan oluşturmaz.</p> : <p>İlk plan için hedef, çalışabileceğin zaman ve uygun kaynak gerekiyor.</p>}{data.totals.declaredMinutes === 0 && <p>Kaydedilmiş haftalık kapasiten 0 dk. Çalışabileceğin günlere süre ekle.</p>}{data.totals.effectiveMinutes === 0 && data.totals.declaredMinutes !== 0 && <p>Seçili haftada kullanılabilir zaman kalmadı. Gelecek haftayı veya zaman ayarlarını incele.</p>}{data.firstPlan.reasons?.includes("MISSING_SUITABLE_RESOURCE") && <p>Plan için seçili bir derse uygun aktif kaynak ekle.</p>}<div className="wv-links"><Link to="/onboarding?step=capacity">Zamanını düzenle</Link><Link to="/onboarding?step=resources">Kaynaklarını aç</Link></div></div>}
+      {!!data.firstPlan.subjectsWithoutSources.length && <p className="wv-notice">Kaynağı olmayan dersler: {data.firstPlan.subjectsWithoutSources.map(s => s.name).join(", ")}. Bu dersler için kendiliğinden görev oluşturulmaz. <Link to="/onboarding?step=resources">Kaynak ekle</Link></p>}
+      {data.periods.filter(p => p.start_date <= data.weekEnd && p.end_date >= data.weekStart).map((p, i) => <p className="wv-notice" key={i}>Takvim dönemi: {p.name} · kapasite çarpanı {p.capacity_multiplier}</p>)}
+      <div className="wv-days">{data.days.map(day => <article key={day.date} className={`wv-day ${day.date === data.today ? "wv-today" : ""}`} data-date={day.date}>
+        <header><h2>{initialDateLabel(day.date)}</h2><span>{day.date === data.today ? "Bugün · " : ""}{day.tasks.length} görev</span></header>
+        <WeeklyMetrics metrics={day} compact />
+        {day.status !== "SUPPORTED" && <p className="wv-day-note">{WEEK_STATUS[day.status] ?? day.status}</p>}
+        {day.extraActualMinutes !== 0 && <p className="wv-day-note">Ek çalışma: {minutesLabel(day.extraActualMinutes)} · plan karşılığına eklenmez</p>}
+        {day.exceptions.map((x, i) => <p className="wv-day-note" key={i}>İstisna: {x.exception_type === "unavailable" ? "Müsait değil" : "Özel düzenleme"}{x.start_time && ` · ${x.start_time.slice(0, 5)}–${x.end_time?.slice(0, 5)}`}{x.minutes_delta != null && ` · ${x.minutes_delta > 0 ? "+" : ""}${x.minutes_delta} dk`}</p>)}
+        {day.overrides.map((x, i) => <p className="wv-day-note" key={i}>Gün düzenlemesi: {x.capacity_minutes} dk kapasite · {x.reserve_minutes} dk rezerv</p>)}
+        {!!day.warnings.length && <p className="wv-day-note">{day.warnings.includes("COMPLETED_WITH_PARTIAL_CREDIT") ? "Görev tamamlandı; kaydedilmiş kredi taahhütten az. Kalan yük 0, kredi değiştirilmedi." : "Muhasebe kaydı eksik veya tutarsız. Bilinmeyen süreler N/A."}</p>}
+        {day.tasks.length ? <div className="wv-tasks">{day.tasks.map(t => <Task key={t.id} task={t} materialUnavailable={data.materialDetailsUnavailable} />)}</div> : <p className="wv-empty-day">Planlanmış çalışma yok.</p>}
+      </article>)}</div>
+    </>}
   </section>;
 }

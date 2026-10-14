@@ -86,6 +86,8 @@ export interface RoadmapMilestone {
 
 export interface RoadmapResponse {
   configured: boolean;
+  setupRequired?: boolean;
+  weekGenerationReadiness?: { ready: boolean; reason: string | null };
   strategy?: {
     scoreType: string;
     targetExamDate: string;

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { Icon } from "../components/Icon";
+import { SavedCapacitySummary } from "../components/SavedCapacitySummary";
 import { useRoadmap } from "../hooks/useRoadmap";
 import { callAppApi } from "../lib/app-api";
 import { compactMinutesLabel, dateLabel } from "../lib/roadmap";
@@ -114,7 +115,7 @@ export function SettingsPage() {
           <small>Farklı planlama katmanları</small>
         </div>
 
-        <div className="settings-capacity-metrics">
+        <SavedCapacitySummary userId={user!.id}><div className="settings-capacity-metrics">
           <div>
             <span>Normal müsaitlik</span>
             <strong>{roadmap?.capacity ? compactMinutesLabel(roadmap.capacity.normalWeeklyMinutes) : "Belirtilmedi"}</strong>
@@ -138,9 +139,9 @@ export function SettingsPage() {
             <strong>{roadmap?.capacity?.planningBudgetMinutes == null ? "Aktif plan yok" : compactMinutesLabel(roadmap.capacity.planningBudgetMinutes)}</strong>
             <small>Planner reserve/bütçe kuralları sonrası</small>
           </div>
-        </div>
+        </div></SavedCapacitySummary>
 
-        <Link className="settings-edit-link" to="/onboarding" aria-label="Haftalık müsaitliği düzenle">Düzenle <Icon name="arrow" /></Link>
+        <Link className="settings-edit-link" to="/onboarding?step=capacity" aria-label="Haftalık müsaitliği düzenle">Düzenle <Icon name="arrow" /></Link>
       </section>
       <section className="settings-section settings-periods-section">
         <div className="settings-section-heading"><h2>Akademik boşluklar</h2><small>{periods.length ? `${periods.length} dönem` : ""}</small></div>

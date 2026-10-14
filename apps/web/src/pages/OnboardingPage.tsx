@@ -1,5 +1,4 @@
 import {
-  calculateWeeklyAvailableMinutes,
   createBulkResourceUnits,
   type CurriculumNode,
   type ExamProfile,
@@ -11,12 +10,13 @@ import {
   type ResourceUnit,
   type ResourceUnitType,
   type Subject,
-  type WeeklyAvailability,
 } from "@kpss-coach/domain";
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { supabase } from "../lib/supabase";
+import { StudyCapacityStep } from "../components/StudyCapacityStep";
+import { weeklyCapacityMinutes, type StudyCapacityState } from "../lib/study-capacity";
 
 interface EditionOption {
   id: string;
@@ -26,16 +26,7 @@ interface EditionOption {
   exams: { name: string } | null;
 }
 
-interface AvailabilityDraft {
-  key: string;
-  weekday: number;
-  start_time: string;
-  end_time: string;
-  label: string;
-}
-
 const STEPS = ["Sınav", "Dersler", "Zaman", "Kaynaklar", "Özet"];
-const WEEKDAYS = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 
 function todayInIstanbul() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
@@ -48,7 +39,8 @@ function messageOf(error: unknown) {
 export function OnboardingPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  const [searchParams] = useSearchParams();
+  const [step, setStep] = useState(searchParams.get("step") === "capacity" ? 3 : searchParams.get("step") === "resources" ? 4 : 1);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +53,8 @@ export function OnboardingPage() {
   const [targetExamDate, setTargetExamDate] = useState("");
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
   const [progressCount, setProgressCount] = useState(0);
-  const [windows, setWindows] = useState<AvailabilityDraft[]>([]);
+  const [weeklyMinutes, setWeeklyMinutes] = useState<number | null>(null);
+  const [capacityDirty, setCapacityDirty] = useState(false);
   const [resources, setResources] = useState<Resource[]>([]);
   const [selectedResourceId, setSelectedResourceId] = useState<string>("");
   const [sections, setSections] = useState<ResourceSection[]>([]);
@@ -136,7 +129,7 @@ export function OnboardingPage() {
         if (existingProfile) {
           const [selectionResult, availabilityResult, progressResult] = await Promise.all([
             supabase.from("user_subjects").select("subject_id").eq("exam_profile_id", existingProfile.id),
-            supabase.from("weekly_availability").select("*").eq("exam_profile_id", existingProfile.id).order("weekday"),
+            supabase.rpc("study_capacity_state", { p_exam_profile_id: existingProfile.id }),
             supabase.from("topic_progress").select("id", { count: "exact", head: true }).eq("exam_profile_id", existingProfile.id),
           ]);
           if (selectionResult.error) throw selectionResult.error;
@@ -144,13 +137,7 @@ export function OnboardingPage() {
           if (progressResult.error) throw progressResult.error;
           if (!active) return;
           setSelectedSubjectIds((selectionResult.data ?? []).map((row) => row.subject_id));
-          setWindows(((availabilityResult.data ?? []) as WeeklyAvailability[]).map((window) => ({
-            key: window.id,
-            weekday: window.weekday,
-            start_time: window.start_time.slice(0, 5),
-            end_time: window.end_time.slice(0, 5),
-            label: window.label ?? "",
-          })));
+          setWeeklyMinutes(weeklyCapacityMinutes(availabilityResult.data as StudyCapacityState));
           setProgressCount(progressResult.count ?? 0);
           await refreshResources(existingProfile.id);
         }
@@ -166,14 +153,6 @@ export function OnboardingPage() {
   useEffect(() => {
     void loadResourceChildren(selectedResourceId).catch((caught) => setError(messageOf(caught)));
   }, [loadResourceChildren, selectedResourceId]);
-
-  const weeklyMinutes = useMemo(() => {
-    try {
-      return calculateWeeklyAvailableMinutes(windows);
-    } catch {
-      return null;
-    }
-  }, [windows]);
 
   async function runSave(action: () => Promise<void>) {
     setSaving(true);
@@ -203,6 +182,9 @@ export function OnboardingPage() {
         : await supabase.from("exam_profiles").insert({ ...payload, status: "draft" }).select("*").single();
       if (result.error) throw result.error;
       setProfile(result.data as ExamProfile);
+      const state = await supabase.rpc("study_capacity_state", { p_exam_profile_id: result.data.id });
+      if (state.error) throw state.error;
+      setWeeklyMinutes(weeklyCapacityMinutes(state.data as StudyCapacityState));
       setStep(2);
     });
   }
@@ -264,34 +246,6 @@ export function OnboardingPage() {
       if (countError) throw countError;
       setProgressCount(count ?? 0);
       setStep(3);
-    });
-  }
-
-  async function saveAvailability() {
-    if (!user || !profile || weeklyMinutes === null) {
-      setError("Zaman pencerelerini kontrol edin.");
-      return;
-    }
-    await runSave(async () => {
-      const { error: deleteError } = await supabase
-        .from("weekly_availability")
-        .delete()
-        .eq("exam_profile_id", profile.id);
-      if (deleteError) throw deleteError;
-      if (windows.length) {
-        const { error: insertError } = await supabase.from("weekly_availability").insert(
-          windows.map((window) => ({
-            user_id: user.id,
-            exam_profile_id: profile.id,
-            weekday: window.weekday,
-            start_time: window.start_time,
-            end_time: window.end_time,
-            label: window.label.trim() || null,
-          })),
-        );
-        if (insertError) throw insertError;
-      }
-      setStep(4);
     });
   }
 
@@ -392,16 +346,10 @@ export function OnboardingPage() {
     });
   }
 
-  async function activateProfile() {
-    if (!profile) return;
-    await runSave(async () => {
-      const { error: updateError } = await supabase
-        .from("exam_profiles")
-        .update({ status: "active" })
-        .eq("id", profile.id);
-      if (updateError) throw updateError;
-      navigate("/", { replace: true });
-    });
+  function reviewFirstPlan() {
+    if (!profile || capacityDirty || !weeklyMinutes || !selectedSubjectIds.length || !resources.some(resource => resource.status === "active")) return;
+    // A draft activates only inside the acknowledged create-only SQL transaction.
+    navigate(`/first-plan?profileId=${profile.id}`);
   }
 
   if (loading) return <main className="card wide onboarding-card"><p>Kurulum yükleniyor…</p></main>;
@@ -440,22 +388,7 @@ export function OnboardingPage() {
         </div><button disabled={saving} onClick={() => void saveSubjects()}>Kaydet ve Progress Oluştur</button></section>
       )}
 
-      {step === 3 && (
-        <section><h2>3. Haftalık zamanın</h2><p>Genellikle çalışabildiğin günleri ve saat aralıklarını ekle.</p>
-          {windows.map((window) => <div className="inline-grid" key={window.key}>
-            <select value={window.weekday} onChange={(event) => setWindows((current) => current.map((item) => item.key === window.key ? { ...item, weekday: Number(event.target.value) } : item))}>
-              {WEEKDAYS.map((day, index) => <option key={day} value={index + 1}>{day}</option>)}
-            </select>
-            <input aria-label="Başlangıç" type="time" value={window.start_time} onChange={(event) => setWindows((current) => current.map((item) => item.key === window.key ? { ...item, start_time: event.target.value } : item))} />
-            <input aria-label="Bitiş" type="time" value={window.end_time} onChange={(event) => setWindows((current) => current.map((item) => item.key === window.key ? { ...item, end_time: event.target.value } : item))} />
-            <input aria-label="Etiket" placeholder="Etiket" value={window.label} onChange={(event) => setWindows((current) => current.map((item) => item.key === window.key ? { ...item, label: event.target.value } : item))} />
-            <button type="button" onClick={() => setWindows((current) => current.filter((item) => item.key !== window.key))}>Sil</button>
-          </div>)}
-          <div className="actions"><button type="button" onClick={() => setWindows((current) => [...current, { key: crypto.randomUUID(), weekday: 1, start_time: "14:00", end_time: "18:00", label: "" }])}>Pencere Ekle</button>
-          <strong>Haftalık kapasite: {weeklyMinutes === null ? "Geçersiz" : `${Math.floor(weeklyMinutes / 60)}s ${weeklyMinutes % 60}dk`}</strong></div>
-          <button disabled={saving || weeklyMinutes === null} onClick={() => void saveAvailability()}>Kaydet ve Devam Et</button>
-        </section>
-      )}
+      {profile && <div hidden={step !== 3}><StudyCapacityStep key={profile.id} profileId={profile.id} allowDailyDefault={profile.status === "draft"} onSaved={setWeeklyMinutes} onDirty={setCapacityDirty} onContinue={() => setStep(4)} /></div>}
 
       {step === 4 && profile && (
         <section><h2>4. Kaynakların</h2><p>Kullandığın kitap, video kurs ve soru bankalarını ekle.</p>
@@ -479,13 +412,13 @@ export function OnboardingPage() {
       )}
 
       {step === 5 && (
-        <section><h2>5. Her şey hazır</h2><p>Sistemin bu bilgilerle yaşayan haftalık planını oluşturacak.</p><dl>
+        <section>{capacityDirty && <p role="status">Çalışma sürelerindeki seçimini önce Zaman adımında kaydet.</p>}<h2>5. Kurulum özeti</h2><p>Seçimlerin kaydedildi. İlk haftan için çalışmaları seçip planını inceleyebilirsin.</p><dl>
           <dt>Sınav</dt><dd>{editions.find((edition) => edition.id === editionId)?.exams?.name ?? "—"}</dd>
           <dt>Seçilen ders</dt><dd>{selectedSubjectIds.length}</dd>
           <dt>Haftalık kapasite</dt><dd>{weeklyMinutes === null ? "—" : `${Math.floor(weeklyMinutes / 60)}s ${weeklyMinutes % 60}dk`}</dd>
           <dt>Kaynak</dt><dd>{resources.length}</dd>
           <dt>Hazırlanan konu</dt><dd>{progressCount}</dd>
-        </dl><button disabled={saving || !profile} onClick={() => void activateProfile()}>Çalışma Sistemini Başlat</button></section>
+        </dl>{(!weeklyMinutes || !selectedSubjectIds.length || !resources.some(resource => resource.status === "active")) && <p role="status">Devam etmek için ders, aktif kaynak ve pozitif haftalık kapasite gerekli.</p>}<button disabled={saving || capacityDirty || !profile || !weeklyMinutes || !selectedSubjectIds.length || !resources.some(resource => resource.status === "active")} onClick={reviewFirstPlan}>İlk haftanı planla</button></section>
       )}
     </main>
   );

@@ -2,6 +2,7 @@ import { classifyP48CapacitySource } from "./p48-capacity-source.ts";
 import { buildP48WeekBlocks, calculateEffectiveDayCapacity } from "./planning.bundle.js";
 import { aggregateCompletedStudySessions, aggregatePlannedCreditByDate } from "./completed-study.ts";
 import { loadP48DailyCapacityOverrides, planningCapacityForDate } from "./capacity-overrides.ts";
+import { p48GenerationReadiness } from "./p48-generation-readiness.ts";
 
 const P48_SUBJECT_TARGETS = [
   { subjectId: "20000000-0000-0000-0000-000000000006", subjectName: "Hukuk", weeklyMinutes: 450, scoreWeight: 20 },
@@ -90,6 +91,11 @@ export async function ensureP48WeekPlanForService(
   profile: any,
   referenceDate: string,
 ) {
+  const weekStart = mondayOf(referenceDate);
+  const snapshot = await client.rpc("service_planning_week_snapshot", {
+    p_user_id: userId, p_exam_profile_id: profile.id, p_week_start: weekStart,
+  });
+  if (snapshot.error) throw snapshot.error;
   const strategy = await client.from("p48_strategy_profiles").select("*")
     .eq("user_id", userId)
     .eq("exam_profile_id", profile.id)
@@ -98,11 +104,11 @@ export async function ensureP48WeekPlanForService(
   if (strategy.error) throw strategy.error;
   if (!strategy.data) return { configured: false, created: false, plan: null, tasks: [] };
 
-  const weekStart = mondayOf(referenceDate);
   const current = await loadPlanWithTasks(client, userId, profile.id, weekStart);
   if (current.plan) return { configured: true, created: false, ...current };
+  if (snapshot.data?.input?.capacitySource?.mode === "daily_minutes") throw new Error("CAPACITY_MODEL_UNSUPPORTED");
 
-  const [availability, periods, exceptions, targets, sessions, allocations, dailyOverrides] = await Promise.all([
+  const [availability, periods, exceptions, targets, sessions, allocations, dailyOverrides, selection] = await Promise.all([
     client.from("weekly_availability").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id).eq("is_active", true),
     client.from("calendar_periods").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id),
     client.from("schedule_exceptions").select("*").eq("user_id", userId).eq("exam_profile_id", profile.id)
@@ -116,8 +122,9 @@ export async function ensureP48WeekPlanForService(
       .select("planned_credit_minutes,study_sessions!inner(started_at)")
       .eq("user_id", userId).eq("exam_profile_id", profile.id).is("superseded_at", null),
     loadP48DailyCapacityOverrides(client, userId, profile.id, weekStart, addDays(weekStart, 6)),
+    client.from("user_subjects").select("subject_id").eq("user_id", userId).eq("exam_profile_id", profile.id).eq("status", "active"),
   ]);
-  for (const result of [availability, periods, exceptions, targets, sessions, allocations]) if (result.error) throw result.error;
+  for (const result of [availability, periods, exceptions, targets, sessions, allocations, selection]) if (result.error) throw result.error;
 
   const capacitySourceState = classifyP48CapacitySource({
     weeklyTargetMinutes: Number(strategy.data.weekly_target_minutes),
@@ -152,7 +159,15 @@ export async function ensureP48WeekPlanForService(
     dayCapacities[date] = date < referenceDate ? 0 : Math.max(0, planningCapacity - (plannedCreditByDate.get(date) ?? 0));
   }
 
-  const resources = (targets.data ?? []).map((row: any) => ({
+  const selectedSubjects = P48_SUBJECT_TARGETS.filter(subject => (selection.data ?? []).some((row: any) => row.subject_id === subject.subjectId));
+  const readiness = p48GenerationReadiness({
+    targetExamDate: strategy.data.target_exam_date,
+    availableMinutes: Math.max(0, ...Object.values(dayCapacities)),
+    selectedSubjectIds: selectedSubjects.map(subject => subject.subjectId),
+    resources: (targets.data ?? []).map((row: any) => row.resources).filter(Boolean),
+  });
+  if (!readiness.ready) throw new Error(readiness.reason!);
+  const resources = (targets.data ?? []).filter((row: any) => row.resources?.status === "active" && selectedSubjects.some(subject => subject.subjectId === row.resources.subject_id)).map((row: any) => ({
     resourceId: row.resources.id,
     resourceName: row.resources.name,
     subjectId: row.resources.subject_id,
@@ -169,11 +184,11 @@ export async function ensureP48WeekPlanForService(
     currentDate: referenceDate,
     weeklyTargetMinutes: Number(strategy.data.weekly_target_minutes),
     dayCapacities,
-    subjects: P48_SUBJECT_TARGETS.map((subject) => ({ ...subject })),
+    subjects: selectedSubjects.map((subject) => ({ ...subject })),
     resources,
   });
 
-  const normalized = blocks.map((block: any) => ({
+  const normalized = blocks.filter((block: any) => block.resourceId).map((block: any) => ({
     plannedDate: block.plannedDate,
     subjectId: block.subjectId,
     workMode: block.workMode,
@@ -196,9 +211,9 @@ export async function ensureP48WeekPlanForService(
 
   const stored = await client.rpc("service_replace_manual_weekly_plan", {
     p_user_id: userId,
-    p_payload: { weekStartDate: weekStart, availableMinutes, blocks: normalized },
+    p_payload: { intent: "generate_week", weekStartDate: weekStart, expectedFingerprint: snapshot.data.fingerprint, blocks: normalized },
   });
   if (stored.error) throw stored.error;
   const created = await loadPlanWithTasks(client, userId, profile.id, weekStart);
-  return { configured: true, created: true, ...created, dayCapacities };
+  return { configured: true, created: stored.data.created, ...created, dayCapacities };
 }

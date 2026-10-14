@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createLocalAuthenticatedClient } from "./_helpers/local-auth.ts";
 import { beforeAll, describe, expect, it } from "vitest";
+// @ts-expect-error shared ESM fixture for local CLI and integration tests.
+import { createLocalP48PilotFixture } from "../../scripts/lib/local-p48-pilot-fixture.mjs";
 // The importer is intentionally plain ESM so it can also run as a standalone CLI.
 // @ts-expect-error no declaration file is needed by the integration harness.
 import { runImporter } from "../../scripts/import-p48-canonical.mjs";
@@ -46,8 +48,7 @@ describe("P48 canonical importer and baseline persistence", () => {
   beforeAll(async () => {
     actorA = await createActor("a");
     actorB = await createActor("b");
-    const boot = await actorA.api.rpc("bootstrap_p48_strategy");
-    expect(boot.error).toBeNull();
+    await createLocalP48PilotFixture(actorA.api, { url, userId: actorA.userId, profileId: actorA.profileId });
     firstApply = await runImporter({ mode: "apply", userId: actorA.userId, examProfileId: actorA.profileId });
   }, 60_000);
 

@@ -12,6 +12,7 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage").then((module) => 
 const LoginPage = lazy(() => import("./pages/LoginPage").then((module) => ({ default: module.LoginPage })));
 const RegisterPage = lazy(() => import("./pages/RegisterPage").then((module) => ({ default: module.RegisterPage })));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage").then((module) => ({ default: module.OnboardingPage })));
+const FirstPlanPage = lazy(() => import("./pages/FirstPlanPage").then((module) => ({ default: module.FirstPlanPage })));
 
 function RouteFallback() {
   return <main className="route-fallback" aria-label="Sayfa yükleniyor"><span /><span /><div /></main>;
@@ -23,6 +24,7 @@ export function App() {
     <Route path="/register" element={<RegisterPage />} />
     <Route element={<ProtectedRoute />}>
       <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/first-plan" element={<FirstPlanPage />} />
       <Route element={<AppShell />}>
         <Route index element={<HomePage />} />
         <Route path="session" element={<HomePage />} />

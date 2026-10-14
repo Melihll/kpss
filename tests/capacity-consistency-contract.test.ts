@@ -62,14 +62,9 @@ describe("P0-07 capacity consistency contract", () => {
   });
 
   it("Week never aliases plan availability as planning target", () => {
-    expect(week).toContain(
-      "data?.capacity?.planningTargetMinutes ?? 0",
-    );
-    expect(week).not.toContain(
-      "plan?.available_minutes ?? 0",
-    );
-    expect(week).toContain("effectiveWeeklyMinutes");
-    expect(week).toContain("planningBudgetMinutes");
+    expect(week).toContain("useWeeklyStudyView");
+    expect(week).not.toContain("plan?.available_minutes ?? 0");
+    for (const metric of ["declaredMinutes", "effectiveMinutes", "plannedCreditMinutes", "actualMinutes", "remainingPlannedMinutes", "weeklyCeilingMinutes"]) expect(week).toContain(metric);
   });
 
   it("uses planned credit rather than total actual study for P48 planner capacity", () => {
