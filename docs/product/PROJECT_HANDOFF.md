@@ -1,3 +1,48 @@
+## UX V3 LOCAL state
+
+**Güncel durum: 12 Ekim 2026, Europe/Istanbul.** UX V3 için tek güncel durum kaydı bu bölümdür. CURRENT_SPRINT aktif işi, PRODUCT_BACKLOG kalan kabul maddelerini, ROADMAP sıralamayı taşır; faz durumları bu kayda göre yorumlanır. Aşağıdaki eski tarihli checkpoint/next-step kayıtları tarihsel kanıttır; güncel UX V3 sırasını veya yeni production yetkisini belirlemez.
+
+| Dilim | Güncel LOCAL durum | Tamamlanan kapsam / kanıt |
+|---|---|---|
+| P0 | **PASS** | Bootstrap/generation yan etkilerinin navigation'dan kaldırılması ve revision/owner kontrollü atomik availability. İlk rapor: .release/onboarding-integrity-repair-20261009/00_REPAIR_REPORT.md; 53 ilgili integration. |
+| S0 / R2 | **PASS** | Bütün desteklenen plan writer sınırları, gerçek kapasite/freshness, raw DML denial, V0 retirement, execution/protected-work ayrımı. Final .release/s0-r2-writer-boundary-20261010/00_RESULT.md; 166 birleşik integration. İlk S0 raporundaki BLOCKED kapasite bypass'ları bu sonraki R2 kapanışıyla kapandı; ilk rapor tarihsel olarak korunur. |
+| S1-A | **GREEN** | Kayıtlı günlük dakika kapasitesi, legacy uyumluluk ve fail-closed capability sınırları; 28 gerçek LOCAL kabul testi. .release/ux-v3-daily-capacity-20261011/00_RESULT.md. |
+| S1-B | **GREEN** | İnsan tarafından seçilen ilk manual plan; yazısız preview/review, açık create, atomik activation/receipt/idempotency ve current/upcoming Today; 41 integration. .release/ux-v3-first-plan-20261011/00_RESULT.md. |
+| S1-C | **GREEN** | Factual Week/Progress read model, current/historical gerçek browser, canlı history/yetki/veri koruması. 25 integration; son strict 16 GET / 0 write attempt, 68 tablo before/after aynı. .release/ux-v3-weekly-view-20261011/00_RESULT.md. |
+| S1-D | **NEXT / NOT_STARTED** | Sıradaki fonksiyonel geliştirme: çalışma sonu ve öğrenme döngüsünün aşağıdaki açık sınırlarını tasarlayıp doğrulamak. Bu checkpoint hazırlığı implementasyon başlatmaz. |
+
+Sayılar farklı fazların doğrulama kapsamlarıdır; birbirine eklenerek yeni bir toplam üretilmez. Son tam dirty-worktree non-integration kanıtı **1632/1632 test, 219 dosya**; web/domain typecheck, LOCAL build ve mevcut safety kontrolleri PASS. Bu suite onay bekleyen landing dosyalarını da içerir. Git checkpoint'in landing hariç projeksiyonu ayrıca bellek içi TypeScript ve bundle kontrolünden geçti; 1632 testi projected/staged/committed adayda yeniden geçmiş gibi sunulmaz.
+
+Kanıtların ayrıntısı ignored .release altında yereldir; temiz clone'da bulunacakları varsayılmaz. Kapanışların kimliksiz, kalıcı özeti bu tablodur. 12 Ekim S1-C live audit: **62 migration kaydı aynı**, eski function/policy/grant/trigger/üyelik aynı; **28.859 başlangıç public satırında 0 değişen/0 kayıp**, 1.743 eski Auth ID mevcut. Son gerçek kısmi çalışma örneği **30 plan / 2 credit / 2 actual / 28 kalan**; session, allocation ve task progress birbirine eklenerek iki kez sayılmaz.
+
+### S1-D için açık fonksiyonel sınır
+
+- Mevcut Start/Pause/Resume/Finish ve actual/credit muhasebesi çalışır. Bu, görevin, kaynak biriminin veya konunun tamamlandığı/öğrenildiği anlamına tek başına gelmez.
+- Generic ilk-plan blokları kaynak seviyesindedir. Exact sayfa/video/unit kapsamı ve topic/learning-stage kanıtı olmayan çalışmada materyal tamamlanması veya öğrenme kazanımı uydurulmamalı; mevcut canonical/material sözleşmeleri korunmalı.
+- Çalışma sonu sonucu, kalan iş, anlamlı öğrenme/tekrar geri bildirimi ve kullanıcının sonraki çalışmaya dönüşü için açık ürün ve kabul sözleşmesi eksiktir. Bu döngüde gerçek süre, plan kredisi, materyal ilerlemesi ve öğrenme kanıtı ayrı kalmalıdır.
+- Kalan işin sonraki güne/haftaya taşınması, ikinci hafta authoring, plan replacement veya gate açılması kendiliğinden yetkili değildir. S1-D tasarımında ihtiyaç/owner/explicit intent/korunan çalışma sınırı ayrıca belirlenmelidir; bu görev yeni endpoint veya writer eklemez.
+
+### MVP ve onay sınırları
+
+- **Bu P0–S1-C / UX V3 zinciri production için onaylı veya yayımlanmış değildir.** 8 Ekim'de kabul edilmiş eski web release kaydı kendi tarihsel kapsamıyla geçerlidir; yeni LOCAL çalışma için release onayı sayılmaz. Bu görev production'a erişmez.
+- **Landing tasarım onayı yok.** Mevcut local implementation ve teknik testler tasarım kabulü değildir. Landing/public-entry/auth görsel değişiklikleri ayrı, beklemede ve worktree'de korunur.
+- Kapsamlı UX/UI görsel revizyon **MVP sonrası** yapılacaktır. Öncelik S1-D fonksiyonel çalışma sonu/öğrenme döngüsüdür; mevcut görsel sistem bu checkpoint'te yeniden tasarlanmaz.
+- Planner Confirm/Apply, canonical/evidence-shadow ve Coach yetki/gate sınırları değiştirilmedi. Son belgelenmiş production gate durumu yeni live control-plane denetimi yapılmış gibi sunulmaz; Reactive Coach'un mevcut exact-profile kapsamı genişletilmedi.
+- Applied migration'lar forward-only korunur. Yeni **20 untracked migration** LOCAL history'de uygulanmıştır; untracked olmak pending DB migration demek değildir. P0(2) → S0(1) → R2(7) → S1-A(4) → S1-B(3) → S1-C(3), son LOCAL history 62. Dosyalar değiştirilmez/tekrar uygulanmaz; production zinciri ayrıca incelenip onaylanmalıdır.
+- Git hazırlığı: develop / e506dfe5ab23eaf9ce5cc3cdc6cc0791d8a46c14. İki LOCAL checkpoint önerisi .release/git-checkpoint-20261012/CHECKPOINT_PLAN.md içinde; staging ve commit insan onayı bekler. Commit/push/deploy, reset/clean/stash veya DB reset bu hazırlıkta yapılmaz.
+
+---
+
+> **2026-10-08 — FINAL WEB-ONLY PRODUCTION RELEASE: GREEN**
+>
+> - Accepted production web: **6e7f6cdd-63d7-45b0-9de7-aadb7cef2823**, exact source **e506dfe5ab23eaf9ce5cc3cdc6cc0791d8a46c14**, custom domain https://kpsskocum.com.tr. Frozen manifest **9c0fbf73a948eb54ca1bb546d8015d64ae4ccb24cab8f7b19a5ce875cc564ed4**; actual normal-TLS served bytes/hash **24/24 PASS**. No new build, source edit, commit or Git push during rollout.
+> - Gate A PASS for real Resources A→B→C, loading switch, close/reopen, correct native identity, maximum one observed iframe and paused existing-checkpoint restoration after normal reload (**803s / 13:23**). Explicit Play/continuous playback was forbidden and not tested. Fresh human approval covered incidental existing progress PUTs; actual scoped video progress rows stayed unchanged.
+> - Gate B PASS at **390px**: real pointer Pause receiver, no Finish overlap, actual **POST /pause 200**, persisted open break/paused UI; Resume 200, same session after normal refresh, one deliberate Finish 200. Exactly one approved session **2f7f78bd-2a2e-44b3-8384-6bf7072588a6**, one allocation, **3 actual/planned-credit minutes**, zero active sessions. No second session/task/resource fixture.
+> - Gate C critical authenticated smoke PASS; **10m17s** observation (rounded; measured **616.874s**) after all mandatory gates passed, no observed critical runtime/domain/API error or unexpected scoped data change. P2 Resume hover white-label/white-background issue is tracked as [UX-001 / TODO](PRODUCT_BACKLOG.md#post-release-ui-backlog); sampled fallback 404s remain documented. No hotfix or rollback.
+> - app-api **v79 ACTIVE**, JWT verification preserved; all six Edge identities/bundles and 41 migration-history entries unchanged. No production SQL, schema/RLS/RPC/trigger, gate/secret or Edge deployment change. The approved session/accounting data mutation is preserved; database deployment is unchanged.
+> - Rollback was **NOT REQUIRED / NOT EXECUTED**. Primary retained: **b187f696-2bd8-4fc6-b4d8-1e505f2421a9** / cbc209f; secondary **f7c4dd8e-e3a4-4a19-8b47-cbcd8016abae** / 395a536d. Failed historic rollout targets are excluded.
+> - [Final accepted release and scope](CONCEPT_B_FINAL_WEB_PRODUCTION_RELEASE.md). Historical incident/freeze checkpoints below are retained and superseded only for this web release outcome. This does not expand Planner/Coach authority or close unrelated product phases. This documentation closure changes only docs; HEAD remains the deployed RC, with documentation-only worktree changes awaiting separate commit approval.
+
 > **2026-10-07 — P1 VIDEO LIFECYCLE: LOCAL GREEN / NEW RC PENDING**
 >
 > **Production rollback incident repaired locally; new RC pending.** SDK replacement of React-owned DOM reproduced as the exact NotFoundError before repair. Stable React host + imperative SDK children, generation guards and at-most-once destroy now pass actual-component SDK replacement, StrictMode, slow/fail/final-flush regressions.
@@ -441,7 +486,7 @@
 > - This current-state block supersedes older pre-smoke wording later in this document.
 
 
-Last updated: 2026-09-25
+Last updated: 2026-10-12
 
 ## Canonical source
 

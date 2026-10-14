@@ -1,3 +1,25 @@
+## UX V3 backlog — 12 Ekim 2026
+
+Tek güncel faz kaydı: [PROJECT_HANDOFF — UX V3 LOCAL state](PROJECT_HANDOFF.md#ux-v3-local-state). P0/S0/R2 LOCAL PASS ve S1-A/B/C LOCAL GREEN; production onayı yok. Eski S0 BLOCKED karşı örnekleri final R2 PASS ile kapanmıştır; eski rapor silinmez veya yeniden yazılmaz.
+
+## UX V3 S1-D
+
+- Priority: P1; **NEXT / NOT_STARTED**. Sonraki fonksiyonel geliştirme; bu dokümantasyon/Git hazırlığı implementasyon yetkisi değildir.
+- Problem: ilk plan, gerçek çalışma kaydı ve factual haftalık görünüm mevcut; çalışma sonu sonucu ile materyal/konu/öğrenme/tekrar geri dönüş döngüsü generic kaynak seviyesinde bütünüyle tamamlanmış değildir.
+- Gerekli sözleşme: Finish sonrası actual/credit/kalan yük ile kullanıcının çalışma sonucunu doğru açıklamak; exact materyal ve topic kanıtı yokken sayfa/video tamamlanması, mastery veya learning-stage uydurmamak; mevcut authoritative kayıtları kullanmak.
+- Kabul: aynı gerçek oturum Today/Week/Progress ve izinli materyal/öğrenme yüzeylerinde tutarlı; partial/zero-progress/extra çalışma açık; refresh/retry ve kimlik koruması; kaydı olmayan kanıt bilinmeyen kalır; duplicate accounting yok.
+- Yetki sınırı: otomatik sonraki hafta planı, carryover/replacement, yeni writer, Coach Apply veya Planner gate açılması bu işi tanımlamakla yetkili hale gelmez. Gerekli değişiklik ayrıca dar kapsam ve açık intent ile tasarlanır.
+- Korunacaklar: landing/P0/S0/R2/S1-A/B/C, mevcut kullanıcı ve ilerleme verisi, exact resource/task kimlikleri, current/upcoming/historical ayrımı ve session/player lifecycle.
+
+## UX V3 — beklemede tutulan görsel işler
+
+- **Landing: DESIGN_APPROVAL_PENDING.** Local implementasyon ve testleri var; görsel/tasarım kabulü yok. Bu checkpoint'in fonksiyonel kod grubuna alınmaz.
+- **Kapsamlı UX/UI revizyon: POST_MVP.** S1-D fonksiyonel döngüsünün önüne geçirilmez. Mevcut UX-001 gibi eski görsel kayıtlar ve kanıtlar aşağıda saklanır; bu görevde hotfix başlamaz.
+
+Aşağıdaki backlog/milestone kayıtları tarihsel bağlam ve devam eden bağımsız ürün işleri olarak korunur; güncel UX V3 faz durumları yukarıdaki canonical handoff'a bağlıdır.
+
+---
+
 > **Authoritative current state - EVRE_7_PRODUCT_UX_CLOSED_2026_09_29**
 >
 > - **Evre 7 Product UX / Daily Coach Experience is `CLOSED`. Evre 7A UX Reality Audit & Daily Experience Contract, 7B Today as Daily Home, 7C Coach x Planner UX, 7D Week + Material Continuity, and 7E Product Polish & Real-user UX Acceptance are all `CLOSED`. Evre 8 and Evre 9 remain `WAITING`.**
@@ -354,7 +376,7 @@
 
 Status: Active
 
-Last updated: 2026-09-25
+Last updated: 2026-10-12
 
 ## Workflow
 
@@ -380,6 +402,23 @@ Status changes must be deliberate. Being listed under `NOW` does not by itself m
 | `P3` | Nice to have. |
 
 Priority describes impact, not implementation order. Dependencies and safety gates may determine sequence.
+
+## Post-release UI backlog
+
+| ID | Priority | Title | Status |
+| --- | --- | --- | --- |
+| `UX-001` | `P2` | Resume hover contrast after Pause | `TODO` |
+
+### `UX-001` — Resume hover contrast after Pause
+
+- Priority: `P2`
+- Status: `TODO`; no implementation has begun in this documentation closure.
+- Reported: 2026-10-08, during the accepted web RC `e506dfe5ab23eaf9ce5cc3cdc6cc0791d8a46c14` production Gate B.
+- Trigger and evidence: at 390px in Focus, Pause changes the button to “Devam Et” while the pointer remains over it. Text and background both become rgb(255, 255, 255), leaving the visible label blank. The accessible name remains “Çalışmaya devam et”; the control is enabled, hitOwn=true and Finish overlap area=0. Actual Resume returned POST /resume 200. Evidence: ignored gate-b-before-resume.json/png and [accepted release, Gate C](CONCEPT_B_FINAL_WEB_PRODUCTION_RELEASE.md#gate-c--pass-critical-smoke-noncritical-issues-recorded).
+- Classification: confirmed noncritical visual defect; functional Pause/Resume/Finish safety and accounting passed. The conflicting hover/resume CSS rules already existed in parent e58e5d7. No hotfix, rollback or current-source change is proposed by this closure.
+- Desired outcome: the Resume label remains readable when state changes under a stationary pointer and in normal, hover, keyboard-focus and disabled states.
+- Acceptance criteria: reproduce and verify locally at 390px and desktop; inspect Today and Focus states; retain visible labels and focus indicators; preserve Pause/Finish separation and correct real pointer receivers. Pause must still call only /pause, Resume /resume, and deliberate Finish /finish, with no duplicate session/accounting or API contract change.
+- Release boundary: any correction requires a separately authorized local source task, verified/frozen new RC and separate production deployment permission. This documentation task does not begin that work or authorize another production session.
 
 ## Current milestone backlog
 

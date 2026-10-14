@@ -1,3 +1,17 @@
+## UX V3 — güncel uygulama sırası, 12 Ekim 2026
+
+Faz durumlarının tek güncel kaydı [PROJECT_HANDOFF — UX V3 LOCAL state](PROJECT_HANDOFF.md#ux-v3-local-state) bölümüdür. Bu sıra eski tarihli next-step kayıtlarını UX V3 için supersede eder; eski M1/Evre kapanışları ve production release geçmişi kendi kapsamlarıyla korunur.
+
+1. **Tamamlanan LOCAL temel:** P0 onboarding integrity → S0/R2 writer/security sınırları → S1-A günlük kapasite → S1-B ilk manual plan → S1-C haftalık read-only görünüm. S1-C kapanışı yeni özellik veya production aktivasyonu değildir.
+2. **Şimdiki hazırlık:** anlamlı LOCAL Git checkpoint'leri ve proje durumunun konsolidasyonu; insan onayı olmadan staging/commit yok.
+3. **Sıradaki fonksiyonel dilim:** S1-D çalışma sonu ve öğrenme döngüsü; [backlog kabul sınırı](PRODUCT_BACKLOG.md#ux-v3-s1-d). Uygulama NOT_STARTED; actual/credit/material/learning ayrımı ve korunan kalan iş esastır.
+4. **MVP sonrası:** kapsamlı UX/UI görsel revizyon. Landing tasarım onayı ayrıca bekler; technical local PASS görsel onay değildir.
+5. **Ayrı release kapısı:** P0–S1-C zincirinin production uyumluluğu, migration/security/client matrisi ve rollout onayı. Bu görevde production erişimi veya yayın yok; Planner/Coach gate'leri değiştirilmez.
+
+Çalışma sonu/öğrenme açığı kapanmış kabul edilmez; generic kaynaklı ilk-plan session'ı tek başına topic/mastery/canonical completion kanıtı üretmez. İkinci hafta authoring veya otomatik taşıma bu roadmap kaydından yetki kazanmaz.
+
+---
+
 > **Authoritative current state - EVRE_7_PRODUCT_UX_CLOSED_2026_09_29**
 >
 > - **Evre 7 Product UX / Daily Coach Experience is `CLOSED`. Evre 7A UX Reality Audit & Daily Experience Contract, 7B Today as Daily Home, 7C Coach x Planner UX, 7D Week + Material Continuity, and 7E Product Polish & Real-user UX Acceptance are all `CLOSED`. Evre 8 and Evre 9 remain `WAITING`.**
@@ -353,7 +367,7 @@
 
 Status: Active
 
-Last updated: 2026-09-25
+Last updated: 2026-10-12
 
 ## Roadmap rules
 

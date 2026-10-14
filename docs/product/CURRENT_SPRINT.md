@@ -1,3 +1,27 @@
+## UX V3 — güncel sprint, 12 Ekim 2026
+
+Durumların tek güncel kaydı [PROJECT_HANDOFF — UX V3 LOCAL state](PROJECT_HANDOFF.md#ux-v3-local-state) bölümüdür. P0/S0/R2 LOCAL PASS; S1-A/B/C LOCAL GREEN. Bu zincirin production onayı yok; önceki release kayıtları tarihsel kapsamlarıyla korunur.
+
+**NOW:** güvenli LOCAL Git checkpoint hazırlığı ve insan onayı. Bütünleşik fonksiyonel kod ile proje belgeleri iki checkpoint olarak planlanır; landing tasarım onayı bekleyen dosyalar korunup dışarıda tutulur. Staging, commit, push ve deploy bu hazırlıkta yapılmaz.
+
+**NEXT:** S1-D — çalışma sonu ve öğrenme döngüsü; [açık kabul işi](PRODUCT_BACKLOG.md#ux-v3-s1-d). Actual/plan credit, görev durumu, materyal ilerlemesi ve öğrenme kanıtı ayrımını koruyan sözleşme hazırlanmalıdır. Mevcut çalışan session muhasebesi bütün öğrenme döngüsünün tamamlandığı iddiası değildir. S1-D implementasyonu başlamadı.
+
+**MVP SONRASI:** kapsamlı UX/UI görsel revizyon. Landing tasarımı ayrıca onay bekler; local test PASS tasarım onayı değildir. Planner/Coach gate'leri ve kullanıcı/veri koruma sınırları değişmez.
+
+Aşağıdaki eski sprint ve release checkpoint'lerinin next-step ifadeleri kendi tarihlerine aittir; güncel UX V3 sırası yukarıdadır.
+
+---
+
+> **2026-10-08 — FINAL WEB-ONLY PRODUCTION RELEASE: GREEN**
+>
+> - Accepted production web: **6e7f6cdd-63d7-45b0-9de7-aadb7cef2823**, exact source **e506dfe5ab23eaf9ce5cc3cdc6cc0791d8a46c14**, custom domain https://kpsskocum.com.tr. Frozen manifest **9c0fbf73a948eb54ca1bb546d8015d64ae4ccb24cab8f7b19a5ce875cc564ed4**; actual normal-TLS served bytes/hash **24/24 PASS**. No new build, source edit, commit or Git push during rollout.
+> - Gate A PASS for real Resources A→B→C, loading switch, close/reopen, correct native identity, maximum one observed iframe and paused existing-checkpoint restoration after normal reload (**803s / 13:23**). Explicit Play/continuous playback was forbidden and not tested. Fresh human approval covered incidental existing progress PUTs; actual scoped video progress rows stayed unchanged.
+> - Gate B PASS at **390px**: real pointer Pause receiver, no Finish overlap, actual **POST /pause 200**, persisted open break/paused UI; Resume 200, same session after normal refresh, one deliberate Finish 200. Exactly one approved session **2f7f78bd-2a2e-44b3-8384-6bf7072588a6**, one allocation, **3 actual/planned-credit minutes**, zero active sessions. No second session/task/resource fixture.
+> - Gate C critical authenticated smoke PASS; **10m17s** observation (rounded; measured **616.874s**) after all mandatory gates passed, no observed critical runtime/domain/API error or unexpected scoped data change. P2 Resume hover white-label/white-background issue is tracked as [UX-001 / TODO](PRODUCT_BACKLOG.md#post-release-ui-backlog); sampled fallback 404s remain documented. No hotfix or rollback.
+> - app-api **v79 ACTIVE**, JWT verification preserved; all six Edge identities/bundles and 41 migration-history entries unchanged. No production SQL, schema/RLS/RPC/trigger, gate/secret or Edge deployment change. The approved session/accounting data mutation is preserved; database deployment is unchanged.
+> - Rollback was **NOT REQUIRED / NOT EXECUTED**. Primary retained: **b187f696-2bd8-4fc6-b4d8-1e505f2421a9** / cbc209f; secondary **f7c4dd8e-e3a4-4a19-8b47-cbcd8016abae** / 395a536d. Failed historic rollout targets are excluded.
+> - [Final accepted release and scope](CONCEPT_B_FINAL_WEB_PRODUCTION_RELEASE.md). Historical incident/freeze checkpoints below are retained and superseded only for this web release outcome. This does not expand Planner/Coach authority or close unrelated product phases. This documentation closure changes only docs; HEAD remains the deployed RC, with documentation-only worktree changes awaiting separate commit approval.
+
 > **2026-10-07 — P1 VIDEO LIFECYCLE: LOCAL GREEN / NEW RC PENDING**
 >
 > **Production rollback incident repaired locally; new RC pending.** Exact React/SDK DOM ownership failure reproduced before source repair, then SDK replacement/unmount regression GREEN. Stable host, imperative children, generation guards and idempotent retirement preserve the existing progress writer.
@@ -423,7 +447,7 @@
 > - This current-state block supersedes older pre-smoke wording later in this document.
 
 
-Last updated: 2026-09-25
+Last updated: 2026-10-12
 
 ## Sprint 02 — Evre 6B & Continuing Planning Foundations
 
