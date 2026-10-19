@@ -2,13 +2,19 @@
 
 Status: Active policy
 
-Last updated: 2026-08-22
+Last updated: 2026-10-19
 
 ## Purpose
 
 This process protects user intent, study accounting, and production data while allowing reviewed changes to reach production. It defines gates; it does not authorize a deployment by itself.
 
 Production migrations and deployments must use explicit release gates. No release may depend on informal memory, an unreviewed local state, or an unrecorded manual repair.
+
+## Engineering System v1
+
+Görev rolleri, branch/worktree ve review akışı için [Engineering System v1](ENGINEERING_SYSTEM.md) geçerlidir. ACCEPTED durumu production yayın onayı değildir.
+
+Production yayınında exact kaynak kimliği, artifact manifesti, migration provenance, kullanılabilirliği doğrulanmış recovery ve açık kullanıcı onayı doğrulanmalıdır. Eksik kaynak/provenance veya bilinmeyen canlı baseline yeni yayın için GO sayılmaz. Aşağıdaki mevcut release gate ve onay sınırları korunur.
 
 ## Release principles
 
