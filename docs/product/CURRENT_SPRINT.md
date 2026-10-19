@@ -1,14 +1,22 @@
-## UX V3 — güncel sprint, 12 Ekim 2026
+## Engineering System v1 — güncel sprint, 19 Ekim 2026
 
-Durumların tek güncel kaydı [PROJECT_HANDOFF — UX V3 LOCAL state](PROJECT_HANDOFF.md#ux-v3-local-state) bölümüdür. P0/S0/R2 LOCAL PASS; S1-A/B/C LOCAL GREEN. Bu zincirin production onayı yok; önceki release kayıtları tarihsel kapsamlarıyla korunur.
+Güncel proje/baseline kaydı: [PROJECT_HANDOFF — UX V3 LOCAL state](PROJECT_HANDOFF.md#ux-v3-local-state). Geliştirme sözleşmesi: [ENGINEERING_SYSTEM](ENGINEERING_SYSTEM.md). Aynı anda en fazla üç aktif görev; şu anda **bir** aktif görev var.
 
-**NOW:** güvenli LOCAL Git checkpoint hazırlığı ve insan onayı. Bütünleşik fonksiyonel kod ile proje belgeleri iki checkpoint olarak planlanır; landing tasarım onayı bekleyen dosyalar korunup dışarıda tutulur. Staging, commit, push ve deploy bu hazırlıkta yapılmaz.
+| Task | Durum | Kapsam ve sonraki adım |
+| --- | --- | --- |
+| ENG-001 — Engineering Harness Foundation / target compatibility | **REVIEW** | Özgün 4e6a284 için bağımsız review PASS ve yerel commit tamamlandı. Ayrı codex/engsys-001-pr, origin/develop aad020d temelinde yalnız beş belgeyi hedefe uyarlar; uyumluluk düzeltmesi yeniden inceleme bekler. |
 
-**NEXT:** S1-D — çalışma sonu ve öğrenme döngüsü; [açık kabul işi](PRODUCT_BACKLOG.md#ux-v3-s1-d). Actual/plan credit, görev durumu, materyal ilerlemesi ve öğrenme kanıtı ayrımını koruyan sözleşme hazırlanmalıdır. Mevcut çalışan session muhasebesi bütün öğrenme döngüsünün tamamlandığı iddiası değildir. S1-D implementasyonu başlamadı.
+**Kapanmış tarihsel işler:** Maliye historical repair CLOSED; Anayasa historical investigation CLOSED — doğrulanmış hatalı kayıt yok. Bu sprint onları yeniden açmaz.
 
-**MVP SONRASI:** kapsamlı UX/UI görsel revizyon. Landing tasarımı ayrıca onay bekler; local test PASS tasarım onayı değildir. Planner/Coach gate'leri ve kullanıcı/veri koruma sınırları değişmez.
+**Son bildirilen production:** DB48 / app-api v81 ACTIVE / web f81e51cb-205c-4fac-a72a-64ba8b4a2a27 korunmuş. Bu bilgi tarihsel kapanış kanıtıdır; canlı yeniden doğrulama yapılmadı. LOCAL runtime UNKNOWN. Ana dirty develop ve landing korunur.
 
-Aşağıdaki eski sprint ve release checkpoint'lerinin next-step ifadeleri kendi tarihlerine aittir; güncel UX V3 sırası yukarıdadır.
+**Ayrı bekleyen konular (aktif göreve dönüştürülmedi):** production source provenance eksikliği; fresh migration compatibility; P0 doğal uzun oturum production kabulü PARTIAL. S1-E/çalışma sonu-öğrenme döngüsü bekler; önceki LOCAL kazanımlar ve Evre 5/7 kapanışları korunur. Landing tasarım onayı ayrı; kapsamlı görsel revizyon MVP sonrasıdır.
+
+**Belge güncelliği:** PRODUCT_BACKLOG ve ROADMAP eski durum taşıyabilir; ENG-001 onları yeniden yazmaz. Güncel durumu bu sprint ve handoff belirler. Aşağıdaki eski sprint/release next-step kayıtları tarihsel kapsamlarıyla korunur; aktif görev veya yayın yetkisi değildir.
+
+**Durma sınırı:** Yalnız izinli diff, git diff --check ve hızlı path/command varlığı kontrol edilir. Bu integration branch'inde commit'e özel onaylı kimlikle yerel commit hazırlanabilir; config'e kimlik yazılmaz. Test/build, CI/framework, uygulama/SQL, LOCAL/production, push/PR/merge yapılmaz; uyumluluk review'ı beklenir.
+
+**Hedef kapsamı:** Son doğrulanan origin/develop aad020d üzerine yalnız ENG-001 belgeleri taşınır. Yerel ürün commit'leri 0c3a694/742ca9e ve bunlara ait runner/testler LOCAL-only / pending integration kalır; tarihsel LOCAL kabul hedef branch implementasyonu değildir.
 
 ---
 

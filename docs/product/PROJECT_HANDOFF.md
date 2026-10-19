@@ -1,6 +1,38 @@
 ## UX V3 LOCAL state
 
-**Güncel durum: 12 Ekim 2026, Europe/Istanbul.** UX V3 için tek güncel durum kaydı bu bölümdür. CURRENT_SPRINT aktif işi, PRODUCT_BACKLOG kalan kabul maddelerini, ROADMAP sıralamayı taşır; faz durumları bu kayda göre yorumlanır. Aşağıdaki eski tarihli checkpoint/next-step kayıtları tarihsel kanıttır; güncel UX V3 sırasını veya yeni production yetkisini belirlemez.
+**Güncel durum: 19 Ekim 2026, Europe/Istanbul.** Bu bölüm güncel proje durumu, CURRENT_SPRINT aktif görevler, [ENGINEERING_SYSTEM](ENGINEERING_SYSTEM.md) geliştirme akışı için kaynaktır. Aşağıdaki tarihli checkpoint'ler geçmiş kanıttır; güncel çalışma veya yeni production yetkisi belirlemez.
+
+**Aktif çalışma: ENG-001 — hedef uyumluluk düzeltmesi / REVIEW.** Özgün 4e6a284 foundation için bağımsız review PASS ve yerel commit tamamlandı. codex/engsys-001-pr üzerindeki beş belgeli uyarlama inceleme bekler; yalnız yerel integration commit'i hazırlanır, push/PR/merge ve production/LOCAL işlemi yapılmaz.
+
+| Alan | Son bildirilen durum ve sınır |
+| --- | --- |
+| Maliye historical repair | **CLOSED.** 19 Ekim kapanışı exact kapsamlı onarım ve DB48 sonucunu bildirir; yeni onarım yetkisi değildir. |
+| Anayasa historical investigation | **CLOSED — doğrulanmış hatalı kayıt yok.** Yetkili Temmuz/Ağustos/Eylül incelemelerinde onarım hedefi bulunmadı; tüm geçmişte hiç olay olmadığı iddia edilmez. |
+| Production baseline | **Son bildirilen: DB48 / app-api v81 ACTIVE, verify_jwt=true / web f81e51cb-205c-4fac-a72a-64ba8b4a2a27 korunmuş.** Tarihsel kapanış kanıtıdır; bu görevde canlı yeniden doğrulama yapılmadı. Güncel canlı durum UNKNOWN. |
+| LOCAL runtime | **UNKNOWN.** Eski LOCAL kabul ve migration sayıları bugünkü runtime/DB sağlık kontrolü değildir; bu görev LOCAL'e bağlanmaz. |
+| P0 production acceptance | **PARTIAL.** Normal lifecycle/retry ve süre-materyal ayrımı için tarihsel kabul var; doğal uzun/ertesi güne sarkan oturumda gerçek dakika review senaryosu NOT EXECUTED. Onarım kapanışı bu eksik senaryoyu kapatmaz. |
+| Production source provenance | **Eksik / ayrı görev.** 17 Ekim kaydı e506dfe tabanı + donmuş hotfix, commit_dirty=true ve artifact hash'leri bildirir; bütün production içeriğini temsil eden temiz exact commit eşleşmesi doğrulanmış değildir. main/develop doğrudan production kaynağı sayılmaz. |
+| Fresh migration compatibility | **Ayrı açık görev.** 20261010220000 için clean-install syntax/provenance bulgusu var; fresh replay PASS sayılmaz. Applied SQL/history bu görevde değiştirilmez. |
+| Korunan çalışmalar | Ana develop/742ca9ebd4299be1634c6ca8fa1d1374b6d597fb: **6 modified / 18 untracked / 0 staged** başlangıcı; landing ve diğer ürün işleri korunur. Özgün codex/engsys-001-harness / 4e6a284 korunur; uyarlama ayrı codex/engsys-001-pr worktree/branch'indedir. Recovery/preview/release worktree'lerine dokunulmaz. |
+
+**Kapanış dayanakları (önceden üretilmiş, ignored yerel kayıtlar):**
+
+- Maliye ve DB48: `.release/exact-repair-privilege-fix-20261018/final-execution/CLOSURE.md` (19 Ekim).
+- Anayasa: `.release/anayasa-detection-20261019/RESULT.md` ve `JULY_RESULT.md` (19 Ekim).
+- API/web yayını ve dirty kaynak kaydı: `.release/p0-controlled-production-20261017/resume-v80/RESULT.md` (17 Ekim).
+- P0 kabul sınırı: `.release/p0-production-final-acceptance-20261017/RESULT.md` (17 Ekim).
+
+Bu dosyalar temiz clone'da bulunmak zorunda değildir; yukarıdaki kimliksiz özet kalıcı proje hafızasıdır. ENG-001 bu kanıtları taşımaz, özel identifier/credential/backup okumaz ve production'ı yeniden sorgulamaz. Fresh compatibility için yerel `docs/product/MIGRATION_CLEAN_INSTALL_COMPATIBILITY.md` de ana dirty checkout'ta untracked korunur; temiz clone'da var sayılmaz.
+
+**Ürün ve yetki sınırı:** Evre 5/7 kapanışları ve P0/S0/R2/S1-A/B/C/D için önceki LOCAL kazanımlar korunur; bunlar yeni production rollout veya öğrenme döngüsü kabulü değildir. S1-E ve ayrı çalışma sonu/öğrenme sözleşmesi bekler. Landing tasarımı onay bekler; kapsamlı UX/UI revizyon MVP sonrasıdır. Planner/Coach yetki ve gate'leri değişmez.
+
+**Belge güncelliği:** PRODUCT_BACKLOG ve ROADMAP eski aktif durum/NO-GO/next-step ifadeleri içerebilir. Bu görevde yeniden yazılmadılar; güncel durum ve aktif iş için bu bölüm ile CURRENT_SPRINT kullanılır. Tarihsel karar ve tamamlanan fazlar geçerliliğini kendi kapsamıyla korur.
+
+**Hedef branch gerçeği:** Bu paket son doğrulanan origin/develop `aad020d37aca75b32b5e4c3f1805d0708b21d61c` üzerine yalnız beş belgeyi taşır. Yerel ürün commit'leri `0c3a694` (hafta devamlılığı) ve `742ca9e` (süre bütünlüğü) **LOCAL-only / pending integration** kalır; bunların kaynak/testleri hedefte mevcut varsayılmaz. Aşağıdaki LOCAL kazanımlar tarihsel yerel kanıttır. Bu kaynak ağacının DB48/app-api v81/web baseline'ını tam temsil ettiği iddia edilmez.
+
+### 12 Ekim 2026 — hedef branch'teki tarihsel LOCAL ve MVP checkpoint'i
+
+Aşağıdaki kayıt origin/develop temelinden korunur. Buradaki S1-D NEXT, Git/history sayıları ve “bu görev” ifadeleri 12 Ekim checkpoint'ine aittir. Sonraki LOCAL çalışmaların pending integration durumu ve dar production kapanışları yukarıda ayrıştırılmıştır; tarihsel kayıt bugünkü runtime veya yeni yayın yetkisi değildir.
 
 | Dilim | Güncel LOCAL durum | Tamamlanan kapsam / kanıt |
 |---|---|---|
