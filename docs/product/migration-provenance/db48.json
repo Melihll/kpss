@@ -1,0 +1,1797 @@
+{
+  "schemaVersion": 1,
+  "snapshot": {
+    "id": "DB48",
+    "recordedThrough": "2026-10-19",
+    "basis": "Historical DB46 release inventory, DB47 execution, and DB48 closure evidence.",
+    "canonicalReferenceCommit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+    "liveProductionVerified": false,
+    "productionSqlBytesDirectlyVerified": false,
+    "isDeploymentOrReplayPlan": false
+  },
+  "hashPolicy": {
+    "algorithm": "SHA-256",
+    "canonicalSource": "Exact Git blob bytes for existing files; exact recovered source bytes for the seven additions.",
+    "normalization": "Byte-level CRLF to LF only. Preserve BOM, whitespace, lone CR and final newline count.",
+    "checkoutPolicy": "Raw match or CRLF-only variant of the pinned canonical source is accepted; other content changes fail."
+  },
+  "evidenceSources": [
+    {
+      "id": "db46Inventory",
+      "type": "historical-local-release-evidence",
+      "path": ".release/p0-final-closure-20261016/release-manifest.json",
+      "sha256": "43391a11a3eadcf7ef20a4bade99bf9220d70202161cada64065340d6212b7b6",
+      "requiredAtRuntime": false
+    },
+    {
+      "id": "db46AppliedRecord",
+      "type": "historical-local-release-evidence",
+      "path": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+      "sha256": "fafb906c325cf53fd00ea717570d9dd6c046f29d0f273bde2951835c254f2cf3",
+      "requiredAtRuntime": false
+    },
+    {
+      "id": "db47Inventory",
+      "type": "historical-local-release-evidence",
+      "path": ".release/esra-maliye-repair-20261017/release-manifest.json",
+      "sha256": "dc8e4e82aec9849307ee7cf4e998933d4beeade696af553ad81c2d86611e1bef",
+      "requiredAtRuntime": false
+    },
+    {
+      "id": "db47AppliedRecord",
+      "type": "historical-local-release-evidence",
+      "path": ".release/esra-maliye-repair-20261017/production-execution-20261018/EXECUTION_RESULT.md",
+      "sha256": "b0de1bde6c56a938f15f09d13a6d81e5cc7a5c44a1e26efa8c7efddf6bcb6858",
+      "requiredAtRuntime": false
+    },
+    {
+      "id": "db48Inventory",
+      "type": "historical-local-release-evidence",
+      "path": ".release/exact-repair-privilege-fix-20261018/release-manifest.json",
+      "sha256": "1f42a32714dfdbab5d34118e8629d6266029a28c85c5294bb24dadb64482f1e7",
+      "requiredAtRuntime": false
+    },
+    {
+      "id": "db48AppliedRecord",
+      "type": "historical-local-release-evidence",
+      "path": ".release/exact-repair-privilege-fix-20261018/final-execution/CLOSURE.md",
+      "sha256": "4ca78e2ff5cd00e7cb0c7afe6ac21cb896626bf11a7c54abe6b76ff9e3678cac",
+      "requiredAtRuntime": false
+    }
+  ],
+  "exclusions": [
+    {
+      "version": "20261014200000",
+      "filename": "20261014200000_returning_manual_week_plan.sql",
+      "reason": "Not part of the documented historical DB48 chain; not recovered by ENG-002A."
+    }
+  ],
+  "migrations": [
+    {
+      "version": "20260807230000",
+      "filename": "20260807230000_create_user_profiles.sql",
+      "canonicalPath": "supabase/migrations/20260807230000_create_user_profiles.sql",
+      "releaseArtifactSha256": "30049bc4fb105cc8de02022f3d546f5b9cdcf660c5c38bbb10c138be8b25d888",
+      "canonicalSourceSha256": "0c1c30908a6d1c6c2b16477891c4236fe8e0a8d68e6bca9f144d894fc37f1e92",
+      "lfNormalizedSha256": "0c1c30908a6d1c6c2b16477891c4236fe8e0a8d68e6bca9f144d894fc37f1e92",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 75,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 75,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260807230000_create_user_profiles.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260807230000_create_user_profiles.sql"
+      }
+    },
+    {
+      "version": "20260808000100",
+      "filename": "20260808000100_create_global_catalog.sql",
+      "canonicalPath": "supabase/migrations/20260808000100_create_global_catalog.sql",
+      "releaseArtifactSha256": "9758332ebff9fba6db9c351d4f931b0b22cb00603c4c39b06b6e41de9f59fe99",
+      "canonicalSourceSha256": "59648fe1e350fcdb9856d4676cabdc82446ade6b4c17d88c6cdf039410dea4a0",
+      "lfNormalizedSha256": "59648fe1e350fcdb9856d4676cabdc82446ade6b4c17d88c6cdf039410dea4a0",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 89,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 89,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808000100_create_global_catalog.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808000100_create_global_catalog.sql"
+      }
+    },
+    {
+      "version": "20260808000200",
+      "filename": "20260808000200_create_user_domain.sql",
+      "canonicalPath": "supabase/migrations/20260808000200_create_user_domain.sql",
+      "releaseArtifactSha256": "66107e16240514b350cc6ac18a45ad03e5009a0b1c716c0c0cce55896b2b35a9",
+      "canonicalSourceSha256": "cd053ffba37b250147061251701fa06ab0e57a1a64934cf2d446f7289a6da8e7",
+      "lfNormalizedSha256": "cd053ffba37b250147061251701fa06ab0e57a1a64934cf2d446f7289a6da8e7",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 332,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 332,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808000200_create_user_domain.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808000200_create_user_domain.sql"
+      }
+    },
+    {
+      "version": "20260808000300",
+      "filename": "20260808000300_create_domain_functions.sql",
+      "canonicalPath": "supabase/migrations/20260808000300_create_domain_functions.sql",
+      "releaseArtifactSha256": "c24249ae2a1c6baca90c5362001d999b5a2aa7cf803c4d7581bb6738e152466e",
+      "canonicalSourceSha256": "fdab0a1156815546ca3fd05e788d63cc360c60ce6accf120ddc5a7f45847ebdc",
+      "lfNormalizedSha256": "fdab0a1156815546ca3fd05e788d63cc360c60ce6accf120ddc5a7f45847ebdc",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 99,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 99,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808000300_create_domain_functions.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808000300_create_domain_functions.sql"
+      }
+    },
+    {
+      "version": "20260808000400",
+      "filename": "20260808000400_create_planning_task_schema.sql",
+      "canonicalPath": "supabase/migrations/20260808000400_create_planning_task_schema.sql",
+      "releaseArtifactSha256": "cd24399d7d0410e4a6006605e291d0801056fa2d994606bbc877afee6c4b926a",
+      "canonicalSourceSha256": "7d0fc8dc34b9227807431447f7cf71631b09297ed9c4d02c4db97d4f8a5133fa",
+      "lfNormalizedSha256": "7d0fc8dc34b9227807431447f7cf71631b09297ed9c4d02c4db97d4f8a5133fa",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 194,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 194,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808000400_create_planning_task_schema.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808000400_create_planning_task_schema.sql"
+      }
+    },
+    {
+      "version": "20260808000500",
+      "filename": "20260808000500_create_task_persistence_functions.sql",
+      "canonicalPath": "supabase/migrations/20260808000500_create_task_persistence_functions.sql",
+      "releaseArtifactSha256": "1511c77c539f7c8bd52fbef92ea9802d6052463323b2f530a09882b50b6e55d7",
+      "canonicalSourceSha256": "258acb5a03a519f503952e998730a7c13ae827ccbd11151ffbd3f6aaef0dfb75",
+      "lfNormalizedSha256": "258acb5a03a519f503952e998730a7c13ae827ccbd11151ffbd3f6aaef0dfb75",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 273,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 273,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808000500_create_task_persistence_functions.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808000500_create_task_persistence_functions.sql"
+      }
+    },
+    {
+      "version": "20260808000600",
+      "filename": "20260808000600_create_execution_messaging_schema.sql",
+      "canonicalPath": "supabase/migrations/20260808000600_create_execution_messaging_schema.sql",
+      "releaseArtifactSha256": "7d316cb877fb068e163f0e99873261c98bcc31e5977de7af17d5c89eb0ea54dd",
+      "canonicalSourceSha256": "f2361d9a327f5400c8009cc3999a630d6e033f2dd30dd472a6121cddde5a0a2c",
+      "lfNormalizedSha256": "f2361d9a327f5400c8009cc3999a630d6e033f2dd30dd472a6121cddde5a0a2c",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 156,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 156,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808000600_create_execution_messaging_schema.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808000600_create_execution_messaging_schema.sql"
+      }
+    },
+    {
+      "version": "20260808000700",
+      "filename": "20260808000700_create_execution_result_functions.sql",
+      "canonicalPath": "supabase/migrations/20260808000700_create_execution_result_functions.sql",
+      "releaseArtifactSha256": "e4c62abec023053c5a7b71ad2225a55d23b787c075e5a53fea010966c25c56d9",
+      "canonicalSourceSha256": "6b7d51cf8a2ce20f26cb1baa2edc852cf5ada42a34342f7f014e36fbedd04c3c",
+      "lfNormalizedSha256": "6b7d51cf8a2ce20f26cb1baa2edc852cf5ada42a34342f7f014e36fbedd04c3c",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 134,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 134,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808000700_create_execution_result_functions.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808000700_create_execution_result_functions.sql"
+      }
+    },
+    {
+      "version": "20260808000800",
+      "filename": "20260808000800_harden_phase04_pilot_gate.sql",
+      "canonicalPath": "supabase/migrations/20260808000800_harden_phase04_pilot_gate.sql",
+      "releaseArtifactSha256": "b1218a330616946dee38f1c85ddf8e93e490493c0c06e470b7d7026edbee45fb",
+      "canonicalSourceSha256": "e5713ca089a8c10006b7158d05fb70e525d878e54ebca1568346dd6ffe076797",
+      "lfNormalizedSha256": "e5713ca089a8c10006b7158d05fb70e525d878e54ebca1568346dd6ffe076797",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 206,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 206,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808000800_harden_phase04_pilot_gate.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808000800_harden_phase04_pilot_gate.sql"
+      }
+    },
+    {
+      "version": "20260808000900",
+      "filename": "20260808000900_create_mastery_revision_schema.sql",
+      "canonicalPath": "supabase/migrations/20260808000900_create_mastery_revision_schema.sql",
+      "releaseArtifactSha256": "d5f8d201ee32e65495ef124c228eeb09d2cc45218c7fdd36ec0743998d7ade56",
+      "canonicalSourceSha256": "7439c77cdfb8421230434de5b93023cb2a2519e73756a0302a85b6bd1fc80169",
+      "lfNormalizedSha256": "7439c77cdfb8421230434de5b93023cb2a2519e73756a0302a85b6bd1fc80169",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 252,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 252,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808000900_create_mastery_revision_schema.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808000900_create_mastery_revision_schema.sql"
+      }
+    },
+    {
+      "version": "20260808001000",
+      "filename": "20260808001000_create_dynamic_replanning_schema.sql",
+      "canonicalPath": "supabase/migrations/20260808001000_create_dynamic_replanning_schema.sql",
+      "releaseArtifactSha256": "d81bef24ae4de75829ad2d4288bd570996bca2604c346914a473976afee1888e",
+      "canonicalSourceSha256": "e52ae8a10d1ec3ec565c264267f3de5257d5c62ab273366f1d67b26cf12aec87",
+      "lfNormalizedSha256": "e52ae8a10d1ec3ec565c264267f3de5257d5c62ab273366f1d67b26cf12aec87",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 109,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 109,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808001000_create_dynamic_replanning_schema.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808001000_create_dynamic_replanning_schema.sql"
+      }
+    },
+    {
+      "version": "20260808001100",
+      "filename": "20260808001100_create_v1_pilot_closure_schema.sql",
+      "canonicalPath": "supabase/migrations/20260808001100_create_v1_pilot_closure_schema.sql",
+      "releaseArtifactSha256": "85bbf2e3fb694fe82f7fe863231c1def0a8818f48321a449774b32063d918f83",
+      "canonicalSourceSha256": "fbfa9baf386368ed61b89b92310f1aef4ebde3331453228e2791a8c8dee60b35",
+      "lfNormalizedSha256": "fbfa9baf386368ed61b89b92310f1aef4ebde3331453228e2791a8c8dee60b35",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 235,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 235,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808001100_create_v1_pilot_closure_schema.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808001100_create_v1_pilot_closure_schema.sql"
+      }
+    },
+    {
+      "version": "20260808120000",
+      "filename": "20260808120000_seed_production_reference_catalog.sql",
+      "canonicalPath": "supabase/migrations/20260808120000_seed_production_reference_catalog.sql",
+      "releaseArtifactSha256": "339d863a8d0f2aab887cefecddc9740a4e24326f58706cff5f3f35438496885e",
+      "canonicalSourceSha256": "97326ee22e4a796f80b5d973c6abccf082947ee797112047166325fb45d6056d",
+      "lfNormalizedSha256": "97326ee22e4a796f80b5d973c6abccf082947ee797112047166325fb45d6056d",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 74,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 74,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808120000_seed_production_reference_catalog.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808120000_seed_production_reference_catalog.sql"
+      }
+    },
+    {
+      "version": "20260808160000",
+      "filename": "20260808160000_seed_pilot_curriculum.sql",
+      "canonicalPath": "supabase/migrations/20260808160000_seed_pilot_curriculum.sql",
+      "releaseArtifactSha256": "6affec68de8e0b7771f53259063d35b32d33fa2a34ce9b418567d76c65be8928",
+      "canonicalSourceSha256": "c5e9bc79ef08fc3df6ecb6c6db13c9aadcbf468faf4e2a2e2c4f569893c7b0fb",
+      "lfNormalizedSha256": "c5e9bc79ef08fc3df6ecb6c6db13c9aadcbf468faf4e2a2e2c4f569893c7b0fb",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 134,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 134,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808160000_seed_pilot_curriculum.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808160000_seed_pilot_curriculum.sql"
+      }
+    },
+    {
+      "version": "20260808163000",
+      "filename": "20260808163000_backfill_selected_topic_progress.sql",
+      "canonicalPath": "supabase/migrations/20260808163000_backfill_selected_topic_progress.sql",
+      "releaseArtifactSha256": "2b9e51890496ea56c9839037e7a9362fd90d9488169c598c7a568ae8cd82cd6c",
+      "canonicalSourceSha256": "a30da6a63153eb4bda0dea4ea5db1002f2b58e9cf5bef27757874394b361e060",
+      "lfNormalizedSha256": "a30da6a63153eb4bda0dea4ea5db1002f2b58e9cf5bef27757874394b361e060",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 23,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 23,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260808163000_backfill_selected_topic_progress.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260808163000_backfill_selected_topic_progress.sql"
+      }
+    },
+    {
+      "version": "20260809153000",
+      "filename": "20260809153000_reconcile_topic_progress_question_counters.sql",
+      "canonicalPath": "supabase/migrations/20260809153000_reconcile_topic_progress_question_counters.sql",
+      "releaseArtifactSha256": "6cd938d13b70432b2408a0a71ac1cecd460d1dd795892b38b6e06641ab7bb6ef",
+      "canonicalSourceSha256": "80e543caaeba5427eea3f4d6da77f24f6b8e6063fd506cb242ae09f83d6c46b1",
+      "lfNormalizedSha256": "80e543caaeba5427eea3f4d6da77f24f6b8e6063fd506cb242ae09f83d6c46b1",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 31,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 31,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260809153000_reconcile_topic_progress_question_counters.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260809153000_reconcile_topic_progress_question_counters.sql"
+      }
+    },
+    {
+      "version": "20260809190000",
+      "filename": "20260809190000_harden_telegram_coach_flow.sql",
+      "canonicalPath": "supabase/migrations/20260809190000_harden_telegram_coach_flow.sql",
+      "releaseArtifactSha256": "8726b20a5b26ac8eddb2b8b97baee23ab36679ea882cedbb9efbc883f29be8df",
+      "canonicalSourceSha256": "75b27b2669163563813819e9dfe0661ba7d473aea5ab24311e111fbc7c321d5b",
+      "lfNormalizedSha256": "75b27b2669163563813819e9dfe0661ba7d473aea5ab24311e111fbc7c321d5b",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 154,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 154,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260809190000_harden_telegram_coach_flow.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260809190000_harden_telegram_coach_flow.sql"
+      }
+    },
+    {
+      "version": "20260810153000",
+      "filename": "20260810153000_manual_weekly_pilot_plan.sql",
+      "canonicalPath": "supabase/migrations/20260810153000_manual_weekly_pilot_plan.sql",
+      "releaseArtifactSha256": "23b13c00a3ca0a267ba0573986797b551c8e0265785d7e895482ae0cb61e7b71",
+      "canonicalSourceSha256": "6543e7dbe5958aec1832e890535cf2929981f3437b8c614369bb13cb3d59fdcb",
+      "lfNormalizedSha256": "6543e7dbe5958aec1832e890535cf2929981f3437b8c614369bb13cb3d59fdcb",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 213,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 213,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260810153000_manual_weekly_pilot_plan.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260810153000_manual_weekly_pilot_plan.sql"
+      }
+    },
+    {
+      "version": "20260811180000",
+      "filename": "20260811180000_p48_long_range_roadmap.sql",
+      "canonicalPath": "supabase/migrations/20260811180000_p48_long_range_roadmap.sql",
+      "releaseArtifactSha256": "21b0d884201b86aa9829ce7d3650de4fc5ea36be1a3e9269d2718258459894bc",
+      "canonicalSourceSha256": "990e116a40854e9707e265318ed7e8ee746fbf40a6a0665e05e7f3e1cb5281fc",
+      "lfNormalizedSha256": "990e116a40854e9707e265318ed7e8ee746fbf40a6a0665e05e7f3e1cb5281fc",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 301,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 301,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260811180000_p48_long_range_roadmap.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260811180000_p48_long_range_roadmap.sql"
+      }
+    },
+    {
+      "version": "20260816200000",
+      "filename": "20260816200000_p48_canonical_infrastructure.sql",
+      "canonicalPath": "supabase/migrations/20260816200000_p48_canonical_infrastructure.sql",
+      "releaseArtifactSha256": "b8ed680b5f85e88479259e48a84cd0e9a9bc15bf2cbaeb4f67f0b9b7a76aa4bc",
+      "canonicalSourceSha256": "b984453abac8ea7b42b0e96cfc6f0d9c308a95f0771b9fe3d02da936f36ec13b",
+      "lfNormalizedSha256": "b984453abac8ea7b42b0e96cfc6f0d9c308a95f0771b9fe3d02da936f36ec13b",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 412,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 412,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260816200000_p48_canonical_infrastructure.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260816200000_p48_canonical_infrastructure.sql"
+      }
+    },
+    {
+      "version": "20260817130000",
+      "filename": "20260817130000_make_plan_revision_atomic.sql",
+      "canonicalPath": "supabase/migrations/20260817130000_make_plan_revision_atomic.sql",
+      "releaseArtifactSha256": "cbd8ce86dfca92f88df7babc73b8251eae89ed3478ef1f1e458fc78b8ef07dcb",
+      "canonicalSourceSha256": "30f022850456059e4da1618c681d8f6ab38facbd815597a27db2d7fa7bf1807e",
+      "lfNormalizedSha256": "30f022850456059e4da1618c681d8f6ab38facbd815597a27db2d7fa7bf1807e",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 186,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 186,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260817130000_make_plan_revision_atomic.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260817130000_make_plan_revision_atomic.sql"
+      }
+    },
+    {
+      "version": "20260818190000",
+      "filename": "20260818190000_create_planning_v2_shadow_persistence.sql",
+      "canonicalPath": "supabase/migrations/20260818190000_create_planning_v2_shadow_persistence.sql",
+      "releaseArtifactSha256": "735ebb64488b5b08e515bddeee9a109b48eb65ebf5a297465ed59fc386806abf",
+      "canonicalSourceSha256": "a28bd076ee61829a230aa71c13c109f89582f49270a1b005e6c6a99c0b09256a",
+      "lfNormalizedSha256": "a28bd076ee61829a230aa71c13c109f89582f49270a1b005e6c6a99c0b09256a",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 667,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 667,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260818190000_create_planning_v2_shadow_persistence.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260818190000_create_planning_v2_shadow_persistence.sql"
+      }
+    },
+    {
+      "version": "20260820094500",
+      "filename": "20260820094500_create_task_daily_preferences.sql",
+      "canonicalPath": "supabase/migrations/20260820094500_create_task_daily_preferences.sql",
+      "releaseArtifactSha256": "bcc2382d259836c7711e1ebabb8c1d1a5a32997ff1dc183f3a3456e673f8e3a9",
+      "canonicalSourceSha256": "ffb3811605678ab9d8c97a8122cc45c608a89a3a11554192c60c51fe2e8b9b58",
+      "lfNormalizedSha256": "ffb3811605678ab9d8c97a8122cc45c608a89a3a11554192c60c51fe2e8b9b58",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 43,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 43,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260820094500_create_task_daily_preferences.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260820094500_create_task_daily_preferences.sql"
+      }
+    },
+    {
+      "version": "20260820103000",
+      "filename": "20260820103000_add_study_session_breaks.sql",
+      "canonicalPath": "supabase/migrations/20260820103000_add_study_session_breaks.sql",
+      "releaseArtifactSha256": "4424942fed646c0210a578e8ab94661c7be49ca06bba697524d9420b31d4bb39",
+      "canonicalSourceSha256": "27268d6c8a1c6f95706edf46c159c6d35581112bb876589e514698b2e84999c2",
+      "lfNormalizedSha256": "27268d6c8a1c6f95706edf46c159c6d35581112bb876589e514698b2e84999c2",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 275,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 275,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260820103000_add_study_session_breaks.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260820103000_add_study_session_breaks.sql"
+      }
+    },
+    {
+      "version": "20260820110000",
+      "filename": "20260820110000_create_resource_progress.sql",
+      "canonicalPath": "supabase/migrations/20260820110000_create_resource_progress.sql",
+      "releaseArtifactSha256": "f50ddb3f4aab56ba783317a6914f430c97816c3a899ed798a87ef55cd6028f84",
+      "canonicalSourceSha256": "b33860e095cc53e5d6d890a3f194cc28658c696324f6d3d98b1dbc922262412b",
+      "lfNormalizedSha256": "b33860e095cc53e5d6d890a3f194cc28658c696324f6d3d98b1dbc922262412b",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 64,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 64,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260820110000_create_resource_progress.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260820110000_create_resource_progress.sql"
+      }
+    },
+    {
+      "version": "20260820113000",
+      "filename": "20260820113000_create_topic_resource_links.sql",
+      "canonicalPath": "supabase/migrations/20260820113000_create_topic_resource_links.sql",
+      "releaseArtifactSha256": "101ade3e81c33843add5704a9177d0f35a0004b80a66c0f0f1c6c84ccb0e2fdb",
+      "canonicalSourceSha256": "00cc870438813f9c0b7cc2175aed19fab20ccaeee47b28ae4aab64f32d9093d4",
+      "lfNormalizedSha256": "00cc870438813f9c0b7cc2175aed19fab20ccaeee47b28ae4aab64f32d9093d4",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 174,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 174,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260820113000_create_topic_resource_links.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260820113000_create_topic_resource_links.sql"
+      }
+    },
+    {
+      "version": "20260820120000",
+      "filename": "20260820120000_youtube_playlist_sync.sql",
+      "canonicalPath": "supabase/migrations/20260820120000_youtube_playlist_sync.sql",
+      "releaseArtifactSha256": "cd7caa86262a93733b22c0ccb6686e163a1b413f3f14d39b80cc82079835aec2",
+      "canonicalSourceSha256": "1cb799c0c75afcc609d7e46b33e55521fefad763f61f5bb1b55e7e7b77ca1bf0",
+      "lfNormalizedSha256": "1cb799c0c75afcc609d7e46b33e55521fefad763f61f5bb1b55e7e7b77ca1bf0",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 169,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 169,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260820120000_youtube_playlist_sync.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260820120000_youtube_playlist_sync.sql"
+      }
+    },
+    {
+      "version": "20260820123000",
+      "filename": "20260820123000_youtube_video_progress.sql",
+      "canonicalPath": "supabase/migrations/20260820123000_youtube_video_progress.sql",
+      "releaseArtifactSha256": "c957f6a8c2a638078fcd7df30c3bfdfebb27a3cf41e70c4b3c7c6c481b3ae7ed",
+      "canonicalSourceSha256": "97c97741eb6c32e323c9d7d62a03428ebc5d25457c9df1638a11c2d2e60eda29",
+      "lfNormalizedSha256": "97c97741eb6c32e323c9d7d62a03428ebc5d25457c9df1638a11c2d2e60eda29",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 171,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 171,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260820123000_youtube_video_progress.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260820123000_youtube_video_progress.sql"
+      }
+    },
+    {
+      "version": "20260820130000",
+      "filename": "20260820130000_add_study_session_mode.sql",
+      "canonicalPath": "supabase/migrations/20260820130000_add_study_session_mode.sql",
+      "releaseArtifactSha256": "595c35763eb4bb3e1269437e8e514ea3c28927214ec1da757084aa4476fb8a12",
+      "canonicalSourceSha256": "3ba6474fa53fbd105b8c6a18139c2c891ee4659318c711c5a9a0cd701c6739df",
+      "lfNormalizedSha256": "3ba6474fa53fbd105b8c6a18139c2c891ee4659318c711c5a9a0cd701c6739df",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 70,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 70,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260820130000_add_study_session_mode.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260820130000_add_study_session_mode.sql"
+      }
+    },
+    {
+      "version": "20260821120000",
+      "filename": "20260821120000_harden_study_time_and_plan_audit.sql",
+      "canonicalPath": "supabase/migrations/20260821120000_harden_study_time_and_plan_audit.sql",
+      "releaseArtifactSha256": "1c4c354910a1b01dfeaed9fc82d2e079c062b8e8e7a266631b4323b30c3e13f9",
+      "canonicalSourceSha256": "06e9ae5a0468ee6b8d3e9158206e495213b049b69fa049a3cde3e70eb51f5d1c",
+      "lfNormalizedSha256": "06e9ae5a0468ee6b8d3e9158206e495213b049b69fa049a3cde3e70eb51f5d1c",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 118,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 118,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260821120000_harden_study_time_and_plan_audit.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260821120000_harden_study_time_and_plan_audit.sql"
+      }
+    },
+    {
+      "version": "20260821123000",
+      "filename": "20260821123000_restore_topic_progress_on_finish.sql",
+      "canonicalPath": "supabase/migrations/20260821123000_restore_topic_progress_on_finish.sql",
+      "releaseArtifactSha256": "53d49e7868c5aa8464e2fcd9da274d86cf60392ffd9424a81504570f8b4df863",
+      "canonicalSourceSha256": "89f807e32bd9b36fbfb996073940abe75d6eff9cda710947336a48581583ac40",
+      "lfNormalizedSha256": "89f807e32bd9b36fbfb996073940abe75d6eff9cda710947336a48581583ac40",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 117,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 117,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260821123000_restore_topic_progress_on_finish.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260821123000_restore_topic_progress_on_finish.sql"
+      }
+    },
+    {
+      "version": "20260821130000",
+      "filename": "20260821130000_confirmed_product_actions.sql",
+      "canonicalPath": "supabase/migrations/20260821130000_confirmed_product_actions.sql",
+      "releaseArtifactSha256": "85d8edaa9217d784787ce56dbee887a8dd0e5f8c8c55b0f4db143ba87eb2dffe",
+      "canonicalSourceSha256": "218bee9651ea5277ef51cc4ce4f26659d9c86e93691e06ef52f53891db08845b",
+      "lfNormalizedSha256": "218bee9651ea5277ef51cc4ce4f26659d9c86e93691e06ef52f53891db08845b",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 441,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 441,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260821130000_confirmed_product_actions.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260821130000_confirmed_product_actions.sql"
+      }
+    },
+    {
+      "version": "20260822120000",
+      "filename": "20260822120000_study_intent_semantics.sql",
+      "canonicalPath": "supabase/migrations/20260822120000_study_intent_semantics.sql",
+      "releaseArtifactSha256": "6aecb6e75320cdd60fa2ab313140fa107b3128852e5e1f1b0dd959f8131ceee4",
+      "canonicalSourceSha256": "3ccbb42f17cad03544c37e84f4a0179e194f0c3fd17b16dc127d13370bdb5e40",
+      "lfNormalizedSha256": "3ccbb42f17cad03544c37e84f4a0179e194f0c3fd17b16dc127d13370bdb5e40",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 716,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 716,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260822120000_study_intent_semantics.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260822120000_study_intent_semantics.sql"
+      }
+    },
+    {
+      "version": "20260824123500",
+      "filename": "20260824123500_mat001_material_progress_and_video_topic_mapping.sql",
+      "canonicalPath": "supabase/migrations/20260824123500_mat001_material_progress_and_video_topic_mapping.sql",
+      "releaseArtifactSha256": "23a657cd2205228f7eb2386f1a68b436c50c97ff910313fb66bb1743e19a25e2",
+      "canonicalSourceSha256": "4d8134bf1f965513cc78caa5e6a4b23b17f1ae0955ba7f9b41748008b1ea5d0f",
+      "lfNormalizedSha256": "4d8134bf1f965513cc78caa5e6a4b23b17f1ae0955ba7f9b41748008b1ea5d0f",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 208,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 208,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260824123500_mat001_material_progress_and_video_topic_mapping.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260824123500_mat001_material_progress_and_video_topic_mapping.sql"
+      }
+    },
+    {
+      "version": "20260825130000",
+      "filename": "20260825130000_atomic_physical_pace_evidence.sql",
+      "canonicalPath": "supabase/migrations/20260825130000_atomic_physical_pace_evidence.sql",
+      "releaseArtifactSha256": "da196727faa7fa3cb1f9ee418ae58ae48a537d6b0894510fda93c381af47748a",
+      "canonicalSourceSha256": "82006d04a089595308ff9b434dd4f4c8888c2191fdd0fb9c69f0af210c32a8e6",
+      "lfNormalizedSha256": "82006d04a089595308ff9b434dd4f4c8888c2191fdd0fb9c69f0af210c32a8e6",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 859,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 859,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260825130000_atomic_physical_pace_evidence.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260825130000_atomic_physical_pace_evidence.sql"
+      }
+    },
+    {
+      "version": "20260826120000",
+      "filename": "20260826120000_planner_v2_proposal_lifecycle_candidate.sql",
+      "canonicalPath": "supabase/migrations/20260826120000_planner_v2_proposal_lifecycle_candidate.sql",
+      "releaseArtifactSha256": "c1c0ad5565ba1daeeddead1dea2ba281f934e7fde8b1828ef6adbf7e6ac3200e",
+      "canonicalSourceSha256": "a52d9ccc1f7b135ce7a93bb9c546e866c57beffeabb8d34bc0803e08558691a5",
+      "lfNormalizedSha256": "a52d9ccc1f7b135ce7a93bb9c546e866c57beffeabb8d34bc0803e08558691a5",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 601,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 601,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260826120000_planner_v2_proposal_lifecycle_candidate.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260826120000_planner_v2_proposal_lifecycle_candidate.sql"
+      }
+    },
+    {
+      "version": "20260901123000",
+      "filename": "20260901123000_planner_v2_preview_attempt_lifecycle.sql",
+      "canonicalPath": "supabase/migrations/20260901123000_planner_v2_preview_attempt_lifecycle.sql",
+      "releaseArtifactSha256": "d8a4ed43efe6d7f9c22556d276f9fc9973c1ce6edaf57f7eda1511d4afaf0202",
+      "canonicalSourceSha256": "7cbfcfa7981a943848f835cc22f0a34332de2f7116c14151bb7e2c9e46ddeaea",
+      "lfNormalizedSha256": "7cbfcfa7981a943848f835cc22f0a34332de2f7116c14151bb7e2c9e46ddeaea",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 19,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 19,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260901123000_planner_v2_preview_attempt_lifecycle.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260901123000_planner_v2_preview_attempt_lifecycle.sql"
+      }
+    },
+    {
+      "version": "20260902101000",
+      "filename": "20260902101000_align_service_role_task_privileges.sql",
+      "canonicalPath": "supabase/migrations/20260902101000_align_service_role_task_privileges.sql",
+      "releaseArtifactSha256": "09135f51210b7e0c82e353994c921d8197f84c0834ffa422cf9f75473a83a8da",
+      "canonicalSourceSha256": "a8a1613260960d2ccc9088ce6dd8c33f52a600900e3a63894ca49d5a835cda4f",
+      "lfNormalizedSha256": "a8a1613260960d2ccc9088ce6dd8c33f52a600900e3a63894ca49d5a835cda4f",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 18,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 18,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260902101000_align_service_role_task_privileges.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260902101000_align_service_role_task_privileges.sql"
+      }
+    },
+    {
+      "version": "20260902103000",
+      "filename": "20260902103000_harden_planner_v2_expired_confirmation_state.sql",
+      "canonicalPath": "supabase/migrations/20260902103000_harden_planner_v2_expired_confirmation_state.sql",
+      "releaseArtifactSha256": "a9a304879a882fc912d7fba602ea822c6186295fd3a69a00068ca27876d2fdb4",
+      "canonicalSourceSha256": "2ea5c4cc788c71afb39b34c09b35fbf174a02346c7dacdb224bd05a5fd6e0302",
+      "lfNormalizedSha256": "2ea5c4cc788c71afb39b34c09b35fbf174a02346c7dacdb224bd05a5fd6e0302",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 217,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 217,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260902103000_harden_planner_v2_expired_confirmation_state.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260902103000_harden_planner_v2_expired_confirmation_state.sql"
+      }
+    },
+    {
+      "version": "20260911150000",
+      "filename": "20260911150000_ai_usage_ledger_v1.sql",
+      "canonicalPath": "supabase/migrations/20260911150000_ai_usage_ledger_v1.sql",
+      "releaseArtifactSha256": "5efad49755ec3933af19a517f2e03ec34fdc1f4d464b0cc86a9b38a7135e21a8",
+      "canonicalSourceSha256": "ed2ca8c924eba09ba1b757b21bbdb0db129ae9d1309d886d8ccd02fc13290f4a",
+      "lfNormalizedSha256": "ed2ca8c924eba09ba1b757b21bbdb0db129ae9d1309d886d8ccd02fc13290f4a",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 223,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 223,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260911150000_ai_usage_ledger_v1.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260911150000_ai_usage_ledger_v1.sql"
+      }
+    },
+    {
+      "version": "20260911170000",
+      "filename": "20260911170000_ai_provider_runtime_reservations_v1.sql",
+      "canonicalPath": "supabase/migrations/20260911170000_ai_provider_runtime_reservations_v1.sql",
+      "releaseArtifactSha256": "589b186c3910c1ef9de24a69bef4d9307a46c907333447af66794bfb7615c22a",
+      "canonicalSourceSha256": "d17bef08f9f016986044a87fca9e11a717ea13875395e5489d13c6205fce7cd6",
+      "lfNormalizedSha256": "d17bef08f9f016986044a87fca9e11a717ea13875395e5489d13c6205fce7cd6",
+      "canonicalVsRelease": {
+        "rawSha256Equal": false,
+        "equalAfterCRLFToLF": true,
+        "classification": "CRLF_ONLY"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 338,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 338,
+          "lf": 0,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "canonical-git-blob",
+        "commit": "a81d13696884e073c11d3a87985ce7739ec56f91",
+        "path": "supabase/migrations/20260911170000_ai_provider_runtime_reservations_v1.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20260911170000_ai_provider_runtime_reservations_v1.sql"
+      }
+    },
+    {
+      "version": "20261015120000",
+      "filename": "20261015120000_session_duration_integrity.sql",
+      "canonicalPath": "supabase/migrations/20261015120000_session_duration_integrity.sql",
+      "releaseArtifactSha256": "d0af521e2df012dee4a378d5da97e9c983d252f95174cd8649851f562c08398f",
+      "canonicalSourceSha256": "d0af521e2df012dee4a378d5da97e9c983d252f95174cd8649851f562c08398f",
+      "lfNormalizedSha256": "d0af521e2df012dee4a378d5da97e9c983d252f95174cd8649851f562c08398f",
+      "canonicalVsRelease": {
+        "rawSha256Equal": true,
+        "equalAfterCRLFToLF": true,
+        "classification": "RAW_EXACT"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 202,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 0,
+          "lf": 202,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "local-git-blob",
+        "commit": "742ca9ebd4299be1634c6ca8fa1d1374b6d597fb",
+        "path": "supabase/migrations/20261015120000_session_duration_integrity.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20261015120000_session_duration_integrity.sql"
+      }
+    },
+    {
+      "version": "20261015121000",
+      "filename": "20261015121000_session_finish_lock_protocol.sql",
+      "canonicalPath": "supabase/migrations/20261015121000_session_finish_lock_protocol.sql",
+      "releaseArtifactSha256": "43bcf3bcd68f12a1859e5342b745a024ff3904428da7a2d48a2ce337a3f98114",
+      "canonicalSourceSha256": "43bcf3bcd68f12a1859e5342b745a024ff3904428da7a2d48a2ce337a3f98114",
+      "lfNormalizedSha256": "43bcf3bcd68f12a1859e5342b745a024ff3904428da7a2d48a2ce337a3f98114",
+      "canonicalVsRelease": {
+        "rawSha256Equal": true,
+        "equalAfterCRLFToLF": true,
+        "classification": "RAW_EXACT"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 15,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 0,
+          "lf": 15,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "local-git-blob",
+        "commit": "742ca9ebd4299be1634c6ca8fa1d1374b6d597fb",
+        "path": "supabase/migrations/20261015121000_session_finish_lock_protocol.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20261015121000_session_finish_lock_protocol.sql"
+      }
+    },
+    {
+      "version": "20261015122000",
+      "filename": "20261015122000_session_duration_bound.sql",
+      "canonicalPath": "supabase/migrations/20261015122000_session_duration_bound.sql",
+      "releaseArtifactSha256": "3fe67c355ff87e82385e54f6e75ce5a2dc82c9bca421ca0c1f3a8b3513571dc5",
+      "canonicalSourceSha256": "3fe67c355ff87e82385e54f6e75ce5a2dc82c9bca421ca0c1f3a8b3513571dc5",
+      "lfNormalizedSha256": "3fe67c355ff87e82385e54f6e75ce5a2dc82c9bca421ca0c1f3a8b3513571dc5",
+      "canonicalVsRelease": {
+        "rawSha256Equal": true,
+        "equalAfterCRLFToLF": true,
+        "classification": "RAW_EXACT"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 23,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 0,
+          "lf": 23,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "local-git-blob",
+        "commit": "742ca9ebd4299be1634c6ca8fa1d1374b6d597fb",
+        "path": "supabase/migrations/20261015122000_session_duration_bound.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20261015122000_session_duration_bound.sql"
+      }
+    },
+    {
+      "version": "20261015123000",
+      "filename": "20261015123000_zero_review_task_state.sql",
+      "canonicalPath": "supabase/migrations/20261015123000_zero_review_task_state.sql",
+      "releaseArtifactSha256": "21f0abf36c61df679fbd4ddc43c1ff3fdb97337fdab345741014a8292c753f30",
+      "canonicalSourceSha256": "21f0abf36c61df679fbd4ddc43c1ff3fdb97337fdab345741014a8292c753f30",
+      "lfNormalizedSha256": "21f0abf36c61df679fbd4ddc43c1ff3fdb97337fdab345741014a8292c753f30",
+      "canonicalVsRelease": {
+        "rawSha256Equal": true,
+        "equalAfterCRLFToLF": true,
+        "classification": "RAW_EXACT"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 39,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 0,
+          "lf": 39,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "local-git-blob",
+        "commit": "742ca9ebd4299be1634c6ca8fa1d1374b6d597fb",
+        "path": "supabase/migrations/20261015123000_zero_review_task_state.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20261015123000_zero_review_task_state.sql"
+      }
+    },
+    {
+      "version": "20261015130000",
+      "filename": "20261015130000_session_write_boundary.sql",
+      "canonicalPath": "supabase/migrations/20261015130000_session_write_boundary.sql",
+      "releaseArtifactSha256": "1243ee86df74235c553f81ed342d048716fff6f5f34205715756c8cc85b86dd8",
+      "canonicalSourceSha256": "1243ee86df74235c553f81ed342d048716fff6f5f34205715756c8cc85b86dd8",
+      "lfNormalizedSha256": "1243ee86df74235c553f81ed342d048716fff6f5f34205715756c8cc85b86dd8",
+      "canonicalVsRelease": {
+        "rawSha256Equal": true,
+        "equalAfterCRLFToLF": true,
+        "classification": "RAW_EXACT"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 223,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 0,
+          "lf": 223,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "protected-untracked-file",
+        "workspace": "original develop checkout",
+        "path": "supabase/migrations/20261015130000_session_write_boundary.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/p0-final-closure-20261016/release-manifest.json",
+        "appliedRecord": ".release/p0-controlled-production-20261017/resume-v80/RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20261015130000_session_write_boundary.sql"
+      }
+    },
+    {
+      "version": "20261017213000",
+      "filename": "20261017213000_exact_session_repair.sql",
+      "canonicalPath": "supabase/migrations/20261017213000_exact_session_repair.sql",
+      "releaseArtifactSha256": "08edf16942a19e32703d5ede1ec7dcd65993fe687048c726e1ee0d7663f8f287",
+      "canonicalSourceSha256": "08edf16942a19e32703d5ede1ec7dcd65993fe687048c726e1ee0d7663f8f287",
+      "lfNormalizedSha256": "08edf16942a19e32703d5ede1ec7dcd65993fe687048c726e1ee0d7663f8f287",
+      "canonicalVsRelease": {
+        "rawSha256Equal": true,
+        "equalAfterCRLFToLF": true,
+        "classification": "RAW_EXACT"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 238,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 0,
+          "lf": 238,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "frozen-release-runner-file",
+        "path": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20261017213000_exact_session_repair.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/esra-maliye-repair-20261017/release-manifest.json",
+        "appliedRecord": ".release/esra-maliye-repair-20261017/production-execution-20261018/EXECUTION_RESULT.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20261017213000_exact_session_repair.sql"
+      }
+    },
+    {
+      "version": "20261018234500",
+      "filename": "20261018234500_exact_repair_function_privileges.sql",
+      "canonicalPath": "supabase/migrations/20261018234500_exact_repair_function_privileges.sql",
+      "releaseArtifactSha256": "bb0c9675557e8b22722e0b2cd22ec92feecb926808dbbe4e205acdfb6542c88b",
+      "canonicalSourceSha256": "bb0c9675557e8b22722e0b2cd22ec92feecb926808dbbe4e205acdfb6542c88b",
+      "lfNormalizedSha256": "bb0c9675557e8b22722e0b2cd22ec92feecb926808dbbe4e205acdfb6542c88b",
+      "canonicalVsRelease": {
+        "rawSha256Equal": true,
+        "equalAfterCRLFToLF": true,
+        "classification": "RAW_EXACT"
+      },
+      "lineEndings": {
+        "canonicalSource": {
+          "crlf": 0,
+          "lf": 86,
+          "loneCr": 0
+        },
+        "releaseArtifact": {
+          "crlf": 0,
+          "lf": 86,
+          "loneCr": 0
+        }
+      },
+      "source": {
+        "type": "frozen-release-runner-file",
+        "path": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20261018234500_exact_repair_function_privileges.sql"
+      },
+      "evidence": {
+        "type": "historical-release-artifact-and-execution-record",
+        "inventory": ".release/exact-repair-privilege-fix-20261018/release-manifest.json",
+        "appliedRecord": ".release/exact-repair-privilege-fix-20261018/final-execution/CLOSURE.md",
+        "releaseArtifact": ".release/exact-repair-privilege-fix-20261018/final-execution/runner/supabase/migrations/20261018234500_exact_repair_function_privileges.sql"
+      }
+    }
+  ]
+}
