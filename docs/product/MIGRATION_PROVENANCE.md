@@ -1,6 +1,6 @@
 # DB48 migration provenance
 
-Durum: ENG-002A / READY FOR REVIEW. Bu kayıt tarihsel release kaynak eşlemesidir; canlı production veya temiz kurulum kabulü değildir.
+Durum: ENG-002A / MERGED; ENG-002B / READY FOR REVIEW. Bu kayıt tarihsel release kaynak eşlemesidir; canlı production veya temiz kurulum kabulü değildir.
 
 ## Tarihsel kaynak eşlemesi
 
@@ -34,8 +34,30 @@ Script yalnız manifesti ve canonical migration dosyalarını okur. Eksik dosya 
 
 Production runtime ve production'daki gerçek SQL baytlarının doğrudan doğrulanması kapsam dışıdır. Kontrol, tarihsel kayda göre Git kaynak bütünlüğünü gösterir; tüm kaynak dizininin production DB48 ile aynı olduğu iddiasını üretmez.
 
-## Fresh-install: BLOCKED — ENG-002B
+## DB48 clean install — ENG-002B / READY FOR REVIEW
 
-[20261010220000_s0_r2_actual_progress_protection.sql](../../supabase/migrations/20261010220000_s0_r2_actual_progress_protection.sql) içinde kapanış `$function$` sonrasında statement sonlandırıcısı `;` eksiktir. Fresh-install replay hâlâ **BLOCKED**; kaynak bütünlüğü PASS sonucu temiz kurulum başarısı değildir.
+20 Ekim 2026: PR #3 develop'a merge edildi; başlangıç commit'i `22c5c9e10a5b36f3e72ecc8f4f9e8a6c5875939a`. İzole replay **48/48 PASS**. Yeni DB'de public uygulama tablosu ve Auth kullanıcısı başlangıçta sıfırdı; migration history yoktu. Her başarılı SQL'den sonra yalnız bu yeni DB'ye history kaydı yazıldı; son sıralı 48 version manifestle birebir karşılaştırıldı.
 
-Bu applied SQL ve migration history ENG-002A'da değiştirilmez. Fresh-install uyumluluğu ENG-002B kapsamında ayrıca çözülecektir; bu görev DB replay veya migration uygulamaz.
+Tekrar çalıştırma: `node scripts/replay-db48-clean-install.mjs`.
+
+Gereksinimler: Node.js, Git, çalışan yerel Docker Desktop `desktop-linux` context'i ve yerelde bulunan şu sabit image:
+
+`public.ecr.aws/supabase/postgres@sha256:3866d94d8426927e8db3f1c5d790752292bfbe27b5f1f46e199ae1b7d3c1710b`
+
+Doğrulanan sürüm PostgreSQL 17.6'dır. DB47/48 SQL'lerinin rol üyeliği seçenekleri PostgreSQL 16+ gerektirir; repo config'indeki major_version=15 bu testin ortamı değildir ve değiştirilmemiştir. PostgreSQL 15 veya tam Supabase servis yığını uyumluluğu iddia edilmez.
+
+Runner yeni UUID adlı, ownership etiketli container oluşturur: `network=none`, yayınlanan port yok, host bind/kalıcı volume yok, DB verisi tmpfs'te. Hiçbir DB URL'si veya mevcut container hedefi kabul etmez; image indirmez, Docker engine'i başlatmaz, env/credential dosyası okumaz. SQL yalnız kendi container'ındaki Unix socket üzerinden normal, superuser olmayan `postgres` rolüyle çalışır. Mevcut LOCAL veya production'dan bootstrap/veri kopyalanmaz; platform bootstrap sabit image'dan gelir.
+
+Kaynaklar provenance kontrolünden geçer. Yalnız manifestteki 48 SQL'in HEAD Git blob'u canonical SHA ile eşleştirilerek geçici klasöre kopyalanır ve manifest sırasıyla çalışır. Checkout CRLF olsa da replay exact canonical Git baytlarını kullanır. İlk SQL hatasında durur; başarısız SQL'e history eklemez, otomatik SQL düzeltmesi veya retry yapmaz. Normal sonuç/hata çıkışında yalnız sahipliği doğrulanan görev container'ını kaldırır. Zorla process/host kapanması halinde otomatik cleanup garantisi yoktur.
+
+Başarılı tam replay sonrası kontroller: exact history; user_profiles/tasks/study_sessions/weekly_plans RLS ve policy varlığı; Auth, finish ve session-boundary fonksiyonları; dokuz private repair fonksiyonu; PUBLIC/client EXECUTE ve private schema erişiminin kapalı olması; kısıtlı repair rolü; operator EXECUTE; sıfır Auth kullanıcı verisi. **10/10 kontrol PASS**. Bunlar kapsamlı uygulama runtime, bütün ACL'ler veya production kabulü değildir.
+
+Çıktı OS geçici dizinindeki yeni `kpss-eng002b-replay-*` klasörüne yazılır: 48 kaynak SQL, iki compatibility kopyası ve `result.json`. Son rapor kaynak commit/image kimliğini, SHA'ları, sıra/sonuçları, ilk engeli (varsa), postcheck ve cleanup sonucunu içerir. Doğrulanan son koşuda `replay=PASS`, `canonicalFilesUnchanged=true`, `cleanup=REMOVED OWN CONTAINER AND TMPFS` kaydedildi.
+
+### Snapshot dışındaki semicolon sorunu
+
+`20261010220000_s0_r2_actual_progress_protection.sql` DB48 manifestinde **yoktur**; 21 snapshot-dışı SQL'den biridir. Önceki genel fresh-install BLOCKED kaydı DB48-only replay için engel değildir. Bu dosyanın production'da uygulanma durumu bu görevde sorgulanmadı/doğrulanmadı; manifest dışından uygulanmışlık sonucu çıkarılmaz.
+
+Canonical Git SHA-256: `753779b041d36f0acbc2541cac9c5caa497c7552731e7ab1fc6bb717d3dc33eb`. Runner bu exact kaynağı ve checkout'un yalnız LF/CRLF varyantı olduğunu doğrular. Ayrı geçici kopyada son `$function$` sonrasına yalnız tek `;` baytı ekler; bu baytı kaldırınca orijinalin birebir geri geldiğini, boyut farkının +1 ve diğer farkların sıfır olduğunu kanıtlar. Kaynak/geçici SHA ve offset raporlanır.
+
+Bu compatibility kopyası **çalıştırılmaz**, DB48'e/history'ye eklenmez. Canonical SQL, eski history ve 21 snapshot-dışı SQL değişmemiştir. Tüm canonical dizinin temiz kurulum kabulü hâlâ **BLOCKED / NOT VERIFIED**; yalnız bu semicolon kanıtı onların replay başarısı anlamına gelmez. DB48 için kalan replay engeli yoktur; ENG-002B bağımsız review bekler.
