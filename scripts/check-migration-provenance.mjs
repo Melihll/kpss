@@ -115,7 +115,7 @@ function verify() {
     unexpectedMigrationFiles,
     unexpectedMigrationPolicy: "Reported separately; not evidence of applied or pending production migrations. Duplicate DB48 versions fail.",
     failures,
-    freshInstall: "BLOCKED: 20261010220000 missing statement terminator; ENG-002B.",
+    freshInstall: "NOT EXECUTED by this offline check. DB48 replay: scripts/replay-db48-clean-install.mjs. Whole-directory replay remains BLOCKED: snapshot-external 20261010220000 is unterminated.",
   };
   console.log(JSON.stringify(result, null, 2));
   process.exitCode = result.status === "PASS" ? 0 : 1;
