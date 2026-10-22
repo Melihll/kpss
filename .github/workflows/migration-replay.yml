@@ -1,0 +1,48 @@
+name: Isolated PG17 migration replay
+
+on:
+  pull_request:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  migration-replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PG17_IMAGE: ghcr.io/supabase/postgres@sha256:3866d94d8426927e8db3f1c5d790752292bfbe27b5f1f46e199ae1b7d3c1710b
+      MIGRATION_BASE_COMMIT: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - name: Checkout candidate merge tree and complete history
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Offline migration and Docker safety fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/check-canonical-replay-compatibility.mjs | tee "$RUNNER_TEMP/migration-offline.json"
+      - name: Preload the exact Supabase PostgreSQL image on the local daemon
+        shell: bash
+        run: docker --host unix:///var/run/docker.sock pull "$PG17_IMAGE"
+      - name: Fresh isolated PG17 replay
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: node scripts/replay-canonical-clean-install.mjs
+      - name: Preserve synthetic test evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: migration-replay-evidence
+          path: |
+            ${{ runner.temp }}/migration-offline.json
+            ${{ runner.temp }}/kpss-eng002c-boundary-*/
+          if-no-files-found: warn
+          retention-days: 7
