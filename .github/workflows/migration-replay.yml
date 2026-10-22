@@ -14,7 +14,6 @@ jobs:
     env:
       PG17_IMAGE: public.ecr.aws/supabase/postgres@sha256:3866d94d8426927e8db3f1c5d790752292bfbe27b5f1f46e199ae1b7d3c1710b
       MIGRATION_BASE_COMMIT: ${{ github.event.pull_request.base.sha }}
-      TMPDIR: ${{ runner.temp }}
     steps:
       - name: Checkout candidate merge tree and complete history
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -34,6 +33,8 @@ jobs:
         shell: bash
         run: docker --host unix:///var/run/docker.sock pull "$PG17_IMAGE"
       - name: Fresh isolated PG17 replay
+        env:
+          TMPDIR: ${{ runner.temp }}
         run: node scripts/replay-canonical-clean-install.mjs
       - name: Preserve synthetic test evidence even on failure
         if: always()
