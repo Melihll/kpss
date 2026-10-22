@@ -31,7 +31,21 @@ jobs:
           node scripts/check-canonical-replay-compatibility.mjs | tee "$RUNNER_TEMP/migration-offline.json"
       - name: Preload the exact Supabase PostgreSQL image on the local daemon
         shell: bash
-        run: docker --host unix:///var/run/docker.sock pull "$PG17_IMAGE"
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4; do
+            echo "Pull attempt ${attempt}/4"
+            if docker --host unix:///var/run/docker.sock pull "$PG17_IMAGE"; then
+              exit 0
+            fi
+            if (( attempt < 4 )); then
+              delay=$((30 * 2 ** (attempt - 1)))
+              echo "Pull failed; retrying in ${delay} seconds"
+              sleep "$delay"
+            fi
+          done
+          echo "::error::Pinned PostgreSQL image pull failed after 4 attempts."
+          exit 1
       - name: Fresh isolated PG17 replay
         env:
           TMPDIR: ${{ runner.temp }}
