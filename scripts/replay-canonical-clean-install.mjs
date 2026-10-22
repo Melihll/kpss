@@ -2,18 +2,22 @@
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
-import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { baselineCommit, image, sha, lf, literal, buildCopies, assertPrefix } from "./lib/canonical-replay-compatibility.mjs";
+import { baselineCommit, frozenInventorySha256, image, sha, lf, literal, buildCopies, assertPrefix,
+  readCanonicalInventory, assertSnapshotMembership, dockerTarget, assertLocalDockerEndpoint } from "./lib/canonical-replay-compatibility.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const context = "desktop-linux";
+let target;
+// Every daemon operation uses the validated, fixed local endpoint, never an ambient context.
+const dockerEnvironment = { ...process.env };
+for (const key of ["DOCKER_HOST", "DOCKER_CONTEXT", "DOCKER_TLS_VERIFY", "DOCKER_CERT_PATH"]) delete dockerEnvironment[key];
 const token = randomUUID();
 const name = "kpss-eng002c-boundary-" + token;
 const output = mkdtempSync(path.join(os.tmpdir(), "kpss-eng002c-boundary-"));
-const report = { status: "FAIL", replay: "NOT EXECUTED", output, image, baselineCommit,
+const report = { status: "FAIL", replay: "NOT EXECUTED", output, image, baselineCommit, frozenInventorySha256,
   applied: [], postchecks: "NOT EXECUTED", negativeFixtures: [], cleanup: "NOT NEEDED",
   pg15: "INCOMPATIBLE / NOT EXECUTED: INHERIT/SET membership options and pg_auth_members columns require PG16+. config.toml unchanged." };
 const originals = new Map();
@@ -22,8 +26,8 @@ const save = (file, data) => writeFileSync(path.join(output, file), data);
 let container;
 
 function docker(args, input, required = true) {
-  const r = spawnSync("docker", ["--context", context, ...args],
-    { input, encoding: "utf8", timeout: 120000, maxBuffer: 8 * 1024 * 1024 });
+  const r = spawnSync("docker", ["--host", target.endpoint, ...args],
+    { input, env: dockerEnvironment, encoding: "utf8", timeout: 120000, maxBuffer: 8 * 1024 * 1024 });
   if (required && (r.error || r.status !== 0)) {
     // Never print arguments: create has a synthetic password.
     throw new Error(r.error?.code ?? (r.stderr || r.stdout || "Docker command failed").trim());
@@ -72,6 +76,9 @@ function guardFixtures(copy, prefix) {
     ["wrong-success-order", "update eng002c_replay.completed set ordinal=10000 where ordinal=1; update eng002c_replay.completed set ordinal=1 where ordinal=2; update eng002c_replay.completed set ordinal=2 where ordinal=10000;", "ENG002C_SUCCESS_SEQUENCE_MISMATCH"],
     ["source-sha-ledger-drift", "update eng002c_replay.completed set canonical_sha256=repeat('0',64) where ordinal=1;", "ENG002C_SUCCESS_SEQUENCE_MISMATCH"],
     ["replay-sha-ledger-drift", "update eng002c_replay.completed set replay_sha256=repeat('0',64) where ordinal=1;", "ENG002C_SUCCESS_SEQUENCE_MISMATCH"],
+    ["candidate-commit-drift", "update eng002c_replay.run set source_commit=repeat('0',40);", "ENG002C_RUN_IDENTITY_MISMATCH"],
+    ["frozen-baseline-drift", "update eng002c_replay.run set baseline_commit=repeat('0',40);", "ENG002C_RUN_IDENTITY_MISMATCH"],
+    ["image-identity-drift", "update eng002c_replay.run set image='foreign-image';", "ENG002C_RUN_IDENTITY_MISMATCH"],
     ["foreign-run", "update eng002c_replay.run set run_id='00000000-0000-0000-0000-000000000000';", "ENG002C_RUN_IDENTITY_MISMATCH"],
     ["ledger-privilege-drift", "grant select on eng002c_replay.completed to authenticated;", "ENG002C_LEDGER_PRIVILEGES_REQUIRED"],
     ["wrong-operator", "set local role authenticated;", "ENG002C_OPERATOR_REQUIRED"],
@@ -104,24 +111,15 @@ function guardFixtures(copy, prefix) {
 try {
   const args = process.argv.slice(2);
   assert(args.length === 0 || (args.length === 2 && args[0] === "--db48-evidence"), "Only --db48-evidence <result.json> is accepted");
-  report.sourceCommit = git(["rev-parse", "HEAD"]).toString().trim();
-  git(["merge-base", "--is-ancestor", baselineCommit, "HEAD"]);
-  const inventory = ref => git(["ls-tree", "-r", "--name-only", ref, "--", "supabase/migrations"])
-    .toString().trim().split(/\r?\n/).filter(f => f.endsWith(".sql")).sort();
-  const files = inventory(baselineCommit);
-  assert.equal(files.length, 69);
-  assert.deepEqual(inventory("HEAD"), files, "Canonical Git inventory drift");
-  assert.deepEqual(readdirSync(path.join(root, "supabase/migrations")).filter(f => f.toLowerCase().endsWith(".sql")).sort(), files.map(f => path.basename(f)), "Canonical working inventory drift");
-  const rows = files.map(canonicalPath => {
-    const absolute = path.join(root, canonicalPath);
-    assert(lstatSync(absolute).isFile() && !lstatSync(absolute).isSymbolicLink());
-    const working = readFileSync(absolute);
-    originals.set(absolute, sha(working));
-    const bytes = git(["cat-file", "blob", baselineCommit + ":" + canonicalPath]);
-    assert.equal(sha(git(["cat-file", "blob", "HEAD:" + canonicalPath])), sha(bytes), "Canonical Git SHA drift");
-    assert(lf(working).equals(lf(bytes)), "Canonical working source drift: " + canonicalPath);
-    return { canonicalPath, filename: path.basename(canonicalPath), version: path.basename(canonicalPath).slice(0, 14), bytes, canonicalSourceSha256: sha(bytes) };
+  target = dockerTarget(process.platform, process.env);
+  report.docker = target;
+  const { rows, sourceCommit, comparisonCommit } = readCanonicalInventory(root, {
+    comparisonCommit: process.env.MIGRATION_BASE_COMMIT,
+    remember: (file, hash) => originals.set(file, hash),
   });
+  report.sourceCommit = sourceCommit;
+  report.comparisonCommit = comparisonCommit;
+  report.totalMigrations = rows.length;
   for (const relative of ["supabase/config.toml", "docs/product/migration-provenance/db48.json", "scripts/replay-db48-clean-install.mjs", "scripts/check-migration-provenance.mjs"]) {
     const absolute = path.join(root, relative);
     const bytes = readFileSync(absolute);
@@ -129,7 +127,7 @@ try {
     assert(lf(bytes).equals(lf(git(["cat-file", "blob", baselineCommit + ":" + relative]))), "Protected baseline source drift");
   }
   report.harnessSha256 = {};
-  for (const relative of ["scripts/replay-canonical-clean-install.mjs", "scripts/lib/canonical-replay-compatibility.mjs", "scripts/check-canonical-replay-compatibility.mjs"]) {
+  for (const relative of ["scripts/replay-canonical-clean-install.mjs", "scripts/lib/canonical-replay-compatibility.mjs", "scripts/check-canonical-replay-compatibility.mjs", ".github/workflows/migration-replay.yml"]) {
     const absolute = path.join(root, relative);
     const hash = sha(readFileSync(absolute));
     originals.set(absolute, hash);
@@ -138,13 +136,13 @@ try {
   report.provenance = JSON.parse(execFileSync(process.execPath, [path.join(root, "scripts/check-migration-provenance.mjs")], { encoding: "utf8" }));
   assert.equal(report.provenance.status, "PASS");
   assert.equal(report.provenance.counts.checked, 48);
-  assert.equal(report.provenance.unexpectedMigrationFiles.length, 21);
+  const manifest = JSON.parse(readFileSync(path.join(root, "docs/product/migration-provenance/db48.json")));
+  report.provenanceBoundary = assertSnapshotMembership(rows, manifest, report.provenance.unexpectedMigrationFiles);
   if (args.length) {
     const absolute = path.resolve(args[1]);
     const bytes = readFileSync(absolute);
     originals.set(absolute, sha(bytes));
     const evidence = JSON.parse(bytes);
-    const manifest = JSON.parse(readFileSync(path.join(root, "docs/product/migration-provenance/db48.json")));
     assert.equal(evidence.status, "PASS"); assert.equal(evidence.replay, "PASS");
     assert.equal(evidence.manifestSha256, sha(readFileSync(path.join(root, "docs/product/migration-provenance/db48.json"))));
     assert.deepEqual(evidence.applied, manifest.migrations.map(r => ({ version: r.version, sha256: r.canonicalSourceSha256 })));
@@ -152,7 +150,7 @@ try {
     assert(Object.values(evidence.postchecks).every(v => v === true));
     report.db48Evidence = { path: absolute, sha256: sha(bytes), replay: "48/48 PASS (existing)", postchecks: "10/10 PASS (existing)" };
   }
-  const copies = buildCopies(rows, token);
+  const copies = buildCopies(rows, token, sourceCommit);
   mkdirSync(path.join(output, "migrations"));
   mkdirSync(path.join(output, "compatibility"));
   report.inventory = copies.map(({ bytes, probe, ...row }) => row);
@@ -163,8 +161,8 @@ try {
       writeFileSync(path.join(output, "compatibility", copy.filename), copy.bytes);
     }
   }
-  const endpoint = docker(["context", "inspect", context, "--format", "{{.Endpoints.docker.Host}}"]).stdout.trim();
-  assert.equal(endpoint, "npipe:////./pipe/dockerDesktopLinuxEngine", "Only the local Docker Desktop pipe is allowed");
+  const endpoint = docker(["context", "inspect", target.context, "--format", "{{.Endpoints.docker.Host}}"]).stdout.trim();
+  assertLocalDockerEndpoint(target, endpoint);
   report.imageId = docker(["image", "inspect", image, "--format", "{{.Id}}"]).stdout.trim();
   container = docker(["create", "--pull=never", "--name", name, "--label", "io.kpss.eng002c.boundary=" + token,
     "--network", "none", "--restart", "no", "--tmpfs", "/var/lib/postgresql/data:rw,size=1073741824",
@@ -189,11 +187,11 @@ try {
   sql(`create schema if not exists supabase_migrations; create table supabase_migrations.schema_migrations(version text primary key,statements text[],name text);
     create schema eng002c_replay authorization postgres;
     revoke all on schema eng002c_replay from public,anon,authenticated,service_role,authenticator;
-    create table eng002c_replay.run(run_id uuid primary key,source_commit text not null,image text not null);
+    create table eng002c_replay.run(run_id uuid primary key,source_commit text not null,baseline_commit text not null,image text not null);
     create table eng002c_replay.completed(ordinal integer primary key check(ordinal>0),version text unique not null,
       canonical_sha256 text not null,replay_sha256 text not null,success boolean not null check(success));
     revoke all on all tables in schema eng002c_replay from public,anon,authenticated,service_role,authenticator;
-    insert into eng002c_replay.run values (${literal(token)},${literal(baselineCommit)},${literal(image)});`);
+    insert into eng002c_replay.run values (${literal(token)},${literal(sourceCommit)},${literal(baselineCommit)},${literal(image)});`);
   report.replay = "FAIL";
   for (const copy of copies) {
     const prefix = copies.slice(0, report.applied.length);
@@ -205,7 +203,7 @@ try {
     sql(`begin; insert into supabase_migrations.schema_migrations(version,name) values (${literal(copy.version)},${literal(copy.filename.slice(15,-4))});
       insert into eng002c_replay.completed values (${prefix.length + 1},${literal(copy.version)},${literal(copy.canonicalSourceSha256)},${literal(copy.replaySha256)},true); commit;`);
     report.applied.push({ version: copy.version, canonicalSha256: copy.canonicalSourceSha256, replaySha256: copy.replaySha256 });
-    console.log("APPLIED " + copy.version + " (" + report.applied.length + "/69)");
+    console.log("APPLIED " + copy.version + " (" + report.applied.length + "/" + copies.length + ")");
   }
   delete report.firstBlocker;
   assertPrefix(state(), copies);
@@ -253,7 +251,7 @@ try {
   try { save("result.json", JSON.stringify(report, null, 2) + "\n"); }
   catch (e) { report.status = "FAIL"; report.resultWriteError = e.message; }
   process.exitCode = report.status === "PASS" ? 0 : 1;
-  console.log(JSON.stringify({ status: report.status, replay: report.replay, successfulMigrations: report.applied.length,
+  console.log(JSON.stringify({ status: report.status, replay: report.replay, successfulMigrations: report.applied.length, totalMigrations: report.totalMigrations,
     postchecks: report.postchecks, negativeFixtures: report.negativeFixtures.length, firstBlocker: report.firstBlocker,
     error: report.error, output, cleanup: report.cleanup, canonicalFilesUnchanged: report.canonicalFilesUnchanged,
     sourceVerificationErrors: report.sourceVerificationErrors, resultWriteError: report.resultWriteError }, null, 2));
