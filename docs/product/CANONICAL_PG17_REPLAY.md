@@ -1,7 +1,8 @@
 # ENG-003A — PostgreSQL 17 migration CI
 
 Durum: **ENG-003A READY FOR REVIEW**. Tarih: 22 Ekim 2026, Europe/Istanbul.
-GitHub Actions execution: **NOT EXECUTED**; no GitHub CI GREEN claim.
+GitHub Actions: ECR preload failed with `toomanyrequests: Data limit exceeded`.
+GHCR registry fix awaits its own CI replay; no GitHub CI GREEN claim.
 
 ## Scope and identity
 
@@ -71,7 +72,7 @@ roll back and recheck both positive guards and unchanged ledger/history.
   environment settings fail without printing their values. Daemon operations use
   the fixed local `--host`, with ambient connection overrides removed.
 - The same digest-pinned Supabase PG17.6 image is used on both platforms:
-  `public.ecr.aws/supabase/postgres@sha256:3866d94d8426927e8db3f1c5d790752292bfbe27b5f1f46e199ae1b7d3c1710b`.
+  `ghcr.io/supabase/postgres@sha256:3866d94d8426927e8db3f1c5d790752292bfbe27b5f1f46e199ae1b7d3c1710b`.
 - UUID/exact ID/name/image ownership, `network=none`, no ports or host/persistent
   mounts, tmpfs, non-superuser postgres and an empty baseline remain required.
   Cleanup removes only the verified task container/tmpfs; cleanup failure is FAIL.
@@ -93,7 +94,22 @@ node scripts/check-canonical-replay-compatibility.mjs
 node scripts/replay-canonical-clean-install.mjs
 ```
 
-## Current verification
+## GHCR registry identity verification
+
+The official [Supabase GHCR package](https://github.com/supabase/postgres/pkgs/container/postgres)
+serves the exact same immutable index as ECR, tagged `17.6.1.155` in the local ECR cache.
+Both registries' raw index bytes were independently SHA-256 checked against the
+pinned digest above and compared byte-for-byte. The Linux/amd64 child manifest is
+`sha256:3e2a7ab48783077d0122dc72ed5174afb543110c38266c845716c51d130658e4` in both.
+Only the registry reference changes; no newer PostgreSQL build is substituted.
+The shared image constant also updates container ownership and private-ledger
+identity assertions. SQL, Docker isolation and cleanup logic are unchanged.
+
+The evidence below belongs to the previous ECR reference and harness hashes.
+It is historical evidence, not a PASS for the updated GHCR harness. A fresh
+GitHub Actions run must establish offline, replay, ACL/RLS and negative-test PASS.
+
+## Historical local verification (ECR reference)
 
 - Local Windows offline fixtures: **60/60 PASS**, including all 69 frozen hashes,
   N=70/N=71 append-only prefixes, prior-tail immutability, DB48/21 identity and
@@ -108,7 +124,8 @@ node scripts/replay-canonical-clean-install.mjs
   compared byte-for-byte with the base runner: unchanged.
 - 69 saved replay copies regenerated and compared; exactly three transformations.
   Result source/harness hashes match. The exact task container is absent after cleanup.
-- Real Linux Docker replay and GitHub Actions run: **NOT EXECUTED**.
+- Local evidence did not execute Linux replay. Subsequent GitHub runs failed
+  before replay at ECR preload; the GHCR fix requires a new CI result.
   GitHub execution remains the next external acceptance step after independent
   review and separately authorized commit/push/PR. No CI GREEN claim.
 

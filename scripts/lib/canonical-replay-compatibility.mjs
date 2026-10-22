@@ -9,7 +9,7 @@ export const baselineCommit = "19fecf22386a9b8427f48f326927096a210d30ed";
 // Immutable ordered [path, version, exact Git-blob SHA-256] tuples at baselineCommit.
 export const frozenMigrationCount = 69;
 export const frozenInventorySha256 = "d25abe4aba0b721953c4b68a917ce38b53d916277183ba99f96a1881ca51410e";
-export const image = "public.ecr.aws/supabase/postgres@sha256:3866d94d8426927e8db3f1c5d790752292bfbe27b5f1f46e199ae1b7d3c1710b";
+export const image = "ghcr.io/supabase/postgres@sha256:3866d94d8426927e8db3f1c5d790752292bfbe27b5f1f46e199ae1b7d3c1710b";
 export const sha = bytes => createHash("sha256").update(bytes).digest("hex");
 export const lf = bytes => Buffer.from(bytes.toString("latin1").replace(/\r\n/g, "\n"), "latin1");
 export const literal = value => "'" + String(value).replaceAll("'", "''") + "'";

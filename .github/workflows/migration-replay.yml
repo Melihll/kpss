@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      PG17_IMAGE: public.ecr.aws/supabase/postgres@sha256:3866d94d8426927e8db3f1c5d790752292bfbe27b5f1f46e199ae1b7d3c1710b
+      PG17_IMAGE: ghcr.io/supabase/postgres@sha256:3866d94d8426927e8db3f1c5d790752292bfbe27b5f1f46e199ae1b7d3c1710b
       MIGRATION_BASE_COMMIT: ${{ github.event.pull_request.base.sha }}
     steps:
       - name: Checkout candidate merge tree and complete history
