@@ -13,7 +13,7 @@
     "lint:ux-lab": "node scripts/check-ux-lab.mjs",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "test": "vitest run --exclude tests/integration/**",
+    "test": "vitest run --exclude \"tests/integration/**\"",
     "test:integration": "node scripts/run-integration-tests.mjs",
     "test:edge": "node scripts/run-edge-smoke.mjs",
     "test:phase04-http": "node scripts/run-phase04-http-smoke.mjs",
