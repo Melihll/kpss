@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   migration-replay:
@@ -29,9 +30,36 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/check-canonical-replay-compatibility.mjs | tee "$RUNNER_TEMP/migration-offline.json"
-      - name: Preload the exact Supabase PostgreSQL image on the local daemon
+      - name: Authenticate to GHCR and preload the exact PostgreSQL image
         shell: bash
-        run: docker --host unix:///var/run/docker.sock pull "$PG17_IMAGE"
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+          GHCR_USERNAME: ${{ github.actor }}
+        run: |
+          set +x
+          set -euo pipefail
+          umask 077
+          export DOCKER_CONFIG
+          DOCKER_CONFIG=$(mktemp -d "$RUNNER_TEMP/ghcr-auth.XXXXXX")
+          cleanup() {
+            status=$?
+            trap - EXIT
+            if ! docker --config "$DOCKER_CONFIG" logout ghcr.io >/dev/null 2>&1; then
+              echo "::error::GHCR logout failed."
+              status=1
+            fi
+            if ! rm -f -- "$DOCKER_CONFIG/config.json" || ! rmdir -- "$DOCKER_CONFIG"; then
+              echo "::error::Temporary Docker credentials cleanup failed."
+              status=1
+            fi
+            exit "$status"
+          }
+          trap cleanup EXIT
+          trap 'exit 130' INT
+          trap 'exit 143' TERM
+          printf '%s' "$GHCR_TOKEN" | docker --config "$DOCKER_CONFIG" login ghcr.io --username "$GHCR_USERNAME" --password-stdin
+          unset GHCR_TOKEN
+          docker --config "$DOCKER_CONFIG" --host unix:///var/run/docker.sock pull "$PG17_IMAGE"
       - name: Fresh isolated PG17 replay
         env:
           TMPDIR: ${{ runner.temp }}
