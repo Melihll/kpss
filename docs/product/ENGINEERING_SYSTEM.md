@@ -1,6 +1,6 @@
 # Engineering System v1
 
-Durum: **Engineering System v1 TAMAMLANDI.** ENG-001–ENG-003 altyapı işleri kapalı; ENG-004 dokümantasyon kapanışı bağımsız review için hazırdır.
+Durum: **Engineering System v1 TAMAMLANDI.** ENG-001–ENG-003 altyapı işleri kapalıdır; ENG-004 dokümantasyon kapanışı [PR #8](https://github.com/Melihll/kpss/pull/8) ile kayıtlıdır. PR henüz merge edilmemiştir.
 Tarih: 28 Ekim 2026, Europe/Istanbul.
 
 Bu sistem mevcut pnpm/Vitest/Supabase araçlarını ve mimariyi kullanır. Migration ve Application CI kuruludur; `develop` branch protection aktiftir. Roller görev sorumluluklarıdır; yeni agent framework'ü veya otomatik delegasyon yoktur. Ürünün AI Coach/Planner yetkileri geliştirme agent'larına üretim erişimi vermez. Sonraki odak KPSS Koçu'nun ürün geliştirmesidir; ürün önceliği ve dar görev sözleşmesi kullanıcı kapsamıyla belirlenir.
@@ -124,7 +124,7 @@ Her anlamlı görev sonunda kısa kayıt:
 
 Merge kimlikleri fetch edilmiş Git geçmişindedir. Altyapı kapanışı açık teknik sınırlamaları kapatmaz; yeni altyapı işi başlatılmaz.
 
-**ENG-004 / REVIEW:** başlangıç `origin/develop` / `db65a849c47e6a03e9db375e26072d9e51fff0ff`; branch `codex/eng-004-system-closure`, ayrı worktree. İzinli yedi dosya: `AGENTS.md` ve `docs/product/` altında `ENGINEERING_SYSTEM.md`, `CURRENT_SPRINT.md`, `PROJECT_HANDOFF.md`, `RELEASE_PROCESS.md`, `MIGRATION_PROVENANCE.md`, `CANONICAL_PG17_REPLAY.md`. Kabul: eski aktif durumlar düzeltilmiş, kurallar ve gerçek riskler korunmuş, sonraki odak ürün geliştirmesi; kontrol: dokümantasyon diff/bağlantı/tutarlılık ve `git diff --check`. Düşük risk; uygulama/SQL/workflow değişikliği, test/build, production/LOCAL işlemi veya commit/push/PR yok. Builder bağımsız review onayı vermez; ENG-004 kapanış diff'i inceleme bekler.
+**ENG-004 kapanış kaydı:** başlangıç `origin/develop` / `db65a849c47e6a03e9db375e26072d9e51fff0ff`; branch `codex/eng-004-system-closure`. Yedi belgeli kapanış `190986d` ile commit edilip push edilmiş ve [PR #8](https://github.com/Melihll/kpss/pull/8) açılmıştır; PR henüz merge edilmemiştir. Bu commit için [Application CI](https://github.com/Melihll/kpss/actions/runs/40659460504) ve [Migration CI](https://github.com/Melihll/kpss/actions/runs/40659460588) PASS kaydı vardır; sonraki commitlerin review ve CI sonuçları PR üzerinden izlenir. Geçici PR/review durumu aktif sprint görevi değildir. Sonraki odak KPSS Koçu ürün geliştirmesidir; mevcut teknik sınırlamalar ve production/LOCAL yetki sınırları korunur.
 
 **Karar / öğrenme:** rol ve gate sözleşmesi mevcut araçlar üzerinde kalır; biten altyapı işleri yerine ürün değerine dönülür. Worktree DB'yi ayırmaz; CI PASS test hedefini doğrular, production uyumluluğunu veya yayın yetkisini vermez.
 

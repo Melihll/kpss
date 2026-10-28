@@ -2,7 +2,7 @@
 
 **Güncel durum: 28 Ekim 2026, Europe/Istanbul.** Bu bölüm güncel proje durumu, CURRENT_SPRINT aktif görevler, [ENGINEERING_SYSTEM](ENGINEERING_SYSTEM.md) geliştirme akışı için kaynaktır. Aşağıdaki tarihli checkpoint'ler geçmiş kanıttır; güncel çalışma veya yeni production yetkisi belirlemez.
 
-**Engineering System v1 tamamlandı.** ENG-001–ENG-003 altyapı işleri kapalıdır; [kapanış kaydı](ENGINEERING_SYSTEM.md#engineering-system-v1-kapanış-kaydı--eng-004) merge/CI dayanaklarını ve aktif zorunlu kontrolleri içerir. **ENG-004 / REVIEW:** yalnız dokümantasyon kapanış diff'i bağımsız inceleme bekler; commit/push/PR ve production/LOCAL işlemi yok. Sonraki odak KPSS Koçu'nun ürün geliştirmesidir; dar ürün görevi kullanıcı önceliğiyle seçilir.
+**Engineering System v1 tamamlandı.** ENG-001–ENG-003 altyapı işleri kapalıdır; [kapanış kaydı](ENGINEERING_SYSTEM.md#engineering-system-v1-kapanış-kaydı--eng-004) merge/CI dayanaklarını ve aktif zorunlu kontrolleri içerir. ENG-004 dokümantasyon kapanışı commit edilip push edilmiş ve [PR #8](https://github.com/Melihll/kpss/pull/8) açılmıştır; PR henüz merge edilmemiştir. Sonraki odak KPSS Koçu'nun ürün geliştirmesidir; dar ürün görevi kullanıcı önceliğiyle seçilir.
 
 | Alan | Son bildirilen durum ve sınır |
 | --- | --- |

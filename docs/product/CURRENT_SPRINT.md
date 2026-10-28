@@ -1,20 +1,14 @@
 ## Engineering System v1 — kapanış ve ürün odağı, 28 Ekim 2026
 
-Güncel proje/baseline kaydı: [PROJECT_HANDOFF — UX V3 LOCAL state](PROJECT_HANDOFF.md#ux-v3-local-state). Geliştirme sözleşmesi: [ENGINEERING_SYSTEM](ENGINEERING_SYSTEM.md). Aynı anda en fazla üç aktif görev; şu anda **bir** aktif görev var.
+Güncel proje/baseline kaydı: [PROJECT_HANDOFF — UX V3 LOCAL state](PROJECT_HANDOFF.md#ux-v3-local-state). Geliştirme sözleşmesi: [ENGINEERING_SYSTEM](ENGINEERING_SYSTEM.md). Aynı anda en fazla üç aktif görev; sonraki ürün görevi kullanıcı önceliğiyle seçilir.
 
-| Task | Durum | Kapsam ve sonraki adım |
-| --- | --- | --- |
-| ENG-004 — Engineering System Closure | **REVIEW** | Engineering System v1 tamamlandı; bu dokümantasyon diff'i bağımsız review bekler. Ayrı codex/eng-004-system-closure, güncel origin/develop db65a84 tabanı. Commit/push/PR yok. |
-
-**Altyapı kapanışı:** ENG-001, ENG-002A/B/C ve ENG-003A/C tamamlandı. Merge/CI/branch protection dayanakları ve zorunlu kontrollerin tek ayrıntılı kaydı: [Engineering System kapanışı](ENGINEERING_SYSTEM.md#engineering-system-v1-kapanış-kaydı--eng-004).
+**Altyapı kapanışı:** Engineering System v1 tamamlandı; ENG-001, ENG-002A/B/C ve ENG-003A/C kapalıdır. ENG-004 dokümantasyon kapanışı commit edilip push edilmiş ve [PR #8](https://github.com/Melihll/kpss/pull/8) açılmıştır; PR henüz merge edilmemiştir. Merge/CI/branch protection dayanakları ve zorunlu kontrollerin tek ayrıntılı kaydı: [Engineering System kapanışı](ENGINEERING_SYSTEM.md#engineering-system-v1-kapanış-kaydı--eng-004).
 
 **Sonraki odak:** KPSS Koçu'nun ürün geliştirmesi. Kullanıcı önceliğiyle dar ürün görevi seçilecek; yeni altyapı özelliği açılmaz. Çalışma sonu/öğrenme döngüsü gibi bekleyen ürün ihtiyaçları bu kayıtla uygulanmış veya yetkilendirilmiş sayılmaz.
 
 **Kalan gerçek sınırlamalar (aktif göreve dönüştürülmedi):** production source provenance eksikliği; PG17 test ortamının production uyumluluğunu kanıtlamaması; değişmemiş canonical SQL/PG15/tam Supabase runtime temiz kurulum kabulünün olmaması; P0 doğal uzun oturum production kabulü PARTIAL. Production/LOCAL baseline, kapanmış onarımlar, pending integration ve bekleyen ürün kabulü [handoff](PROJECT_HANDOFF.md#ux-v3-local-state) içinde korunur.
 
 **Belge güncelliği:** PRODUCT_BACKLOG ve ROADMAP eski durum taşıyabilir; ENG-004 onları yeniden yazmaz. Güncel durumu bu sprint ve handoff belirler. Aşağıdaki eski sprint/release next-step kayıtları tarihsel kapsamlarıyla korunur; aktif görev veya yayın yetkisi değildir.
-
-**ENG-004 durma sınırı:** Yalnız gerekli dokümantasyon diff'i, bağlantı/tutarlılık ve `git diff --check`; bağımsız review için hazır bırakılır. Commit/push/PR/merge, test/build, altyapı/uygulama/SQL değişikliği veya LOCAL/production işlemi yapılmaz. Dirty develop ve landing korunur.
 
 ---
 
