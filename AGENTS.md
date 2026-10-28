@@ -20,6 +20,7 @@
 - HEAD/branch, upstream'in yerel kaydı, staged/modified/untracked dosyalar ve worktree listesini oku. Remote ref'i canlı doğrulanmış gibi sunma.
 - Görev sözleşmesindeki başlangıç ve izinli dosyaları doğrula. Beklenmeyen değişiklikte üzerine yazma; bağımsız güvenli işi sürdür, bağımlı adımı durdur ve farkı bildir.
 - Görev bazlı `codex/<task>-<konu>` branch ve ayrı worktree kullan. Kirli checkout, landing, recovery ve başkasının değişikliğini koru; izinsiz stash/reset/clean/toplu staging yapma.
+- `develop` branch protection aktiftir; PR için zorunlu `migration-replay` ve `application` kontrollerini koru. Kapsam ve ek doğrulamalar [ENGINEERING_SYSTEM — gate matrisi](docs/product/ENGINEERING_SYSTEM.md#e-gate-matrisi) içindedir.
 - Worktree DB/servis izolasyonu sağlamaz. Test için paylaşılan LOCAL'i resetleme veya mevcut kullanıcı/veriyi temizleme.
 
 ## Değişiklik ve doğrulama
@@ -35,4 +36,4 @@
 
 - Kısa rapor: sonuç/durum, branch/HEAD ve dosyalar, yapılan kontroller, kalan belirsizlik, korunan çalışmalar ve reviewer için kapsam.
 - Mimari tercihi, nedenini ve geliştiricinin anlaması gereken teknik konuyu birkaç cümleyle açıkla.
-- Commit/push/merge ve yayın için kullanıcının mevcut yetkisine ve görevdeki durma sınırına uy. ENG-001 bağımsız review ve commit öncesinde durur.
+- Commit/push/merge ve yayın için kullanıcının mevcut yetkisine ve görevdeki durma sınırına uy. Review için hazırlık, commit/push/PR veya yayın yetkisi vermez.

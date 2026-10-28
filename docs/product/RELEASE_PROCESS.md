@@ -2,7 +2,7 @@
 
 Status: Active policy
 
-Last updated: 2026-10-19
+Last updated: 2026-10-28
 
 ## Purpose
 
@@ -13,6 +13,8 @@ Production migrations and deployments must use explicit release gates. No releas
 ## Engineering System v1
 
 Görev rolleri, branch/worktree ve review akışı için [Engineering System v1](ENGINEERING_SYSTEM.md) geçerlidir. ACCEPTED durumu production yayın onayı değildir.
+
+Engineering System v1 tamamlandı. `develop` branch protection ve zorunlu `migration-replay` / `application` kontrolleri aktiftir; dokümantasyon PR'ları da bu kontrollerden geçer. CI kapsamı ve kapanış dayanakları [gate matrisindedir](ENGINEERING_SYSTEM.md#e-gate-matrisi). CI PASS bağımsız review, göreve özel kabul veya aşağıdaki release gate'lerini karşılamış sayılmaz. Özellikle izole PG17 test ortamı production uyumluluğunu kanıtlamaz; [migration test sınırları](CANONICAL_PG17_REPLAY.md#limits-and-historical-evidence) korunur.
 
 Production yayınında exact kaynak kimliği, artifact manifesti, migration provenance, kullanılabilirliği doğrulanmış recovery ve açık kullanıcı onayı doğrulanmalıdır. Eksik kaynak/provenance veya bilinmeyen canlı baseline yeni yayın için GO sayılmaz. Aşağıdaki mevcut release gate ve onay sınırları korunur.
 

@@ -1,6 +1,6 @@
 # DB48 migration provenance
 
-Durum: ENG-002A / MERGED; ENG-002B / READY FOR REVIEW. Bu kayıt tarihsel release kaynak eşlemesidir; canlı production veya temiz kurulum kabulü değildir.
+Durum: **ENG-002A / MERGED (PR #3); ENG-002B / MERGED (PR #4), KAPALI.** Güncelleme: 28 Ekim 2026. Bu kayıt tarihsel DB48 kaynak eşlemesi ve izole DB48 testidir; canlı production kabulü değildir. Sonraki canonical PG17 replay ve Migration CI kapanışı [CANONICAL_PG17_REPLAY](CANONICAL_PG17_REPLAY.md) içindedir.
 
 ## Tarihsel kaynak eşlemesi
 
@@ -34,7 +34,7 @@ Script yalnız manifesti ve canonical migration dosyalarını okur. Eksik dosya 
 
 Production runtime ve production'daki gerçek SQL baytlarının doğrudan doğrulanması kapsam dışıdır. Kontrol, tarihsel kayda göre Git kaynak bütünlüğünü gösterir; tüm kaynak dizininin production DB48 ile aynı olduğu iddiasını üretmez.
 
-## DB48 clean install — ENG-002B / READY FOR REVIEW
+## DB48 clean install — ENG-002B / MERGED
 
 20 Ekim 2026: PR #3 develop'a merge edildi; başlangıç commit'i `22c5c9e10a5b36f3e72ecc8f4f9e8a6c5875939a`. İzole replay **48/48 PASS**. Yeni DB'de public uygulama tablosu ve Auth kullanıcısı başlangıçta sıfırdı; migration history yoktu. Her başarılı SQL'den sonra yalnız bu yeni DB'ye history kaydı yazıldı; son sıralı 48 version manifestle birebir karşılaştırıldı.
 
@@ -44,7 +44,7 @@ Gereksinimler: Node.js, Git, çalışan yerel Docker Desktop `desktop-linux` con
 
 `public.ecr.aws/supabase/postgres@sha256:3866d94d8426927e8db3f1c5d790752292bfbe27b5f1f46e199ae1b7d3c1710b`
 
-Doğrulanan sürüm PostgreSQL 17.6'dır. DB47/48 SQL'lerinin rol üyeliği seçenekleri PostgreSQL 16+ gerektirir; repo config'indeki major_version=15 bu testin ortamı değildir ve değiştirilmemiştir. PostgreSQL 15 veya tam Supabase servis yığını uyumluluğu iddia edilmez.
+Doğrulanan sürüm PostgreSQL 17.6'dır. DB47/48 SQL'lerinin rol üyeliği seçenekleri PostgreSQL 16+ gerektirir; repo config'indeki major_version=15 bu testin ortamı değildir ve değiştirilmemiştir. Production PostgreSQL sürümü UNKNOWN; PG17 test ortamı production uyumluluğunu kanıtlamaz. PostgreSQL 15 veya tam Supabase servis yığını uyumluluğu iddia edilmez.
 
 Runner yeni UUID adlı, ownership etiketli container oluşturur: `network=none`, yayınlanan port yok, host bind/kalıcı volume yok, DB verisi tmpfs'te. Hiçbir DB URL'si veya mevcut container hedefi kabul etmez; image indirmez, Docker engine'i başlatmaz, env/credential dosyası okumaz. SQL yalnız kendi container'ındaki Unix socket üzerinden normal, superuser olmayan `postgres` rolüyle çalışır. Mevcut LOCAL veya production'dan bootstrap/veri kopyalanmaz; platform bootstrap sabit image'dan gelir.
 
@@ -60,4 +60,6 @@ Başarılı tam replay sonrası kontroller: exact history; user_profiles/tasks/s
 
 Canonical Git SHA-256: `753779b041d36f0acbc2541cac9c5caa497c7552731e7ab1fc6bb717d3dc33eb`. Runner bu exact kaynağı ve checkout'un yalnız LF/CRLF varyantı olduğunu doğrular. Ayrı geçici kopyada son `$function$` sonrasına yalnız tek `;` baytı ekler; bu baytı kaldırınca orijinalin birebir geri geldiğini, boyut farkının +1 ve diğer farkların sıfır olduğunu kanıtlar. Kaynak/geçici SHA ve offset raporlanır.
 
-Bu compatibility kopyası **çalıştırılmaz**, DB48'e/history'ye eklenmez. Canonical SQL, eski history ve 21 snapshot-dışı SQL değişmemiştir. Tüm canonical dizinin temiz kurulum kabulü hâlâ **BLOCKED / NOT VERIFIED**; yalnız bu semicolon kanıtı onların replay başarısı anlamına gelmez. DB48 için kalan replay engeli yoktur; ENG-002B bağımsız review bekler.
+Bu compatibility kopyası **DB48 runner'ında çalıştırılmaz**, DB48'e/history'ye eklenmez. Canonical SQL, eski history ve 21 snapshot-dışı SQL değişmemiştir. DB48 için kalan replay engeli yoktur; ENG-002B PR #4 ile kapanmıştır.
+
+Sonraki ENG-002C/ENG-003A, snapshot dışındaki bu SQL'i de kapsayan canonical dizini **üç geçici uyumluluk kopyasıyla** izole PG17'de başarıyla replay eder; Migration CI PASS ve PR #6 MERGED. Bu genişletilmiş test, değişmemiş canonical dizinin temiz kurulum kabulü değildir. Eski genel fresh-install engeli DB48/PG17 test işlerini açık tutmaz; değişmemiş SQL, PG15/tam Supabase runtime ve production uyumluluğu sınırları [canonical replay raporunda](CANONICAL_PG17_REPLAY.md#limits-and-historical-evidence) korunur.

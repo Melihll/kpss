@@ -1,15 +1,16 @@
-# ENG-003A — PostgreSQL 17 migration CI
+# PostgreSQL 17 migration replay ve CI
 
-Durum: **ENG-003A READY FOR REVIEW**. Tarih: 22 Ekim 2026, Europe/Istanbul.
-GitHub Actions: ECR preload failed with `toomanyrequests: Data limit exceeded`.
-GHCR registry fix awaits its own CI replay; no GitHub CI GREEN claim.
+Durum: **ENG-002C / MERGED (PR #5); ENG-003A / MERGED (PR #6), KAPALI.** Güncelleme: 28 Ekim 2026, Europe/Istanbul. Migration CI **PASS**; [PR #6](https://github.com/Melihll/kpss/pull/6) develop'a 833cf6b ile merge edildi. PASS durumu kullanıcı kapanış bildirimine, merge kimliği fetch edilmiş Git geçmişine dayanır; ENG-004 CI'yı yeniden çalıştırmaz.
 
-## Scope and identity
+`migration-replay`, aktif develop branch protection'ın iki zorunlu kontrolünden biridir. Application CI ve sistem kapanışı için [Engineering System](ENGINEERING_SYSTEM.md#e-gate-matrisi) kullanılır. Önceki ECR preload hatası ve GHCR doğrulama bekleyişi kapanmıştır; aşağıdaki yerel kanıtlar tarihsel kapsamlarıyla korunur.
+
+## Original task scope and identity (historical)
 
 - Base: `origin/develop` / `d8b576b517f13aa06d0d52b03aa3233295d8592e` (PR #5 merged).
 - Branch: `codex/eng-003a-migration-ci`, separate worktree.
-- Allowed changes: the three canonical replay/compatibility scripts, this report,
-  and `.github/workflows/migration-replay.yml`. Builder stops before commit/push/PR.
+- Original implementation scope: the three canonical replay/compatibility scripts,
+  this report and `.github/workflows/migration-replay.yml`. Subsequent authorized
+  integration completed through PR #6; the original pre-commit stop is historical.
 - `supabase/config.toml` remains **major_version=15**. Production PostgreSQL is
   **UNKNOWN**; no production access or version assumption. PG17 is only a new,
   disposable test/CI target. Shared LOCAL, dirty develop and landing are preserved.
@@ -77,10 +78,14 @@ roll back and recheck both positive guards and unchanged ledger/history.
   mounts, tmpfs, non-superuser postgres and an empty baseline remain required.
   Cleanup removes only the verified task container/tmpfs; cleanup failure is FAIL.
 
-The new workflow runs on `pull_request` targeting `develop`, on `ubuntu-24.04`.
+The workflow runs on every `pull_request` targeting `develop`, on `ubuntu-24.04`,
+with no path filter (including documentation-only PRs).
 It uses commit-pinned official actions, full Git history, Node 24 and
-`contents: read`, with checkout credentials not persisted. No package install,
-repository secrets, existing DB, deploy or `pull_request_target` is used.
+`contents: read` / `packages: read`, with checkout credentials not persisted.
+The job's GitHub token authenticates only the pinned GHCR preload through a
+temporary Docker config; logout and credential cleanup are enforced.
+No package install, repository secrets, existing DB, deploy or
+`pull_request_target` is used.
 It runs offline fixtures first, preloads only the pinned image on the local socket,
 then runs the isolated replay. `TMPDIR` is the runner temp directory; `always()`
 uploads only generated SQL/test evidence and the offline result for seven days.
@@ -106,8 +111,8 @@ The shared image constant also updates container ownership and private-ledger
 identity assertions. SQL, Docker isolation and cleanup logic are unchanged.
 
 The evidence below belongs to the previous ECR reference and harness hashes.
-It is historical evidence, not a PASS for the updated GHCR harness. A fresh
-GitHub Actions run must establish offline, replay, ACL/RLS and negative-test PASS.
+It remains historical local evidence, separate from the later Migration CI PASS
+reported at closure. It is not relabeled as a run of the updated GHCR harness.
 
 ## Historical local verification (ECR reference)
 
@@ -124,10 +129,9 @@ GitHub Actions run must establish offline, replay, ACL/RLS and negative-test PAS
   compared byte-for-byte with the base runner: unchanged.
 - 69 saved replay copies regenerated and compared; exactly three transformations.
   Result source/harness hashes match. The exact task container is absent after cleanup.
-- Local evidence did not execute Linux replay. Subsequent GitHub runs failed
-  before replay at ECR preload; the GHCR fix requires a new CI result.
-  GitHub execution remains the next external acceptance step after independent
-  review and separately authorized commit/push/PR. No CI GREEN claim.
+- This historical local run did not execute Linux replay. Early GitHub runs
+  failed at ECR preload; later authenticated GHCR preload and CI acceptance
+  closed ENG-003A as recorded above. The old failure is not a current blocker.
 
 Local evidence (OS temp; not tracked or assumed in a clean clone):
 
@@ -151,6 +155,12 @@ and catalog fields in `20261015130000`, `20261017213000`, `20261018234500`.
 No PG15 or full Supabase/application runtime acceptance is claimed. PG17 PASS
 means replay of the three temporary compatibility copies, not unchanged canonical
 fresh-install success or production acceptance.
+
+**PG17 test ortamı production uyumluluğunu kanıtlamaz.** Production PostgreSQL
+version remains UNKNOWN. Neither Migration CI nor Application CI proves parity
+with the deployed database, full Auth/Edge/PostgREST runtime, all ACL/RLS behavior
+or user acceptance. The 18 scoped postchecks are not comprehensive security
+coverage. Canonical/applied SQL and production history remain unchanged.
 
 Historical ENG-002C evidence remains a separate result: 69/69 PG17.6 replay,
 18/18 scoped postchecks, 24/24 live negative fixtures and 20/20 offline checks.
