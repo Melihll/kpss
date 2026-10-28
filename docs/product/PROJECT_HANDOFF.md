@@ -1,8 +1,8 @@
 ## UX V3 LOCAL state
 
-**Güncel durum: 19 Ekim 2026, Europe/Istanbul.** Bu bölüm güncel proje durumu, CURRENT_SPRINT aktif görevler, [ENGINEERING_SYSTEM](ENGINEERING_SYSTEM.md) geliştirme akışı için kaynaktır. Aşağıdaki tarihli checkpoint'ler geçmiş kanıttır; güncel çalışma veya yeni production yetkisi belirlemez.
+**Güncel durum: 28 Ekim 2026, Europe/Istanbul.** Bu bölüm güncel proje durumu, CURRENT_SPRINT aktif görevler, [ENGINEERING_SYSTEM](ENGINEERING_SYSTEM.md) geliştirme akışı için kaynaktır. Aşağıdaki tarihli checkpoint'ler geçmiş kanıttır; güncel çalışma veya yeni production yetkisi belirlemez.
 
-**Aktif çalışma: ENG-001 — hedef uyumluluk düzeltmesi / REVIEW.** Özgün 4e6a284 foundation için bağımsız review PASS ve yerel commit tamamlandı. codex/engsys-001-pr üzerindeki beş belgeli uyarlama inceleme bekler; yalnız yerel integration commit'i hazırlanır, push/PR/merge ve production/LOCAL işlemi yapılmaz.
+**Engineering System v1 tamamlandı.** ENG-001–ENG-003 altyapı işleri kapalıdır; [kapanış kaydı](ENGINEERING_SYSTEM.md#engineering-system-v1-kapanış-kaydı--eng-004) merge/CI dayanaklarını ve aktif zorunlu kontrolleri içerir. ENG-004 dokümantasyon kapanışı commit edilip push edilmiş ve [PR #8](https://github.com/Melihll/kpss/pull/8) açılmıştır; PR henüz merge edilmemiştir. Sonraki odak KPSS Koçu'nun ürün geliştirmesidir; dar ürün görevi kullanıcı önceliğiyle seçilir.
 
 | Alan | Son bildirilen durum ve sınır |
 | --- | --- |
@@ -12,8 +12,8 @@
 | LOCAL runtime | **UNKNOWN.** Eski LOCAL kabul ve migration sayıları bugünkü runtime/DB sağlık kontrolü değildir; bu görev LOCAL'e bağlanmaz. |
 | P0 production acceptance | **PARTIAL.** Normal lifecycle/retry ve süre-materyal ayrımı için tarihsel kabul var; doğal uzun/ertesi güne sarkan oturumda gerçek dakika review senaryosu NOT EXECUTED. Onarım kapanışı bu eksik senaryoyu kapatmaz. |
 | Production source provenance | **Eksik / ayrı görev.** 17 Ekim kaydı e506dfe tabanı + donmuş hotfix, commit_dirty=true ve artifact hash'leri bildirir; bütün production içeriğini temsil eden temiz exact commit eşleşmesi doğrulanmış değildir. main/develop doğrudan production kaynağı sayılmaz. |
-| Fresh migration compatibility | **Ayrı açık görev.** 20261010220000 için clean-install syntax/provenance bulgusu var; fresh replay PASS sayılmaz. Applied SQL/history bu görevde değiştirilmez. |
-| Korunan çalışmalar | Ana develop/742ca9ebd4299be1634c6ca8fa1d1374b6d597fb: **6 modified / 18 untracked / 0 staged** başlangıcı; landing ve diğer ürün işleri korunur. Özgün codex/engsys-001-harness / 4e6a284 korunur; uyarlama ayrı codex/engsys-001-pr worktree/branch'indedir. Recovery/preview/release worktree'lerine dokunulmaz. |
+| Migration kaynak ve test kapsamı | **DB48 provenance ve izole PG17 replay tamamlandı.** [DB48](MIGRATION_PROVENANCE.md) ve [canonical PG17 replay](CANONICAL_PG17_REPLAY.md) farklı kapsamlardır. Canonical replay üç geçici uyumluluk kopyası kullanır; değişmemiş canonical SQL temiz kurulumu kanıtlanmaz. Config PG15, production PostgreSQL sürümü UNKNOWN; PG17 test ortamı production uyumluluğunu veya tam Supabase runtime kabulünü kanıtlamaz. Applied SQL/history korunur. |
+| Korunan çalışmalar | Ana dirty develop/742ca9ebd4299be1634c6ca8fa1d1374b6d597fb, landing ve diğer ürün işleri korunur. ENG-004 ayrı codex/eng-004-system-closure worktree/branch'inde, origin/develop db65a84 tabanındadır. Diğer mühendislik/recovery/preview/release worktree'lerine dokunulmaz. |
 
 **Kapanış dayanakları (önceden üretilmiş, ignored yerel kayıtlar):**
 
@@ -22,13 +22,13 @@
 - API/web yayını ve dirty kaynak kaydı: `.release/p0-controlled-production-20261017/resume-v80/RESULT.md` (17 Ekim).
 - P0 kabul sınırı: `.release/p0-production-final-acceptance-20261017/RESULT.md` (17 Ekim).
 
-Bu dosyalar temiz clone'da bulunmak zorunda değildir; yukarıdaki kimliksiz özet kalıcı proje hafızasıdır. ENG-001 bu kanıtları taşımaz, özel identifier/credential/backup okumaz ve production'ı yeniden sorgulamaz. Fresh compatibility için yerel `docs/product/MIGRATION_CLEAN_INSTALL_COMPATIBILITY.md` de ana dirty checkout'ta untracked korunur; temiz clone'da var sayılmaz.
+Bu dosyalar temiz clone'da bulunmak zorunda değildir; yukarıdaki kimliksiz özet kalıcı proje hafızasıdır. ENG-004 bu kanıtları taşımaz, özel identifier/credential/backup okumaz ve production'ı yeniden sorgulamaz. Eski yerel `docs/product/MIGRATION_CLEAN_INSTALL_COMPATIBILITY.md` ana dirty checkout'ta untracked korunur; sürümlenen güncel migration kanıtları yukarıdaki bağlantılardadır.
 
 **Ürün ve yetki sınırı:** Evre 5/7 kapanışları ve P0/S0/R2/S1-A/B/C/D için önceki LOCAL kazanımlar korunur; bunlar yeni production rollout veya öğrenme döngüsü kabulü değildir. S1-E ve ayrı çalışma sonu/öğrenme sözleşmesi bekler. Landing tasarımı onay bekler; kapsamlı UX/UI revizyon MVP sonrasıdır. Planner/Coach yetki ve gate'leri değişmez.
 
 **Belge güncelliği:** PRODUCT_BACKLOG ve ROADMAP eski aktif durum/NO-GO/next-step ifadeleri içerebilir. Bu görevde yeniden yazılmadılar; güncel durum ve aktif iş için bu bölüm ile CURRENT_SPRINT kullanılır. Tarihsel karar ve tamamlanan fazlar geçerliliğini kendi kapsamıyla korur.
 
-**Hedef branch gerçeği:** Bu paket son doğrulanan origin/develop `aad020d37aca75b32b5e4c3f1805d0708b21d61c` üzerine yalnız beş belgeyi taşır. Yerel ürün commit'leri `0c3a694` (hafta devamlılığı) ve `742ca9e` (süre bütünlüğü) **LOCAL-only / pending integration** kalır; bunların kaynak/testleri hedefte mevcut varsayılmaz. Aşağıdaki LOCAL kazanımlar tarihsel yerel kanıttır. Bu kaynak ağacının DB48/app-api v81/web baseline'ını tam temsil ettiği iddia edilmez.
+**Hedef branch gerçeği:** ENG-004 tabanı fetch edilmiş origin/develop `db65a849c47e6a03e9db375e26072d9e51fff0ff`'tir. DB48 migration SQL kaynakları ENG-002A ile geri kazanılmıştır; yerel ürün commit'leri `0c3a694` (hafta devamlılığı) ve `742ca9e` (süre bütünlüğü) bir bütün olarak **LOCAL-only / pending integration** kalır. `scripts/run-manual-week-plan-tests.mjs` ve `tests/integration/session-duration-integrity.test.ts` bu ağaçta yoktur. Aşağıdaki LOCAL kazanımlar tarihsel yerel kanıttır. Bu kaynak ağacının DB48/app-api v81/web baseline'ını tam temsil ettiği iddia edilmez.
 
 ### 12 Ekim 2026 — hedef branch'teki tarihsel LOCAL ve MVP checkpoint'i
 

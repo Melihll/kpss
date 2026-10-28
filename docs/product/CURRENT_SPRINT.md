@@ -1,22 +1,14 @@
-## Engineering System v1 — güncel sprint, 19 Ekim 2026
+## Engineering System v1 — kapanış ve ürün odağı, 28 Ekim 2026
 
-Güncel proje/baseline kaydı: [PROJECT_HANDOFF — UX V3 LOCAL state](PROJECT_HANDOFF.md#ux-v3-local-state). Geliştirme sözleşmesi: [ENGINEERING_SYSTEM](ENGINEERING_SYSTEM.md). Aynı anda en fazla üç aktif görev; şu anda **bir** aktif görev var.
+Güncel proje/baseline kaydı: [PROJECT_HANDOFF — UX V3 LOCAL state](PROJECT_HANDOFF.md#ux-v3-local-state). Geliştirme sözleşmesi: [ENGINEERING_SYSTEM](ENGINEERING_SYSTEM.md). Aynı anda en fazla üç aktif görev; sonraki ürün görevi kullanıcı önceliğiyle seçilir.
 
-| Task | Durum | Kapsam ve sonraki adım |
-| --- | --- | --- |
-| ENG-001 — Engineering Harness Foundation / target compatibility | **REVIEW** | Özgün 4e6a284 için bağımsız review PASS ve yerel commit tamamlandı. Ayrı codex/engsys-001-pr, origin/develop aad020d temelinde yalnız beş belgeyi hedefe uyarlar; uyumluluk düzeltmesi yeniden inceleme bekler. |
+**Altyapı kapanışı:** Engineering System v1 tamamlandı; ENG-001, ENG-002A/B/C ve ENG-003A/C kapalıdır. ENG-004 dokümantasyon kapanışı commit edilip push edilmiş ve [PR #8](https://github.com/Melihll/kpss/pull/8) açılmıştır; PR henüz merge edilmemiştir. Merge/CI/branch protection dayanakları ve zorunlu kontrollerin tek ayrıntılı kaydı: [Engineering System kapanışı](ENGINEERING_SYSTEM.md#engineering-system-v1-kapanış-kaydı--eng-004).
 
-**Kapanmış tarihsel işler:** Maliye historical repair CLOSED; Anayasa historical investigation CLOSED — doğrulanmış hatalı kayıt yok. Bu sprint onları yeniden açmaz.
+**Sonraki odak:** KPSS Koçu'nun ürün geliştirmesi. Kullanıcı önceliğiyle dar ürün görevi seçilecek; yeni altyapı özelliği açılmaz. Çalışma sonu/öğrenme döngüsü gibi bekleyen ürün ihtiyaçları bu kayıtla uygulanmış veya yetkilendirilmiş sayılmaz.
 
-**Son bildirilen production:** DB48 / app-api v81 ACTIVE / web f81e51cb-205c-4fac-a72a-64ba8b4a2a27 korunmuş. Bu bilgi tarihsel kapanış kanıtıdır; canlı yeniden doğrulama yapılmadı. LOCAL runtime UNKNOWN. Ana dirty develop ve landing korunur.
+**Kalan gerçek sınırlamalar (aktif göreve dönüştürülmedi):** production source provenance eksikliği; PG17 test ortamının production uyumluluğunu kanıtlamaması; değişmemiş canonical SQL/PG15/tam Supabase runtime temiz kurulum kabulünün olmaması; P0 doğal uzun oturum production kabulü PARTIAL. Production/LOCAL baseline, kapanmış onarımlar, pending integration ve bekleyen ürün kabulü [handoff](PROJECT_HANDOFF.md#ux-v3-local-state) içinde korunur.
 
-**Ayrı bekleyen konular (aktif göreve dönüştürülmedi):** production source provenance eksikliği; fresh migration compatibility; P0 doğal uzun oturum production kabulü PARTIAL. S1-E/çalışma sonu-öğrenme döngüsü bekler; önceki LOCAL kazanımlar ve Evre 5/7 kapanışları korunur. Landing tasarım onayı ayrı; kapsamlı görsel revizyon MVP sonrasıdır.
-
-**Belge güncelliği:** PRODUCT_BACKLOG ve ROADMAP eski durum taşıyabilir; ENG-001 onları yeniden yazmaz. Güncel durumu bu sprint ve handoff belirler. Aşağıdaki eski sprint/release next-step kayıtları tarihsel kapsamlarıyla korunur; aktif görev veya yayın yetkisi değildir.
-
-**Durma sınırı:** Yalnız izinli diff, git diff --check ve hızlı path/command varlığı kontrol edilir. Bu integration branch'inde commit'e özel onaylı kimlikle yerel commit hazırlanabilir; config'e kimlik yazılmaz. Test/build, CI/framework, uygulama/SQL, LOCAL/production, push/PR/merge yapılmaz; uyumluluk review'ı beklenir.
-
-**Hedef kapsamı:** Son doğrulanan origin/develop aad020d üzerine yalnız ENG-001 belgeleri taşınır. Yerel ürün commit'leri 0c3a694/742ca9e ve bunlara ait runner/testler LOCAL-only / pending integration kalır; tarihsel LOCAL kabul hedef branch implementasyonu değildir.
+**Belge güncelliği:** PRODUCT_BACKLOG ve ROADMAP eski durum taşıyabilir; ENG-004 onları yeniden yazmaz. Güncel durumu bu sprint ve handoff belirler. Aşağıdaki eski sprint/release next-step kayıtları tarihsel kapsamlarıyla korunur; aktif görev veya yayın yetkisi değildir.
 
 ---
 
